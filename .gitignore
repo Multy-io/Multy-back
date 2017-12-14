@@ -1,0 +1,10 @@
+cmd/cmd
+cmd/multy
+cmd/config.yml
+cmd/back-*
+
+
+vendor/gopkg.in
+vendor/github.com
+vendor/golang.org
+
