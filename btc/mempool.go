@@ -1,130 +1,71 @@
 package btc
 
 import (
-	"fmt"
+	"log"
 
+	"github.com/Appscrunch/Multy-back/store"
 	"github.com/btcsuite/btcd/btcjson"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"gopkg.in/mgo.v2/bson"
 )
 
-func parseMempoolTransaction(inTx *btcjson.TxRawResult) error {
-	for num, out := range inTx.Vout {
-		fmt.Println("addres", num, out.ScriptPubKey.Addresses)
-	}
-
-	return nil
-}
-
-/*
-//Here we parsing transaction by getting inputs and outputs addresses
-func parseRawMempool(inTx *btcjson.TxRawResult) error {
-	memPoolTx := MultyMempoolTx{size: inTx.Size, hash: inTx.Hash, txid: inTx.Txid}
-
-	inputs := inTx.Vin
-
-	var inputSum, outputSum float64 = 0, 0
-
-	for j := 0; j < len(inputs); j++ {
-		input := inputs[j]
-
-		inputNum := input.Vout
-
-		txCHash, errCHash := chainhash.NewHashFromStr(input.Txid)
-
-		if errCHash != nil {
-			log.Fatal(errCHash)
-		}
-
-		oldTx, err := rpcClient.GetRawTransactionVerbose(txCHash)
-		if err != nil {
-			log.Println("ERR GetRawTransactionVerbose [old]: ", err.Error())
-			return err
-		}
-
-		oldOutputs := oldTx.Vout
-
-		inputSum += oldOutputs[inputNum].Value
-
-		addressesInputs := oldOutputs[inputNum].ScriptPubKey.Addresses
-
-		inputAdr := MultyAddress{addressesInputs, oldOutputs[inputNum].Value}
-
-		memPoolTx.inputs = append(memPoolTx.inputs, inputAdr)
-	}
-
-	outputs := inTx.Vout
-
-	var txOutputs []MultyAddress
-
-	for _, output := range outputs {
-		addressesOuts := output.ScriptPubKey.Addresses
-		outputSum += output.Value
-
-		txOutputs = append(txOutputs, MultyAddress{addressesOuts, output.Value})
-	}
-	memPoolTx.outputs = txOutputs
-
-	memPoolTx.amount = inputSum
-	memPoolTx.fee = inputSum - outputSum
-
-	memPoolTx.feeRate = int32(memPoolTx.fee / float64(memPoolTx.size) * 100000000)
-
-	// log.Printf("\n **************************** Multy-New Tx Found *******************\n hash: %s, id: %s \n amount: %f , fee: %f , feeRate: %d \n Inputs: %v \n OutPuts: %v \n ****************************Multy-the best wallet*******************", memPoolTx.hash, memPoolTx.txid, memPoolTx.amount, memPoolTx.fee, memPoolTx.feeRate, memPoolTx.inputs, memPoolTx.outputs)
-	// memPoolTx.hash, memPoolTx.txid, memPoolTx.amount, memPoolTx.fee, memPoolTx.feeRate, memPoolTx.inputs, memPoolTx.outputs
-
+func parseMempoolTransaction(inTx *btcjson.TxRawResult) {
 	var user store.User
+	// parse every new transaction out from mempool and notify user with websocket
+	for _, out := range inTx.Vout {
+		for _, address := range out.ScriptPubKey.Addresses {
 
-	for _, input := range memPoolTx.inputs {
-		for _, address := range input.address {
-			usersData.Find(bson.M{"wallets.addresses.address": address}).One(&user)
-			if user.Wallets != nil {
-				chToClient <- CreateBtcTransactionWithUserID(user.UserID, txIn, "not implemented", memPoolTx.hash, input.amount)
-				// add UserID related tx's to db
-				// rec := newTxInfo(txIn, memPoolTx.hash, address, input.amount)
-				// sel := bson.M{"userID": user.UserID}
-				// update := bson.M{"$push": bson.M{"transactions": rec}}
-				// err := usersData.Update(sel, update)
-				// if err != nil {
-				// 	fmt.Println(err)
-				// }
-				// // TODO: parse block
+			query := bson.M{"wallets.addresses.address": address}
+			err := usersData.Find(query).One(&user)
+			if err != nil {
+				continue
 			}
-			user = store.User{}
+			log.Printf("[DEBUG] [IS OUR USER] parseMempoolTransaction: usersData.Find = %s", address)
+
+			chToClient <- BtcTransactionWithUserID{
+				UserID: user.UserID,
+				NotificationMsg: &BtcTransaction{
+					TransactionType: txInMempool,
+					Amount:          out.Value,
+					TxID:            inTx.Txid,
+					Address:         address,
+				},
+			}
 		}
 	}
 
-	for _, output := range memPoolTx.outputs {
-		for _, address := range output.address {
-			usersData.Find(bson.M{"wallets.addresses.address": address}).One(&user)
-			if user.Wallets != nil {
-				chToClient <- CreateBtcTransactionWithUserID(user.UserID, txOut, "not implemented", memPoolTx.hash, output.amount)
-				// add UserID related tx's to db
+	// parse every new transaction in from mempool and notify user with websocket
+	for _, input := range inTx.Vin {
+		txHash, err := chainhash.NewHashFromStr(input.Txid)
+		if err != nil {
+			log.Printf("[ERR] parseMempoolTransaction: chainhash.NewHashFromStr = %s", err)
+		}
+		previousTx, err := rpcClient.GetRawTransactionVerbose(txHash)
+		if err != nil {
+			log.Printf("[ERR] parseMempoolTransaction:rpcClient.GetRawTransactionVerbose: %s ", err.Error())
+		}
 
-				// rec := newTxInfo(txOut, memPoolTx.hash, address, output.amount)
-				// sel := bson.M{"userID": user.UserID}
-				// update := bson.M{"$push": bson.M{"transactions": rec}}
-				// err := usersData.Update(sel, update)
-				// if err != nil {
-				// 	fmt.Println(err)
-				// }
-				// // TODO: parse block
+		for _, out := range previousTx.Vout {
+			for _, address := range out.ScriptPubKey.Addresses {
+				query := bson.M{"wallets.addresses.address": address}
+				err := usersData.Find(query).One(&user)
+				if err != nil {
+					continue
+				}
+				log.Printf("[DEBUG] [IS OUR USER]-AS-OUT parseMempoolTransaction: usersData.Find = %s", address)
+
+				chToClient <- BtcTransactionWithUserID{
+					UserID: user.UserID,
+					NotificationMsg: &BtcTransaction{
+						TransactionType: txOutMempool,
+						Amount:          out.Value,
+						TxID:            inTx.Txid,
+						Address:         address,
+					},
+				}
+
 			}
-			user = store.User{}
 		}
 	}
 
-	rec := newRecord(int(memPoolTx.feeRate), memPoolTx.hash)
-
-	err := mempoolRates.Insert(rec)
-	if err != nil {
-		log.Println("ERR mempoolRates.Insert: ", err.Error())
-		return err
-	}
-
-	//TODO save transaction as mem pool tx
-	//TODO update fee rates table
-	memPool = append(memPool, memPoolTx)
-
-	log.Printf("[DEBUG] parseRawTransaction: new multy mempool; size=%d", len(memPool))
-	return nil
 }
-*/

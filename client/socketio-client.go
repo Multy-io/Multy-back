@@ -32,46 +32,48 @@ func (sConnPool *SocketIOConnectedPool) listenBTC() {
 	for {
 		select {
 		case newTransactionWithUserID = <-sConnPool.btcCh:
-			log.Printf("got new transaction: %+v\n", newTransactionWithUserID)
-			/*	if _, ok := sConnPool.users[newTransactionWithUserID.UserID]; !ok {
+			log.Printf("got new transaction: %+v\n", newTransactionWithUserID.NotificationMsg)
+			if _, ok := sConnPool.users[newTransactionWithUserID.UserID]; !ok {
+				break
+			}
+			userID := newTransactionWithUserID.UserID
+			//TODO: with mutex
+			userConns := sConnPool.users[userID].conns
+			log.Printf("userConn=%+v\n", userConns)
+
+			/*	var cc *SocketIOUser
+				for _, c := range sConnPool.users {
+					cc = c
 					break
 				}
-				userID := newTransactionWithUserID.UserID
-				//TODO: with mutex
-				userConns := sConnPool.users[userID].conns
-				log.Printf("userConn=%+v\n", userConns)
-			*/
-			var cc *SocketIOUser
-			for _, c := range sConnPool.users {
-				cc = c
-				break
-			}
-			if cc == nil {
-				break
-			}
-			for _, conn := range cc.conns {
+				if cc == nil {
+					break
+				}*/
+			for _, conn := range userConns {
 				//for _, conn := range userConns {
 				log.Println("id=", conn.Id())
 				msgRaw, err := json.Marshal(newTransactionWithUserID.NotificationMsg)
 				if err != nil {
+					log.Printf("[ERR] listenBTC: %s\n", err.Error())
 					break
 				}
-				conn.Emit("/newTransaction", string(msgRaw))
+				conn.Emit("newTransaction", string(msgRaw))
 			}
 		}
 	}
 }
 
 func (sConnPool *SocketIOConnectedPool) AddUserConn(userID string, userObj *SocketIOUser) {
-	log.Println("DEBUG AddUserConn: ", userID)
+	log.Println("[DEBUG] AddUserConn: ", userID)
 	sConnPool.m.Lock()
 	defer sConnPool.m.Unlock()
 
-	(sConnPool.users[userID]) = userObj
+	sConnPool.users[userID] = userObj
 }
 
 func (sConnPool *SocketIOConnectedPool) RemoveUserConn(userID string) {
-	log.Println("DEBUG RemoveUserConn: ", userID)
+	log.Println("[DEBUG] RemoveUserConn: ", userID)
+
 	sConnPool.m.Lock()
 	defer sConnPool.m.Unlock()
 

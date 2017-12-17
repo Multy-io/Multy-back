@@ -7,8 +7,10 @@ import (
 )
 
 const (
-	txIn  = "incoming"
-	txOut = "outcoming"
+	txInMempool  = "incoming from mempool"
+	txOutMempool = "outcoming from mempool"
+	txInBlock    = "incoming from block"
+	txOutBlock   = "outcoming from block"
 )
 
 // Dirty hack - this will be wrapped to a struct

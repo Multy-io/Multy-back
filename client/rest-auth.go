@@ -13,42 +13,6 @@ import (
 
 // The jwt middleware.
 
-/*
-var authenticator = func (restClient *RestClient) getAdressBalance() gin.HandlerFunc {
-	return func(c *gin.Context) {
-
-
-func(userId string, deviceId string, password string, c *gin.Context) (store.User, bool) {
-
-	query := bson.M{"userID": userId}
-
-	user := store.User{}
-
-	err := usersData.Find(query).One(&user)
-
-	if err != nil || len(user.UserID) == 0 {
-		return store.User{}, false
-	}
-
-	return user, true
-
-}
-*/
-// var authorizator = func(userId string, c *gin.Context) bool {
-// 	if userId == "admin" {
-// 		return true
-// 	}
-//
-// 	return false
-// }
-/*
-var unauthorized = func(c *gin.Context, code int, message string) {
-	c.JSON(code, gin.H{
-		"code":    code,
-		"message": message,
-	})
-}
-*/
 // LoginHandler can be used by clients to get a jwt token.
 // Payload needs to be json in the form of {"username": "USERNAME", "password": "PASSWORD", "deviceid": "DEVICEID"}.
 // Reply will be of the form {"token": "TOKEN"}.
