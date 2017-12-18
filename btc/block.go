@@ -1,6 +1,7 @@
 package btc
 
 import (
+	"encoding/json"
 	"log"
 
 	"gopkg.in/mgo.v2/bson"
@@ -55,7 +56,7 @@ func parseNewBlock(hash *chainhash.Hash) {
 				}
 				log.Printf("[DEBUG] [IS OUR USER] parseNewBlock: usersData.Find = %s", address)
 
-				chToClient <- BtcTransactionWithUserID{
+				txMsq := BtcTransactionWithUserID{
 					UserID: user.UserID,
 					NotificationMsg: &BtcTransaction{
 						TransactionType: txInBlock,
@@ -64,6 +65,7 @@ func parseNewBlock(hash *chainhash.Hash) {
 						Address:         address,
 					},
 				}
+				sendNotifyToClients(&txMsq)
 
 			}
 		}
@@ -89,7 +91,7 @@ func parseNewBlock(hash *chainhash.Hash) {
 					}
 					log.Printf("[DEBUG] [IS OUR USER]-AS-OUT parseMempoolTransaction: usersData.Find = %s", address)
 
-					chToClient <- BtcTransactionWithUserID{
+					txMsq := BtcTransactionWithUserID{
 						UserID: user.UserID,
 						NotificationMsg: &BtcTransaction{
 							TransactionType: txOutBlock,
@@ -98,10 +100,25 @@ func parseNewBlock(hash *chainhash.Hash) {
 							Address:         address,
 						},
 					}
-
+					sendNotifyToClients(&txMsq)
 				}
 			}
 		}
 
 	}
+}
+
+func sendNotifyToClients(txMsq *BtcTransactionWithUserID) {
+	newTxJSON, err := json.Marshal(txMsq)
+	if err != nil {
+		log.Printf("[ERR] sendNotifyToClients: [%+v] %s\n", txMsq, err.Error())
+		return
+	}
+
+	err = nsqProducer.Publish(TopicTransaction, newTxJSON)
+	if err != nil {
+		log.Printf("[ERR] nsq publish new transaction: [%+v] %s\n", txMsq, err.Error())
+		return
+	}
+	return
 }

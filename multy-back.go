@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	defaultServerAddress = "0.0.0.0:7778"
+	defaultServerAddress = "0.0.0.0:6678"
 	version              = "v1"
 )
 
@@ -28,9 +28,10 @@ type Multy struct {
 
 	btcClientCh chan btc.BtcTransactionWithUserID
 
-	socketIO   *socketio.Server
-	btcClient  *rpcclient.Client
-	restClient *client.RestClient
+	socketIO     *socketio.Server
+	btcClient    *rpcclient.Client
+	restClient   *client.RestClient
+	firebaseConn *client.FirebaseConn
 }
 
 // Init initializes Multy instance
@@ -47,15 +48,15 @@ func Init(conf *Configuration) (*Multy, error) {
 
 	// TODO: add channels for communitation
 	log.Println("[DEBUG] InitHandlers")
-	btcClient, btcClientCh, err := btc.InitHandlers()
+	btcClient, err := btc.InitHandlers()
 	if err != nil {
 		return nil, fmt.Errorf("blockchain api initialization: %s", err.Error())
 	}
 	log.Println("[INFO] btc handlers initialization done")
 	multy.btcClient = btcClient
-	multy.btcClientCh = btcClientCh
 
-	multy.clientPool = client.InitConnectedPool(btcClientCh)
+	tempCh := make(chan btc.BtcTransactionWithUserID, 0)
+	multy.clientPool = client.InitConnectedPool(tempCh)
 
 	if err = multy.initRoute(conf.Address); err != nil {
 		return nil, fmt.Errorf("router initialization: %s", err.Error())
@@ -94,6 +95,15 @@ func (multy *Multy) initRoute(address string) error {
 		return err
 	}
 	multy.restClient = restClient
+
+	firebaseConf := &client.FirebaseConf{ServerKey: `serverKey`}
+
+	firebaseConn, err := client.InitFirebaseConn(firebaseConf, multy.route)
+	if err != nil {
+		log.Printf("[ERR] firebase initialization: %s\n", err.Error())
+		return err
+	}
+	multy.firebaseConn = firebaseConn
 
 	return nil
 }

@@ -93,7 +93,7 @@ func SetSocketIOHandlers(r *gin.RouterGroup, btcCh chan btc.BtcTransactionWithUs
 
 	log.Println("Starting server...")
 	go func() {
-		log.Panic(http.ListenAndServe("0.0.0.0:7780", serveMux))
+		log.Panic(http.ListenAndServe("0.0.0.0:6680", serveMux))
 	}()
 	return nil, nil
 }

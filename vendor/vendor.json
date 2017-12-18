@@ -39,6 +39,12 @@
 			"revisionTime": "2017-12-04T09:52:00Z"
 		},
 		{
+			"checksumSHA1": "/RCq7JZC2bJLK4o5QSOLxaaO+hs=",
+			"path": "github.com/blockcypher/gobcy",
+			"revision": "6eace16b4b81ea8dbdcde5417d6b1cc3828a3d1f",
+			"revisionTime": "2016-06-28T20:39:45Z"
+		},
+		{
 			"checksumSHA1": "gZQ6HheWahvZzIc3phBnOwoWHjE=",
 			"path": "github.com/btcsuite/btcd/btcec",
 			"revision": "2e60448ffcc6bf78332d1fe590260095f554dd78",
@@ -111,6 +117,12 @@
 			"revisionTime": "2015-01-19T17:41:27Z"
 		},
 		{
+			"checksumSHA1": "GXOurDGgsLmJs0wounpdWZZRSGw=",
+			"path": "github.com/dgrijalva/jwt-go",
+			"revision": "a539ee1a749a2b895533f979515ac7e6e0f5b650",
+			"revisionTime": "2017-06-08T00:51:49Z"
+		},
+		{
 			"checksumSHA1": "QeKwBtN2df+j+4stw3bQJ6yO4EY=",
 			"path": "github.com/gin-contrib/sse",
 			"revision": "22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae",
@@ -171,6 +183,24 @@
 			"revisionTime": "2017-12-01T01:43:01Z"
 		},
 		{
+			"checksumSHA1": "2b05iFLBjNwhqBQtFtIuC+/ezfw=",
+			"path": "github.com/graarh/golang-socketio",
+			"revision": "2c44953b9b5fcd4da83ec8816f002ce68a12ef2d",
+			"revisionTime": "2017-05-10T16:27:25Z"
+		},
+		{
+			"checksumSHA1": "Yy4eN9/8WEN6w3zXKljHUEW6iC0=",
+			"path": "github.com/graarh/golang-socketio/protocol",
+			"revision": "2c44953b9b5fcd4da83ec8816f002ce68a12ef2d",
+			"revisionTime": "2017-05-10T16:27:25Z"
+		},
+		{
+			"checksumSHA1": "sJu0Oxc+CTNpsJmOjtBXRkGqB3I=",
+			"path": "github.com/graarh/golang-socketio/transport",
+			"revision": "2c44953b9b5fcd4da83ec8816f002ce68a12ef2d",
+			"revisionTime": "2017-05-10T16:27:25Z"
+		},
+		{
 			"checksumSHA1": "w5RcOnfv5YDr3j2bd1YydkPiZx4=",
 			"path": "github.com/mattn/go-isatty",
 			"revision": "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c",
@@ -187,6 +217,18 @@
 			"path": "golang.org/x/crypto/ripemd160",
 			"revision": "94eea52f7b742c7cbe0b03b22f0c4c8631ece122",
 			"revisionTime": "2017-11-28T01:43:40Z"
+		},
+		{
+			"checksumSHA1": "B2t4JjkjyoUINOnKXviNypvgWpo=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "bf42f188b9bc6f2cf5b8ee5a912ef1aedd0eba4c",
+			"revisionTime": "2017-11-10T14:41:19Z"
+		},
+		{
+			"checksumSHA1": "9QENMGpz4ELXL4R4DI69TzGHulw=",
+			"path": "gopkg.in/dgrijalva/jwt-go.v3",
+			"revision": "d2709f9f1f31ebcda9651b03077758c1f3a0018c",
+			"revisionTime": "2016-06-16T19:15:56Z"
 		},
 		{
 			"checksumSHA1": "P/k5ZGf0lEBgpKgkwy++F7K1PSg=",

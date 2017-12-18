@@ -22,7 +22,7 @@ func parseMempoolTransaction(inTx *btcjson.TxRawResult) {
 			}
 			log.Printf("[DEBUG] [IS OUR USER] parseMempoolTransaction: usersData.Find = %s", address)
 
-			chToClient <- BtcTransactionWithUserID{
+			txMsq := BtcTransactionWithUserID{
 				UserID: user.UserID,
 				NotificationMsg: &BtcTransaction{
 					TransactionType: txInMempool,
@@ -31,6 +31,7 @@ func parseMempoolTransaction(inTx *btcjson.TxRawResult) {
 					Address:         address,
 				},
 			}
+			sendNotifyToClients(&txMsq)
 		}
 	}
 
@@ -54,7 +55,7 @@ func parseMempoolTransaction(inTx *btcjson.TxRawResult) {
 				}
 				log.Printf("[DEBUG] [IS OUR USER]-AS-OUT parseMempoolTransaction: usersData.Find = %s", address)
 
-				chToClient <- BtcTransactionWithUserID{
+				txMsq := BtcTransactionWithUserID{
 					UserID: user.UserID,
 					NotificationMsg: &BtcTransaction{
 						TransactionType: txOutMempool,
@@ -63,7 +64,7 @@ func parseMempoolTransaction(inTx *btcjson.TxRawResult) {
 						Address:         address,
 					},
 				}
-
+				sendNotifyToClients(&txMsq)
 			}
 		}
 	}

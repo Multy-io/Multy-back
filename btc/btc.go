@@ -1,9 +1,10 @@
 package btc
 
 import (
-	"time"
+	"fmt"
 
 	"github.com/btcsuite/btcd/rpcclient"
+	"github.com/nsqio/go-nsq"
 )
 
 const (
@@ -11,34 +12,29 @@ const (
 	txOutMempool = "outcoming from mempool"
 	txInBlock    = "incoming from block"
 	txOutBlock   = "outcoming from block"
+
+	// TopicTransaction is a topic for sending notifies to clients
+	TopicTransaction = "btcTransactionUpdate"
 )
 
 // Dirty hack - this will be wrapped to a struct
 var (
-	rpcClient  = &rpcclient.Client{}
-	chToClient chan BtcTransactionWithUserID // a channel for sending data to client
+	rpcClient = &rpcclient.Client{}
+
+	nsqProducer *nsq.Producer // a producer for sending data to clients
+	rpcConf     *rpcclient.ConnConfig
 )
 
-func simulateSendNewTransactions() {
-	for {
-		time.Sleep(time.Second * 2)
-		b := BtcTransactionWithUserID{
-			NotificationMsg: &BtcTransaction{
-				Amount: 5,
-			},
-			UserID: "555",
-		}
-
-		chToClient <- b
+func InitHandlers() (*rpcclient.Client, error) {
+	config := nsq.NewConfig()
+	p, err := nsq.NewProducer("127.0.0.1:4150", config)
+	if err != nil {
+		return nil, fmt.Errorf("nsq producer: %s", err.Error())
 	}
-}
-
-func InitHandlers() (*rpcclient.Client, chan BtcTransactionWithUserID, error) {
-	chToClient = make(chan BtcTransactionWithUserID, 0)
-	// go simulateSendNewTransactions()
+	nsqProducer = p
 
 	go RunProcess()
-	return rpcClient, chToClient, nil
+	return rpcClient, nil
 }
 
 type BtcTransaction struct {
