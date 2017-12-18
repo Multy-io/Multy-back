@@ -9,8 +9,6 @@ import (
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
-
-	socketio "github.com/googollee/go-socket.io"
 )
 
 const (
@@ -22,13 +20,10 @@ const (
 type Multy struct {
 	config     *Configuration
 	clientPool *client.SocketIOConnectedPool
+	route      *gin.Engine
 
 	userStore store.UserStore
-	route     *gin.Engine
 
-	btcClientCh chan btc.BtcTransactionWithUserID
-
-	socketIO     *socketio.Server
 	btcClient    *rpcclient.Client
 	restClient   *client.RestClient
 	firebaseConn *client.FirebaseConn
@@ -55,9 +50,6 @@ func Init(conf *Configuration) (*Multy, error) {
 	log.Println("[INFO] btc handlers initialization done")
 	multy.btcClient = btcClient
 
-	tempCh := make(chan btc.BtcTransactionWithUserID, 0)
-	multy.clientPool = client.InitConnectedPool(tempCh)
-
 	if err = multy.initRoute(conf.Address); err != nil {
 		return nil, fmt.Errorf("router initialization: %s", err.Error())
 	}
@@ -72,13 +64,13 @@ func (multy *Multy) initRoute(address string) error {
 	gin.SetMode(gin.DebugMode)
 
 	socketIORoute := router.Group("/socketio")
-	socketIOServer, err := client.SetSocketIOHandlers(socketIORoute, multy.btcClientCh, multy.clientPool)
+	socketIOPool, err := client.SetSocketIOHandlers(socketIORoute)
 	if err != nil {
 		return err
 	}
 
 	multy.route = router
-	multy.socketIO = socketIOServer
+	multy.clientPool = socketIOPool
 
 	restClient, err := client.SetRestHandlers(multy.userStore, client.BTCApiConf{
 		Token: "6b4e9ead6afe4803bd1e2d22b24b52ad",

@@ -9,6 +9,14 @@ import (
 	"net/url"
 )
 
+const (
+	topicExchangeAll          = "exchangeAll"
+	topicExchangeUpdate       = "exchangeUpdate"
+	topicBTCTransactionUpdate = "btcTransaction"
+
+	topicEthTransactionUpdate = "ethTransaction"
+)
+
 type EventGetExchangeReq struct {
 	From string
 	To   string

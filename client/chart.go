@@ -20,7 +20,7 @@ const (
 )
 
 type Rates struct {
-	BTCtoUSDDay    map[time.Time]float64
+	BTCtoUSDDay    map[string]float64
 	exchangeSingle *EventExchangeChart
 
 	m *sync.Mutex
@@ -49,7 +49,7 @@ func initExchangeChart() (*exchangeChart, error) {
 	chart := &exchangeChart{
 		rates: &Rates{
 			exchangeSingle: &EventExchangeChart{},
-			BTCtoUSDDay:    make(map[time.Time]float64),
+			BTCtoUSDDay:    make(map[string]float64),
 			m:              &sync.Mutex{},
 		},
 		interval: secondsInDay / numOfChartDots,
@@ -90,10 +90,10 @@ func (eChart *exchangeChart) update() {
 
 	// TODO: do it gracefullcy
 	theOldest, theNewest := getExtremRates(eChart.rates.BTCtoUSDDay)
-	delete(eChart.rates.BTCtoUSDDay, theOldest)
-	eChart.rates.BTCtoUSDDay[theNewest.Add(time.Duration(eChart.interval)*time.Second)] = r1.Float64()*5 + 5
+	delete(eChart.rates.BTCtoUSDDay, theOldest.Format(time.RFC3339))
+	eChart.rates.BTCtoUSDDay[theNewest.Add(time.Duration(eChart.interval)*time.Second).Format(time.RFC3339)] = r1.Float64()*5 + 5
 
-	eChart.rates.exchangeSingle.BTCtoUSD = eChart.rates.BTCtoUSDDay[theNewest.Add(time.Duration(eChart.interval)*time.Second)]
+	eChart.rates.exchangeSingle.BTCtoUSD = eChart.rates.BTCtoUSDDay[theNewest.Add(time.Duration(eChart.interval)*time.Second).Format(time.RFC3339)]
 
 	return
 }
@@ -105,14 +105,15 @@ func (eChart *exchangeChart) updateAll() {
 	aDayAgoTime.AddDate(0, 0, -1)
 
 	for i := 0; i < numOfChartDots; i += eChart.interval {
-		eChart.rates.BTCtoUSDDay[aDayAgoTime.Add(-time.Second*time.Duration(i))] = r1.Float64()*5 + 5
+		timeInString := aDayAgoTime.Add(-time.Second * time.Duration(i)).Format(time.RFC3339)
+		eChart.rates.BTCtoUSDDay[timeInString] = r1.Float64()*5 + 5
 	}
 
 	log.Printf("[DEBUG] updateRateAll: BTCtoUSDDay=%+v/n", eChart.rates.BTCtoUSDDay)
 	return
 }
 
-func (eChart *exchangeChart) getAll() map[time.Time]float64 {
+func (eChart *exchangeChart) getAll() map[string]float64 {
 	log.Printf("[DEBUG] exchange chart: get all exchanges \n")
 
 	eChart.rates.m.Lock()
@@ -128,16 +129,20 @@ func (eChart *exchangeChart) getLast() *EventExchangeChart {
 	return eChart.rates.exchangeSingle
 }
 
-func getExtremRates(rates map[time.Time]float64) (time.Time, time.Time) {
+func getExtremRates(rates map[string]float64) (time.Time, time.Time) {
 	var min, max time.Time
 	for rt := range rates {
-		if rt.Unix() <= min.Unix() {
-			min = rt
+		t, err := time.Parse(time.RFC3339, rt)
+		if err != nil {
+			log.Println("[ERR] parse string time to time:", err.Error())
+			return time.Now(), time.Now()
 		}
-		if rt.Unix() > max.Unix() {
-			max = rt
+		if t.Unix() <= min.Unix() {
+			min = t
 		}
-
+		if t.Unix() > max.Unix() {
+			max = t
+		}
 	}
 	return min, max
 }
