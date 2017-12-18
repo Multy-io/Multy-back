@@ -10,7 +10,7 @@ import (
 )
 
 func parseNewBlock(hash *chainhash.Hash) {
-	log.Printf("[DEBUG] New block connected")
+	log.Printf("[DEBUG] New block connected %s", hash.String())
 
 	// block Height
 	// blockVerbose, err := rpcClient.GetBlockVerbose(hash)
@@ -29,16 +29,19 @@ func parseNewBlock(hash *chainhash.Hash) {
 	// delete by transaction hash record from mempool db to estimete tx speed
 	for _, txHash := range allBlockTransactions {
 
-		query := bson.M{"hashtx": txHash.String()}
-		err := mempoolRates.Remove(query)
-		if err != nil {
-			log.Printf("[ERR] parseNewBlock:mempoolRates.Remove: %s ", err.Error())
-		}
-
 		blockTxVerbose, err := rpcClient.GetRawTransactionVerbose(&txHash)
 		if err != nil {
 			log.Printf("[ERR] parseNewBlock:rpcClient.GetRawTransactionVerbose: %s ", err.Error())
 			continue
+		}
+
+		// delete all block transations from memPoolDB
+		query := bson.M{"hashtx": blockTxVerbose.Txid}
+		err = mempoolRates.Remove(query)
+		if err != nil {
+			log.Printf("[ERR] parseNewBlock:mempoolRates.Remove: %s ", err.Error())
+		} else {
+			log.Printf("[DEBUG] Tx removed: %s ", blockTxVerbose.Txid)
 		}
 
 		// parse block tx outputs and notify
@@ -74,6 +77,7 @@ func parseNewBlock(hash *chainhash.Hash) {
 			previousTx, err := rpcClient.GetRawTransactionVerbose(txHash)
 			if err != nil {
 				log.Printf("[ERR] parseNewBlock:rpcClient.GetRawTransactionVerbose: %s ", err.Error())
+				continue
 			}
 
 			for _, out := range previousTx.Vout {
@@ -98,5 +102,6 @@ func parseNewBlock(hash *chainhash.Hash) {
 				}
 			}
 		}
+
 	}
 }

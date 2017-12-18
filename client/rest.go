@@ -426,7 +426,7 @@ func (restClient *RestClient) sendRawTransaction() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		connCfg := &rpcclient.ConnConfig{
-			Host:         "192.168.0.121:18334",
+			Host:         "localhost:18334",
 			User:         "multy",
 			Pass:         "multy",
 			HTTPPostMode: true,  // Bitcoin core only supports HTTP POST mode

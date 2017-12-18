@@ -40,23 +40,10 @@ var usersData *mgo.Collection
 
 var mempoolRates *mgo.Collection
 
-var Cert = `-----BEGIN CERTIFICATE-----
-MIICPDCCAZ2gAwIBAgIQf8XOycg2EQ8wHpXsZJSy7jAKBggqhkjOPQQDBDAjMREw
-DwYDVQQKEwhnZW5jZXJ0czEOMAwGA1UEAxMFYW50b24wHhcNMTcxMTI2MTY1ODQ0
-WhcNMjcxMTI1MTY1ODQ0WjAjMREwDwYDVQQKEwhnZW5jZXJ0czEOMAwGA1UEAxMF
-YW50b24wgZswEAYHKoZIzj0CAQYFK4EEACMDgYYABAGuHzCFKsJwlFwmtx5QMT/r
-YJ/ap9E2QlUsCnMUCn1ho0wLJkpIgNQWs1zcaKTMGZNpwwLemCHke9sX06h/MdAG
-CwGf1CY5kafyl7dTTlmD10sBA7UD1RXDjYnmYQhB1Z1MUNXKWXe4jCv7DnWmFEnc
-+s5N1NXJx1PNzx/EcsCkRJcMraNwMG4wDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB
-/wQFMAMBAf8wSwYDVR0RBEQwQoIFYW50b26CCWxvY2FsaG9zdIcEfwAAAYcQAAAA
-AAAAAAAAAAAAAAAAAYcEwKgAeYcQ/oAAAAAAAAByhcL//jB99jAKBggqhkjOPQQD
-BAOBjAAwgYgCQgCfs9tYHA1nvU5HSdNeHSZCR1WziHYuZHmGE7eqAWQjypnVbFi4
-pccvzDFvESf8DG4FVymK4E2T/RFnD9qUDiMzPQJCATkCMzSKcyYlsL7t1ZgQLwAK
-UpQl3TYp8uTf+UWzBz0uoEbB4CFeE2G5ZzrVK4XWZK615sfVFSorxHOOZaLwZEEL
------END CERTIFICATE-----`
+var Cert = `testcert`
 
 var connCfg = &rpcclient.ConnConfig{
-	Host:         "192.168.0.121:18334",
+	Host:         "localhost:18334",
 	User:         "multy",
 	Pass:         "multy",
 	Endpoint:     "ws",
@@ -70,7 +57,7 @@ var connCfg = &rpcclient.ConnConfig{
 func RunProcess() error {
 	fmt.Println("[DEBUG] RunProcess()")
 
-	db, err := mgo.Dial("192.168.0.121:27017")
+	db, err := mgo.Dial("localhost:27017")
 
 	if err != nil {
 		log.Printf("[ERR] RunProcess: Cand connect to DB: %s\n", err.Error())
@@ -79,15 +66,16 @@ func RunProcess() error {
 
 	usersData = db.DB("userDB").C("userCollection") // all db tables
 	mempoolRates = db.DB("BTCMempool").C("Rates")
+
 	// Drop collection on every new start of application
 	err = mempoolRates.DropCollection()
 	if err != nil {
 		log.Printf("[ERR] RunProcess:mempoolRates.DropCollection:%s \n", err.Error())
 	}
+
 	ntfnHandlers := rpcclient.NotificationHandlers{
 		OnBlockConnected: func(hash *chainhash.Hash, height int32, t time.Time) {
 			log.Printf("[DEBUG] OnBlockConnected: %v (%d) %v", hash, height, t)
-
 			go parseNewBlock(hash)
 
 		},
@@ -95,11 +83,10 @@ func RunProcess() error {
 			log.Printf("[DEBUG] OnTxAcceptedVerbose: new transaction id = %v", txDetails.Txid)
 			// notify on new in
 			// notify on new out
-
 			go parseMempoolTransaction(txDetails)
-			//tx speed
-			go parseRawTransaction(txDetails)
-
+			//add every new tx from mempool to db
+			//feeRate
+			go newTxToDB(txDetails.Hash)
 		},
 	}
 

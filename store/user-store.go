@@ -20,7 +20,7 @@ const (
 	tableRates   = "Rates"      // and send those two fields there
 )
 
-const defaultMongoDBaddr = "192.168.0.121:27017"
+const defaultMongoDBaddr = "localhost:27017"
 
 type UserStore interface {
 	//GetSession()
