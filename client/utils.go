@@ -17,7 +17,6 @@ func responseErr(c *gin.Context, err error, code int) {
 			"message": http.StatusText(code),
 		})
 	}
-
 	return
 }
 

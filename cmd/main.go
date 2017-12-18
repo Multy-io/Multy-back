@@ -1,39 +1,62 @@
 package main
 
-import (
-	"fmt"
-	"log"
+import _ "github.com/KristinaEtc/slflog"
 
-	mylty "github.com/Appscrunch/Multy-back"
+import (
+	"github.com/KristinaEtc/config"
+
+	multy "github.com/Appscrunch/Multy-back"
+	"github.com/Appscrunch/Multy-back/client"
+	"github.com/Appscrunch/Multy-back/store"
+	"github.com/KristinaEtc/slf"
 )
 
-const defaultConfigFile = "config.yml"
-
 var (
+	log = slf.WithContext("main")
+
 	branch    string
 	commit    string
 	buildtime string
 )
 
+// TODO: add all default params
+var globalOpt = multy.Configuration{
+	Name: "my-test-back",
+	Database: store.Conf{
+		Address:      "localhost:27017",
+		DBUsers:      "userDB",
+		DBBTCMempool: "BTCMempool",
+	},
+	RestAddress:  "localhost:7778",
+	SocketioAddr: "localhost:7780",
+	BTCAPITest: client.BTCApiConf{
+		Token: "btc-test-token",
+		Coin:  "btc",
+		Chain: "test3",
+	},
+	BTCAPIMain: client.BTCApiConf{
+		Token: "btc-main-token",
+		Coin:  "btc",
+		Chain: "main",
+	},
+}
+
 func main() {
-	serviceInfo := fmt.Sprintf("[INFO] multy back-end  service\n"+
-		"\tbranch: \t%s\n"+
-		"\tcommit: \t%s\n"+
-		"\tbuild time: \t%s\n", branch, commit, buildtime)
-	log.Println(serviceInfo)
+	config.ReadGlobalConfig(&globalOpt, "multy configuration")
 
-	conf, err := mylty.GetConfig(defaultConfigFile)
-	if err != nil {
-		log.Fatal("[ERR] configuration init: ", err.Error())
-	}
-	log.Printf("[DEBUG] configuration: %+v\n", conf)
+	log.Error("--------------------------------new multy back server session")
+	log.Infof("%s", globalOpt.Name)
 
-	mu, err := mylty.Init(conf)
+	log.Infof("branch: %s", branch)
+	log.Infof("commit: %s", commit)
+	log.Infof("build time: %s", buildtime)
+
+	mu, err := multy.Init(&globalOpt)
 	if err != nil {
-		log.Fatal("[ERR] Server initialization: ", err.Error())
+		log.Fatalf("Server initialization: %s\n", err.Error())
 	}
 
 	if err = mu.Run(); err != nil {
-		log.Fatal("[ERR] Server running: ", err.Error())
+		log.Fatalf("Server running: %s\n", err.Error())
 	}
 }

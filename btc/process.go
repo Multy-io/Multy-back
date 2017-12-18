@@ -1,8 +1,6 @@
 package btc
 
 import (
-	"fmt"
-
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/rpcclient"
 	mgo "gopkg.in/mgo.v2"
@@ -10,8 +8,6 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-
-	"log"
 )
 
 type MultyMempoolTx struct {
@@ -55,12 +51,12 @@ var connCfg = &rpcclient.ConnConfig{
 }
 
 func RunProcess() error {
-	fmt.Println("[DEBUG] RunProcess()")
+	log.Info("Run Process")
 
 	db, err := mgo.Dial("localhost:27017")
 
 	if err != nil {
-		log.Printf("[ERR] RunProcess: Cand connect to DB: %s\n", err.Error())
+		log.Errorf("RunProcess: Cand connect to DB: %s", err.Error())
 		return err
 	}
 
@@ -70,17 +66,17 @@ func RunProcess() error {
 	// Drop collection on every new start of application
 	err = mempoolRates.DropCollection()
 	if err != nil {
-		log.Printf("[ERR] RunProcess:mempoolRates.DropCollection:%s \n", err.Error())
+		log.Errorf("RunProcess:mempoolRates.DropCollection:%s", err.Error())
 	}
 
 	ntfnHandlers := rpcclient.NotificationHandlers{
 		OnBlockConnected: func(hash *chainhash.Hash, height int32, t time.Time) {
-			log.Printf("[DEBUG] OnBlockConnected: %v (%d) %v", hash, height, t)
+			log.Debugf("OnBlockConnected: %v (%d) %v", hash, height, t)
 			go parseNewBlock(hash)
 
 		},
 		OnTxAcceptedVerbose: func(txDetails *btcjson.TxRawResult) {
-			log.Printf("[DEBUG] OnTxAcceptedVerbose: new transaction id = %v", txDetails.Txid)
+			log.Debugf("OnTxAcceptedVerbose: new transaction id = %v", txDetails.Txid)
 			// notify on new in
 			// notify on new out
 			go parseMempoolTransaction(txDetails)
@@ -92,7 +88,7 @@ func RunProcess() error {
 
 	rpcClient, err = rpcclient.New(connCfg, &ntfnHandlers)
 	if err != nil {
-		log.Printf("[ERR] RunProcess(): rpcclient.New %s\n", err.Error())
+		log.Errorf("RunProcess(): rpcclient.New %s\n", err.Error())
 		return err
 	}
 
@@ -100,13 +96,13 @@ func RunProcess() error {
 	if err = rpcClient.NotifyBlocks(); err != nil {
 		return err
 	}
-	log.Println("NotifyBlocks: Registration Complete")
+	log.Info("NotifyBlocks: Registration Complete")
 
 	// Register for new transaction in mempool notifications.
 	if err = rpcClient.NotifyNewTransactions(true); err != nil {
 		return err
 	}
-	log.Println("NotifyNewTransactions: Registration Complete")
+	log.Info("NotifyNewTransactions: Registration Complete")
 
 	// get all mempool and append to db
 	go getAllMempool()

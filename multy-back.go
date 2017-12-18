@@ -2,13 +2,19 @@ package multyback
 
 import (
 	"fmt"
-	"log"
+	"io/ioutil"
 
 	"github.com/Appscrunch/Multy-back/btc"
 	"github.com/Appscrunch/Multy-back/client"
 	"github.com/Appscrunch/Multy-back/store"
+	"github.com/KristinaEtc/slf"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
+)
+
+var (
+	pwdCurr = "multy-back"
+	log     = slf.WithContext(pwdCurr)
 )
 
 const (
@@ -24,9 +30,9 @@ type Multy struct {
 
 	userStore store.UserStore
 
-	btcClient    *rpcclient.Client
-	restClient   *client.RestClient
-	firebaseConn *client.FirebaseConn
+	btcClient      *rpcclient.Client
+	restClient     *client.RestClient
+	firebaseClient *client.FirebaseClient
 }
 
 // Init initializes Multy instance
@@ -35,79 +41,70 @@ func Init(conf *Configuration) (*Multy, error) {
 		config: conf,
 	}
 
-	userStore, err := store.InitUserStore(conf.DataStoreAddress)
+	userStore, err := store.InitUserStore(conf.Database)
 	if err != nil {
 		return nil, err
 	}
 	multy.userStore = userStore
 
-	// TODO: add channels for communitation
-	log.Println("[DEBUG] InitHandlers")
-	btcClient, err := btc.InitHandlers()
+	btcClient, err := btc.InitHandlers(getCertificate(conf.BTCSertificate))
 	if err != nil {
 		return nil, fmt.Errorf("blockchain api initialization: %s", err.Error())
 	}
-	log.Println("[INFO] btc handlers initialization done")
+	log.Debug("BTC handlers initialization done")
 	multy.btcClient = btcClient
 
-	if err = multy.initRoute(conf.Address); err != nil {
+	if err = multy.initRoutes(conf); err != nil {
 		return nil, fmt.Errorf("router initialization: %s", err.Error())
 	}
 
-	log.Println("[DEBUG] init done")
 	return multy, nil
 }
 
-func (multy *Multy) initRoute(address string) error {
+func getCertificate(certFile string) string {
+	cert, err := ioutil.ReadFile(certFile)
+	if err != nil {
+		return ""
+	}
+	return string(cert)
+}
+
+func (multy *Multy) initRoutes(conf *Configuration) error {
 	router := gin.Default()
+	multy.route = router
 
 	gin.SetMode(gin.DebugMode)
 
 	socketIORoute := router.Group("/socketio")
-	socketIOPool, err := client.SetSocketIOHandlers(socketIORoute)
+	socketIOPool, err := client.SetSocketIOHandlers(socketIORoute, conf.SocketioAddr)
 	if err != nil {
 		return err
 	}
-
-	multy.route = router
 	multy.clientPool = socketIOPool
 
-	restClient, err := client.SetRestHandlers(multy.userStore, client.BTCApiConf{
-		Token: "6b4e9ead6afe4803bd1e2d22b24b52ad",
-		Coin:  "btc",
-		Chain: "test3",
-	},
-		client.BTCApiConf{
-			Token: "6b4e9ead6afe4803bd1e2d22b24b52ad",
-			Coin:  "btc",
-			Chain: "main",
-		},
-		router, multy.btcClient)
+	restClient, err := client.SetRestHandlers(
+		multy.userStore,
+		conf.BTCAPITest,
+		conf.BTCAPIMain,
+		router,
+		multy.btcClient)
 	if err != nil {
 		return err
 	}
 	multy.restClient = restClient
 
-	firebaseConf := &client.FirebaseConf{ServerKey: `serverKey`}
-
-	firebaseConn, err := client.InitFirebaseConn(firebaseConf, multy.route)
+	firebaseClient, err := client.InitFirebaseConn(&conf.Firebase, multy.route)
 	if err != nil {
-		log.Printf("[ERR] firebase initialization: %s\n", err.Error())
 		return err
 	}
-	multy.firebaseConn = firebaseConn
+	multy.firebaseClient = firebaseClient
 
 	return nil
 }
 
 // Run runs service
-func (m *Multy) Run() error {
-	if m.config.Address == "" {
-		log.Println("[INFO] listening on default addres: ", defaultServerAddress)
-	}
-	m.config.Address = defaultServerAddress
-
-	log.Println("[DEBUG] running server")
-	m.route.Run(m.config.Address)
+func (multy *Multy) Run() error {
+	log.Info("Running server")
+	multy.route.Run(multy.config.RestAddress)
 	return nil
 }

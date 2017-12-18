@@ -2,7 +2,6 @@ package btc
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
@@ -14,19 +13,19 @@ const (
 func getAllMempool() {
 	mempool, err := rpcClient.GetRawMempoolVerbose()
 	if err != nil {
-		log.Printf("[ERR] getAllMempool: rpcClient.GetRawMempoolVerbose: %s \n", err.Error())
+		log.Errorf("getAllMempool: rpcClient.GetRawMempoolVerbose: %s", err.Error())
 	}
 	for hash, txInfo := range mempool {
 		rec := newRecord(int(txInfo.Fee/float64(txInfo.Size))*btcToSatoshi, hash)
 		err = mempoolRates.Insert(rec)
 		if err != nil {
-			log.Println("[ERR] getAllMempool: mempoolRates.Insert: ", err.Error())
+			log.Errorf("getAllMempool: mempoolRates.Insert: %s", err.Error())
 			continue
 		}
 	}
 	count, err := mempoolRates.Count()
 	if err != nil {
-		log.Println("[ERR] getAllMempool: mempoolRates.Count: ", err.Error())
+		log.Errorf("getAllMempool: mempoolRates.Count: %s", err.Error())
 		return
 	}
 	fmt.Println("Total mempool size is ", count)
@@ -35,12 +34,12 @@ func getAllMempool() {
 func newTxToDB(hash string) {
 	txHash, err := chainhash.NewHashFromStr(hash)
 	if err != nil {
-		log.Println("[ERR] newTxToDB: chainhash.NewHashFromStr : ", err.Error())
+		log.Errorf("newTxToDB: chainhash.NewHashFromStr: %s", err.Error())
 		return
 	}
 	tx, err := rpcClient.GetRawTransaction(txHash)
 	if err != nil {
-		log.Println("[ERR] newTxToDB: rpcClient.GetTransaction : ", err.Error())
+		log.Errorf("newTxToDB: rpcClient.GetTransaction: %s", err.Error())
 		return
 	}
 
@@ -53,7 +52,7 @@ func newTxToDB(hash string) {
 	for _, input := range tx.MsgTx().TxIn {
 		previousTx, err := rpcClient.GetRawTransactionVerbose(&input.PreviousOutPoint.Hash)
 		if err != nil {
-			log.Println("[ERR] newTxToDB: rpcClient.GetRawTransactionVerbose : ", err.Error())
+			log.Errorf("newTxToDB: rpcClient.GetRawTransactionVerbose: %s", err.Error())
 			return
 		}
 		inputSum += previousTx.Vout[input.PreviousOutPoint.Index].Value
@@ -64,7 +63,7 @@ func newTxToDB(hash string) {
 	rec := newRecord(int(fee/float64(tx.MsgTx().SerializeSize()))*btcToSatoshi, tx.Hash().String())
 	err = mempoolRates.Insert(rec)
 	if err != nil {
-		log.Println("[ERR] newTxToDB: mempoolRates.Insert: ", err.Error())
+		log.Errorf("newTxToDB: mempoolRates.Insert: %s", err.Error())
 	}
 }
 

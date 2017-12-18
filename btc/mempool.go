@@ -1,8 +1,6 @@
 package btc
 
 import (
-	"log"
-
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -20,7 +18,7 @@ func parseMempoolTransaction(inTx *btcjson.TxRawResult) {
 			if err != nil {
 				continue
 			}
-			log.Printf("[DEBUG] [IS OUR USER] parseMempoolTransaction: usersData.Find = %s", address)
+			log.Debugf("[IS OUR USER] parseMempoolTransaction: usersData.Find = %s", address)
 
 			txMsq := BtcTransactionWithUserID{
 				UserID: user.UserID,
@@ -39,11 +37,11 @@ func parseMempoolTransaction(inTx *btcjson.TxRawResult) {
 	for _, input := range inTx.Vin {
 		txHash, err := chainhash.NewHashFromStr(input.Txid)
 		if err != nil {
-			log.Printf("[ERR] parseMempoolTransaction: chainhash.NewHashFromStr = %s", err)
+			log.Errorf("parseMempoolTransaction: chainhash.NewHashFromStr = %s", err)
 		}
 		previousTx, err := rpcClient.GetRawTransactionVerbose(txHash)
 		if err != nil {
-			log.Printf("[ERR] parseMempoolTransaction:rpcClient.GetRawTransactionVerbose: %s ", err.Error())
+			log.Errorf("parseMempoolTransaction:rpcClient.GetRawTransactionVerbose: %s", err.Error())
 		}
 
 		for _, out := range previousTx.Vout {
@@ -53,7 +51,7 @@ func parseMempoolTransaction(inTx *btcjson.TxRawResult) {
 				if err != nil {
 					continue
 				}
-				log.Printf("[DEBUG] [IS OUR USER]-AS-OUT parseMempoolTransaction: usersData.Find = %s", address)
+				log.Debugf("[IS OUR USER]-AS-OUT parseMempoolTransaction: usersData.Find = %s", address)
 
 				txMsq := BtcTransactionWithUserID{
 					UserID: user.UserID,

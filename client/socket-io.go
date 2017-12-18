@@ -2,7 +2,6 @@ package client
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -42,10 +41,10 @@ func getHeaderDataSocketIO(headers http.Header) (*SocketIOUser, error) {
 	}, nil
 }
 
-func SetSocketIOHandlers(r *gin.RouterGroup) (*SocketIOConnectedPool, error) {
+func SetSocketIOHandlers(r *gin.RouterGroup, address string) (*SocketIOConnectedPool, error) {
 	server := gosocketio.NewServer(transport.GetDefaultWebsocketTransport())
 
-	connectedPool, err := InitConnectedPool(server)
+	pool, err := InitConnectedPool(server, address)
 	if err != nil {
 		return nil, fmt.Errorf("connection pool initialization: %s", err.Error())
 	}
@@ -54,47 +53,40 @@ func SetSocketIOHandlers(r *gin.RouterGroup) (*SocketIOConnectedPool, error) {
 		return nil, fmt.Errorf("exchange chart initialization: %s", err.Error())
 	}
 
-	connectedPool.chart = chart
+	pool.chart = chart
 
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
-		fmt.Println("[DEBUG] connected:", c.Id())
-		c.Emit("exchangeAll", connectedPool.chart.getAll())
+		pool.log.Debugf("connected:", c.Id())
+		c.Emit("exchangeAll", pool.chart.getAll())
 
 		user, err := getHeaderDataSocketIO(c.RequestHeader())
 		if err != nil {
-			log.Printf("[ERR] get socketio headers: %s\n", err.Error())
+			pool.log.Errorf("get socketio headers: %s", err.Error())
 			return
 		}
 		connectionID := c.Id()
-		user.chart = connectedPool.chart
+		user.chart = pool.chart
 
-		newConn := newSocketIOUser(connectionID, user, c)
-		connectedPool.addUserConn(user.userID, newConn)
+		newConn := newSocketIOUser(connectionID, user, c, pool.log)
+		pool.addUserConn(user.userID, newConn)
 
-		log.Println("[DEBUG] OnConnection done")
+		pool.log.Debugf("OnConnection done")
 	})
 
-	/*server.On("getExchangeReq", func(c *gosocketio.Channel, req EventGetExchangeReq) EventGetExchangeResp {
-		log.Printf("[DEBUG] getExchange: user=%s, req=%+v\n", c.Id(), req)
-		resp := processGetExchangeEvent(req)
-		log.Printf("[DEBUG] getExchange: user=%s, resp=%+v\n", c.Id(), resp)
-		return resp
-	})*/
-
 	server.On(gosocketio.OnError, func(c *gosocketio.Channel) {
-		log.Println("Error occurs")
+		pool.log.Errorf("Error occurs %s", c.Id())
 	})
 
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
-		log.Println("Disconnected", c.Id())
+		pool.log.Infof("Disconnected %s", c.Id())
 	})
 
 	serveMux := http.NewServeMux()
 	serveMux.Handle("/socket.io/", server)
 
-	log.Println("Starting server...")
+	pool.log.Infof("Starting socketIO server on %s address", address)
 	go func() {
-		log.Panic(http.ListenAndServe("0.0.0.0:6680", serveMux))
+		pool.log.Panicf("%s", http.ListenAndServe(address, serveMux))
 	}()
-	return connectedPool, nil
+	return pool, nil
 }

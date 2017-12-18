@@ -1,7 +1,9 @@
 cmd/cmd
 cmd/multy
-cmd/config.yml
+cmd/multy.config
+cmd/btc.cert
 cmd/back-*
+cmd/logs
 
 
 vendor/gopkg.in

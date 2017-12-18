@@ -1,10 +1,11 @@
 package client
 
 import (
-	"log"
 	"math/rand"
 	"sync"
 	"time"
+
+	"github.com/ventu-io/slf"
 )
 
 var (
@@ -31,6 +32,7 @@ type exchangeChart struct {
 
 	ticker   *time.Ticker
 	interval int
+	log      slf.StructuredLogger
 }
 
 type EventExchangeChart struct {
@@ -45,15 +47,16 @@ type EventExchangeChart struct {
 }
 
 func initExchangeChart() (*exchangeChart, error) {
-	log.Println("[DEBUG] initExchangeChart ")
 	chart := &exchangeChart{
 		rates: &Rates{
 			exchangeSingle: &EventExchangeChart{},
 			BTCtoUSDDay:    make(map[string]float64),
 			m:              &sync.Mutex{},
 		},
+		log:      slf.WithContext("chart"),
 		interval: secondsInDay / numOfChartDots,
 	}
+	chart.log.Debug("initExchangeChart")
 
 	go chart.run()
 
@@ -62,10 +65,10 @@ func initExchangeChart() (*exchangeChart, error) {
 }
 
 func (eChart *exchangeChart) run() error {
-	log.Println("[DEBUG] exchange chart: run")
+	eChart.log.Debug("exchange chart: run")
 	eChart.updateAll()
 	eChart.ticker = time.NewTicker(time.Duration(eChart.interval) * time.Second)
-	log.Printf("[DEBUG] updateExchange: ticker=%ds\n", eChart.interval)
+	eChart.log.Debugf("updateExchange: ticker=%ds", eChart.interval)
 
 	for {
 		select {
@@ -76,7 +79,7 @@ func (eChart *exchangeChart) run() error {
 }
 
 func (eChart *exchangeChart) update() {
-	log.Printf("[DEBUG] updateExchange; mock implementation\n")
+	eChart.log.Debug("updateExchange; mock implementation")
 
 	eChart.rates.m.Lock()
 	defer eChart.rates.m.Unlock()
@@ -89,7 +92,7 @@ func (eChart *exchangeChart) update() {
 	eChart.rates.exchangeSingle.ETHtoEUR = r1.Float64()*5 + 5
 
 	// TODO: do it gracefullcy
-	theOldest, theNewest := getExtremRates(eChart.rates.BTCtoUSDDay)
+	theOldest, theNewest := eChart.getExtremRates(eChart.rates.BTCtoUSDDay)
 	delete(eChart.rates.BTCtoUSDDay, theOldest.Format(time.RFC3339))
 	eChart.rates.BTCtoUSDDay[theNewest.Add(time.Duration(eChart.interval)*time.Second).Format(time.RFC3339)] = r1.Float64()*5 + 5
 
@@ -99,7 +102,7 @@ func (eChart *exchangeChart) update() {
 }
 
 func (eChart *exchangeChart) updateAll() {
-	log.Printf("[DEBUG] updateExchange; mock implementation\n")
+	eChart.log.Debug("updateExchange; mock implementation")
 
 	aDayAgoTime := time.Now()
 	aDayAgoTime.AddDate(0, 0, -1)
@@ -109,12 +112,12 @@ func (eChart *exchangeChart) updateAll() {
 		eChart.rates.BTCtoUSDDay[timeInString] = r1.Float64()*5 + 5
 	}
 
-	log.Printf("[DEBUG] updateRateAll: BTCtoUSDDay=%+v/n", eChart.rates.BTCtoUSDDay)
+	eChart.log.Debugf("updateRateAll: BTCtoUSDDay=%+v", eChart.rates.BTCtoUSDDay)
 	return
 }
 
 func (eChart *exchangeChart) getAll() map[string]float64 {
-	log.Printf("[DEBUG] exchange chart: get all exchanges \n")
+	eChart.log.Debug("exchange chart: get all exchanges")
 
 	eChart.rates.m.Lock()
 	defer eChart.rates.m.Unlock()
@@ -122,19 +125,19 @@ func (eChart *exchangeChart) getAll() map[string]float64 {
 }
 
 func (eChart *exchangeChart) getLast() *EventExchangeChart {
-	log.Printf("[DEBUG] exchange chart: get last exchanges \n")
+	eChart.log.Debug("exchange chart: get last exchanges")
 
 	eChart.rates.m.Lock()
 	defer eChart.rates.m.Unlock()
 	return eChart.rates.exchangeSingle
 }
 
-func getExtremRates(rates map[string]float64) (time.Time, time.Time) {
+func (eChart *exchangeChart) getExtremRates(rates map[string]float64) (time.Time, time.Time) {
 	var min, max time.Time
 	for rt := range rates {
 		t, err := time.Parse(time.RFC3339, rt)
 		if err != nil {
-			log.Println("[ERR] parse string time to time:", err.Error())
+			eChart.log.Errorf("parse string time to time: %s", err.Error())
 			return time.Now(), time.Now()
 		}
 		if t.Unix() <= min.Unix() {

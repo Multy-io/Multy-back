@@ -5,6 +5,7 @@ import (
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/nsqio/go-nsq"
+	"github.com/KristinaEtc/slf"
 )
 
 const (
@@ -25,13 +26,18 @@ var (
 	rpcConf     *rpcclient.ConnConfig
 )
 
-func InitHandlers() (*rpcclient.Client, error) {
+var log = slf.WithContext("btc")
+
+func InitHandlers(certFromConf string) (*rpcclient.Client, error) {
 	config := nsq.NewConfig()
 	p, err := nsq.NewProducer("127.0.0.1:4150", config)
 	if err != nil {
 		return nil, fmt.Errorf("nsq producer: %s", err.Error())
 	}
 	nsqProducer = p
+
+	log.Debugf("Certificate=%s", certFromConf)
+	Cert = certFromConf
 
 	go RunProcess()
 	return rpcClient, nil

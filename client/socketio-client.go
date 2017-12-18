@@ -2,34 +2,40 @@ package client
 
 import (
 	"encoding/json"
-	"log"
+
 	"sync"
 	"time"
 
 	"github.com/Appscrunch/Multy-back/btc"
 	nsq "github.com/bitly/go-nsq"
 	"github.com/graarh/golang-socketio"
+	"github.com/ventu-io/slf"
 )
 
 const updateExchangeClient = time.Second * 5
 
 type SocketIOConnectedPool struct {
-	users map[string]*SocketIOUser // socketio connections by client id
-	m     *sync.RWMutex
+	address string
+	users   map[string]*SocketIOUser // socketio connections by client id
+	m       *sync.RWMutex
 
 	nsqConsumerExchange       *nsq.Consumer
 	nsqConsumerBTCTransaction *nsq.Consumer
 
 	chart  *exchangeChart
 	server *gosocketio.Server
+	log    slf.StructuredLogger
 }
 
-func InitConnectedPool(server *gosocketio.Server) (*SocketIOConnectedPool, error) {
-	log.Println("[DEBUG] InitConnectedPool")
+func InitConnectedPool(server *gosocketio.Server, address string) (*SocketIOConnectedPool, error) {
 	pool := &SocketIOConnectedPool{
-		m:     &sync.RWMutex{},
-		users: make(map[string]*SocketIOUser, 0),
+		m:       &sync.RWMutex{},
+		users:   make(map[string]*SocketIOUser, 0),
+		address: address,
+		log:     slf.WithContext("connectedPool"),
 	}
+	pool.log.Info("InitConnectedPool")
+
 	nsqConsumerBTCTransaction, err := pool.newConsumerBTCTransaction()
 	if err != nil {
 		return nil, err
@@ -46,11 +52,11 @@ func (sConnPool *SocketIOConnectedPool) newConsumerBTCTransaction() (*nsq.Consum
 	}
 
 	consumer.AddHandler(nsq.HandlerFunc(func(message *nsq.Message) error {
-		log.Printf("[%s]: %v", topicBTCTransactionUpdate, string(message.Body))
+		sConnPool.log.Infof("[%s]: %v", topicBTCTransactionUpdate, string(message.Body))
 
 		var newTransactionWithUserID = btc.BtcTransactionWithUserID{}
 		if err := json.Unmarshal(message.Body, &newTransactionWithUserID); err != nil {
-			log.Println("[ERR] topic btc transaction update: ", err.Error())
+			sConnPool.log.Errorf("topic btc transaction update: %s", err.Error())
 			return err
 		}
 		go sConnPool.sendTransactionNotify(newTransactionWithUserID)
@@ -59,7 +65,7 @@ func (sConnPool *SocketIOConnectedPool) newConsumerBTCTransaction() (*nsq.Consum
 
 	err = consumer.ConnectToNSQD("127.0.0.1:4150")
 	if err != nil {
-		log.Printf("[ERR] nsq exchange: %s\n", err.Error())
+		sConnPool.log.Errorf("nsq exchange: %s", err.Error())
 	}
 
 	return consumer, nil
@@ -76,13 +82,13 @@ func (sConnPool *SocketIOConnectedPool) sendTransactionNotify(newTransactionWith
 	userConns := sConnPool.users[userID].conns
 
 	for _, conn := range userConns {
-		log.Printf("[DEBUG] %s: id=%s\n", topicBTCTransactionUpdate, conn.Id())
+		sConnPool.log.Debugf("%s: id=%s\n", topicBTCTransactionUpdate, conn.Id())
 		conn.Emit(topicBTCTransactionUpdate, newTransactionWithUserID)
 	}
 }
 
 func (sConnPool *SocketIOConnectedPool) addUserConn(userID string, userObj *SocketIOUser) {
-	log.Println("DEBUG AddUserConn: ", userID)
+	sConnPool.log.Debugf("AddUserConn: ", userID)
 	sConnPool.m.Lock()
 	defer sConnPool.m.Unlock()
 
@@ -90,7 +96,7 @@ func (sConnPool *SocketIOConnectedPool) addUserConn(userID string, userObj *Sock
 }
 
 func (sConnPool *SocketIOConnectedPool) removeUserConn(userID string) {
-	log.Println("DEBUG RemoveUserConn: ", userID)
+	sConnPool.log.Debugf("RemoveUserConn: %s", userID)
 	sConnPool.m.Lock()
 	defer sConnPool.m.Unlock()
 
@@ -109,19 +115,22 @@ type SocketIOUser struct {
 	nsqConfig                 *nsq.Config
 
 	conns map[string]*gosocketio.Channel
+
+	log slf.StructuredLogger
 }
 
-func newSocketIOUser(id string, connectedUser *SocketIOUser, conn *gosocketio.Channel) *SocketIOUser {
-	connectedUser.conns = make(map[string]*gosocketio.Channel, 0)
-	connectedUser.conns[id] = conn
+func newSocketIOUser(id string, newUser *SocketIOUser, conn *gosocketio.Channel, log slf.StructuredLogger) *SocketIOUser {
+	newUser.conns = make(map[string]*gosocketio.Channel, 0)
+	newUser.conns[id] = conn
+	newUser.log = log.WithField("userID", id)
 
-	go connectedUser.runUpdateExchange()
+	go newUser.runUpdateExchange()
 
-	return connectedUser
+	return newUser
 }
 
 func (sIOUser *SocketIOUser) runUpdateExchange() {
-	log.Println("[DEBUG] runUpdateExchange userID=", sIOUser.userID)
+	sIOUser.log.Debugf("runUpdateExchange userID=%s", sIOUser.userID)
 	tr := time.NewTicker(updateExchangeClient)
 
 	for {
@@ -129,7 +138,7 @@ func (sIOUser *SocketIOUser) runUpdateExchange() {
 		case _ = <-tr.C:
 			updateMsg := sIOUser.chart.getLast()
 			for _, c := range sIOUser.conns {
-				log.Printf("conn %v\n", c)
+				sIOUser.log.Debugf("runUpdateExchange: conn id=%s", c.Id())
 				c.Emit(topicExchangeUpdate, updateMsg)
 			}
 		}

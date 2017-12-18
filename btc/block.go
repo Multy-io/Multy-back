@@ -2,7 +2,6 @@ package btc
 
 import (
 	"encoding/json"
-	"log"
 
 	"gopkg.in/mgo.v2/bson"
 
@@ -11,7 +10,7 @@ import (
 )
 
 func parseNewBlock(hash *chainhash.Hash) {
-	log.Printf("[DEBUG] New block connected %s", hash.String())
+	log.Debugf("New block connected %s", hash.String())
 
 	// block Height
 	// blockVerbose, err := rpcClient.GetBlockVerbose(hash)
@@ -21,7 +20,7 @@ func parseNewBlock(hash *chainhash.Hash) {
 	rawBlock, err := rpcClient.GetBlock(hash)
 	allBlockTransactions, err := rawBlock.TxHashes()
 	if err != nil {
-		log.Printf("[ERR] parseNewBlock:rawBlock.TxHashes: %s", err.Error())
+		log.Errorf("parseNewBlock:rawBlock.TxHashes: %s", err.Error())
 	}
 
 	var user store.User
@@ -32,7 +31,7 @@ func parseNewBlock(hash *chainhash.Hash) {
 
 		blockTxVerbose, err := rpcClient.GetRawTransactionVerbose(&txHash)
 		if err != nil {
-			log.Printf("[ERR] parseNewBlock:rpcClient.GetRawTransactionVerbose: %s ", err.Error())
+			log.Errorf("parseNewBlock:rpcClient.GetRawTransactionVerbose: %s", err.Error())
 			continue
 		}
 
@@ -40,9 +39,9 @@ func parseNewBlock(hash *chainhash.Hash) {
 		query := bson.M{"hashtx": blockTxVerbose.Txid}
 		err = mempoolRates.Remove(query)
 		if err != nil {
-			log.Printf("[ERR] parseNewBlock:mempoolRates.Remove: %s ", err.Error())
+			log.Errorf("parseNewBlock:mempoolRates.Remove: %s", err.Error())
 		} else {
-			log.Printf("[DEBUG] Tx removed: %s ", blockTxVerbose.Txid)
+			log.Debugf("Tx removed: %s", blockTxVerbose.Txid)
 		}
 
 		// parse block tx outputs and notify
@@ -54,7 +53,7 @@ func parseNewBlock(hash *chainhash.Hash) {
 				if err != nil {
 					continue
 				}
-				log.Printf("[DEBUG] [IS OUR USER] parseNewBlock: usersData.Find = %s", address)
+				log.Debugf("[IS OUR USER] parseNewBlock: usersData.Find = %s", address)
 
 				txMsq := BtcTransactionWithUserID{
 					UserID: user.UserID,
@@ -74,11 +73,11 @@ func parseNewBlock(hash *chainhash.Hash) {
 		for _, input := range blockTxVerbose.Vin {
 			txHash, err := chainhash.NewHashFromStr(input.Txid)
 			if err != nil {
-				log.Printf("[ERR] parseNewBlock: chainhash.NewHashFromStr = %s", err)
+				log.Errorf("parseNewBlock: chainhash.NewHashFromStr = %s", err)
 			}
 			previousTx, err := rpcClient.GetRawTransactionVerbose(txHash)
 			if err != nil {
-				log.Printf("[ERR] parseNewBlock:rpcClient.GetRawTransactionVerbose: %s ", err.Error())
+				log.Errorf("parseNewBlock:rpcClient.GetRawTransactionVerbose: %s ", err.Error())
 				continue
 			}
 
@@ -89,7 +88,7 @@ func parseNewBlock(hash *chainhash.Hash) {
 					if err != nil {
 						continue
 					}
-					log.Printf("[DEBUG] [IS OUR USER]-AS-OUT parseMempoolTransaction: usersData.Find = %s", address)
+					log.Debugf("[IS OUR USER]-AS-OUT parseMempoolTransaction: usersData.Find = %s", address)
 
 					txMsq := BtcTransactionWithUserID{
 						UserID: user.UserID,
@@ -111,13 +110,13 @@ func parseNewBlock(hash *chainhash.Hash) {
 func sendNotifyToClients(txMsq *BtcTransactionWithUserID) {
 	newTxJSON, err := json.Marshal(txMsq)
 	if err != nil {
-		log.Printf("[ERR] sendNotifyToClients: [%+v] %s\n", txMsq, err.Error())
+		log.Errorf("sendNotifyToClients: [%+v] %s\n", txMsq, err.Error())
 		return
 	}
 
 	err = nsqProducer.Publish(TopicTransaction, newTxJSON)
 	if err != nil {
-		log.Printf("[ERR] nsq publish new transaction: [%+v] %s\n", txMsq, err.Error())
+		log.Errorf("nsq publish new transaction: [%+v] %s\n", txMsq, err.Error())
 		return
 	}
 	return

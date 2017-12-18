@@ -2,7 +2,6 @@ package store
 
 import (
 	"errors"
-	"log"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -14,13 +13,18 @@ var (
 )
 
 const (
-	tableUsers   = "userCollection"
-	dbUsers      = "userDB"
-	dbBTCMempool = "BTCMempool" // TODO: create rates store
-	tableRates   = "Rates"      // and send those two fields there
+	tableUsers = "userCollection"
+	tableRates = "Rates" // and send those two fields there
 )
 
-const defaultMongoDBaddr = "localhost:27017"
+// Conf is a struct for database configuration
+type Conf struct {
+	Address      string
+	TableUsers   string
+	DBUsers      string
+	DBBTCMempool string
+	TableRates   string
+}
 
 type UserStore interface {
 	//GetSession()
@@ -34,10 +38,24 @@ type UserStore interface {
 }
 
 type MongoUserStore struct {
-	address    string
+	config     *Conf
 	session    *mgo.Session
 	usersData  *mgo.Collection
 	ratessData *mgo.Collection
+}
+
+func InitUserStore(conf Conf) (UserStore, error) {
+	uStore := &MongoUserStore{
+		config: &conf,
+	}
+	session, err := mgo.Dial(conf.Address)
+	if err != nil {
+		return nil, err
+	}
+	uStore.session = session
+	uStore.usersData = uStore.session.DB(conf.DBUsers).C(tableUsers)
+	uStore.ratessData = uStore.session.DB(conf.DBBTCMempool).C(tableRates)
+	return uStore, nil
 }
 
 func (mongo *MongoUserStore) UpdateUser(sel bson.M, user *User) error {
@@ -62,25 +80,6 @@ func (mongo *MongoUserStore) Insert(user User) error {
 }
 func (mongo *MongoUserStore) GetAllRates(sortBy string, rates *[]RatesRecord) error {
 	return mongo.ratessData.Find(nil).Sort(sortBy).All(rates)
-}
-
-func InitUserStore(address string) (UserStore, error) {
-	if address == "" {
-		log.Printf("[INFO] mongo db address: will be used %s\n", defaultMongoDBaddr)
-		address = defaultMongoDBaddr
-	}
-
-	uStore := &MongoUserStore{
-		address: address,
-	}
-	session, err := mgo.Dial(address)
-	if err != nil {
-		return nil, err
-	}
-	uStore.session = session
-	uStore.usersData = uStore.session.DB(dbUsers).C(tableUsers)
-	uStore.ratessData = uStore.session.DB(dbBTCMempool).C(tableRates)
-	return uStore, nil
 }
 
 func (mongoUserData *MongoUserStore) Close() error {
