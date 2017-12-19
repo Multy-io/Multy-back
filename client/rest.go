@@ -10,8 +10,8 @@ import (
 	"github.com/Appscrunch/Multy-back/btc"
 	"github.com/Appscrunch/Multy-back/currencies"
 	"github.com/Appscrunch/Multy-back/store"
+	"github.com/KristinaEtc/slf"
 	"github.com/blockcypher/gobcy"
-	"github.com/ventu-io/slf"
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"

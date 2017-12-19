@@ -1,11 +1,18 @@
 package client
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
 	"math/rand"
+	"net/http"
+	"net/url"
+	"strconv"
 	"sync"
 	"time"
 
-	"github.com/ventu-io/slf"
+	"github.com/KristinaEtc/slf"
 )
 
 var (
@@ -21,7 +28,7 @@ const (
 )
 
 type Rates struct {
-	BTCtoUSDDay    map[string]float64
+	BTCtoUSDDay    map[string]string
 	exchangeSingle *EventExchangeChart
 
 	m *sync.Mutex
@@ -50,7 +57,7 @@ func initExchangeChart() (*exchangeChart, error) {
 	chart := &exchangeChart{
 		rates: &Rates{
 			exchangeSingle: &EventExchangeChart{},
-			BTCtoUSDDay:    make(map[string]float64),
+			BTCtoUSDDay:    make(map[string]string),
 			m:              &sync.Mutex{},
 		},
 		log:      slf.WithContext("chart"),
@@ -66,57 +73,153 @@ func initExchangeChart() (*exchangeChart, error) {
 
 func (eChart *exchangeChart) run() error {
 	eChart.log.Debug("exchange chart: run")
-	eChart.updateAll()
+	eChart.getAll()
 	eChart.ticker = time.NewTicker(time.Duration(eChart.interval) * time.Second)
 	eChart.log.Debugf("updateExchange: ticker=%ds", eChart.interval)
+
+	tickerHour := time.NewTicker(time.Hour)
 
 	for {
 		select {
 		case _ = <-eChart.ticker.C:
 			eChart.update()
+
+		case _ = <-tickerHour.C:
+			eChart.updateAll()
 		}
 	}
 }
 
-func (eChart *exchangeChart) update() {
-	eChart.log.Debug("updateExchange; mock implementation")
+func (eChart *exchangeChart) updateAll() {
+	eChart.log.Debug("update All")
 
 	eChart.rates.m.Lock()
 	defer eChart.rates.m.Unlock()
 
-	eChart.rates.exchangeSingle.ETHtoBTC = r1.Float64()*5 + 5
-	eChart.rates.exchangeSingle.USDtoBTC = r1.Float64()*5 + 5
-	eChart.rates.exchangeSingle.ETHtoBTC = r1.Float64()*5 + 5
-
-	eChart.rates.exchangeSingle.ETHtoUSD = r1.Float64()*5 + 5
-	eChart.rates.exchangeSingle.ETHtoEUR = r1.Float64()*5 + 5
-
-	// TODO: do it gracefullcy
-	theOldest, theNewest := eChart.getExtremRates(eChart.rates.BTCtoUSDDay)
-	delete(eChart.rates.BTCtoUSDDay, theOldest.Format(time.RFC3339))
-	eChart.rates.BTCtoUSDDay[theNewest.Add(time.Duration(eChart.interval)*time.Second).Format(time.RFC3339)] = r1.Float64()*5 + 5
-
-	eChart.rates.exchangeSingle.BTCtoUSD = eChart.rates.BTCtoUSDDay[theNewest.Add(time.Duration(eChart.interval)*time.Second).Format(time.RFC3339)]
+	min, max := eChart.getExtremRates(eChart.rates.BTCtoUSDDay)
+	delete(eChart.rates.BTCtoUSDDay, min)
+	eChart.rates.BTCtoUSDDay[max] = strconv.FormatFloat(eChart.rates.exchangeSingle.USDtoBTC, 'f', 2, 64)
 
 	return
 }
 
-func (eChart *exchangeChart) updateAll() {
-	eChart.log.Debug("updateExchange; mock implementation")
+func (eChart *exchangeChart) update() {
+	eChart.rates.m.Lock()
+	defer eChart.rates.m.Unlock()
 
-	aDayAgoTime := time.Now()
-	aDayAgoTime.AddDate(0, 0, -1)
-
-	for i := 0; i < numOfChartDots; i += eChart.interval {
-		timeInString := aDayAgoTime.Add(-time.Second * time.Duration(i)).Format(time.RFC3339)
-		eChart.rates.BTCtoUSDDay[timeInString] = r1.Float64()*5 + 5
+	exchangeSingle, err := eChart.getUpdatedRated()
+	if err != nil {
+		eChart.log.Errorf("coult not update rates: %s", err.Error())
+		return
 	}
 
-	eChart.log.Debugf("updateRateAll: BTCtoUSDDay=%+v", eChart.rates.BTCtoUSDDay)
+	eChart.rates.exchangeSingle = exchangeSingle
 	return
 }
 
-func (eChart *exchangeChart) getAll() map[string]float64 {
+func (eChart *exchangeChart) getUpdatedRated() (*EventExchangeChart, error) {
+	log.Println("getUpdatedRated")
+
+	reqURI := fmt.Sprintf("https://min-api.cryptocompare.com/data/price?fsym=%s&tsyms=%s", "BTC", "EUR,USD,ETH")
+	_, err := url.ParseRequestURI(reqURI)
+	if err != nil {
+		log.Printf("[ERR] processGetExchangeEvent: wrong reqURI: [%s], %s\n", reqURI, err.Error())
+		return nil, err
+	}
+
+	log.Printf("[DEBUG] processGetExchangeEvent: reqURI=%s", reqURI)
+	resp, err := http.Get(reqURI)
+	if err != nil {
+		log.Printf("[ERR] processGetExchangeEvent: get exchange: [%s], err=%s\n", reqURI, err.Error())
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("[ERR] processGetExchangeEvent: get exchange: response status code=%d\n", resp.StatusCode)
+		return nil, err
+	}
+
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("[ERR] processGetExchangeEvent: get exchange: get response body: %s\n", err.Error())
+		return nil, err
+	}
+
+	log.Printf("[DEBUG] processGetExchangeEvent: resp=[%s]\n", string(bodyBytes))
+
+	var ratesRaw map[string]float64
+	if err := json.Unmarshal(bodyBytes, &ratesRaw); err != nil {
+		log.Printf("[ERR] processGetExchangeEvent: parse responce=%s\n", err.Error())
+		return nil, err
+	}
+
+	rates := &EventExchangeChart{
+		EURtoBTC: 1 / ratesRaw["EUR"],
+		USDtoBTC: 1 / ratesRaw["USD"],
+		ETHtoBTC: 1 / ratesRaw["ETH"],
+	}
+	rates.ETHtoUSD = rates.ETHtoBTC / ratesRaw["USD"]
+	rates.ETHtoEUR = rates.ETHtoBTC / ratesRaw["EUR"]
+
+	rates.BTCtoUSD = ratesRaw["USD"]
+	log.Printf("[DEBUG] rates=[%+v]\n", rates)
+
+	return rates, nil
+}
+
+type RatesFromApi struct {
+	Date  string `json:"date"`
+	Price string `json:"price"`
+}
+
+func (eChart *exchangeChart) getsAll() {
+	eChart.log.Debug("updateAll")
+
+	reqURI := "https://www.bitstamp.net/api/transactions/?date=hour"
+
+	eChart.log.Debugf("reqURI=%s", reqURI)
+	resp, err := http.Get(reqURI)
+	if err != nil {
+		eChart.log.Errorf("[%s], err=%s", reqURI, err.Error())
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		eChart.log.Errorf("get exchange: response status code=%d", resp.StatusCode)
+		return
+	}
+
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		eChart.log.Errorf("get exchange: get response body: %s", err.Error())
+		return
+	}
+
+	eChart.log.Debugf("resp=[%s]", string(bodyBytes))
+
+	ratesAll := make([]RatesFromApi, 0)
+	err = json.Unmarshal(bodyBytes, &ratesAll)
+	if err != nil {
+		eChart.log.Errorf("%s\n", err.Error())
+		return
+	}
+
+	eChart.log.Debugf("ratesAll=[%v]", ratesAll)
+	eChart.saveRates(ratesAll)
+
+	return
+}
+
+func (eChart *exchangeChart) saveRates(allRates []RatesFromApi) {
+	eChart.rates.m.Lock()
+	defer eChart.rates.m.Unlock()
+
+	for _, rate := range allRates {
+		eChart.rates.BTCtoUSDDay[rate.Date] = rate.Price
+	}
+}
+
+func (eChart *exchangeChart) getAll() map[string]string {
 	eChart.log.Debug("exchange chart: get all exchanges")
 
 	eChart.rates.m.Lock()
@@ -132,13 +235,13 @@ func (eChart *exchangeChart) getLast() *EventExchangeChart {
 	return eChart.rates.exchangeSingle
 }
 
-func (eChart *exchangeChart) getExtremRates(rates map[string]float64) (time.Time, time.Time) {
+func (eChart *exchangeChart) getExtremRates(rates map[string]string) (string, string) {
 	var min, max time.Time
 	for rt := range rates {
 		t, err := time.Parse(time.RFC3339, rt)
 		if err != nil {
 			eChart.log.Errorf("parse string time to time: %s", err.Error())
-			return time.Now(), time.Now()
+			return "", ""
 		}
 		if t.Unix() <= min.Unix() {
 			min = t
@@ -147,5 +250,6 @@ func (eChart *exchangeChart) getExtremRates(rates map[string]float64) (time.Time
 			max = t
 		}
 	}
-	return min, max
+
+	return min.String(), max.String()
 }

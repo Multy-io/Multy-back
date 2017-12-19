@@ -9,7 +9,7 @@ LD_OPTS = -ldflags="-X main.branch=${BRANCH} -X main.commit=${COMMIT} -X main.bu
 all: setup deps build
 
 run:
-	cd cmd && ./$(NAME)
+	./cmd/$(NAME)
 
 setup:
 	go get -u github.com/kardianos/govendor
@@ -30,3 +30,6 @@ todo:
 		--color \
 		-nRo -E ' TODO:.*|SkipNow|nolint:.*' .
 .PHONY: todo
+
+dist:
+	GOOS=linux $(BUILD_CMD) go build $(LD_OPTS) -o ./dist/$(NAME) .

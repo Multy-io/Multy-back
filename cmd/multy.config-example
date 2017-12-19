@@ -1,0 +1,51 @@
+{
+    "Name": "my-test-back",
+    "Database": {
+        "Address": "localhost:27017",
+        "TableUsers": "userCollection",
+        "DBUsers": "userDB",
+        "DBBTCMempool": "BTCMempool",
+        "TableRates": "Rates"
+    },
+    "RestAddress": "localhost:6678",
+    "SocketioAddr": "localhost:6680",
+    "BTCAPITest": {
+        "Token": "test-token",
+        "Coin": "btc",
+        "Chain": "test3"
+    },
+    "BTCAPIMain": {
+        "Token": "main-token",
+        "Coin": "btc",
+        "Chain": "main"
+    },
+    "Firebase": {
+        "ServerKey": "firebase-key"
+    },
+    "BTCSertificate": "root/go/bin/rpc.cert",
+    "Logs": {
+        "Handlers": [
+            {
+                "Type": "stderr",
+                "Level": "DEBUG"
+            },
+            {
+                "Type": "file",
+                "Level": "INFO",
+                "Filename": "info.log"
+            },
+            {
+                "Type": "file",
+                "Level": "WARN",
+                "Filename": "error.log"
+            },
+            {
+                "Type": "file",
+                "Level": "DEBUG",
+                "Filename": "debug.log"
+            }
+        ],
+        "CallerInfo": false,
+        "Logpath": "logs"
+    }
+}

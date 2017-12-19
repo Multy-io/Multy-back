@@ -18,6 +18,18 @@ const (
 	deviceTypeAndroid = "android"
 )
 
+const (
+	topicExchangeAll          = "exchangeAll"
+	topicExchangeUpdate       = "exchangeUpdate"
+	topicBTCTransactionUpdate = "btcTransaction"
+
+	topicEthTransactionUpdate = "ethTransaction"
+
+	EUR = "EUR"
+	USD = "USD"
+	ETH = "ETH"
+)
+
 func getHeaderDataSocketIO(headers http.Header) (*SocketIOUser, error) {
 	userID := headers.Get("userID")
 	if len(userID) == 0 {

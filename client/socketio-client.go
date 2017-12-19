@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/Appscrunch/Multy-back/btc"
+	"github.com/KristinaEtc/slf"
 	nsq "github.com/bitly/go-nsq"
 	"github.com/graarh/golang-socketio"
-	"github.com/ventu-io/slf"
 )
 
 const updateExchangeClient = time.Second * 5

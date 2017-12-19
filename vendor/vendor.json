@@ -3,6 +3,30 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "csETv6A+vWaoMHKZKSBYkzvtyzk=",
+			"path": "github.com/KristinaEtc/config",
+			"revision": "8ed85620171d70ac3b86a2d3a427dd8f06a4a139",
+			"revisionTime": "2016-10-07T10:41:38Z"
+		},
+		{
+			"checksumSHA1": "xzcT4PN/jZFELKV6FMILRLrByFg=",
+			"path": "github.com/KristinaEtc/slf",
+			"revision": "fad0076bdc4d841337361114f4f79f9722d6bc48",
+			"revisionTime": "2017-12-18T18:00:57Z"
+		},
+		{
+			"checksumSHA1": "guh9JrLNP6BJrZcbnfXa69fNxTg=",
+			"path": "github.com/KristinaEtc/slflog",
+			"revision": "7f74abafb53797806cb8628b4c84479ddacf6b32",
+			"revisionTime": "2017-12-18T18:05:58Z"
+		},
+		{
+			"checksumSHA1": "GeC69vuF9obBNoPhEvKZns9ShVk=",
+			"path": "github.com/KristinaEtc/slog",
+			"revision": "deae2a3cdc89c46e4df677260ea04db1fa4a21ef",
+			"revisionTime": "2017-12-11T19:21:08Z"
+		},
+		{
 			"checksumSHA1": "VwbbCirLNCq4YpvnRArXVKM4V+Q=",
 			"path": "github.com/NaySoftware/go-fcm",
 			"revision": "2a6c4f48b49f0d5dbfe621589da4c5405157d7c9",
@@ -172,6 +196,12 @@
 			"revisionTime": "2017-05-10T16:27:25Z"
 		},
 		{
+			"checksumSHA1": "gEjGS03N1eysvpQ+FCHTxPcbxXc=",
+			"path": "github.com/kardianos/osext",
+			"revision": "ae77be60afb1dcacde03767a8c37337fad28ac14",
+			"revisionTime": "2017-05-10T13:15:34Z"
+		},
+		{
 			"checksumSHA1": "U6lX43KDDlNOn+Z0Yyww+ZzHfFo=",
 			"path": "github.com/mattn/go-isatty",
 			"revision": "fc9e8d8ef48496124e79ae0df75490096eccf6fe",
@@ -182,6 +212,12 @@
 			"path": "github.com/nsqio/go-nsq",
 			"revision": "8c1ff52dff6fd3ecc19c418649bc643b18e862fc",
 			"revisionTime": "2017-10-30T00:05:02Z"
+		},
+		{
+			"checksumSHA1": "zmC8/3V4ls53DJlNTKDZwPSC/dA=",
+			"path": "github.com/satori/go.uuid",
+			"revision": "5bf94b69c6b68ee1b541973bb8e1144db23a194b",
+			"revisionTime": "2017-03-21T23:07:31Z"
 		},
 		{
 			"checksumSHA1": "9Zw986fuQM/hCoVd8vmHoSM+8sU=",
