@@ -22,7 +22,7 @@
     "Firebase": {
         "ServerKey": "firebase-key"
     },
-    "BTCSertificate": "root/go/bin/rpc.cert",
+    "BTCSertificate": "rpc.cert",
     "Logs": {
         "Handlers": [
             {

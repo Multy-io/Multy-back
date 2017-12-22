@@ -66,7 +66,7 @@ func getCertificate(certFile string) string {
 	if err != nil {
 		return ""
 	}
-	return string(cert)
+	return string(cert[:len(cert)-1])
 }
 
 func (multy *Multy) initRoutes(conf *Configuration) error {

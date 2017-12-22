@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	"strconv"
 	"sync"
 	"time"
 
@@ -28,7 +27,7 @@ const (
 )
 
 type Rates struct {
-	BTCtoUSDDay    map[string]string
+	BTCtoUSDDay    []RatesFromApi
 	exchangeSingle *EventExchangeChart
 
 	m *sync.Mutex
@@ -57,7 +56,7 @@ func initExchangeChart() (*exchangeChart, error) {
 	chart := &exchangeChart{
 		rates: &Rates{
 			exchangeSingle: &EventExchangeChart{},
-			BTCtoUSDDay:    make(map[string]string),
+			BTCtoUSDDay:    make([]RatesFromApi, 0),
 			m:              &sync.Mutex{},
 		},
 		log:      slf.WithContext("chart"),
@@ -73,7 +72,7 @@ func initExchangeChart() (*exchangeChart, error) {
 
 func (eChart *exchangeChart) run() error {
 	eChart.log.Debug("exchange chart: run")
-	eChart.getAll()
+	eChart.getsAllFromAPI()
 	eChart.ticker = time.NewTicker(time.Duration(eChart.interval) * time.Second)
 	eChart.log.Debugf("updateExchange: ticker=%ds", eChart.interval)
 
@@ -91,15 +90,15 @@ func (eChart *exchangeChart) run() error {
 }
 
 func (eChart *exchangeChart) updateAll() {
-	eChart.log.Debug("update All")
-
 	eChart.rates.m.Lock()
 	defer eChart.rates.m.Unlock()
 
-	min, max := eChart.getExtremRates(eChart.rates.BTCtoUSDDay)
-	delete(eChart.rates.BTCtoUSDDay, min)
-	eChart.rates.BTCtoUSDDay[max] = strconv.FormatFloat(eChart.rates.exchangeSingle.USDtoBTC, 'f', 2, 64)
-
+	log.Println("not implemented for json array")
+	/*
+		min, max := eChart.getExtremRates(eChart.rates.BTCtoUSDDay)
+		delete(eChart.rates.BTCtoUSDDay, min)
+		eChart.rates.BTCtoUSDDay[max] = strconv.FormatFloat(eChart.rates.exchangeSingle.USDtoBTC, 'f', 2, 64)
+	*/
 	return
 }
 
@@ -118,7 +117,7 @@ func (eChart *exchangeChart) update() {
 }
 
 func (eChart *exchangeChart) getUpdatedRated() (*EventExchangeChart, error) {
-	log.Println("getUpdatedRated")
+	//log.Println("getUpdatedRated")
 
 	reqURI := fmt.Sprintf("https://min-api.cryptocompare.com/data/price?fsym=%s&tsyms=%s", "BTC", "EUR,USD,ETH")
 	_, err := url.ParseRequestURI(reqURI)
@@ -127,7 +126,7 @@ func (eChart *exchangeChart) getUpdatedRated() (*EventExchangeChart, error) {
 		return nil, err
 	}
 
-	log.Printf("[DEBUG] processGetExchangeEvent: reqURI=%s", reqURI)
+	//log.Printf("[DEBUG] processGetExchangeEvent: reqURI=%s", reqURI)
 	resp, err := http.Get(reqURI)
 	if err != nil {
 		log.Printf("[ERR] processGetExchangeEvent: get exchange: [%s], err=%s\n", reqURI, err.Error())
@@ -145,7 +144,7 @@ func (eChart *exchangeChart) getUpdatedRated() (*EventExchangeChart, error) {
 		return nil, err
 	}
 
-	log.Printf("[DEBUG] processGetExchangeEvent: resp=[%s]\n", string(bodyBytes))
+	//log.Printf("[DEBUG] processGetExchangeEvent: resp=[%s]\n", string(bodyBytes))
 
 	var ratesRaw map[string]float64
 	if err := json.Unmarshal(bodyBytes, &ratesRaw); err != nil {
@@ -162,7 +161,7 @@ func (eChart *exchangeChart) getUpdatedRated() (*EventExchangeChart, error) {
 	rates.ETHtoEUR = rates.ETHtoBTC / ratesRaw["EUR"]
 
 	rates.BTCtoUSD = ratesRaw["USD"]
-	log.Printf("[DEBUG] rates=[%+v]\n", rates)
+	//	log.Printf("[DEBUG] rates=[%+v]\n", rates)
 
 	return rates, nil
 }
@@ -172,7 +171,7 @@ type RatesFromApi struct {
 	Price string `json:"price"`
 }
 
-func (eChart *exchangeChart) getsAll() {
+func (eChart *exchangeChart) getsAllFromAPI() {
 	eChart.log.Debug("updateAll")
 
 	reqURI := "https://www.bitstamp.net/api/transactions/?date=hour"
@@ -195,16 +194,14 @@ func (eChart *exchangeChart) getsAll() {
 		return
 	}
 
-	eChart.log.Debugf("resp=[%s]", string(bodyBytes))
-
-	ratesAll := make([]RatesFromApi, 0)
+	var ratesAll = make([]RatesFromApi, 0)
 	err = json.Unmarshal(bodyBytes, &ratesAll)
 	if err != nil {
 		eChart.log.Errorf("%s\n", err.Error())
 		return
 	}
 
-	eChart.log.Debugf("ratesAll=[%v]", ratesAll)
+	eChart.log.Debugf("getsAllFromAPI=[%v]", ratesAll)
 	eChart.saveRates(ratesAll)
 
 	return
@@ -214,21 +211,23 @@ func (eChart *exchangeChart) saveRates(allRates []RatesFromApi) {
 	eChart.rates.m.Lock()
 	defer eChart.rates.m.Unlock()
 
-	for _, rate := range allRates {
+	/*for _, rate := range allRates {
 		eChart.rates.BTCtoUSDDay[rate.Date] = rate.Price
-	}
+	}*/
+	eChart.rates.BTCtoUSDDay = allRates
 }
 
-func (eChart *exchangeChart) getAll() map[string]string {
+func (eChart *exchangeChart) getAll() []RatesFromApi {
 	eChart.log.Debug("exchange chart: get all exchanges")
 
 	eChart.rates.m.Lock()
 	defer eChart.rates.m.Unlock()
+
 	return eChart.rates.BTCtoUSDDay
 }
 
 func (eChart *exchangeChart) getLast() *EventExchangeChart {
-	eChart.log.Debug("exchange chart: get last exchanges")
+	//eChart.log.Debug("exchange chart: get last exchanges")
 
 	eChart.rates.m.Lock()
 	defer eChart.rates.m.Unlock()

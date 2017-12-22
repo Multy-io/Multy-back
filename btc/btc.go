@@ -3,9 +3,9 @@ package btc
 import (
 	"fmt"
 
-	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/nsqio/go-nsq"
 	"github.com/KristinaEtc/slf"
+	nsq "github.com/bitly/go-nsq"
+	"github.com/btcsuite/btcd/rpcclient"
 )
 
 const (
@@ -36,8 +36,8 @@ func InitHandlers(certFromConf string) (*rpcclient.Client, error) {
 	}
 	nsqProducer = p
 
-	log.Debugf("Certificate=%s", certFromConf)
 	Cert = certFromConf
+	connCfg.Certificates = []byte(Cert)
 
 	go RunProcess()
 	return rpcClient, nil

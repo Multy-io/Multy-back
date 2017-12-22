@@ -68,20 +68,30 @@ func SetSocketIOHandlers(r *gin.RouterGroup, address string) (*SocketIOConnected
 	pool.chart = chart
 
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
-		pool.log.Debugf("connected:", c.Id())
-		c.Emit("exchangeAll", pool.chart.getAll())
+		pool.log.Debugf("connected: %s", c.Id())
+		allRates := pool.chart.getAll()
+		c.Emit(topicExchangeAll, allRates)
 
 		user, err := getHeaderDataSocketIO(c.RequestHeader())
 		if err != nil {
 			pool.log.Errorf("get socketio headers: %s", err.Error())
 			return
 		}
+		user.pool = pool
 		connectionID := c.Id()
 		user.chart = pool.chart
 
-		newConn := newSocketIOUser(connectionID, user, c, pool.log)
-		pool.addUserConn(user.userID, newConn)
-
+		pool.m.Lock()
+		userFromPool, ok := pool.users[user.userID]
+		if !ok {
+			pool.log.Debugf("new user")
+			newSocketIOUser(connectionID, user, c, pool.log)
+			pool.users[user.userID] = user
+			userFromPool = user
+		}
+		userFromPool.conns[connectionID] = c
+		pool.closeChByConnID[connectionID] = userFromPool.closeCh
+		pool.m.Unlock()
 		pool.log.Debugf("OnConnection done")
 	})
 
@@ -91,6 +101,7 @@ func SetSocketIOHandlers(r *gin.RouterGroup, address string) (*SocketIOConnected
 
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
 		pool.log.Infof("Disconnected %s", c.Id())
+		pool.removeUserConn(c.Id())
 	})
 
 	serveMux := http.NewServeMux()

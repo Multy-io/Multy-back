@@ -428,6 +428,8 @@ type SpendableOutputs struct {
 func (restClient *RestClient) sendRawTransaction() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
+		restClient.log.Infof("btc.Cert=%s\n", btc.Cert)
+
 		connCfg := &rpcclient.ConnConfig{
 			Host:         "localhost:18334",
 			User:         "multy",
