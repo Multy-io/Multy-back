@@ -3,6 +3,7 @@ package btc
 import (
 	"fmt"
 
+	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
@@ -16,7 +17,7 @@ func getAllMempool() {
 		log.Errorf("getAllMempool: rpcClient.GetRawMempoolVerbose: %s", err.Error())
 	}
 	for hash, txInfo := range mempool {
-		rec := newRecord(int(txInfo.Fee/float64(txInfo.Size))*btcToSatoshi, hash)
+		rec := newRecord(int(txInfo.Fee/float64(txInfo.Size)*btcToSatoshi), hash)
 		err = mempoolRates.Insert(rec)
 		if err != nil {
 			log.Errorf("getAllMempool: mempoolRates.Insert: %s", err.Error())
@@ -31,40 +32,32 @@ func getAllMempool() {
 	fmt.Println("Total mempool size is ", count)
 }
 
-func newTxToDB(hash string) {
-	txHash, err := chainhash.NewHashFromStr(hash)
-	if err != nil {
-		log.Errorf("newTxToDB: chainhash.NewHashFromStr: %s", err.Error())
-		return
-	}
-	tx, err := rpcClient.GetRawTransaction(txHash)
-	if err != nil {
-		log.Errorf("newTxToDB: rpcClient.GetTransaction: %s", err.Error())
-		return
-	}
-
+func newTxToDB(inTx *btcjson.TxRawResult) {
 	var inputSum float64
 	var outputSum float64
 
-	for _, output := range tx.MsgTx().TxOut {
-		outputSum += float64(output.Value)
-	}
-	for _, input := range tx.MsgTx().TxIn {
-		previousTx, err := rpcClient.GetRawTransactionVerbose(&input.PreviousOutPoint.Hash)
+	for _, input := range inTx.Vin {
+		txCHash, err := chainhash.NewHashFromStr(input.Txid)
 		if err != nil {
-			log.Errorf("newTxToDB: rpcClient.GetRawTransactionVerbose: %s", err.Error())
-			return
+			log.Errorf("newTxToDB: chainhash.NewHashFromStr: %s", err.Error())
 		}
-		inputSum += previousTx.Vout[input.PreviousOutPoint.Index].Value
+		previousTx, err := rpcClient.GetRawTransactionVerbose(txCHash)
+		if err != nil {
+			log.Errorf("newTxToDB: rpcClient.GetTransaction: %s", err.Error())
+		}
+		inputSum += previousTx.Vout[input.Vout].Value
+	}
+	for _, output := range inTx.Vout {
+		outputSum += output.Value
 	}
 
 	fee := inputSum - outputSum
-
-	rec := newRecord(int(fee/float64(tx.MsgTx().SerializeSize()))*btcToSatoshi, tx.Hash().String())
-	err = mempoolRates.Insert(rec)
+	rec := newRecord(int(fee/float64(inTx.Size)*100000000), inTx.Hash)
+	err := mempoolRates.Insert(rec)
 	if err != nil {
 		log.Errorf("newTxToDB: mempoolRates.Insert: %s", err.Error())
 	}
+
 }
 
 /*

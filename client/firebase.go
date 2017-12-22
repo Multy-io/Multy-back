@@ -61,8 +61,15 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine) (*FirebaseClient, error
 		fClient.log.Debugf("data=%+v", data)
 
 		// TODO: add version /v1
-		fClient.client.NewFcmMsgTo("/topics/"+btc.TopicTransaction+"-"+msg.UserID, data)
+		fClient.client.NewFcmMsgTo("/topics/"+btc.TopicTransaction+"-"+msg.UserID, data) //
 		status, err := fClient.client.Send()
+		if err != nil {
+			return err
+		}
+		status.PrintResults()
+		// TODO: add version /v1
+		fClient.client.NewFcmMsgTo(btc.TopicTransaction+"-"+msg.UserID, data) //
+		status, err = fClient.client.Send()
 		if err != nil {
 			return err
 		}

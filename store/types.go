@@ -4,10 +4,9 @@ import "time"
 
 // User represents a single app user
 type User struct {
-	UserID          string                     `bson:"userID"`  // User uqnique identifier
-	Devices         []Device                   `bson:"devices"` // All user devices
-	Wallets         []Wallet                   `bson:"wallets"` // All user addresses in all chains
-	BTCTransactions map[string]*BTCTransaction //////// fix name kritinaaaaaaa
+	UserID  string   `bson:"userID"`  // User uqnique identifier
+	Devices []Device `bson:"devices"` // All user devices
+	Wallets []Wallet `bson:"wallets"` // All user addresses in all chains
 }
 
 type BTCTransaction struct {

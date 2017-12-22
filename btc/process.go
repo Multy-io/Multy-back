@@ -32,9 +32,11 @@ type rpcClientWrapper struct {
 	*rpcclient.Client
 }
 
-var usersData *mgo.Collection
-
-var mempoolRates *mgo.Collection
+var (
+	usersData    *mgo.Collection
+	mempoolRates *mgo.Collection
+	txsData      *mgo.Collection
+)
 
 var Cert = `testcert`
 
@@ -62,6 +64,7 @@ func RunProcess() error {
 
 	usersData = db.DB("userDB").C("userCollection") // all db tables
 	mempoolRates = db.DB("BTCMempool").C("Rates")
+	txsData = db.DB("Tx").C("BTC")
 
 	// Drop collection on every new start of application
 	err = mempoolRates.DropCollection()
@@ -72,8 +75,9 @@ func RunProcess() error {
 	ntfnHandlers := rpcclient.NotificationHandlers{
 		OnBlockConnected: func(hash *chainhash.Hash, height int32, t time.Time) {
 			log.Debugf("OnBlockConnected: %v (%d) %v", hash, height, t)
-			go parseNewBlock(hash)
-
+			go notifyNewBlockTx(hash)
+			go blockTransactions(hash)
+			go blockConfirmations(hash)
 		},
 		OnTxAcceptedVerbose: func(txDetails *btcjson.TxRawResult) {
 			log.Debugf("OnTxAcceptedVerbose: new transaction id = %v", txDetails.Txid)
@@ -82,7 +86,10 @@ func RunProcess() error {
 			go parseMempoolTransaction(txDetails)
 			//add every new tx from mempool to db
 			//feeRate
-			go newTxToDB(txDetails.Hash)
+			go newTxToDB(txDetails)
+
+			go mempoolTransaction(txDetails)
+
 		},
 	}
 

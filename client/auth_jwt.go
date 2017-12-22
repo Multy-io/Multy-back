@@ -2,6 +2,8 @@ package client
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -159,6 +161,7 @@ func (mw *GinJWTMiddleware) middlewareImpl(c *gin.Context) {
 	token, err := mw.parseToken(c)
 
 	if err != nil {
+		log.Printf("[DEBUG]mw.parseToken(c) 401 %s \n", err.Error())
 		mw.unauthorized(c, http.StatusUnauthorized, err.Error())
 		return
 	}
@@ -293,7 +296,7 @@ func (mw *GinJWTMiddleware) jwtFromCookie(c *gin.Context, key string) (string, e
 func (mw *GinJWTMiddleware) parseToken(c *gin.Context) (*jwt.Token, error) {
 	var token string
 	var err error
-
+	fmt.Println("[HEADERS] - parseToken : ", c.Request.Header)
 	parts := strings.Split(mw.TokenLookup, ":")
 	switch parts[0] {
 	case "header":
@@ -305,11 +308,14 @@ func (mw *GinJWTMiddleware) parseToken(c *gin.Context) (*jwt.Token, error) {
 	}
 
 	if err != nil {
+		fmt.Println("[ERR]  parseToken:mw.jwtFromHeader ", err)
 		return nil, err
 	}
-
+	fmt.Println("[DEBUG]  parseToken:mw.jwtFromHeader : no error ")
 	return jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		fmt.Println("[DEBUG]  SigningAlgorithm:", mw.SigningAlgorithm)
 		if jwt.GetSigningMethod(mw.SigningAlgorithm) != token.Method {
+			fmt.Println("[ERR]  .GetSigningMethod ", err)
 			return nil, errors.New("invalid signing algorithm")
 		}
 
