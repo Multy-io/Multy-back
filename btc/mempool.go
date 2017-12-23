@@ -99,7 +99,7 @@ func mempoolTransaction(inTx *btcjson.TxRawResult) {
 				switch err {
 				case mgo.ErrNotFound:
 					//no record like this, create new
-					newTx := newMultyTX(inTx.Txid, inTx.Hash, output.ScriptPubKey.Hex, address, TxStatusAppearedInBlockIncoming, int(output.N), -1, output.Value)
+					newTx := newMultyTX(inTx.Txid, inTx.Hash, output.ScriptPubKey.Hex, address, TxStatusAppearedInMempoolIncoming, int(output.N), -1, output.Value)
 					sel = bson.M{"userid": user.UserID}
 					update := bson.M{"$push": bson.M{"transactions": newTx}}
 					err = txsData.Update(sel, update)

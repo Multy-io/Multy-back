@@ -2,6 +2,7 @@ package btc
 
 import (
 	"encoding/json"
+	"fmt"
 
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -154,58 +155,48 @@ func blockTransactions(hash *chainhash.Hash) {
 				err := usersData.Find(query).One(&user)
 				if err != nil {
 					continue
+					// is not our user
+				} else {
+					fmt.Println("[ITS OUR USER] ", user.UserID)
 				}
 
-				var rec TxRecord
 				err = txsData.Find(bson.M{"userid": user.UserID}).One(nil)
-				switch err {
-				case mgo.ErrNotFound:
-					// add new
-					log.Debugf("New user with tx created. with status %s \n", TxStatusAppearedInBlockOutcoming)
-					log.Debugf("On block height %d \n", blockHeight)
+				if err == mgo.ErrNotFound {
 					newRec := newTxRecord(user.UserID, blockTxVerbose.Txid, blockTxVerbose.Hash, output.ScriptPubKey.Hex, address, TxStatusAppearedInBlockIncoming, int(output.N), blockHeight, output.Value)
 					err = txsData.Insert(newRec)
 					if err != nil {
-						log.Errorf("parseNewBlock:outputsData.Insert mgo.ErrNotFound: %s", err.Error())
+						log.Errorf("[txsData.Insert: %s", err.Error())
 					}
-				case nil:
-					// append
-					sel := bson.M{"userid": user.UserID, "transactions.txid": blockTxVerbose.Txid, "transactions.txaddress": address}
-					err = txsData.Find(sel).One(rec)
-					switch err {
-					case mgo.ErrNotFound:
-						//no record like this, create new
-						log.Debugf("Tx created with status %s \n", TxStatusAppearedInBlockIncoming)
-						log.Debugf("On block height %d \n", blockHeight)
-						newTx := newMultyTX(blockTxVerbose.Txid, blockTxVerbose.Hash, output.ScriptPubKey.Hex, address, TxStatusAppearedInBlockIncoming, int(output.N), blockHeight, output.Value)
-						sel = bson.M{"userid": rec.UserID}
-						update := bson.M{"$push": bson.M{"transactions": newTx}}
-						err = txsData.Update(sel, update)
-						if err != nil {
-							log.Errorf("parseNewBlock:outputsData.Insert case nil: %s", err.Error())
-						}
-					case nil:
-						//record fetched, change status
-						log.Debugf("Status changed to %s \n", TxStatusAppearedInBlockIncoming)
-						log.Debugf("On block height %d \n", blockHeight)
-						sel = bson.M{"userid": user.UserID, "transactions.txid": blockTxVerbose.Txid, "transactions.txaddress": address}
-						update := bson.M{
-							"$set": bson.M{
-								"transactions.$.txstatus":      TxStatusAppearedInBlockIncoming,
-								"transactions.$.txblockheight": blockHeight,
-							},
-						}
-						err = txsData.Update(sel, update)
-						if err != nil {
-							log.Errorf("parseNewBlock:outputsData.Insert case nil: %s", err.Error())
-						}
-					default:
-						//handle error
-					}
+					continue
+				} else if err != nil && err != mgo.ErrNotFound {
+					log.Errorf("txsData.Find: %s", err.Error())
+				}
 
-				default:
-					//handle err
-					log.Errorf("parseNewBlock:outputsData.Insert default: %s", err.Error())
+				sel := bson.M{"userid": user.UserID, "transactions.txid": blockTxVerbose.Txid, "transactions.txaddress": address}
+				err = txsData.Find(sel).One(nil)
+				if err == mgo.ErrNotFound {
+					newTx := newMultyTX(blockTxVerbose.Txid, blockTxVerbose.Hash, output.ScriptPubKey.Hex, address, TxStatusAppearedInBlockIncoming, int(output.N), blockHeight, output.Value)
+					sel = bson.M{"userid": user.UserID}
+					update := bson.M{"$push": bson.M{"transactions": newTx}}
+					err = txsData.Update(sel, update)
+					if err != nil {
+						log.Errorf("txsData.Update add new tx to user: %s", err.Error())
+					}
+					continue
+				} else if err != nil && err != mgo.ErrNotFound {
+					log.Errorf("[ERR]txsData.Find: %s", err.Error())
+				}
+
+				sel = bson.M{"userid": user.UserID, "transactions.txid": blockTxVerbose.Txid, "transactions.txaddress": address}
+				update := bson.M{
+					"$set": bson.M{
+						"transactions.$.txstatus":      TxStatusAppearedInBlockIncoming,
+						"transactions.$.txblockheight": blockHeight,
+					},
+				}
+				err = txsData.Update(sel, update)
+				if err != nil {
+					log.Errorf("parseNewBlock:outputsData.Insert case nil: %s", err.Error())
 				}
 
 			}
@@ -225,66 +216,63 @@ func blockTransactions(hash *chainhash.Hash) {
 
 			for _, address := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses {
 				query := bson.M{"wallets.addresses.address": address}
+				// Is it's our user transaction
 				err := usersData.Find(query).One(&user)
 				if err != nil {
 					continue
+					// Is not our user
+				} else {
+					log.Debugf("[ITS OUR USER] %s", user.UserID)
 				}
 
+				// Is our user already have transactions.
 				err = txsData.Find(bson.M{"userid": user.UserID}).One(nil)
-				switch err {
-				case mgo.ErrNotFound:
-					// add new
-					log.Debugf("New user with tx created. with status %s \n", TxStatusAppearedInBlockOutcoming)
-					log.Debugf("On block height %d \n", blockHeight)
+				if err == mgo.ErrNotFound {
+					// Users first transaction.
 					newRec := newTxRecord(user.UserID, blockTxVerbose.Txid, blockTxVerbose.Hash, previousTxVerbose.Vout[input.Vout].ScriptPubKey.Hex, address, TxStatusAppearedInBlockOutcoming, int(previousTxVerbose.Vout[input.Vout].N), blockHeight, previousTxVerbose.Vout[input.Vout].Value)
 					err = txsData.Insert(newRec)
 					if err != nil {
-						log.Errorf("parseNewBlock:outputsData.Insert mgo.ErrNotFound: %s", err.Error())
+						log.Errorf("txsData.Insert: %s", err.Error())
 					}
-				case nil:
-					// Tx fetched update status to spend of or push if not exists in db.
-					sel := bson.M{"userid": user.UserID, "transactions.txid": blockTxVerbose.Txid, "transactions.txaddress": address}
-					err = txsData.Find(sel).One(nil)
-					switch err {
-					case mgo.ErrNotFound:
-						log.Debugf("Tx created with status %s \n", TxStatusAppearedInBlockOutcoming)
-						log.Debugf("On block height %d \n", blockHeight)
-						// Tx record is not exist case. Create record and push to user entity.
-						newTx := newMultyTX(blockTxVerbose.Txid, blockTxVerbose.Hash, previousTxVerbose.Vout[input.Vout].ScriptPubKey.Hex, address, TxStatusAppearedInBlockOutcoming, int(previousTxVerbose.Vout[input.Vout].N), blockHeight, previousTxVerbose.Vout[input.Vout].Value)
-						sel = bson.M{"userid": user.UserID}
-						update := bson.M{"$push": bson.M{"transactions": newTx}}
-						err = txsData.Update(sel, update)
-						if err != nil {
-							log.Errorf("parseNewBlock:outputsData.Insert case nil: %s", err.Error())
-						}
-					case nil:
-						log.Debugf("Status changed to %s \n", TxStatusAppearedInBlockOutcoming)
-						log.Debugf("On block height %d \n", blockHeight)
-						// Tx record exists case. Update record status.
-						sel = bson.M{"userid": user.UserID, "transactions.txid": blockTxVerbose.Txid, "transactions.txaddress": address}
-						update := bson.M{
-							"$set": bson.M{
-								"transactions.$.txstatus":      TxStatusAppearedInBlockOutcoming,
-								"transactions.$.txblockheight": blockHeight,
-							},
-						}
-						err = txsData.Update(sel, update)
-						if err != nil {
-							log.Errorf("parseNewBlock:outputsData.Insert case nil: %s", err.Error())
-						}
-					default:
-						// Handle db error.
-						log.Errorf("parseNewBlock:outputsData.Insert default: %s", err.Error())
-					}
-
-				default:
-					//handle err
-					log.Errorf("parseNewBlock:outputsData.Insert default: %s", err.Error())
+					continue
+				} else if err != nil && err != mgo.ErrNotFound {
+					log.Errorf("txsData.Find: %s", err.Error())
 				}
+
+				// Is our user already have this transactions.
+				sel := bson.M{"userid": user.UserID, "transactions.txid": blockTxVerbose.Txid, "transactions.txaddress": address}
+				err = txsData.Find(sel).One(nil)
+				if err == mgo.ErrNotFound {
+					// User have no transaction like this. Add to DB.
+					newTx := newMultyTX(blockTxVerbose.Txid, blockTxVerbose.Hash, previousTxVerbose.Vout[input.Vout].ScriptPubKey.Hex, address, TxStatusAppearedInBlockOutcoming, int(previousTxVerbose.Vout[input.Vout].N), blockHeight, previousTxVerbose.Vout[input.Vout].Value)
+					sel = bson.M{"userid": user.UserID}
+					update := bson.M{"$push": bson.M{"transactions": newTx}}
+					err = txsData.Update(sel, update)
+					if err != nil {
+						log.Errorf("txsData.Update add new tx to user: %s", err.Error())
+					}
+					continue
+				} else if err != nil && err != mgo.ErrNotFound {
+					log.Errorf("[ERR]txsData.Find: %s", err.Error())
+				}
+
+				// User have this transaction but with another status.
+				// Update statsus and block height.
+				sel = bson.M{"userid": user.UserID, "transactions.txid": blockTxVerbose.Txid, "transactions.txaddress": address}
+				update := bson.M{
+					"$set": bson.M{
+						"transactions.$.txstatus":      TxStatusAppearedInBlockOutcoming,
+						"transactions.$.txblockheight": blockHeight,
+					},
+				}
+				err = txsData.Update(sel, update)
+				if err != nil {
+					log.Errorf("parseNewBlock:outputsData.Insert case nil: %s", err.Error())
+				}
+
 			}
 
 		}
-
 	}
 
 }
