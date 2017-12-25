@@ -37,11 +37,7 @@ func (restClient *RestClient) LoginHandler() gin.HandlerFunc {
 
 		user, ok := restClient.middlewareJWT.Authenticator(loginVals.UserID, loginVals.DeviceID, loginVals.PushToken, loginVals.DeviceType, c) // user can be empty
 
-		userID := user.UserID
-
-		if len(userID) == 0 {
-			ok = false
-		}
+		userID := loginVals.UserID
 
 		// Create the token
 		token := jwt.New(jwt.GetSigningMethod(restClient.middlewareJWT.SigningAlgorithm))
@@ -50,10 +46,6 @@ func (restClient *RestClient) LoginHandler() gin.HandlerFunc {
 			for key, value := range restClient.middlewareJWT.PayloadFunc(loginVals.UserID) {
 				claims[key] = value
 			}
-		}
-
-		if userID == "" {
-			userID = loginVals.UserID
 		}
 
 		expire := restClient.middlewareJWT.TimeFunc().Add(restClient.middlewareJWT.Timeout)
@@ -67,34 +59,8 @@ func (restClient *RestClient) LoginHandler() gin.HandlerFunc {
 			return
 		}
 
-		// If user auths with DeviceID and UserID that
-		// already exists in DB we refresh JWT token.
-	loop:
-		for _, concreteDevice := range user.Devices {
-
-			// case of expired token on device or relogin from same device with
-			// userID and deviceID existed in DB
-			if concreteDevice.DeviceID == loginVals.DeviceID {
-				sel := bson.M{"userID": user.UserID, "devices.JWT": concreteDevice.JWT}
-				update := bson.M{"$set": bson.M{"devices.$.JWT": tokenString}}
-				err = restClient.userStore.Update(sel, update)
-				responseErr(c, err, http.StatusInternalServerError) // 500
-				break loop
-			} else {
-				// case of adding new device to user account
-				// e.g. user want to use app on another device
-				device := createDevice(loginVals.DeviceID, c.ClientIP(), tokenString, loginVals.PushToken, loginVals.DeviceType)
-				user.Devices = append(user.Devices, device)
-
-				sel := bson.M{"userID": userID}
-				err = restClient.userStore.UpdateUser(sel, &user)
-
-				responseErr(c, err, http.StatusInternalServerError) // 500
-				break loop
-			}
-		}
-
 		if !ok {
+			// new User with new Device
 			device := createDevice(loginVals.DeviceID, c.ClientIP(), tokenString, loginVals.PushToken, loginVals.DeviceType)
 
 			var wallet []store.Wallet
@@ -102,17 +68,68 @@ func (restClient *RestClient) LoginHandler() gin.HandlerFunc {
 			devices = append(devices, device)
 
 			newUser := createUser(loginVals.UserID, devices, wallet)
-
-			user = newUser
-
-			err = restClient.userStore.Insert(user)
-			responseErr(c, err, http.StatusInternalServerError) // 500
-
+			err = restClient.userStore.Insert(newUser)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"token":  "",
+					"expire": "",
+				})
+			} else {
+				c.JSON(http.StatusOK, gin.H{
+					"token":  tokenString,
+					"expire": expire.Format(time.RFC3339),
+				})
+			}
+			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"token":  tokenString,
-			"expire": expire.Format(time.RFC3339),
-		})
+		// old user - check new or old device
+
+		// If user auths with DeviceID and UserID that
+		// already exists in DB we refresh JWT token.
+		for _, concreteDevice := range user.Devices {
+			// case of expired token on device or relogin from same device with
+			// userID and deviceID existed in DB
+			if concreteDevice.DeviceID == loginVals.DeviceID {
+				restClient.log.Infof("update token for device %s", loginVals.DeviceID)
+				sel := bson.M{"userID": user.UserID, "devices.JWT": concreteDevice.JWT}
+				update := bson.M{"$set": bson.M{"devices.$.JWT": tokenString}}
+				err = restClient.userStore.Update(sel, update)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{
+						"token":  "",
+						"expire": "",
+					})
+				} else {
+					c.JSON(http.StatusOK, gin.H{
+						"token":  tokenString,
+						"expire": expire.Format(time.RFC3339),
+					})
+				}
+				return
+			}
+		}
+
+		// no such device - creatig this one
+		restClient.log.Infof("creating new device %s", loginVals.DeviceID)
+		// case of adding new device to user account
+		// e.g. user want to use app on another device
+		device := createDevice(loginVals.DeviceID, c.ClientIP(), tokenString, loginVals.PushToken, loginVals.DeviceType)
+		user.Devices = append(user.Devices, device)
+
+		sel := bson.M{"userID": userID}
+		err = restClient.userStore.UpdateUser(sel, &user)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"token":  "",
+				"expire": "",
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"token":  tokenString,
+				"expire": expire.Format(time.RFC3339),
+			})
+		}
+		return
 	}
 }

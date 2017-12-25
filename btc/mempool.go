@@ -73,60 +73,59 @@ func parseMempoolTransaction(inTx *btcjson.TxRawResult) {
 }
 
 func mempoolTransaction(inTx *btcjson.TxRawResult) {
-	fmt.Println("[MEMPOOL TX] ----------")
+	log.Debugf("[MEMPOOL TX]")
 	var user store.User
+
 	// apear as output
 	for _, output := range inTx.Vout {
 		for _, address := range output.ScriptPubKey.Addresses {
 			query := bson.M{"wallets.addresses.address": address}
 			err := usersData.Find(query).One(&user)
 			if err != nil {
+				// Is not our user.
 				continue
 			}
+			fmt.Println("[ITS OUR USER] ", user.UserID)
 
 			err = txsData.Find(bson.M{"userid": user.UserID}).One(nil)
-			switch err {
-			case mgo.ErrNotFound:
-				// User first transaction. Create new record in db.
+			if err == mgo.ErrNotFound {
+				// Adding user in case of non existence.
 				newRec := newTxRecord(user.UserID, inTx.Txid, inTx.Hash, output.ScriptPubKey.Hex, address, TxStatusAppearedInMempoolIncoming, int(output.N), -1, output.Value)
 				err = txsData.Insert(newRec)
 				if err != nil {
-					log.Errorf("parseNewBlock:outputsData.Insert mgo.ErrNotFound: %s", err.Error())
+					log.Errorf("mempoolTransaction :txsData.Insert: %s", err.Error())
 				}
-			case nil:
-				sel := bson.M{"userid": user.UserID, "transactions.txid": inTx.Txid, "transactions.txaddress": address}
-				err = txsData.Find(sel).One(nil)
-				switch err {
-				case mgo.ErrNotFound:
-					//no record like this, create new
-					newTx := newMultyTX(inTx.Txid, inTx.Hash, output.ScriptPubKey.Hex, address, TxStatusAppearedInMempoolIncoming, int(output.N), -1, output.Value)
-					sel = bson.M{"userid": user.UserID}
-					update := bson.M{"$push": bson.M{"transactions": newTx}}
-					err = txsData.Update(sel, update)
-					if err != nil {
-						log.Errorf("parseNewBlock:outputsData.Insert case nil: %s", err.Error())
-					}
-				case nil:
-					//record fetched, change status
-					sel = bson.M{"userid": user.UserID, "transactions.txid": inTx.Txid, "transactions.txaddress": address}
-					update := bson.M{
-						"$set": bson.M{
-							"transactions.$.txstatus":      TxStatusAppearedInMempoolIncoming,
-							"transactions.$.txblockheight": -1,
-						},
-					}
-					err = txsData.Update(sel, update)
-					if err != nil {
-						log.Errorf("parseNewBlock:outputsData.Insert case nil: %s", err.Error())
-					}
-				default:
-					log.Errorf("parseNewBlock:outputsData.Insert default: %s", err.Error())
-					//handle error
-				}
+				continue
+			} else if err != nil && err != mgo.ErrNotFound {
+				log.Errorf("mempoolTransaction: txsData.Find: %s", err.Error())
+			}
 
-			default:
-				//handle err
-				log.Errorf("parseNewBlock:outputsData.Insert default: %s", err.Error())
+			sel := bson.M{"userid": user.UserID, "transactions.txid": inTx.Txid, "transactions.txaddress": address}
+			err = txsData.Find(sel).One(nil)
+			if err == mgo.ErrNotFound {
+				//appending transaction to user entity
+				newTx := newMultyTX(inTx.Txid, inTx.Hash, output.ScriptPubKey.Hex, address, TxStatusAppearedInMempoolIncoming, int(output.N), -1, output.Value)
+				sel = bson.M{"userid": user.UserID}
+				update := bson.M{"$push": bson.M{"transactions": newTx}}
+				err = txsData.Update(sel, update)
+				if err != nil {
+					log.Errorf("txsData.Update add new tx to user: %s", err.Error())
+				}
+				continue
+			} else if err != nil && err != mgo.ErrNotFound {
+				log.Errorf("mempoolTransaction: txsData.Find: %s", err.Error())
+			}
+
+			sel = bson.M{"userid": user.UserID, "transactions.txid": inTx.Txid, "transactions.txaddress": address}
+			update := bson.M{
+				"$set": bson.M{
+					"transactions.$.txstatus":      TxStatusAppearedInMempoolIncoming,
+					"transactions.$.txblockheight": -1,
+				},
+			}
+			err = txsData.Update(sel, update)
+			if err != nil {
+				log.Errorf("mempoolTransaction: parseNewBlock:outputsData.Insert case nil: %s", err.Error())
 			}
 
 		}
@@ -149,54 +148,56 @@ func mempoolTransaction(inTx *btcjson.TxRawResult) {
 			err := usersData.Find(query).One(&user)
 			if err != nil {
 				continue
+				// Is not our user
+			} else {
+				log.Debugf("[ITS OUR USER] %s", user.UserID)
 			}
 
+			// Is our user already have transactions.
 			err = txsData.Find(bson.M{"userid": user.UserID}).One(nil)
-			switch err {
-			case mgo.ErrNotFound:
-				// add new
-				newRec := newTxRecord(user.UserID, inTx.Txid, inTx.Hash, previousTxVerbose.Vout[input.Vout].ScriptPubKey.Hex, address, TxStatusAppearedInMempoolOutcoming, int(previousTxVerbose.Vout[input.Vout].N), -1, previousTxVerbose.Vout[input.Vout].Value)
+			if err == mgo.ErrNotFound {
+				// Users first transaction.
+				newRec := newTxRecord(user.UserID, previousTxVerbose.Txid, previousTxVerbose.Hash, previousTxVerbose.Vout[input.Vout].ScriptPubKey.Hex, address, TxStatusAppearedInMempoolOutcoming, int(previousTxVerbose.Vout[input.Vout].N), -1, previousTxVerbose.Vout[input.Vout].Value)
 				err = txsData.Insert(newRec)
 				if err != nil {
-					log.Errorf("parseNewBlock:outputsData.Insert mgo.ErrNotFound: %s", err.Error())
+					log.Errorf("txsData.Insert: %s", err.Error())
 				}
-			case nil:
-				// append
-				sel := bson.M{"userid": user.UserID, "transactions.txid": inTx.Txid, "transactions.txaddress": address}
-				err = txsData.Find(sel).One(nil)
-				switch err {
-				case mgo.ErrNotFound:
-					newTx := newMultyTX(inTx.Txid, inTx.Hash, previousTxVerbose.Vout[input.Vout].ScriptPubKey.Hex, address, TxStatusAppearedInMempoolOutcoming, int(previousTxVerbose.Vout[input.Vout].N), -1, previousTxVerbose.Vout[input.Vout].Value)
-					sel = bson.M{"userid": user.UserID}
-					update := bson.M{"$push": bson.M{"transactions": newTx}}
-					err = txsData.Update(sel, update)
-					if err != nil {
-						log.Errorf("parseNewBlock:outputsData.Insert case mgo.ErrNotFound: %s", err.Error())
-					}
-				case nil:
-					// found. nothing to append
-					//	update status
-					sel = bson.M{"userid": user.UserID, "transactions.txid": inTx.Txid, "transactions.txaddress": address}
-					update := bson.M{
-						"$set": bson.M{
-							"transactions.$.txstatus":      TxStatusAppearedInMempoolOutcoming,
-							"transactions.$.txblockheight": -1,
-						},
-					}
-					err = txsData.Update(sel, update)
-					if err != nil {
-						log.Errorf("parseNewBlock:outputsData.Insert case nil: %s", err.Error())
-					}
-				default:
-					// error
-					log.Errorf("parseNewBlock:outputsData.Insert default: %s", err.Error())
-				}
-			default:
-				//handle err
-				log.Errorf("parseNewBlock:outputsData.Insert default: %s", err.Error())
+				continue
+			} else if err != nil && err != mgo.ErrNotFound {
+				log.Errorf("txsData.Find: %s", err.Error())
 			}
 
-		}
+			// Is our user already have this transactions.
+			sel := bson.M{"userid": user.UserID, "transactions.txid": previousTxVerbose.Txid, "transactions.txaddress": address}
+			err = txsData.Find(sel).One(nil)
+			if err == mgo.ErrNotFound {
+				// User have no transaction like this. Add to DB.
+				newTx := newMultyTX(previousTxVerbose.Txid, previousTxVerbose.Hash, previousTxVerbose.Vout[input.Vout].ScriptPubKey.Hex, address, TxStatusAppearedInMempoolOutcoming, int(previousTxVerbose.Vout[input.Vout].N), -1, previousTxVerbose.Vout[input.Vout].Value)
+				sel = bson.M{"userid": user.UserID}
+				update := bson.M{"$push": bson.M{"transactions": newTx}}
+				err = txsData.Update(sel, update)
+				if err != nil {
+					log.Errorf("txsData.Update add new tx to user: %s", err.Error())
+				}
+				continue
+			} else if err != nil && err != mgo.ErrNotFound {
+				log.Errorf("[ERR]txsData.Find: %s", err.Error())
+			}
 
+			// User have this transaction but with another status.
+			// Update statsus and block height.
+			sel = bson.M{"userid": user.UserID, "transactions.txid": previousTxVerbose.Txid, "transactions.txaddress": address}
+			update := bson.M{
+				"$set": bson.M{
+					"transactions.$.txstatus":      TxStatusAppearedInMempoolOutcoming,
+					"transactions.$.txblockheight": -1,
+				},
+			}
+			err = txsData.Update(sel, update)
+			if err != nil {
+				log.Errorf("parseNewBlock:outputsData.Insert case nil: %s", err.Error())
+			}
+		}
 	}
+
 }

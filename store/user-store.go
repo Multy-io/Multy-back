@@ -35,6 +35,8 @@ type UserStore interface {
 	FindUser(query bson.M, user *User) error
 	UpdateUser(sel bson.M, user *User) error
 	GetAllRates(sortBy string, rates *[]RatesRecord) error //add to rates store
+	FindUserTxs(query bson.M, userTxs *TxRecord) error     //add to rates store
+
 }
 
 type MongoUserStore struct {
@@ -42,6 +44,7 @@ type MongoUserStore struct {
 	session    *mgo.Session
 	usersData  *mgo.Collection
 	ratessData *mgo.Collection
+	txsData    *mgo.Collection
 }
 
 func InitUserStore(conf Conf) (UserStore, error) {
@@ -55,6 +58,7 @@ func InitUserStore(conf Conf) (UserStore, error) {
 	uStore.session = session
 	uStore.usersData = uStore.session.DB(conf.DBUsers).C(tableUsers)
 	uStore.ratessData = uStore.session.DB(conf.DBBTCMempool).C(tableRates)
+	uStore.txsData = uStore.session.DB("Tx").C("BTC")
 	return uStore, nil
 }
 
@@ -78,8 +82,13 @@ func (mongo *MongoUserStore) FindUser(query bson.M, user *User) error {
 func (mongo *MongoUserStore) Insert(user User) error {
 	return mongo.usersData.Insert(user)
 }
+
 func (mongo *MongoUserStore) GetAllRates(sortBy string, rates *[]RatesRecord) error {
 	return mongo.ratessData.Find(nil).Sort(sortBy).All(rates)
+}
+
+func (mongo *MongoUserStore) FindUserTxs(query bson.M, userTxs *TxRecord) error {
+	return mongo.txsData.Find(query).One(userTxs)
 }
 
 func (mongoUserData *MongoUserStore) Close() error {

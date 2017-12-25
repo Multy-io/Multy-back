@@ -68,3 +68,20 @@ type Address struct {
 	AddressIndex int    `json:"addressIndex" bson:"addressIndex"`
 	Address      string `json:"address" bson:"address"`
 }
+
+// the way how user transations store in db
+type MultyTX struct {
+	TxID          string  `json:"txid"`
+	TxHash        string  `json:"txhash"`
+	TxOutID       int     `json:"txoutid"`
+	TxOutAmount   float64 `json:"txoutamount"`
+	TxOutScript   string  `json:"txoutscript"`
+	TxAddress     string  `json:"address"`
+	TxBlockHeight int64   `json:"blockheight"`
+	TxStatus      string  `json:"txstatus"`
+}
+
+type TxRecord struct {
+	UserID       string    `json:"userid"`
+	Transactions []MultyTX `json:"transactions"`
+}
