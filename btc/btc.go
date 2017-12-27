@@ -3,6 +3,9 @@ package btc
 import (
 	"fmt"
 
+	mgo "gopkg.in/mgo.v2"
+
+	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	nsq "github.com/bitly/go-nsq"
 	"github.com/btcsuite/btcd/rpcclient"
@@ -28,7 +31,7 @@ var (
 
 var log = slf.WithContext("btc")
 
-func InitHandlers(certFromConf string) (*rpcclient.Client, error) {
+func InitHandlers(certFromConf string, dbConf *store.Conf) (*rpcclient.Client, error) {
 	config := nsq.NewConfig()
 	p, err := nsq.NewProducer("127.0.0.1:4150", config)
 	if err != nil {
@@ -38,6 +41,17 @@ func InitHandlers(certFromConf string) (*rpcclient.Client, error) {
 
 	Cert = certFromConf
 	connCfg.Certificates = []byte(Cert)
+	log.Infof("cert=%s\n", Cert)
+
+	db, err := mgo.Dial("localhost:27017")
+	if err != nil {
+		log.Errorf("RunProcess: Cand connect to DB: %s", err.Error())
+		return nil, err
+	}
+
+	usersData = db.DB(dbConf.DBUsers).C(store.TableUsers) // all db tables
+	mempoolRates = db.DB(dbConf.DBFeeRates).C(store.TableFeeRates)
+	txsData = db.DB(dbConf.DBTx).C(store.TableBTC)
 
 	go RunProcess()
 	return rpcClient, nil

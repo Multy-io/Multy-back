@@ -55,19 +55,8 @@ var connCfg = &rpcclient.ConnConfig{
 func RunProcess() error {
 	log.Info("Run Process")
 
-	db, err := mgo.Dial("localhost:27017")
-
-	if err != nil {
-		log.Errorf("RunProcess: Cand connect to DB: %s", err.Error())
-		return err
-	}
-
-	usersData = db.DB("userDB").C("userCollection") // all db tables
-	mempoolRates = db.DB("BTCMempool").C("Rates")
-	txsData = db.DB("Tx").C("BTC")
-
 	// Drop collection on every new start of application
-	err = mempoolRates.DropCollection()
+	err := mempoolRates.DropCollection()
 	if err != nil {
 		log.Errorf("RunProcess:mempoolRates.DropCollection:%s", err.Error())
 	}

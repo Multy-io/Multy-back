@@ -3,6 +3,7 @@ package btc
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -130,6 +131,7 @@ func blockTransactions(hash *chainhash.Hash) {
 	// block Height
 	blockVerbose, err := rpcClient.GetBlockVerbose(hash)
 	blockHeight := blockVerbose.Height
+	blockTimeUnixNano := time.Now().UnixNano() / 1000000
 
 	//parse all block transactions
 	rawBlock, err := rpcClient.GetBlock(hash)
@@ -160,22 +162,11 @@ func blockTransactions(hash *chainhash.Hash) {
 					fmt.Println("[ITS OUR USER] ", user.UserID)
 				}
 
-				err = txsData.Find(bson.M{"userid": user.UserID}).One(nil)
-				if err == mgo.ErrNotFound {
-					newRec := newTxRecord(user.UserID, blockTxVerbose.Txid, blockTxVerbose.Hash, output.ScriptPubKey.Hex, address, TxStatusAppearedInBlockIncoming, int(output.N), blockHeight, output.Value)
-					err = txsData.Insert(newRec)
-					if err != nil {
-						log.Errorf("[txsData.Insert: %s", err.Error())
-					}
-					continue
-				} else if err != nil && err != mgo.ErrNotFound {
-					log.Errorf("txsData.Find: %s", err.Error())
-				}
-
 				sel := bson.M{"userid": user.UserID, "transactions.txid": blockTxVerbose.Txid, "transactions.txaddress": address}
 				err = txsData.Find(sel).One(nil)
 				if err == mgo.ErrNotFound {
-					newTx := newMultyTX(blockTxVerbose.Txid, blockTxVerbose.Hash, output.ScriptPubKey.Hex, address, TxStatusAppearedInBlockIncoming, int(output.N), blockHeight, output.Value)
+
+					newTx := newMultyTX(blockTxVerbose.Txid, blockTxVerbose.Hash, output.ScriptPubKey.Hex, address, TxStatusAppearedInBlockIncoming, output.Value, int(output.N), blockTimeUnixNano, blockHeight, []StockExchangeRate{})
 					sel = bson.M{"userid": user.UserID}
 					update := bson.M{"$push": bson.M{"transactions": newTx}}
 					err = txsData.Update(sel, update)
@@ -185,6 +176,7 @@ func blockTransactions(hash *chainhash.Hash) {
 					continue
 				} else if err != nil && err != mgo.ErrNotFound {
 					log.Errorf("[ERR]txsData.Find: %s", err.Error())
+					continue
 				}
 
 				sel = bson.M{"userid": user.UserID, "transactions.txid": blockTxVerbose.Txid, "transactions.txaddress": address}
@@ -225,26 +217,12 @@ func blockTransactions(hash *chainhash.Hash) {
 					log.Debugf("[ITS OUR USER] %s", user.UserID)
 				}
 
-				// Is our user already have transactions.
-				err = txsData.Find(bson.M{"userid": user.UserID}).One(nil)
-				if err == mgo.ErrNotFound {
-					// Users first transaction.
-					newRec := newTxRecord(user.UserID, blockTxVerbose.Txid, blockTxVerbose.Hash, previousTxVerbose.Vout[input.Vout].ScriptPubKey.Hex, address, TxStatusAppearedInBlockOutcoming, int(previousTxVerbose.Vout[input.Vout].N), blockHeight, previousTxVerbose.Vout[input.Vout].Value)
-					err = txsData.Insert(newRec)
-					if err != nil {
-						log.Errorf("txsData.Insert: %s", err.Error())
-					}
-					continue
-				} else if err != nil && err != mgo.ErrNotFound {
-					log.Errorf("txsData.Find: %s", err.Error())
-				}
-
 				// Is our user already have this transactions.
 				sel := bson.M{"userid": user.UserID, "transactions.txid": blockTxVerbose.Txid, "transactions.txaddress": address}
 				err = txsData.Find(sel).One(nil)
 				if err == mgo.ErrNotFound {
 					// User have no transaction like this. Add to DB.
-					newTx := newMultyTX(blockTxVerbose.Txid, blockTxVerbose.Hash, previousTxVerbose.Vout[input.Vout].ScriptPubKey.Hex, address, TxStatusAppearedInBlockOutcoming, int(previousTxVerbose.Vout[input.Vout].N), blockHeight, previousTxVerbose.Vout[input.Vout].Value)
+					newTx := newMultyTX(blockTxVerbose.Txid, blockTxVerbose.Hash, previousTxVerbose.Vout[input.Vout].ScriptPubKey.Hex, address, TxStatusAppearedInBlockOutcoming, previousTxVerbose.Vout[input.Vout].Value, int(previousTxVerbose.Vout[input.Vout].N), blockTimeUnixNano, blockHeight, []StockExchangeRate{})
 					sel = bson.M{"userid": user.UserID}
 					update := bson.M{"$push": bson.M{"transactions": newTx}}
 					err = txsData.Update(sel, update)
@@ -254,6 +232,7 @@ func blockTransactions(hash *chainhash.Hash) {
 					continue
 				} else if err != nil && err != mgo.ErrNotFound {
 					log.Errorf("[ERR]txsData.Find: %s", err.Error())
+					continue
 				}
 
 				// User have this transaction but with another status.
@@ -269,23 +248,28 @@ func blockTransactions(hash *chainhash.Hash) {
 				if err != nil {
 					log.Errorf("parseNewBlock:outputsData.Insert case nil: %s", err.Error())
 				}
-
 			}
-
 		}
 	}
-
 }
 
 type MultyTX struct {
-	TxID          string  `json:"txid"`
-	TxHash        string  `json:"txhash"`
-	TxOutID       int     `json:"txoutid"`
-	TxOutAmount   float64 `json:"txoutamount"`
-	TxOutScript   string  `json:"txoutscript"`
-	TxAddress     string  `json:"address"`
-	TxBlockHeight int64   `json:"blockheight"`
-	TxStatus      string  `json:"txstatus"`
+	TxID        string              `json:"txid"`
+	TxHash      string              `json:"txhash"`
+	TxOutScript string              `json:"txoutscript"`
+	TxAddress   string              `json:"address"`
+	TxStatus    string              `json:"txstatus"`
+	TxOutAmount float64             `json:"txoutamount"`
+	TxOutID     int                 `json:"txoutid"`
+	BlockTime   int64               `json:"blocktime"`
+	BlockHeight int64               `json:"blockheight"`
+	FiatPrice   []StockExchangeRate `json:"stockexchangerate"`
+}
+
+type StockExchangeRate struct {
+	ExchangeName   string `json:"exchangename"`
+	FiatEquivalent int    `json:"fiatequivalent"`
+	TotalAmount    int    `json:"totalamount"`
 }
 
 type TxRecord struct {
@@ -293,34 +277,25 @@ type TxRecord struct {
 	Transactions []MultyTX `json:"transactions"`
 }
 
-func newTxRecord(userID, txID, txHash, txOutScript, txAddress, txStatus string, txOutID int, txBlockHeight int64, txOutAmount float64) TxRecord {
+func newEmptyTx(userID string) TxRecord {
 	return TxRecord{
-		UserID: userID,
-		Transactions: []MultyTX{
-			MultyTX{
-				TxID:          txID,
-				TxHash:        txHash,
-				TxOutID:       txOutID,
-				TxOutAmount:   txOutAmount,
-				TxOutScript:   txOutScript,
-				TxAddress:     txAddress,
-				TxBlockHeight: txBlockHeight,
-				TxStatus:      txStatus,
-			},
-		},
+		UserID:       userID,
+		Transactions: []MultyTX{},
 	}
 }
 
-func newMultyTX(txID, txHash, txOutScript, txAddress, txStatus string, txOutID int, txBlockHeight int64, txOutAmount float64) MultyTX {
+func newMultyTX(txID, txHash, txOutScript, txAddress, txStatus string, txOutAmount float64, txOutID int, blockTime, blockHeight int64, fiatPrice []StockExchangeRate) MultyTX {
 	return MultyTX{
-		TxID:          txID,
-		TxHash:        txHash,
-		TxOutID:       txOutID,
-		TxOutAmount:   txOutAmount,
-		TxOutScript:   txOutScript,
-		TxAddress:     txAddress,
-		TxBlockHeight: txBlockHeight,
-		TxStatus:      txStatus,
+		TxID:        txID,
+		TxHash:      txHash,
+		TxOutScript: txOutScript,
+		TxAddress:   txAddress,
+		TxStatus:    txStatus,
+		TxOutAmount: txOutAmount,
+		TxOutID:     txOutID,
+		BlockTime:   blockTime,
+		BlockHeight: blockHeight,
+		FiatPrice:   fiatPrice,
 	}
 }
 

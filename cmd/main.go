@@ -23,9 +23,10 @@ var (
 var globalOpt = multy.Configuration{
 	Name: "my-test-back",
 	Database: store.Conf{
-		Address:      "localhost:27017",
-		DBUsers:      "userDB",
-		DBBTCMempool: "BTCMempool",
+		Address:    "localhost:27017",
+		DBUsers:    "userDB-test",
+		DBFeeRates: "BTCMempool-test",
+		DBTx:       "DBTx-test",
 	},
 	RestAddress:  "localhost:7778",
 	SocketioAddr: "localhost:7780",

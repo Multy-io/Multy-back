@@ -67,6 +67,16 @@ func (restClient *RestClient) LoginHandler() gin.HandlerFunc {
 			var devices []store.Device
 			devices = append(devices, device)
 
+			newTxStore := newEmptyTx(loginVals.UserID)
+			err = restClient.userStore.InsertTxStore(newTxStore)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"token":  "",
+					"expire": "",
+				})
+				return
+			}
+
 			newUser := createUser(loginVals.UserID, devices, wallet)
 			err = restClient.userStore.Insert(newUser)
 			if err != nil {

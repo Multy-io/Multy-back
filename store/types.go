@@ -32,12 +32,12 @@ type TxInfo struct {
 
 // Device represents a single users device.
 type Device struct {
-	DeviceID       string    `bson:"deviceID"`       // Device uqnique identifier (MAC address of device)
-	PushToken      string    `bson:"pushToken"`      // Firebase
-	JWT            string    `bson:"JWT"`            // Device JSON Web Token
-	LastActionTime time.Time `bson:"lastActionTime"` // Last action time from current device
-	LastActionIP   string    `bson:"lastActionIP"`   // IP from last session
-	DeviceType     int       `bson:"deviceType"`     // 1 - IOS, 2 - Android
+	DeviceID       string `bson:"deviceID"`       // Device uqnique identifier (MAC address of device)
+	PushToken      string `bson:"pushToken"`      // Firebase
+	JWT            string `bson:"JWT"`            // Device JSON Web Token
+	LastActionTime int64  `bson:"lastActionTime"` // Last action time from current device
+	LastActionIP   string `bson:"lastActionIP"`   // IP from last session
+	DeviceType     int    `bson:"deviceType"`     // 1 - IOS, 2 - Android
 }
 
 // Wallet Specifies a concrete wallet of user.
@@ -51,9 +51,9 @@ type Wallet struct {
 	//wallet identifier
 	WalletName string `bson:"walletName"`
 
-	LastActionTime time.Time `bson:"lastActionTime"`
+	LastActionTime int64 `bson:"lastActionTime"`
 
-	DateOfCreation time.Time `bson:"dateOfCreation"`
+	DateOfCreation int64 `bson:"dateOfCreation"`
 
 	// All addresses assigned to this wallet.
 	Adresses []Address `bson:"addresses"`
@@ -67,6 +67,15 @@ type RatesRecord struct {
 type Address struct {
 	AddressIndex int    `json:"addressIndex" bson:"addressIndex"`
 	Address      string `json:"address" bson:"address"`
+}
+type WalletsSelect struct {
+	Wallets []struct {
+		Addresses []struct {
+			AddressIndex int    `bson:"addressIndex"`
+			Address      string `bson:"address"`
+		} `bson:"addresses"`
+		WalletIndex int `bson:"walletIndex"`
+	} `bson:"wallets"`
 }
 
 // the way how user transations store in db

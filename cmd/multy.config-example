@@ -2,10 +2,10 @@
     "Name": "my-test-back",
     "Database": {
         "Address": "localhost:27017",
-        "TableUsers": "userCollection",
-        "DBUsers": "userDB",
-        "DBBTCMempool": "BTCMempool",
-        "TableRates": "Rates"
+        "TableUsers": "userCollection-conf",
+        "DBUsers": "userDB-conf",
+        "DBFeeRates": "BTCMempool-conf",
+        "DBTx": "DBTx-conf"
     },
     "RestAddress": "localhost:6678",
     "SocketioAddr": "localhost:6680",

@@ -47,7 +47,7 @@ func Init(conf *Configuration) (*Multy, error) {
 	}
 	multy.userStore = userStore
 
-	btcClient, err := btc.InitHandlers(getCertificate(conf.BTCSertificate))
+	btcClient, err := btc.InitHandlers(getCertificate(conf.BTCSertificate), &conf.Database)
 	if err != nil {
 		return nil, fmt.Errorf("blockchain api initialization: %s", err.Error())
 	}
@@ -66,6 +66,7 @@ func getCertificate(certFile string) string {
 	if err != nil {
 		return ""
 	}
+	log.Debugf("cert: %s", string(cert[:len(cert)-1]))
 	return string(cert[:len(cert)-1])
 }
 
