@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Appscrunch/Multy-back/store"
 	"github.com/gin-gonic/gin"
 	"github.com/graarh/golang-socketio/transport"
 
@@ -24,10 +25,6 @@ const (
 	topicBTCTransactionUpdate = "btcTransaction"
 
 	topicEthTransactionUpdate = "ethTransaction"
-
-	EUR = "EUR"
-	USD = "USD"
-	ETH = "ETH"
 )
 
 func getHeaderDataSocketIO(headers http.Header) (*SocketIOUser, error) {
@@ -53,14 +50,14 @@ func getHeaderDataSocketIO(headers http.Header) (*SocketIOUser, error) {
 	}, nil
 }
 
-func SetSocketIOHandlers(r *gin.RouterGroup, address string) (*SocketIOConnectedPool, error) {
+func SetSocketIOHandlers(r *gin.RouterGroup, address string, ratesDB store.UserStore) (*SocketIOConnectedPool, error) {
 	server := gosocketio.NewServer(transport.GetDefaultWebsocketTransport())
 
-	pool, err := InitConnectedPool(server, address)
+	pool, err := InitConnectedPool(server, address, ratesDB)
 	if err != nil {
 		return nil, fmt.Errorf("connection pool initialization: %s", err.Error())
 	}
-	chart, err := initExchangeChart()
+	chart, err := initExchangeChart(ratesDB)
 	if err != nil {
 		return nil, fmt.Errorf("exchange chart initialization: %s", err.Error())
 	}
@@ -69,7 +66,7 @@ func SetSocketIOHandlers(r *gin.RouterGroup, address string) (*SocketIOConnected
 
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
 		pool.log.Debugf("connected: %s", c.Id())
-		allRates := pool.chart.getAll()
+		allRates := pool.chart.getAllDay()
 		c.Emit(topicExchangeAll, allRates)
 
 		user, err := getHeaderDataSocketIO(c.RequestHeader())

@@ -12,22 +12,26 @@ var (
 	errEmplyConfig = errors.New("empty configuration for datastore")
 )
 
+// Default table names
 const (
-	TableUsers    = "userCollection"
-	TableFeeRates = "Rates" // and send those two fields there
-	TableBTC      = "BTC"
+	TableUsers             = "UserCollection"
+	TableFeeRates          = "Rates" // and send those two fields there
+	TableBTC               = "BTC"
+	TableStockExchangeRate = "TableStockExchangeRate"
 )
 
 // Conf is a struct for database configuration
 type Conf struct {
-	Address    string
-	DBUsers    string
-	DBFeeRates string
-	DBTx       string
+	Address string
+
+	// TODO: move to one database
+	DBUsers             string
+	DBFeeRates          string
+	DBTx                string
+	DBStockExchangeRate string
 }
 
 type UserStore interface {
-	//GetSession()
 	GetUserByDevice(device bson.M, user *User)
 	Update(sel, update bson.M) error
 	Insert(user User) error
@@ -39,14 +43,16 @@ type UserStore interface {
 	InsertTxStore(userTxs TxRecord) error
 	FindUserErr(query bson.M) error
 	FindUserAddresses(query bson.M, sel bson.M, ws *WalletsSelect) error
+	InsertExchangeRate(ExchangeRates) error
 }
 
 type MongoUserStore struct {
-	config     *Conf
-	session    *mgo.Session
-	usersData  *mgo.Collection
-	ratessData *mgo.Collection
-	txsData    *mgo.Collection
+	config            *Conf
+	session           *mgo.Session
+	usersData         *mgo.Collection
+	ratesData         *mgo.Collection
+	txsData           *mgo.Collection
+	stockExchangeRate *mgo.Collection
 }
 
 func InitUserStore(conf Conf) (UserStore, error) {
@@ -59,52 +65,57 @@ func InitUserStore(conf Conf) (UserStore, error) {
 	}
 	uStore.session = session
 	uStore.usersData = uStore.session.DB(conf.DBUsers).C(TableUsers)
-	uStore.ratessData = uStore.session.DB(conf.DBFeeRates).C(TableFeeRates)
+	uStore.ratesData = uStore.session.DB(conf.DBFeeRates).C(TableFeeRates)
 	uStore.txsData = uStore.session.DB(conf.DBTx).C(TableBTC)
+	uStore.stockExchangeRate = uStore.session.DB(conf.DBStockExchangeRate).C(TableStockExchangeRate)
 	return uStore, nil
 }
 
-func (mongo *MongoUserStore) UpdateUser(sel bson.M, user *User) error {
-	return mongo.usersData.Update(sel, user)
+func (mStore *MongoUserStore) UpdateUser(sel bson.M, user *User) error {
+	return mStore.usersData.Update(sel, user)
 }
 
-func (mongo *MongoUserStore) GetUserByDevice(device bson.M, user *User) { // rename GetUserByToken
-	mongo.usersData.Find(device).One(user)
+func (mStore *MongoUserStore) GetUserByDevice(device bson.M, user *User) { // rename GetUserByToken
+	mStore.usersData.Find(device).One(user)
 	return // why?
 }
 
-func (mongo *MongoUserStore) Update(sel, update bson.M) error {
-	return mongo.usersData.Update(sel, update)
+func (mStore *MongoUserStore) Update(sel, update bson.M) error {
+	return mStore.usersData.Update(sel, update)
 }
 
-func (mongo *MongoUserStore) FindUser(query bson.M, user *User) error {
-	return mongo.usersData.Find(query).One(user)
+func (mStore *MongoUserStore) FindUser(query bson.M, user *User) error {
+	return mStore.usersData.Find(query).One(user)
 }
-func (mongo *MongoUserStore) FindUserErr(query bson.M) error {
-	return mongo.usersData.Find(query).One(nil)
-}
-
-func (mongo *MongoUserStore) FindUserAddresses(query bson.M, sel bson.M, ws *WalletsSelect) error {
-	return mongo.usersData.Find(query).Select(sel).One(ws)
+func (mStore *MongoUserStore) FindUserErr(query bson.M) error {
+	return mStore.usersData.Find(query).One(nil)
 }
 
-func (mongo *MongoUserStore) Insert(user User) error {
-	return mongo.usersData.Insert(user)
+func (mStore *MongoUserStore) FindUserAddresses(query bson.M, sel bson.M, ws *WalletsSelect) error {
+	return mStore.usersData.Find(query).Select(sel).One(ws)
 }
 
-func (mongo *MongoUserStore) GetAllRates(sortBy string, rates *[]RatesRecord) error {
-	return mongo.ratessData.Find(nil).Sort(sortBy).All(rates)
+func (mStore *MongoUserStore) Insert(user User) error {
+	return mStore.usersData.Insert(user)
 }
 
-func (mongo *MongoUserStore) FindUserTxs(query bson.M, userTxs *TxRecord) error {
-	return mongo.txsData.Find(query).One(userTxs)
+func (mStore *MongoUserStore) GetAllRates(sortBy string, rates *[]RatesRecord) error {
+	return mStore.ratesData.Find(nil).Sort(sortBy).All(rates)
 }
 
-func (mongo *MongoUserStore) InsertTxStore(userTxs TxRecord) error {
-	return mongo.txsData.Insert(userTxs)
+func (mStore *MongoUserStore) FindUserTxs(query bson.M, userTxs *TxRecord) error {
+	return mStore.txsData.Find(query).One(userTxs)
 }
 
-func (mongoUserData *MongoUserStore) Close() error {
-	mongoUserData.session.Close()
+func (mStore *MongoUserStore) InsertTxStore(userTxs TxRecord) error {
+	return mStore.txsData.Insert(userTxs)
+}
+
+func (mStore *MongoUserStore) InsertExchangeRate(eRate ExchangeRates) error {
+	return mStore.stockExchangeRate.Insert(eRate)
+}
+
+func (mStore *MongoUserStore) Close() error {
+	mStore.session.Close()
 	return nil
 }

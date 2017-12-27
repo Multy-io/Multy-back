@@ -94,3 +94,14 @@ type TxRecord struct {
 	UserID       string    `json:"userid"`
 	Transactions []MultyTX `json:"transactions"`
 }
+
+type ExchangeRates struct {
+	EURtoBTC float64
+	USDtoBTC float64
+	ETHtoBTC float64
+
+	ETHtoUSD float64
+	ETHtoEUR float64
+
+	BTCtoUSD float64
+}

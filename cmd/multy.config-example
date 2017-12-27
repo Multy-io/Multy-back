@@ -5,7 +5,8 @@
         "TableUsers": "userCollection-conf",
         "DBUsers": "userDB-conf",
         "DBFeeRates": "BTCMempool-conf",
-        "DBTx": "DBTx-conf"
+        "DBTx": "DBTx-conf",
+        "DBStockExchangeRate": "DBStockExchangeRate-conf"
     },
     "RestAddress": "localhost:6678",
     "SocketioAddr": "localhost:6680",

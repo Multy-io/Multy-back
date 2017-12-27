@@ -23,10 +23,11 @@ var (
 var globalOpt = multy.Configuration{
 	Name: "my-test-back",
 	Database: store.Conf{
-		Address:    "localhost:27017",
-		DBUsers:    "userDB-test",
-		DBFeeRates: "BTCMempool-test",
-		DBTx:       "DBTx-test",
+		Address:             "localhost:27017",
+		DBUsers:             "userDB-test",
+		DBFeeRates:          "BTCMempool-test",
+		DBTx:                "DBTx-test",
+		DBStockExchangeRate: "DBStockExchangeRate-text",
 	},
 	RestAddress:  "localhost:7778",
 	SocketioAddr: "localhost:7780",
@@ -46,7 +47,7 @@ func main() {
 	config.ReadGlobalConfig(&globalOpt, "multy configuration")
 
 	log.Error("--------------------------------new multy back server session")
-	log.Infof("%s", globalOpt.Name)
+	log.Infof("CONFIGURATION=%+v", globalOpt)
 
 	log.Infof("branch: %s", branch)
 	log.Infof("commit: %s", commit)

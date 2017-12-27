@@ -6,6 +6,7 @@ import (
 )
 
 func Test_processGetExchangeEvent(t *testing.T) {
+	// TODO: update tests
 	ech, err := initExchangeChart()
 	if err != nil {
 		t.Fatal(err.Error())

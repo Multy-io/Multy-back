@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Appscrunch/Multy-back/btc"
+	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	nsq "github.com/bitly/go-nsq"
 	"github.com/graarh/golang-socketio"
@@ -24,18 +25,21 @@ type SocketIOConnectedPool struct {
 	nsqConsumerExchange       *nsq.Consumer
 	nsqConsumerBTCTransaction *nsq.Consumer
 
+	db store.UserStore // TODO: fix store name
+
 	chart  *exchangeChart
 	server *gosocketio.Server
 	log    slf.StructuredLogger
 }
 
-func InitConnectedPool(server *gosocketio.Server, address string) (*SocketIOConnectedPool, error) {
+func InitConnectedPool(server *gosocketio.Server, address string, db store.UserStore) (*SocketIOConnectedPool, error) {
 	pool := &SocketIOConnectedPool{
 		m:               &sync.RWMutex{},
 		users:           make(map[string]*SocketIOUser, 0),
 		address:         address,
 		log:             slf.WithContext("connectedPool"),
 		closeChByConnID: make(map[string]chan string, 0),
+		db:              db,
 	}
 	pool.log.Info("InitConnectedPool")
 
