@@ -173,4 +173,5 @@ func mempoolTransaction(inTx *btcjson.TxRawResult) {
 			}
 		}
 	}
+
 }

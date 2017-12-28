@@ -28,7 +28,7 @@ func createDevice(deviceid, ip, jwt, pushToken string, deviceType int) store.Dev
 		PushToken:      pushToken,
 		JWT:            jwt,
 		LastActionIP:   ip,
-		LastActionTime: time.Now().UnixNano() / 1000000,
+		LastActionTime: time.Now().Unix(),
 		DeviceType:     deviceType,
 	}
 }
@@ -38,8 +38,8 @@ func createWallet(currencyID int, address string, addressIndex int, walletIndex 
 		CurrencyID:     currencyID,
 		WalletIndex:    walletIndex,
 		WalletName:     walletName,
-		LastActionTime: time.Now().UnixNano() / 1000000,
-		DateOfCreation: time.Now().UnixNano() / 1000000,
+		LastActionTime: time.Now().Unix(),
+		DateOfCreation: time.Now().Unix(),
 		Adresses: []store.Address{
 			store.Address{
 				Address:      address,

@@ -3,6 +3,7 @@ package btc
 import (
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/rpcclient"
+	"github.com/btcsuite/btcd/wire"
 	mgo "gopkg.in/mgo.v2"
 
 	"time"
@@ -70,8 +71,6 @@ func RunProcess() error {
 		},
 		OnTxAcceptedVerbose: func(txDetails *btcjson.TxRawResult) {
 			log.Debugf("OnTxAcceptedVerbose: new transaction id = %v", txDetails.Txid)
-			// notify on new in
-			// notify on new out
 			go parseMempoolTransaction(txDetails)
 			//add every new tx from mempool to db
 			//feeRate
@@ -79,6 +78,9 @@ func RunProcess() error {
 
 			go mempoolTransaction(txDetails)
 
+		},
+		OnFilteredBlockDisconnected: func(height int32, header *wire.BlockHeader) {
+			go blockDisconnected(header)
 		},
 	}
 

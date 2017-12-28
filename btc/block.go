@@ -131,7 +131,7 @@ func blockTransactions(hash *chainhash.Hash) {
 	// block Height
 	blockVerbose, err := rpcClient.GetBlockVerbose(hash)
 	blockHeight := blockVerbose.Height
-	blockTimeUnixNano := time.Now().UnixNano() / 1000000
+	blockTimeUnixNano := time.Now().Unix()
 
 	//parse all block transactions
 	rawBlock, err := rpcClient.GetBlock(hash)
@@ -260,10 +260,13 @@ type MultyTX struct {
 	TxAddress   string              `json:"address"`
 	TxStatus    string              `json:"txstatus"`
 	TxOutAmount float64             `json:"txoutamount"`
+	TxFee       float64             `json:"txfee"`
 	TxOutID     int                 `json:"txoutid"`
 	BlockTime   int64               `json:"blocktime"`
 	BlockHeight int64               `json:"blockheight"`
 	FiatPrice   []StockExchangeRate `json:"stockexchangerate"`
+	TxInputs    []string            `json:"txinputs"`
+	TxOutputs   []string            `json:"txoutputs"`
 }
 
 type StockExchangeRate struct {
@@ -307,6 +310,8 @@ const (
 	TxStatusAppearedInBlockOutcoming   = "spend in block"
 
 	TxStatusInBlockConfirmed = "in block confirmed"
+
+	TxStatusRejectedFromBlock = "rejected block"
 )
 
 const (

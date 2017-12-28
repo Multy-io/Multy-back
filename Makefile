@@ -32,4 +32,4 @@ todo:
 .PHONY: todo
 
 dist:
-	GOOS=linux  go build $(LD_OPTS) cmd/ -o ./dist/$(NAME) .
+	cd cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .

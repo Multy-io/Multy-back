@@ -66,7 +66,6 @@ func getCertificate(certFile string) string {
 	if err != nil {
 		return ""
 	}
-	log.Debugf("cert: %s", string(cert[:len(cert)-1]))
 	return string(cert[:len(cert)-1])
 }
 
