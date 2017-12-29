@@ -86,12 +86,42 @@ func mempoolTransaction(inTx *btcjson.TxRawResult) {
 				continue
 			}
 			fmt.Println("[ITS OUR USER] ", user.UserID)
+			inputs := []AddresAmount{}
+			outputs := []AddresAmount{}
+			var inputSum float64
+			var outputSum float64
+
+			for _, out := range inTx.Vout {
+				for _, address := range out.ScriptPubKey.Addresses {
+					amount := int64(out.Value * 100000000)
+					outputs = append(outputs, newAddresAmount(address, amount))
+				}
+				outputSum += out.Value
+			}
+			for _, input := range inTx.Vin {
+				hash, err := chainhash.NewHashFromStr(input.Txid)
+				if err != nil {
+					log.Errorf("parseNewBlock:outputsData.chainhash.NewHashFromStr: %s", err.Error())
+				}
+				previousTxVerbose, err := rpcClient.GetRawTransactionVerbose(hash)
+				if err != nil {
+					log.Errorf("parseNewBlock:rpcClient.GetRawTransactionVerbose: %s", err.Error())
+					continue
+				}
+
+				for _, address := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses {
+					amount := int64(previousTxVerbose.Vout[input.Vout].Value * 100000000)
+					inputs = append(inputs, newAddresAmount(address, amount))
+				}
+				inputSum += previousTxVerbose.Vout[input.Vout].Value
+			}
+			fee := int64((inputSum - outputSum) * 100000000)
 
 			sel := bson.M{"userid": user.UserID, "transactions.txid": inTx.Txid, "transactions.txaddress": address}
 			err = txsData.Find(sel).One(nil)
 			if err == mgo.ErrNotFound {
 				//appending transaction to user entity
-				newTx := newMultyTX(inTx.Txid, inTx.Hash, output.ScriptPubKey.Hex, address, TxStatusAppearedInMempoolIncoming, output.Value, int(output.N), mempoolTimeUnixNano, -1, []StockExchangeRate{})
+				newTx := newMultyTX(inTx.Txid, inTx.Hash, output.ScriptPubKey.Hex, address, TxStatusAppearedInMempoolIncoming, output.Value, int(output.N), mempoolTimeUnixNano, -1, fee, []StockExchangeRate{}, inputs, outputs)
 				sel = bson.M{"userid": user.UserID}
 				update := bson.M{"$push": bson.M{"transactions": newTx}}
 				err = txsData.Update(sel, update)
@@ -107,8 +137,11 @@ func mempoolTransaction(inTx *btcjson.TxRawResult) {
 			sel = bson.M{"userid": user.UserID, "transactions.txid": inTx.Txid, "transactions.txaddress": address}
 			update := bson.M{
 				"$set": bson.M{
-					"transactions.$.txstatus":      TxStatusAppearedInMempoolIncoming,
-					"transactions.$.txblockheight": -1,
+					"transactions.$.txstatus":          TxStatusAppearedInMempoolIncoming,
+					"transactions.$.txblockheight":     -1,
+					"transactions.$.stockexchangerate": []StockExchangeRate{},
+					"transactions.$.txinputs":          inputs,
+					"transactions.$.txoutputs":         outputs,
 				},
 			}
 			err = txsData.Update(sel, update)
@@ -139,13 +172,44 @@ func mempoolTransaction(inTx *btcjson.TxRawResult) {
 			} else {
 				log.Debugf("[ITS OUR USER] %s", user.UserID)
 			}
+			inputs := []AddresAmount{}
+			outputs := []AddresAmount{}
+			var inputSum float64
+			var outputSum float64
+
+			for _, out := range inTx.Vout {
+				for _, address := range out.ScriptPubKey.Addresses {
+					amount := int64(out.Value * 100000000)
+					outputs = append(outputs, newAddresAmount(address, amount))
+				}
+				outputSum += out.Value
+			}
+			for _, input := range inTx.Vin {
+				hash, err := chainhash.NewHashFromStr(input.Txid)
+				if err != nil {
+					log.Errorf("parseNewBlock:outputsData.chainhash.NewHashFromStr: %s", err.Error())
+				}
+				previousTxVerbose, err := rpcClient.GetRawTransactionVerbose(hash)
+				if err != nil {
+					log.Errorf("parseNewBlock:rpcClient.GetRawTransactionVerbose: %s", err.Error())
+					continue
+				}
+
+				for _, address := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses {
+					amount := int64(previousTxVerbose.Vout[input.Vout].Value * 100000000)
+					inputs = append(inputs, newAddresAmount(address, amount))
+				}
+				inputSum += previousTxVerbose.Vout[input.Vout].Value
+			}
+
+			fee := int64((inputSum - outputSum) * 100000000)
 
 			// Is our user already have this transactions.
 			sel := bson.M{"userid": user.UserID, "transactions.txid": previousTxVerbose.Txid, "transactions.txaddress": address}
 			err = txsData.Find(sel).One(nil)
 			if err == mgo.ErrNotFound {
 				// User have no transaction like this. Add to DB.
-				newTx := newMultyTX(previousTxVerbose.Txid, previousTxVerbose.Hash, previousTxVerbose.Vout[input.Vout].ScriptPubKey.Hex, address, TxStatusAppearedInMempoolOutcoming, previousTxVerbose.Vout[input.Vout].Value, int(previousTxVerbose.Vout[input.Vout].N), mempoolTimeUnixNano, -1, []StockExchangeRate{})
+				newTx := newMultyTX(previousTxVerbose.Txid, previousTxVerbose.Hash, previousTxVerbose.Vout[input.Vout].ScriptPubKey.Hex, address, TxStatusAppearedInMempoolOutcoming, previousTxVerbose.Vout[input.Vout].Value, int(previousTxVerbose.Vout[input.Vout].N), mempoolTimeUnixNano, -1, fee, []StockExchangeRate{}, inputs, outputs)
 				sel = bson.M{"userid": user.UserID}
 				update := bson.M{"$push": bson.M{"transactions": newTx}}
 				err = txsData.Update(sel, update)
@@ -163,8 +227,11 @@ func mempoolTransaction(inTx *btcjson.TxRawResult) {
 			sel = bson.M{"userid": user.UserID, "transactions.txid": previousTxVerbose.Txid, "transactions.txaddress": address}
 			update := bson.M{
 				"$set": bson.M{
-					"transactions.$.txstatus":      TxStatusAppearedInMempoolOutcoming,
-					"transactions.$.txblockheight": -1,
+					"transactions.$.txstatus":          TxStatusAppearedInMempoolOutcoming,
+					"transactions.$.txblockheight":     -1,
+					"transactions.$.stockexchangerate": []StockExchangeRate{},
+					"transactions.$.txinputs":          inputs,
+					"transactions.$.txoutputs":         outputs,
 				},
 			}
 			err = txsData.Update(sel, update)

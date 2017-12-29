@@ -21,6 +21,7 @@ import (
 
 const (
 	msgErrWalletIndex           = "already existing wallet index"
+	msgErrTxHistory             = "not found any transaction history"
 	msgErrAddressIndex          = "already existing address index"
 	msgErrMethodNotImplennted   = "method is not implemented"
 	msgErrHeaderError           = "wrong authorization headers"
@@ -89,7 +90,7 @@ func SetRestHandlers(userDB store.UserStore, btcConfTest, btcConfMain BTCApiConf
 		v1.POST("/transaction/send/:currencyid", restClient.sendRawTransaction())
 		v1.GET("/wallet/:walletindex/verbose", restClient.getWalletVerbose())
 		v1.GET("/wallets/verbose", restClient.getAllWalletsVerbose())
-		//	v1.GET("wallets/:walletindex/transactions/history", restClient.getWalletTransactionsHistory())
+		v1.GET("/wallets/:walletindex/transactions/history", restClient.getWalletTransactionsHistory())
 	}
 	return restClient, nil
 }
@@ -701,11 +702,11 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 }
 
 type WalletVerbose struct {
-	CurrencyID     int              `json:"currencyID"`
-	WalletIndex    int              `json:"walletIndex"`
-	WalletName     string           `json:"walletName"`
-	LastActionTime int64            `json:"lastActionTime"`
-	DateOfCreation int64            `json:"dateOfCreation"`
+	CurrencyID     int              `json:"currencyid"`
+	WalletIndex    int              `json:"walletindex"`
+	WalletName     string           `json:"walletname"`
+	LastActionTime int64            `json:"lastactiontime"`
+	DateOfCreation int64            `json:"dateofcreation"`
 	VerboseAddress []AddressVerbose `json:"addresses"`
 }
 type AddressVerbose struct {
@@ -831,13 +832,70 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		var walletTxs []store.MultyTX
+		authHeader := strings.Split(c.GetHeader("Authorization"), " ")
+		if len(authHeader) < 2 {
+			restClient.log.Errorf("getAllWalletsVerbose: wrong Authorization header len\t[addr=%s]", c.Request.RemoteAddr)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrHeaderError,
+				"history": walletTxs,
+			})
+			return
+		}
+		token := authHeader[1]
 
+		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
+		restClient.log.Debugf("getWalletVerbose [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
+		if err != nil {
+			restClient.log.Errorf("getWalletVerbose: non int wallet index:[%d] %s \t[addr=%s]", walletIndex, err.Error(), c.Request.RemoteAddr)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrDecodeWalletIndexErr,
+				"history": walletTxs,
+			})
+			return
+		}
+
+		user := store.User{}
+		sel := bson.M{"devices.JWT": token}
+		err = restClient.userStore.FindUser(sel, &user)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrWalletIndex,
+				"history": walletTxs,
+			})
+			return
+		}
+		addresses := []string{}
+		for _, wallet := range user.Wallets {
+			if wallet.WalletIndex == walletIndex {
+				for _, address := range wallet.Adresses {
+					addresses = append(addresses, address.Address)
+				}
+			}
+		}
+		query := bson.M{
+			"transactions.txaddress": bson.M{
+				"$in": addresses,
+			},
+		}
+
+		err = restClient.userStore.GetAllWalletTransactions(query, &walletTxs)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrTxHistory,
+				"history": walletTxs,
+			})
+			return
+		}
+
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": msgErrTxHistory,
+			"history": walletTxs,
+		})
 	}
-}
-
-type TransactionVerbose struct {
-	Address       string             `json:"address"`
-	AddressIndex  int                `json:"addressindex"`
-	Amount        int                `json:"amount"`
-	SpendableOuts []SpendableOutputs `json:"spendableoutputs"`
 }
