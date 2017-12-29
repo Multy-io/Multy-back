@@ -2,6 +2,7 @@ package store
 
 import (
 	"errors"
+	"time"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -43,7 +44,8 @@ type UserStore interface {
 	InsertTxStore(userTxs TxRecord) error
 	FindUserErr(query bson.M) error
 	FindUserAddresses(query bson.M, sel bson.M, ws *WalletsSelect) error
-	InsertExchangeRate(ExchangeRates) error
+	InsertExchangeRate(ExchangeRates, string) error
+	GetExchangeRatesDay() ([]RatesAPIBitstamp, error)
 }
 
 type MongoUserStore struct {
@@ -111,8 +113,20 @@ func (mStore *MongoUserStore) InsertTxStore(userTxs TxRecord) error {
 	return mStore.txsData.Insert(userTxs)
 }
 
-func (mStore *MongoUserStore) InsertExchangeRate(eRate ExchangeRates) error {
-	return mStore.stockExchangeRate.Insert(eRate)
+func (mStore *MongoUserStore) InsertExchangeRate(eRate ExchangeRates, exchangeStock string) error {
+	eRateRecord := &ExchangeRatesRecord{
+		Exchanges:     eRate,
+		Timestamp:     time.Now().Unix(),
+		StockExchange: exchangeStock,
+	}
+
+	return mStore.stockExchangeRate.Insert(eRateRecord)
+}
+
+// GetExchangeRatesDay returns exchange rates for last day with time interval equal to hour
+func (mStore *MongoUserStore) GetExchangeRatesDay() ([]RatesAPIBitstamp, error) {
+	// not implemented
+	return nil, nil
 }
 
 func (mStore *MongoUserStore) Close() error {

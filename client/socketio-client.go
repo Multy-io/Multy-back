@@ -146,16 +146,17 @@ func newSocketIOUser(id string, newUser *SocketIOUser, conn *gosocketio.Channel,
 }
 
 func (sIOUser *SocketIOUser) runUpdateExchange() {
-	sIOUser.log.Debugf("runUpdateExchange")
 	sIOUser.tickerLastExchange = time.NewTicker(updateExchangeClient)
 
 	for {
 		select {
 		case _ = <-sIOUser.tickerLastExchange.C:
-			updateMsg := sIOUser.chart.getLast()
+			gdaxRate := sIOUser.chart.getExchangeGdax()
+			poloniexRate := sIOUser.chart.getExchangePoloniex()
 			for _, c := range sIOUser.conns {
-				sIOUser.log.Debugf("get last: conn id=%s", c.Id())
-				c.Emit(topicExchangeUpdate, updateMsg)
+				sIOUser.log.Debugf("sending updated exchange: conn id=%s", c.Id())
+				c.Emit(topicExchangeGdax, gdaxRate)
+				c.Emit(topicExchangePoloniex, poloniexRate)
 			}
 		case connID := <-sIOUser.closeCh:
 			log.Println("disconnecting conn id=", connID)

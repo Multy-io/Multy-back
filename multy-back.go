@@ -43,19 +43,19 @@ func Init(conf *Configuration) (*Multy, error) {
 
 	userStore, err := store.InitUserStore(conf.Database)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("DB initialization: %s", err.Error())
 	}
 	multy.userStore = userStore
 
 	btcClient, err := btc.InitHandlers(getCertificate(conf.BTCSertificate), &conf.Database)
 	if err != nil {
-		return nil, fmt.Errorf("blockchain api initialization: %s", err.Error())
+		return nil, fmt.Errorf("Blockchain api initialization: %s", err.Error())
 	}
 	log.Debug("BTC handlers initialization done")
 	multy.btcClient = btcClient
 
 	if err = multy.initRoutes(conf); err != nil {
-		return nil, fmt.Errorf("router initialization: %s", err.Error())
+		return nil, fmt.Errorf("Router initialization: %s", err.Error())
 	}
 
 	return multy, nil

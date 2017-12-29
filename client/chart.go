@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -19,43 +21,56 @@ var (
 )
 
 const (
-	//secondsInDay   = 8640
-	//numOfChartDots = 1200 //12 minutes
-
 	saveToDBInterval       = time.Second * 60
 	updateForExchangeChart = time.Hour
 
 	defaultNSQAddr = "127.0.0.1:4150"
 )
 
-type Rates struct {
-	BTCtoUSDDay    []RatesAPIBitstamp
-	exchangeSingle *store.ExchangeRates
+// StockRate stores rates from specific stock and protected with mutex
+type StockRate struct {
+	exchange *store.ExchangeRates
+	m        *sync.Mutex
+}
 
-	m *sync.Mutex
+// Rates stores rates from all supported stocks
+type Rates struct {
+	BTCtoUSDDay []store.RatesAPIBitstamp
+	mDay        *sync.Mutex
+
+	exchangeGdax     *StockRate
+	exchangePoloniex *StockRate
 }
 
 type exchangeChart struct {
-	rates    *Rates
-	gdaxConn *GdaxAPI
+	rates        *Rates
+	gdaxConn     *GdaxAPI
+	poloniexConn *PoloniexAPI
 
-	db store.UserStore
-
+	db  store.UserStore
 	log slf.StructuredLogger
 }
 
 func initExchangeChart(db store.UserStore) (*exchangeChart, error) {
 	chart := &exchangeChart{
 		rates: &Rates{
-			exchangeSingle: &store.ExchangeRates{},
-			BTCtoUSDDay:    make([]RatesAPIBitstamp, 0),
-			m:              &sync.Mutex{},
+			exchangeGdax: &StockRate{
+				exchange: &store.ExchangeRates{},
+				m:        &sync.Mutex{},
+			},
+			exchangePoloniex: &StockRate{
+				exchange: &store.ExchangeRates{},
+				m:        &sync.Mutex{},
+			},
+
+			BTCtoUSDDay: make([]store.RatesAPIBitstamp, 0),
+			mDay:        &sync.Mutex{},
 		},
 		db:  db,
 		log: slf.WithContext("chart"),
 	}
 	chart.log.Debug("initExchangeChart")
-	chart.getAllAPIBitstamp()
+	chart.getDayAPIBitstamp()
 
 	gDaxConn, err := chart.initGdaxAPI(chart.log)
 	if err != nil {
@@ -63,42 +78,66 @@ func initExchangeChart(db store.UserStore) (*exchangeChart, error) {
 	}
 	chart.gdaxConn = gDaxConn
 
+	poloniexConn, err := chart.initPoloniexAPI(chart.log)
+	if err != nil {
+		return nil, fmt.Errorf("initPoloniexAPI: %s", err)
+	}
+	chart.poloniexConn = poloniexConn
+
 	go chart.run()
 
 	return chart, nil
 }
 
-func (eChart *exchangeChart) saveToDB() {
-	eChart.rates.m.Lock()
-	eChart.rates.m.Unlock()
-
-	eChart.db.InsertExchangeRate(*eChart.rates.exchangeSingle)
-}
-
 func (eChart *exchangeChart) run() error {
-
 	tickerUpdateForChart := time.NewTicker(updateForExchangeChart)
 	tickerSaveToDB := time.NewTicker(saveToDBInterval)
 
 	go eChart.gdaxConn.listen()
+	go eChart.poloniexConn.listen()
+
+	eChart.gdaxConn.subscribe()
+	eChart.poloniexConn.subscribe()
 
 	for {
 		select {
 		case _ = <-tickerSaveToDB.C:
 			eChart.saveToDB()
+
 		case _ = <-tickerUpdateForChart.C:
-			eChart.getAllAPIBitstamp()
+			// will be removed after db method implementation
+			eChart.getDayAPIBitstamp()
+
+			// update hour exchanges by groupping minute records
+			eChart.updateDayRates()
 		}
 	}
 }
 
-type RatesAPIBitstamp struct {
-	Date  string `json:"date"`
-	Price string `json:"price"`
+func (eChart *exchangeChart) saveToDB() {
+	eChart.rates.exchangeGdax.m.Lock()
+	//eChart.log.Debugf("gdax=%+v", eChart.rates.exchangeGdax.exchange)
+	eChart.db.InsertExchangeRate(*eChart.rates.exchangeGdax.exchange, exchangeDdax)
+	eChart.rates.exchangeGdax.m.Unlock()
+
+	eChart.rates.exchangePoloniex.m.Lock()
+	eChart.db.InsertExchangeRate(*eChart.rates.exchangePoloniex.exchange, exchangePoloniex)
+	eChart.rates.exchangePoloniex.m.Unlock()
 }
 
-func (eChart *exchangeChart) getAllAPIBitstamp() {
-	eChart.log.Debug("updateAll")
+func (eChart *exchangeChart) updateDayRates() {
+	eChart.rates.mDay.Lock()
+	_, err := eChart.db.GetExchangeRatesDay()
+	if err != nil {
+		eChart.log.Errorf("GetExchangeRatesDay: %s", err.Error())
+		return
+	}
+	// TODO: saving to in-memory store
+	eChart.rates.mDay.Unlock()
+}
+
+func (eChart *exchangeChart) getDayAPIBitstamp() {
+	eChart.log.Debug("update rates day")
 
 	reqURI := "https://www.bitstamp.net/api/transactions/?date=hour"
 
@@ -120,33 +159,43 @@ func (eChart *exchangeChart) getAllAPIBitstamp() {
 		return
 	}
 
-	var ratesAll = make([]RatesAPIBitstamp, 0)
+	var ratesAll = make([]store.RatesAPIBitstamp, 0)
 	err = json.Unmarshal(bodyBytes, &ratesAll)
 	if err != nil {
 		eChart.log.Errorf("%s\n", err.Error())
 		return
 	}
 
-	eChart.log.Debugf("getAllAPIBitstamp=[%v]", ratesAll)
+	eChart.log.Debugf("rates 24h=[%v]", ratesAll)
 
-	eChart.rates.m.Lock()
+	eChart.rates.mDay.Lock()
 	eChart.rates.BTCtoUSDDay = ratesAll
-	eChart.rates.m.Unlock()
-
-	return
+	eChart.rates.mDay.Unlock()
 }
 
-func (eChart *exchangeChart) getAllDay() []RatesAPIBitstamp {
-	eChart.log.Debug("exchange chart: get all exchanges")
+func (eChart *exchangeChart) getExchangeDay() []store.RatesAPIBitstamp {
+	eChart.log.Debug("exchange chart: get exchanges for 24 hours")
 
-	eChart.rates.m.Lock()
-	defer eChart.rates.m.Unlock()
+	eChart.rates.mDay.Lock()
+	defer eChart.rates.mDay.Unlock()
 
+	for _, k := range eChart.rates.BTCtoUSDDay {
+		i, _ := strconv.Atoi(k.Date)
+		log.Println(time.Unix(int64(i), 0).Format(time.RFC3339), "=", k.Price)
+	}
 	return eChart.rates.BTCtoUSDDay
 }
 
-func (eChart *exchangeChart) getLast() *store.ExchangeRates {
-	eChart.rates.m.Lock()
-	defer eChart.rates.m.Unlock()
-	return eChart.rates.exchangeSingle
+func (eChart *exchangeChart) getExchangeGdax() *store.ExchangeRates {
+	eChart.rates.exchangeGdax.m.Lock()
+	defer eChart.rates.exchangeGdax.m.Unlock()
+
+	return eChart.rates.exchangeGdax.exchange
+}
+
+func (eChart *exchangeChart) getExchangePoloniex() *store.ExchangeRates {
+	eChart.rates.exchangePoloniex.m.Lock()
+	defer eChart.rates.exchangePoloniex.m.Unlock()
+
+	return eChart.rates.exchangePoloniex.exchange
 }

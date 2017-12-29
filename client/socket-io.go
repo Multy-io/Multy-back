@@ -17,13 +17,12 @@ const (
 
 	deviceTypeMac     = "mac"
 	deviceTypeAndroid = "android"
-)
 
-const (
-	topicExchangeAll          = "exchangeAll"
-	topicExchangeUpdate       = "exchangeUpdate"
+	topicExchangeDay      = "exchangeDay"
+	topicExchangeGdax     = "exchangeGdax"
+	topicExchangePoloniex = "exchangePoloniex"
+
 	topicBTCTransactionUpdate = "btcTransaction"
-
 	topicEthTransactionUpdate = "ethTransaction"
 )
 
@@ -66,8 +65,8 @@ func SetSocketIOHandlers(r *gin.RouterGroup, address string, ratesDB store.UserS
 
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
 		pool.log.Debugf("connected: %s", c.Id())
-		allRates := pool.chart.getAllDay()
-		c.Emit(topicExchangeAll, allRates)
+		ratesDay := pool.chart.getExchangeDay()
+		c.Emit(topicExchangeDay, ratesDay)
 
 		user, err := getHeaderDataSocketIO(c.RequestHeader())
 		if err != nil {

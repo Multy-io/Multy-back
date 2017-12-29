@@ -95,13 +95,27 @@ type TxRecord struct {
 	Transactions []MultyTX `json:"transactions"`
 }
 
+// ExchangeRatesRecord presents record with exchanges from rate stock
+// with additional information, such as date and exchange stock
+type ExchangeRatesRecord struct {
+	Exchanges     ExchangeRates `json:"exchanges"`
+	Timestamp     int64         `json:"timestamp"`
+	StockExchange string        `json:"stock_exchange"`
+}
+
+// ExchangeRates stores exchange rates
 type ExchangeRates struct {
-	EURtoBTC float64
-	USDtoBTC float64
-	ETHtoBTC float64
+	EURtoBTC float64 `json:"eur_btc,omitempty"`
+	USDtoBTC float64 `json:"usd_btc,omitempty"`
+	ETHtoBTC float64 `json:"eth_btc,omitempty"`
 
-	ETHtoUSD float64
-	ETHtoEUR float64
+	ETHtoUSD float64 `json:"eth_usd,omitempty"`
+	ETHtoEUR float64 `json:"eth_eur,omitempty"`
 
-	BTCtoUSD float64
+	BTCtoUSD float64 `json:"btc_usd,omitempty"`
+}
+
+type RatesAPIBitstamp struct {
+	Date  string `json:"date"`
+	Price string `json:"price"`
 }
