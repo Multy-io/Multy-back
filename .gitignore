@@ -7,7 +7,3 @@ cmd/logs
 
 rpc.cert
 
-vendor/gopkg.in
-vendor/github.com
-vendor/golang.org
-
