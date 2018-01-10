@@ -23,7 +23,7 @@ func parseMempoolTransaction(inTx *btcjson.TxRawResult) {
 			txMsq := BtcTransactionWithUserID{
 				UserID: user.UserID,
 				NotificationMsg: &BtcTransaction{
-					TransactionType: txInMempool,
+					TransactionType: TxStatusAppearedInMempoolIncoming,
 					Amount:          out.Value,
 					TxID:            inTx.Txid,
 					Address:         address,
@@ -56,7 +56,7 @@ func parseMempoolTransaction(inTx *btcjson.TxRawResult) {
 				txMsq := BtcTransactionWithUserID{
 					UserID: user.UserID,
 					NotificationMsg: &BtcTransaction{
-						TransactionType: txOutMempool,
+						TransactionType: TxStatusAppearedInMempoolOutcoming,
 						Amount:          out.Value,
 						TxID:            inTx.Txid,
 						Address:         address,

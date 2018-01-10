@@ -21,7 +21,7 @@ var (
 )
 
 const (
-	saveToDBInterval       = time.Second * 60
+	saveToDBInterval       = time.Second * 10
 	updateForExchangeChart = time.Hour
 
 	defaultNSQAddr = "127.0.0.1:4150"

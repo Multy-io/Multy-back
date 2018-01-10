@@ -12,19 +12,13 @@ import (
 )
 
 const (
-	txInMempool  = "incoming from mempool"
-	txOutMempool = "outcoming from mempool"
-	txInBlock    = "incoming from block"
-	txOutBlock   = "outcoming from block"
-
 	// TopicTransaction is a topic for sending notifies to clients
 	TopicTransaction = "btcTransactionUpdate"
 )
 
 // Dirty hack - this will be wrapped to a struct
 var (
-	rpcClient = &rpcclient.Client{}
-
+	rpcClient   = &rpcclient.Client{}
 	nsqProducer *nsq.Producer // a producer for sending data to clients
 	rpcConf     *rpcclient.ConnConfig
 )
@@ -52,6 +46,7 @@ func InitHandlers(certFromConf string, dbConf *store.Conf) (*rpcclient.Client, e
 	usersData = db.DB(dbConf.DBUsers).C(store.TableUsers) // all db tables
 	mempoolRates = db.DB(dbConf.DBFeeRates).C(store.TableFeeRates)
 	txsData = db.DB(dbConf.DBTx).C(store.TableBTC)
+	exRate = db.DB("dev-DBStockExchangeRate").C("TableStockExchangeRate")
 
 	go RunProcess()
 	return rpcClient, nil

@@ -46,7 +46,7 @@ type UserStore interface {
 	FindUserAddresses(query bson.M, sel bson.M, ws *WalletsSelect) error
 	InsertExchangeRate(ExchangeRates, string) error
 	GetExchangeRatesDay() ([]RatesAPIBitstamp, error)
-	GetAllWalletTransactions(query bson.M, walletTxs *[]MultyTX) error
+	GetAllWalletTransactions(query bson.M, walletTxs *TxRecord) error
 }
 
 type MongoUserStore struct {
@@ -124,14 +124,36 @@ func (mStore *MongoUserStore) InsertExchangeRate(eRate ExchangeRates, exchangeSt
 	return mStore.stockExchangeRate.Insert(eRateRecord)
 }
 
+// func (mStore *MongoUserStore) GetLatestExchangeRate() ([]ExchangeRatesRecord, error) {
+// 	selGdax := bson.M{
+// 		"stockexchange": "Gdax",
+// 	}
+// 	selPoloniex := bson.M{
+// 		"stockexchange": "Poloniex",
+// 	}
+// 	stocksGdax := ExchangeRatesRecord{}
+// 	err := mStore.stockExchangeRate.Find(selGdax).Sort("-timestamp").One(&stocksGdax)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	stocksPoloniex := ExchangeRatesRecord{}
+// 	err = mStore.stockExchangeRate.Find(selPoloniex).Sort("-timestamp").One(&stocksPoloniex)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return []ExchangeRatesRecord{stocksPoloniex, stocksGdax}, nil
+
+// }
+
 // GetExchangeRatesDay returns exchange rates for last day with time interval equal to hour
 func (mStore *MongoUserStore) GetExchangeRatesDay() ([]RatesAPIBitstamp, error) {
 	// not implemented
 	return nil, nil
 }
 
-func (mStore *MongoUserStore) GetAllWalletTransactions(query bson.M, walletTxs *[]MultyTX) error {
-	return mStore.txsData.Find(query).All(walletTxs)
+func (mStore *MongoUserStore) GetAllWalletTransactions(query bson.M, walletTxs *TxRecord) error {
+	return mStore.txsData.Find(query).One(walletTxs)
 }
 
 func (mStore *MongoUserStore) Close() error {

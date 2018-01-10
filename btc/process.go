@@ -37,6 +37,7 @@ var (
 	usersData    *mgo.Collection
 	mempoolRates *mgo.Collection
 	txsData      *mgo.Collection
+	exRate       *mgo.Collection
 )
 
 var Cert = `testcert`

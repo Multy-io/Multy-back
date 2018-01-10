@@ -27,7 +27,7 @@ var globalOpt = multy.Configuration{
 		DBUsers:             "userDB-test",
 		DBFeeRates:          "BTCMempool-test",
 		DBTx:                "DBTx-test",
-		DBStockExchangeRate: "DBStockExchangeRate-text",
+		DBStockExchangeRate: "dev-DBStockExchangeRate",
 	},
 	RestAddress:  "localhost:7778",
 	SocketioAddr: "localhost:7780",

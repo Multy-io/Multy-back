@@ -40,6 +40,7 @@ func createWallet(currencyID int, address string, addressIndex int, walletIndex 
 		WalletName:     walletName,
 		LastActionTime: time.Now().Unix(),
 		DateOfCreation: time.Now().Unix(),
+		Status:         store.WalletStatusOK,
 		Adresses: []store.Address{
 			store.Address{
 				Address:      address,

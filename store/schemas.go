@@ -1,6 +1,8 @@
 package store
 
-import "time"
+import (
+	"time"
+)
 
 // User represents a single app user
 type User struct {
@@ -40,6 +42,11 @@ type Device struct {
 	DeviceType     int    `bson:"deviceType"`     // 1 - IOS, 2 - Android
 }
 
+const (
+	WalletStatusOK      = "ok"
+	WalletStatusDeleted = "deleted"
+)
+
 // Wallet Specifies a concrete wallet of user.
 type Wallet struct {
 	// Currency of wallet.
@@ -57,6 +64,8 @@ type Wallet struct {
 
 	// All addresses assigned to this wallet.
 	Adresses []Address `bson:"addresses"`
+
+	Status string `bson:"status"`
 }
 
 type RatesRecord struct {
@@ -80,14 +89,24 @@ type WalletsSelect struct {
 
 // the way how user transations store in db
 type MultyTX struct {
-	TxID          string  `json:"txid"`
-	TxHash        string  `json:"txhash"`
-	TxOutID       int     `json:"txoutid"`
-	TxOutAmount   float64 `json:"txoutamount"`
-	TxOutScript   string  `json:"txoutscript"`
-	TxAddress     string  `json:"address"`
-	TxBlockHeight int64   `json:"blockheight"`
-	TxStatus      string  `json:"txstatus"`
+	TxID              string                `json:"txid"`
+	TxHash            string                `json:"txhash"`
+	TxOutScript       string                `json:"txoutscript"`
+	TxAddress         string                `json:"address"`
+	TxStatus          string                `json:"txstatus"`
+	TxOutAmount       float64               `json:"txoutamount"`
+	TxOutID           int                   `json:"txoutid"`
+	WalletIndex       int                   `json:"walletindex"`
+	BlockTime         int64                 `json:"blocktime"`
+	BlockHeight       int64                 `json:"blockheight"`
+	TxFee             int64                 `json:"txfee"`
+	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
+	TxInputs          []AddresAmount        `json:"txinputs"`
+	TxOutputs         []AddresAmount        `json:"txoutputs"`
+}
+type AddresAmount struct {
+	Address string `json:"exchangename"`
+	Amount  int64  `json:"amount"`
 }
 
 type TxRecord struct {
