@@ -1,0 +1,74 @@
+version: '3.4'
+services:
+  multy-back:
+    image: multyio/multy-back:1.0.0
+    volumes:
+      - ./:/go/src/Appscrunch/Multy-back
+    ports:
+      - "5580:5580"
+      - "5578:5578"
+    depends_on:
+      - nsq
+      - nsqlookup
+      - nsqadmin
+      - mongodb
+      - bitcoind
+
+  nsqlookup:
+    image: nsqio/nsq
+    hostname: nsqlookup
+    ports:
+      - "4160:4160"
+      - "4161:4161"
+    command: nsqlookupd
+
+  nsq:
+    image: nsqio/nsq
+    hostname: nsq
+    ports:
+      - "4150:4150"
+      - "4151:4151"
+    links:
+      - nsqlookup:nsqlookup
+    command: nsqd --broadcast-address nsq --lookupd-tcp-address=nsqlookup:4160
+
+  nsqadmin:
+    image: nsqio/nsq
+    hostname: nsqadmin
+    links:
+      - nsqlookup:nsqlookup
+    ports:
+      - "4171:4171"
+    command: nsqadmin --lookupd-http-address=nsqlookup:4161
+
+  mongodb:
+    container_name: "mongodb"
+    image: mongo:3.4
+    command: mongod --smallfiles 
+    environment:
+      - MONGO_DATA_DIR=/data/db
+    volumes:
+      - ./data/db:/data/db
+      # add logpath
+    ports:
+      - 27017:27017
+
+  bitcoind:
+    image: amacneil/bitcoin
+    command: bitcoind
+    healthcheck:
+      test: ["CMD", "/entrypoint.sh", "bitcoin-cli", "getinfo"]
+    ports:
+      - "18334:18334"
+    volumes:
+      - bitcoin-data:/data
+
+  bitcoin-cli:
+    image: amacneil/bitcoin
+    entrypoint: ["/entrypoint.sh", "bitcoin-cli"]
+    command: ""
+    depends_on:
+      - bitcoind
+
+volumes:
+    bitcoin-data:

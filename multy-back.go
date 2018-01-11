@@ -47,7 +47,7 @@ func Init(conf *Configuration) (*Multy, error) {
 	}
 	multy.userStore = userStore
 
-	btcClient, err := btc.InitHandlers(getCertificate(conf.BTCSertificate), &conf.Database)
+	btcClient, err := btc.InitHandlers(getCertificate(conf.BTCSertificate), &conf.Database, conf.NSQAddress)
 	if err != nil {
 		return nil, fmt.Errorf("Blockchain api initialization: %s", err.Error())
 	}
@@ -76,7 +76,7 @@ func (multy *Multy) initRoutes(conf *Configuration) error {
 	gin.SetMode(gin.DebugMode)
 
 	socketIORoute := router.Group("/socketio")
-	socketIOPool, err := client.SetSocketIOHandlers(socketIORoute, conf.SocketioAddr, multy.userStore)
+	socketIOPool, err := client.SetSocketIOHandlers(socketIORoute, conf.SocketioAddr, conf.NSQAddress, multy.userStore)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (multy *Multy) initRoutes(conf *Configuration) error {
 	}
 	multy.restClient = restClient
 
-	firebaseClient, err := client.InitFirebaseConn(&conf.Firebase, multy.route)
+	firebaseClient, err := client.InitFirebaseConn(&conf.Firebase, multy.route, conf.NSQAddress)
 	if err != nil {
 		return err
 	}

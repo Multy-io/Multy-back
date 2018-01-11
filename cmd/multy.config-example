@@ -1,13 +1,14 @@
 {
     "Name": "my-test-back",
     "Database": {
-        "Address": "localhost:27017",
+        "Address": "mongodb:27017",
         "TableUsers": "UserCollection-conf",
         "DBUsers": "userDB-conf",
         "DBFeeRates": "BTCMempool-conf",
         "DBTx": "DBTx-conf",
         "DBStockExchangeRate": "DBStockExchangeRate-conf"
     },
+    "NSQAddress": "nsq:4150",
     "RestAddress": "localhost:6678",
     "SocketioAddr": "localhost:6680",
     "BTCAPITest": {

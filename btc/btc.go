@@ -25,9 +25,9 @@ var (
 
 var log = slf.WithContext("btc")
 
-func InitHandlers(certFromConf string, dbConf *store.Conf) (*rpcclient.Client, error) {
+func InitHandlers(certFromConf string, dbConf *store.Conf, nsqAddr string) (*rpcclient.Client, error) {
 	config := nsq.NewConfig()
-	p, err := nsq.NewProducer("127.0.0.1:4150", config)
+	p, err := nsq.NewProducer(nsqAddr, config)
 	if err != nil {
 		return nil, fmt.Errorf("nsq producer: %s", err.Error())
 	}
@@ -37,7 +37,7 @@ func InitHandlers(certFromConf string, dbConf *store.Conf) (*rpcclient.Client, e
 	connCfg.Certificates = []byte(Cert)
 	log.Infof("cert=%s\n", Cert)
 
-	db, err := mgo.Dial("localhost:27017")
+	db, err := mgo.Dial(dbConf.Address)
 	if err != nil {
 		log.Errorf("RunProcess: Cand connect to DB: %s", err.Error())
 		return nil, err

@@ -27,7 +27,7 @@ type FirebaseClient struct {
 	log slf.StructuredLogger
 }
 
-func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine) (*FirebaseClient, error) {
+func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*FirebaseClient, error) {
 	fClient := &FirebaseClient{
 		conf:      conf,
 		client:    fcm.NewFcmClient(conf.ServerKey),
@@ -78,7 +78,7 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine) (*FirebaseClient, error
 		return nil
 	}))
 
-	if err = nsqConsumer.ConnectToNSQD("127.0.0.1:4150"); err != nil {
+	if err = nsqConsumer.ConnectToNSQD(nsqAddr); err != nil {
 		return nil, fmt.Errorf("connecting to nsq: %s", err.Error())
 	}
 	fClient.log.Debugf("Firebase connection initialization done")

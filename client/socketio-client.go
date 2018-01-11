@@ -32,7 +32,7 @@ type SocketIOConnectedPool struct {
 	log    slf.StructuredLogger
 }
 
-func InitConnectedPool(server *gosocketio.Server, address string, db store.UserStore) (*SocketIOConnectedPool, error) {
+func InitConnectedPool(server *gosocketio.Server, address, nsqAddr string, db store.UserStore) (*SocketIOConnectedPool, error) {
 	pool := &SocketIOConnectedPool{
 		m:               &sync.RWMutex{},
 		users:           make(map[string]*SocketIOUser, 0),
@@ -43,7 +43,7 @@ func InitConnectedPool(server *gosocketio.Server, address string, db store.UserS
 	}
 	pool.log.Info("InitConnectedPool")
 
-	nsqConsumerBTCTransaction, err := pool.newConsumerBTCTransaction()
+	nsqConsumerBTCTransaction, err := pool.newConsumerBTCTransaction(nsqAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func InitConnectedPool(server *gosocketio.Server, address string, db store.UserS
 	return pool, nil
 }
 
-func (sConnPool *SocketIOConnectedPool) newConsumerBTCTransaction() (*nsq.Consumer, error) {
+func (sConnPool *SocketIOConnectedPool) newConsumerBTCTransaction(nsqAddr string) (*nsq.Consumer, error) {
 	consumer, err := nsq.NewConsumer(topicBTCTransactionUpdate, "all", nsq.NewConfig())
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (sConnPool *SocketIOConnectedPool) newConsumerBTCTransaction() (*nsq.Consum
 		return nil
 	}))
 
-	err = consumer.ConnectToNSQD("127.0.0.1:4150")
+	err = consumer.ConnectToNSQD(nsqAddr)
 	if err != nil {
 		sConnPool.log.Errorf("nsq exchange: %s", err.Error())
 	}

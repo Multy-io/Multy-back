@@ -49,10 +49,10 @@ func getHeaderDataSocketIO(headers http.Header) (*SocketIOUser, error) {
 	}, nil
 }
 
-func SetSocketIOHandlers(r *gin.RouterGroup, address string, ratesDB store.UserStore) (*SocketIOConnectedPool, error) {
+func SetSocketIOHandlers(r *gin.RouterGroup, address, nsqAddr string, ratesDB store.UserStore) (*SocketIOConnectedPool, error) {
 	server := gosocketio.NewServer(transport.GetDefaultWebsocketTransport())
 
-	pool, err := InitConnectedPool(server, address, ratesDB)
+	pool, err := InitConnectedPool(server, address, nsqAddr, ratesDB)
 	if err != nil {
 		return nil, fmt.Errorf("connection pool initialization: %s", err.Error())
 	}
