@@ -1,3 +1,8 @@
+/*
+Copyright 2017 Idealnaya rabota LLC
+Licensed under Multy.io license.
+See LICENSE for details
+*/
 package client
 
 import (
@@ -43,8 +48,9 @@ func createWallet(currencyID int, address string, addressIndex int, walletIndex 
 		Status:         store.WalletStatusOK,
 		Adresses: []store.Address{
 			store.Address{
-				Address:      address,
-				AddressIndex: addressIndex,
+				Address:        address,
+				AddressIndex:   addressIndex,
+				LastActionTime: time.Now().Unix(),
 			},
 		},
 	}

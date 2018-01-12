@@ -1,8 +1,14 @@
+/*
+Copyright 2017 Idealnaya rabota LLC
+Licensed under Multy.io license.
+See LICENSE for details
+*/
 package btc
 
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	mgo "gopkg.in/mgo.v2"
@@ -183,7 +189,7 @@ func blockConfirmations(hash *chainhash.Hash) {
 	blockVerbose, err := rpcClient.GetBlockVerbose(hash)
 	blockHeight := blockVerbose.Height
 
-	sel := bson.M{"transactions.txblockheight": bson.M{"$lte": blockHeight - SixBlockConfirmation, "$gte": blockHeight - SixPlusBlockConfirmation}}
+	sel := bson.M{"transactions.blockheight": bson.M{"$lte": blockHeight - SixBlockConfirmation, "$gte": blockHeight - SixPlusBlockConfirmation}}
 	update := bson.M{
 		"$set": bson.M{
 			"transactions.$.txstatus": TxStatusInBlockConfirmed,
@@ -194,7 +200,7 @@ func blockConfirmations(hash *chainhash.Hash) {
 		log.Errorf("blockConfirmations:txsData.Update: %s", err.Error())
 	}
 
-	query := bson.M{"transactions.txblockheight": blockHeight + SixBlockConfirmation}
+	query := bson.M{"transactions.blockheight": blockHeight + SixBlockConfirmation}
 
 	var records []store.TxRecord
 	txsData.Find(query).All(&records)
@@ -230,10 +236,22 @@ func parseOutput(txVerbose *btcjson.TxRawResult, blockHeight int64, txStatus str
 			sel := bson.M{"userID": user.UserID, "wallets.walletIndex": walletIndex}
 			update := bson.M{
 				"$set": bson.M{
-					"wallets.$.status": store.WalletStatusOK,
+					"wallets.$.status":         store.WalletStatusOK,
+					"wallets.$.lastActionTime": time.Now().Unix(),
 				},
 			}
 
+			err = usersData.Update(sel, update)
+			if err != nil {
+				log.Errorf("parseOutput:restClient.userStore.Update: %s", err.Error())
+			}
+
+			sel = bson.M{"userID": user.UserID, "wallets.addresses.address": address}
+			update = bson.M{
+				"$set": bson.M{
+					"wallets." + strconv.Itoa(walletIndex) + ".addresses.$.data": time.Now().Unix(),
+				},
+			}
 			err = usersData.Update(sel, update)
 			if err != nil {
 				log.Errorf("parseOutput:restClient.userStore.Update: %s", err.Error())
@@ -253,7 +271,8 @@ func parseOutput(txVerbose *btcjson.TxRawResult, blockHeight int64, txStatus str
 			sel = bson.M{"userid": user.UserID, "transactions.txid": txVerbose.Txid, "transactions.txaddress": address}
 			err = txsData.Find(sel).One(nil)
 			if err == mgo.ErrNotFound {
-				newTx := newMultyTX(txVerbose.Txid, txVerbose.Hash, output.ScriptPubKey.Hex, address, txStatus, output.Value, int(output.N), walletIndex, blockTimeUnixNano, blockHeight, fee, exRates, inputs, outputs)
+				txOutAmount := int64(100000000 * output.Value)
+				newTx := newMultyTX(txVerbose.Txid, txVerbose.Hash, output.ScriptPubKey.Hex, address, txStatus, int(output.N), walletIndex, txOutAmount, blockTimeUnixNano, blockHeight, fee, exRates, inputs, outputs)
 				sel = bson.M{"userid": user.UserID}
 				update := bson.M{"$push": bson.M{"transactions": newTx}}
 				err = txsData.Update(sel, update)
@@ -270,7 +289,7 @@ func parseOutput(txVerbose *btcjson.TxRawResult, blockHeight int64, txStatus str
 			update = bson.M{
 				"$set": bson.M{
 					"transactions.$.txstatus":          txStatus,
-					"transactions.$.txblockheight":     blockHeight,
+					"transactions.$.blockheight":       blockHeight,
 					"transactions.$.txfee":             fee,
 					"transactions.$.stockexchangerate": exRates,
 					"transactions.$.txinputs":          inputs,
@@ -323,12 +342,35 @@ func parseInput(txVerbose *btcjson.TxRawResult, blockHeight int64, txStatus stri
 
 			walletIndex := fetchWalletIndex(user.Wallets, address)
 
+			sel := bson.M{"userID": user.UserID, "wallets.walletIndex": walletIndex}
+			update := bson.M{
+				"$set": bson.M{
+					"wallets.$.lastActionTime": time.Now().Unix(),
+				},
+			}
+			err = usersData.Update(sel, update)
+			if err != nil {
+				log.Errorf("parseOutput:restClient.userStore.Update: %s", err.Error())
+			}
+
+			sel = bson.M{"userID": user.UserID, "wallets.addresses.address": address}
+			update = bson.M{
+				"$set": bson.M{
+					"wallets." + strconv.Itoa(walletIndex) + ".addresses.$.data": time.Now().Unix(),
+				},
+			}
+			err = usersData.Update(sel, update)
+			if err != nil {
+				log.Errorf("parseOutput:restClient.userStore.Update: %s", err.Error())
+			}
+
 			// Is our user already have this transactions.
-			sel := bson.M{"userid": user.UserID, "transactions.txid": txVerbose.Txid, "transactions.txaddress": address}
+			sel = bson.M{"userid": user.UserID, "transactions.txid": txVerbose.Txid, "transactions.txaddress": address}
 			err = txsData.Find(sel).One(nil)
 			if err == mgo.ErrNotFound {
 				// User have no transaction like this. Add to DB.
-				newTx := newMultyTX(txVerbose.Txid, txVerbose.Hash, previousTxVerbose.Vout[input.Vout].ScriptPubKey.Hex, address, txStatus, previousTxVerbose.Vout[input.Vout].Value, int(previousTxVerbose.Vout[input.Vout].N), walletIndex, blockTimeUnixNano, blockHeight, fee, exRates, inputs, outputs)
+				txOutAmount := int64(100000000 * previousTxVerbose.Vout[input.Vout].Value)
+				newTx := newMultyTX(txVerbose.Txid, txVerbose.Hash, previousTxVerbose.Vout[input.Vout].ScriptPubKey.Hex, address, txStatus, int(previousTxVerbose.Vout[input.Vout].N), walletIndex, txOutAmount, blockTimeUnixNano, blockHeight, fee, exRates, inputs, outputs)
 				sel = bson.M{"userid": user.UserID}
 				update := bson.M{"$push": bson.M{"transactions": newTx}}
 				err = txsData.Update(sel, update)
@@ -344,13 +386,13 @@ func parseInput(txVerbose *btcjson.TxRawResult, blockHeight int64, txStatus stri
 			// User have this transaction but with another status.
 			// Update statsus, block height, exchange rate,block time, inputs and outputs.
 			sel = bson.M{"userid": user.UserID, "transactions.txid": txVerbose.Txid, "transactions.txaddress": address}
-			update := bson.M{
+			update = bson.M{
 				"$set": bson.M{
-					"transactions.$.txstatus":      txStatus,
-					"transactions.$.txblockheight": blockHeight,
-					"transactions.$.txinputs":      inputs,
-					"transactions.$.txoutputs":     outputs,
-					"transactions.$.blocktime":     blockTimeUnixNano,
+					"transactions.$.txstatus":    txStatus,
+					"transactions.$.blockheight": blockHeight,
+					"transactions.$.txinputs":    inputs,
+					"transactions.$.txoutputs":   outputs,
+					"transactions.$.blocktime":   blockTimeUnixNano,
 				},
 			}
 			err = txsData.Update(sel, update)

@@ -1,3 +1,8 @@
+/*
+Copyright 2017 Idealnaya rabota LLC
+Licensed under Multy.io license.
+See LICENSE for details
+*/
 package store
 
 import (
@@ -74,8 +79,9 @@ type RatesRecord struct {
 }
 
 type Address struct {
-	AddressIndex int    `json:"addressIndex" bson:"addressIndex"`
-	Address      string `json:"address" bson:"address"`
+	AddressIndex   int    `json:"addressIndex" bson:"addressIndex"`
+	Address        string `json:"address" bson:"address"`
+	LastActionTime int64  `json:"lastActionTime" bson:"lastActionTime"`
 }
 type WalletsSelect struct {
 	Wallets []struct {
@@ -94,7 +100,7 @@ type MultyTX struct {
 	TxOutScript       string                `json:"txoutscript"`
 	TxAddress         string                `json:"address"`
 	TxStatus          string                `json:"txstatus"`
-	TxOutAmount       float64               `json:"txoutamount"`
+	TxOutAmount       int64                 `json:"txoutamount"`
 	TxOutID           int                   `json:"txoutid"`
 	WalletIndex       int                   `json:"walletindex"`
 	BlockTime         int64                 `json:"blocktime"`
@@ -105,7 +111,7 @@ type MultyTX struct {
 	TxOutputs         []AddresAmount        `json:"txoutputs"`
 }
 type AddresAmount struct {
-	Address string `json:"exchangename"`
+	Address string `json:"address"`
 	Amount  int64  `json:"amount"`
 }
 
@@ -120,6 +126,15 @@ type ExchangeRatesRecord struct {
 	Exchanges     ExchangeRates `json:"exchanges"`
 	Timestamp     int64         `json:"timestamp"`
 	StockExchange string        `json:"stock_exchange"`
+}
+type SpendableOutputs struct {
+	TxID              string                `json:"txid"`
+	TxOutID           int                   `json:"txoutid"`
+	TxOutAmount       int                   `json:"txoutamount"`
+	TxOutScript       string                `json:"txoutscript"`
+	AddressIndex      int                   `json:"addressindex"`
+	TxStatus          string                `json:"txstatus"`
+	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 }
 
 // ExchangeRates stores exchange rates

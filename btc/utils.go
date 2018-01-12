@@ -1,3 +1,8 @@
+/*
+Copyright 2017 Idealnaya rabota LLC
+Licensed under Multy.io license.
+See LICENSE for details
+*/
 package btc
 
 import (
@@ -19,7 +24,7 @@ func newAddresAmount(address string, amount int64) store.AddresAmount {
 	}
 }
 
-func newMultyTX(txID, txHash, txOutScript, txAddress, txStatus string, txOutAmount float64, txOutID, walletindex int, blockTime, blockHeight, fee int64, stockexchangerate []store.ExchangeRatesRecord, inputs, outputs []store.AddresAmount) store.MultyTX {
+func newMultyTX(txID, txHash, txOutScript, txAddress, txStatus string, txOutID, walletindex int, txOutAmount, blockTime, blockHeight, fee int64, stockexchangerate []store.ExchangeRatesRecord, inputs, outputs []store.AddresAmount) store.MultyTX {
 	return store.MultyTX{
 		TxID:              txID,
 		TxHash:            txHash,

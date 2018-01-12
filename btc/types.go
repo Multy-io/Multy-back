@@ -1,3 +1,8 @@
+/*
+Copyright 2017 Idealnaya rabota LLC
+Licensed under Multy.io license.
+See LICENSE for details
+*/
 package btc
 
 func CreateBtcTransactionWithUserID(addr, userId, txType, txId string, amount float64) BtcTransactionWithUserID {
