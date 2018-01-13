@@ -9,6 +9,7 @@
         "DBStockExchangeRate": "DBStockExchangeRate-conf"
     },
     "NSQAddress": "nsq:4150",
+    "BTCNodeAddress": "localhost:18334",
     "RestAddress": "localhost:6678",
     "SocketioAddr": "localhost:6680",
     "BTCAPITest": {

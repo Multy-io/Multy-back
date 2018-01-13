@@ -68,7 +68,14 @@ type BTCApiConf struct {
 	Token, Coin, Chain string
 }
 
-func SetRestHandlers(userDB store.UserStore, btcConfTest, btcConfMain BTCApiConf, r *gin.Engine, clientRPC *rpcclient.Client) (*RestClient, error) {
+func SetRestHandlers(
+	userDB store.UserStore,
+	btcConfTest,
+	btcConfMain BTCApiConf,
+	r *gin.Engine,
+	clientRPC *rpcclient.Client,
+	btcNodeAddress string,
+) (*RestClient, error) {
 	restClient := &RestClient{
 		userStore: userDB,
 		rpcClient: clientRPC,
@@ -102,7 +109,7 @@ func SetRestHandlers(userDB store.UserStore, btcConfTest, btcConfMain BTCApiConf
 		v1.POST("/address", restClient.addAddress())
 		v1.GET("/transaction/feerate", restClient.getFeeRate())
 		v1.GET("/outputs/spendable/:currencyid/:addr", restClient.getSpendableOutputs())
-		v1.POST("/transaction/send/:currencyid", restClient.sendRawTransaction())
+		v1.POST("/transaction/send/:currencyid", restClient.sendRawTransaction(btcNodeAddress))
 		v1.GET("/wallet/:walletindex/verbose", restClient.getWalletVerbose())
 		v1.GET("/wallets/verbose", restClient.getAllWalletsVerbose())
 		v1.GET("/wallets/transactions/:walletindex", restClient.getWalletTransactionsHistory())
@@ -670,13 +677,13 @@ func (restClient *RestClient) getSpendableOutputs() gin.HandlerFunc {
 	}
 }
 
-func (restClient *RestClient) sendRawTransaction() gin.HandlerFunc {
+func (restClient *RestClient) sendRawTransaction(btcNodeAddress string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		restClient.log.Infof("btc.Cert=%s\n", btc.Cert)
 
 		connCfg := &rpcclient.ConnConfig{
-			Host:         "localhost:18334",
+			Host:         btcNodeAddress,
 			User:         "multy",
 			Pass:         "multy",
 			HTTPPostMode: true,  // Bitcoin core only supports HTTP POST mode

@@ -1,18 +1,20 @@
 version: '3.4'
 services:
   multy-back:
-    image: multyio/multy-back:1.0.0
+    image:  multyio/backend:1.0.0
+    command: ["make", "all"]
     volumes:
-      - ./:/go/src/Appscrunch/Multy-back
+        - ${pwd}/cmd/multy.config:/go/src/github.com/Appscrunch/Multy-back/cmd/multy.config
+        - ${pwd}/cmd/rpc.cert:/go/src/github.com/Appscrunch/Multy-back/cmd/rpc.cert
     ports:
-      - "5580:5580"
-      - "5578:5578"
+      - "6678:6678"
+      - "6680:6680"
     depends_on:
       - nsq
       - nsqlookup
       - nsqadmin
       - mongodb
-      - bitcoind
+      - bitcoin-cli
 
   nsqlookup:
     image: nsqio/nsq

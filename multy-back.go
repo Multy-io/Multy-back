@@ -52,7 +52,7 @@ func Init(conf *Configuration) (*Multy, error) {
 	}
 	multy.userStore = userStore
 
-	btcClient, err := btc.InitHandlers(getCertificate(conf.BTCSertificate), &conf.Database, conf.NSQAddress)
+	btcClient, err := btc.InitHandlers(getCertificate(conf.BTCSertificate), &conf.Database, conf.NSQAddress, conf.BTCNodeAddress)
 	if err != nil {
 		return nil, fmt.Errorf("Blockchain api initialization: %s", err.Error())
 	}
@@ -69,9 +69,14 @@ func Init(conf *Configuration) (*Multy, error) {
 func getCertificate(certFile string) string {
 	cert, err := ioutil.ReadFile(certFile)
 	if err != nil {
+		log.Errorf("get certificate: %s", err.Error())
 		return ""
 	}
-	return string(cert[:len(cert)-1])
+	if len(cert) > 1 {
+		return string(cert[:len(cert)-1])
+	}
+	log.Errorf("get certificate: empty certificate")
+	return ""
 }
 
 func (multy *Multy) initRoutes(conf *Configuration) error {
@@ -92,7 +97,8 @@ func (multy *Multy) initRoutes(conf *Configuration) error {
 		conf.BTCAPITest,
 		conf.BTCAPIMain,
 		router,
-		multy.btcClient)
+		multy.btcClient,
+		conf.BTCNodeAddress)
 	if err != nil {
 		return err
 	}

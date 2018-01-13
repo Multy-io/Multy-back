@@ -4,6 +4,7 @@ cmd/multy.config
 cmd/btc.cert
 cmd/back-*
 cmd/logs
+cmd/rpc.cert
 
 rpc.cert
 

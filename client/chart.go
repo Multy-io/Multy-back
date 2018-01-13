@@ -71,7 +71,9 @@ func initExchangeChart(db store.UserStore) (*exchangeChart, error) {
 		log: slf.WithContext("chart"),
 	}
 	chart.log.Debug("initExchangeChart")
-	chart.getDayAPIBitstamp()
+
+	//moved to next release
+	//chart.getDayAPIBitstamp()
 
 	gDaxConn, err := chart.initGdaxAPI(chart.log)
 	if err != nil {
@@ -91,7 +93,6 @@ func initExchangeChart(db store.UserStore) (*exchangeChart, error) {
 }
 
 func (eChart *exchangeChart) run() error {
-	tickerUpdateForChart := time.NewTicker(updateForExchangeChart)
 	tickerSaveToDB := time.NewTicker(saveToDBInterval)
 
 	go eChart.gdaxConn.listen()
@@ -104,13 +105,6 @@ func (eChart *exchangeChart) run() error {
 		select {
 		case _ = <-tickerSaveToDB.C:
 			eChart.saveToDB()
-
-		case _ = <-tickerUpdateForChart.C:
-			// will be removed after db method implementation
-			eChart.getDayAPIBitstamp()
-
-			// update hour exchanges by groupping minute records
-			eChart.updateDayRates()
 		}
 	}
 }

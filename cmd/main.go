@@ -46,7 +46,8 @@ var globalOpt = multy.Configuration{
 		Coin:  "btc",
 		Chain: "main",
 	},
-	NSQAddress: "nsq:4150",
+	NSQAddress:     "nsq:4150",
+	BTCNodeAddress: "localhost:18334",
 }
 
 func main() {

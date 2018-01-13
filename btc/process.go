@@ -48,7 +48,7 @@ var (
 var Cert = `testcert`
 
 var connCfg = &rpcclient.ConnConfig{
-	Host:     "localhost:18334",
+	Host:     "192.168.0.121:18334",
 	User:     "multy",
 	Pass:     "multy",
 	Endpoint: "ws",
@@ -59,7 +59,7 @@ var connCfg = &rpcclient.ConnConfig{
 
 }
 
-func RunProcess() error {
+func RunProcess(btcNodeAddress string) error {
 	log.Info("Run Process")
 
 	// Drop collection on every new start of application
@@ -90,6 +90,8 @@ func RunProcess() error {
 		},
 	}
 
+	//overwrite btc node address
+	connCfg.Host = btcNodeAddress
 	rpcClient, err = rpcclient.New(connCfg, &ntfnHandlers)
 	if err != nil {
 		log.Errorf("RunProcess(): rpcclient.New %s\n", err.Error())

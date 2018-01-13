@@ -30,7 +30,7 @@ var (
 
 var log = slf.WithContext("btc")
 
-func InitHandlers(certFromConf string, dbConf *store.Conf, nsqAddr string) (*rpcclient.Client, error) {
+func InitHandlers(certFromConf string, dbConf *store.Conf, nsqAddr, btcNodeAddress string) (*rpcclient.Client, error) {
 	config := nsq.NewConfig()
 	p, err := nsq.NewProducer(nsqAddr, config)
 	if err != nil {
@@ -53,7 +53,7 @@ func InitHandlers(certFromConf string, dbConf *store.Conf, nsqAddr string) (*rpc
 	txsData = db.DB(dbConf.DBTx).C(store.TableBTC)
 	exRate = db.DB("dev-DBStockExchangeRate").C("TableStockExchangeRate")
 
-	go RunProcess()
+	go RunProcess(btcNodeAddress)
 	return rpcClient, nil
 }
 

@@ -4,11 +4,36 @@ Back end server for [Multy](https://github.com/Appscrunch/Multy/wiki) applicatio
 
 ## Usage Instructions
 
-`go get github.com/Appscrunch/Multy-back`
+In all cases you would like to set configuration parameters in `multy.config` file with addresses, passwords, tokend and other settings. Note, that configuration file must be located in the same directory as the binary file.
 
-Before running a server, you would like to set configuration parameters in `config.json` file. Note, that configuration file must be located in the same directory as the binary file.
+### From source
 
-For running Multy-back, in Multy-back directory run `make all`.
+For building Multy-back, in Multy-back directory run:
+```
+make all-with-deps
+```
+
+After that in `cmd` directory  binary file with name `multy` should appear. 
+
+To run a server:
+
+```
+make run
+```
+
+Notice, that program uses NSQ, MongoDB and BTC RPC API. You should install and run it by yourself.
+
+### From docker-compose
+
+In docker-compose file (`multy-back` service) set volumes: `multy.config` and `rpc.cert` (for btc node).
+
+If you don't want to use btc node from docker container, in `cmd/multy.config` set its address in `BTCNodeAddress` field. 
+
+To run a server: 
+
+```
+docker-compose up
+```
 
 ## API
 

@@ -70,8 +70,10 @@ func SetSocketIOHandlers(r *gin.RouterGroup, address, nsqAddr string, ratesDB st
 
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
 		pool.log.Debugf("connected: %s", c.Id())
-		ratesDay := pool.chart.getExchangeDay()
-		c.Emit(topicExchangeDay, ratesDay)
+
+		// moved to next release
+		//ratesDay := pool.chart.getExchangeDay()
+		//c.Emit(topicExchangeDay, ratesDay)
 
 		user, err := getHeaderDataSocketIO(c.RequestHeader())
 		if err != nil {
