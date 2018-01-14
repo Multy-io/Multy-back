@@ -101,6 +101,8 @@ func SetRestHandlers(
 	r.POST("/auth", restClient.LoginHandler())
 	r.GET("/server/config", restClient.getServerConfig())
 
+	r.GET("/statuscheck", restClient.statusCheck())
+
 	v1 := r.Group("/api/v1")
 	v1.Use(restClient.middlewareJWT.MiddlewareFunc())
 	{
@@ -341,6 +343,14 @@ func (restClient *RestClient) changeWalletName() gin.HandlerFunc {
 
 	}
 }
+
+func (restClient *RestClient) statusCheck() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// TODO: add additional info
+		c.JSON(http.StatusOK, `{"Status":"ok"}`)
+	}
+}
+
 func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		resp := map[string]interface{}{

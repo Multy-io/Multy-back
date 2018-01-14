@@ -1,7 +1,7 @@
 version: '3.4'
 services:
   multy-back:
-    image:  multyio/backend:1.0.0
+    image:  multyio/backend:1.0.1
     command: ["make", "all"]
     volumes:
         - "./cmd/multy.config:/go/src/github.com/Appscrunch/Multy-back/cmd/multy.config"
