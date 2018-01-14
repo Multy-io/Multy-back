@@ -7,4 +7,5 @@ cmd/logs
 cmd/rpc.cert
 
 rpc.cert
+data-db
 

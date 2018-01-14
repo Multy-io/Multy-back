@@ -4,8 +4,8 @@ services:
     image:  multyio/backend:1.0.0
     command: ["make", "all"]
     volumes:
-        - ${pwd}/cmd/multy.config:/go/src/github.com/Appscrunch/Multy-back/cmd/multy.config
-        - ${pwd}/cmd/rpc.cert:/go/src/github.com/Appscrunch/Multy-back/cmd/rpc.cert
+        - "./cmd/multy.config:/go/src/github.com/Appscrunch/Multy-back/cmd/multy.config"
+        - "./cmd/rpc.cert:/go/src/github.com/Appscrunch/Multy-back/cmd/rpc.cert"
     ports:
       - "6678:6678"
       - "6680:6680"
@@ -14,7 +14,7 @@ services:
       - nsqlookup
       - nsqadmin
       - mongodb
-      - bitcoin-cli
+      # - btcd-testnet
 
   nsqlookup:
     image: nsqio/nsq
@@ -50,27 +50,18 @@ services:
     environment:
       - MONGO_DATA_DIR=/data/db
     volumes:
-      - ./data/db:/data/db
+      - ./data-db/db:/data/db
       # add logpath
     ports:
       - 27017:27017
 
-  bitcoind:
-    image: amacneil/bitcoin
-    command: bitcoind
-    healthcheck:
-      test: ["CMD", "/entrypoint.sh", "bitcoin-cli", "getinfo"]
-    ports:
-      - "18334:18334"
-    volumes:
-      - bitcoin-data:/data
-
-  bitcoin-cli:
-    image: amacneil/bitcoin
-    entrypoint: ["/entrypoint.sh", "bitcoin-cli"]
-    command: ""
-    depends_on:
-      - bitcoind
-
-volumes:
-    bitcoin-data:
+#  btcd-testnet:
+#    image: multyio/btcd-testnet:1.0.0
+#    volumes:
+#     - ${BTCD}:/root/.btcd
+#     - ${BTCCTL}:/root/.btcctl
+#     - "./cmd/rpc.cert:/root/rpc.cert"
+#     - "./cmd/rpc.key:/root/rpc.key"
+#    ports:
+#     - 1334:1334
+#     - 18334:18334

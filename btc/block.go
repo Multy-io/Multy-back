@@ -130,7 +130,6 @@ func notifyNewBlockTx(hash *chainhash.Hash) {
 				}
 			}
 		}
-
 	}
 }
 

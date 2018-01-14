@@ -27,7 +27,7 @@ Notice, that program uses NSQ, MongoDB and BTC RPC API. You should install and r
 
 In docker-compose file (`multy-back` service) set volumes: `multy.config` and `rpc.cert` (for btc node).
 
-If you don't want to use btc node from docker container, in `cmd/multy.config` set its address in `BTCNodeAddress` field. 
+If you want to use btc node from docker container, uncomment btcd-testnet part o fdocker-compose file and set its address in `BTCNodeAddress` field in `cmd/multy.config`. 
 
 To run a server: 
 
