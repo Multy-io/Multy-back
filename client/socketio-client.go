@@ -58,7 +58,7 @@ func InitConnectedPool(server *gosocketio.Server, address, nsqAddr string, db st
 }
 
 func (sConnPool *SocketIOConnectedPool) newConsumerBTCTransaction(nsqAddr string) (*nsq.Consumer, error) {
-	consumer, err := nsq.NewConsumer(topicBTCTransactionUpdate, "all", nsq.NewConfig())
+	consumer, err := nsq.NewConsumer(btc.TopicTransaction, "socketio", nsq.NewConfig())
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (sConnPool *SocketIOConnectedPool) sendTransactionNotify(newTransactionWith
 	userConns := sConnPool.users[userID].conns
 
 	for _, conn := range userConns {
-		conn.Emit(topicBTCTransactionUpdate, newTransactionWithUserID)
+		conn.Emit(btc.TopicTransaction, newTransactionWithUserID)
 	}
 }
 

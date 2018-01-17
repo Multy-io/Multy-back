@@ -26,9 +26,6 @@ const (
 	topicExchangeDay      = "exchangeDay"
 	topicExchangeGdax     = "exchangeGdax"
 	topicExchangePoloniex = "exchangePoloniex"
-
-	topicBTCTransactionUpdate = "btcTransaction"
-	topicEthTransactionUpdate = "ethTransaction"
 )
 
 func getHeaderDataSocketIO(headers http.Header) (*SocketIOUser, error) {
