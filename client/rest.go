@@ -139,8 +139,6 @@ func initMiddlewareJWT(restClient *RestClient) {
 			}
 			return user, true
 		},
-		//Authorizator:  authorizator,
-		//Unauthorized: unauthorized,
 		Unauthorized: nil,
 		TokenLookup:  "header:Authorization",
 
@@ -368,6 +366,10 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 				"soft": 18,
 				"hard": 1,
 			},
+			"donate": map[string]string{
+				"BTC": "mzNZBhim9XGy66FkdzrehHwdWNgbiTYXCQ",
+				"ETH": "0x54f46318d8f83c28b719ccf01ab4628e1e8f65fa",
+			},
 		}
 		c.JSON(http.StatusOK, resp)
 	}
@@ -426,7 +428,7 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 
 		var unspendTxs []store.MultyTX
 		for _, tx := range userTxs.Transactions {
-			if tx.TxStatus != "spend in mempool" && tx.TxStatus != "spend in block" {
+			if tx.TxStatus != 3 && tx.TxStatus != 4 && tx.TxStatus != 6 { //"spend in mempool" && "spend in block"
 				unspendTxs = append(unspendTxs, tx)
 			}
 		}
@@ -662,7 +664,7 @@ func (restClient *RestClient) getSpendableOutputs() gin.HandlerFunc {
 
 			for _, tx := range userTxs.Transactions {
 				if tx.TxAddress == address {
-					if tx.TxStatus == "incoming in block" || tx.TxStatus == "in block confirmed" {
+					if tx.TxStatus != 3 && tx.TxStatus != 4 && tx.TxStatus != 6 { // "incoming in block" || "in block confirmed"
 						spOuts = append(spOuts, store.SpendableOutputs{
 							TxID:        tx.TxID,
 							TxOutID:     tx.TxOutID,
@@ -885,7 +887,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 
 		var unspendTxs []store.MultyTX
 		for _, tx := range userTxs.Transactions {
-			if tx.TxStatus != "spend in mempool" && tx.TxStatus != "spend in block" {
+			if tx.TxStatus != 3 && tx.TxStatus != 4 && tx.TxStatus != 6 { // "spend in mempool" && "spend in block"
 				unspendTxs = append(unspendTxs, tx)
 			}
 		}
@@ -1013,7 +1015,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 		var unspendTxs []store.MultyTX
 		for _, tx := range userTxs.Transactions {
-			if tx.TxStatus != "spend in mempool" && tx.TxStatus != "spend in block" {
+			if tx.TxStatus != 3 && tx.TxStatus != 4 && tx.TxStatus != 6 { // "spend in mempool" && "spend in block"
 				unspendTxs = append(unspendTxs, tx)
 			}
 		}
@@ -1164,7 +1166,7 @@ type TxHistory struct {
 	TxHash      string               `json:"txhash"`
 	TxOutScript string               `json:"txoutscript"`
 	TxAddress   string               `json:"address"`
-	TxStatus    string               `json:"txstatus"`
+	TxStatus    int                  `json:"txstatus"`
 	TxOutAmount int64                `json:"txoutamount"`
 	TxOutID     int                  `json:"txoutid"`
 	WalletIndex int                  `json:"walletindex"`

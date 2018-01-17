@@ -24,7 +24,7 @@ func newAddresAmount(address string, amount int64) store.AddresAmount {
 	}
 }
 
-func newMultyTX(txID, txHash, txOutScript, txAddress, txStatus string, txOutID, walletindex int, txOutAmount, blockTime, blockHeight, fee int64, stockexchangerate []store.ExchangeRatesRecord, inputs, outputs []store.AddresAmount) store.MultyTX {
+func newMultyTX(txID, txHash, txOutScript, txAddress string, txStatus, txOutID, walletindex int, txOutAmount, blockTime, blockHeight, fee, mempoolTime int64, stockexchangerate []store.ExchangeRatesRecord, inputs, outputs []store.AddresAmount) store.MultyTX {
 	return store.MultyTX{
 		TxID:              txID,
 		TxHash:            txHash,
@@ -37,6 +37,7 @@ func newMultyTX(txID, txHash, txOutScript, txAddress, txStatus string, txOutID, 
 		BlockTime:         blockTime,
 		BlockHeight:       blockHeight,
 		TxFee:             fee,
+		MempoolTime:       mempoolTime,
 		StockExchangeRate: stockexchangerate,
 		TxInputs:          inputs,
 		TxOutputs:         outputs,

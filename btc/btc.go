@@ -58,7 +58,7 @@ func InitHandlers(certFromConf string, dbConf *store.Conf, nsqAddr, btcNodeAddre
 }
 
 type BtcTransaction struct {
-	TransactionType string  `json:"transactionType"`
+	TransactionType int     `json:"transactionType"`
 	Amount          float64 `json:"amount"`
 	TxID            string  `json:"txid"`
 	Address         string  `json:"address"`

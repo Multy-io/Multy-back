@@ -99,13 +99,14 @@ type MultyTX struct {
 	TxHash            string                `json:"txhash"`
 	TxOutScript       string                `json:"txoutscript"`
 	TxAddress         string                `json:"address"`
-	TxStatus          string                `json:"txstatus"`
+	TxStatus          int                   `json:"txstatus"`
 	TxOutAmount       int64                 `json:"txoutamount"`
 	TxOutID           int                   `json:"txoutid"`
 	WalletIndex       int                   `json:"walletindex"`
 	BlockTime         int64                 `json:"blocktime"`
 	BlockHeight       int64                 `json:"blockheight"`
 	TxFee             int64                 `json:"txfee"`
+	MempoolTime       int64                 `json:"mempooltime"`
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 	TxInputs          []AddresAmount        `json:"txinputs"`
 	TxOutputs         []AddresAmount        `json:"txoutputs"`
@@ -133,7 +134,7 @@ type SpendableOutputs struct {
 	TxOutAmount       int                   `json:"txoutamount"`
 	TxOutScript       string                `json:"txoutscript"`
 	AddressIndex      int                   `json:"addressindex"`
-	TxStatus          string                `json:"txstatus"`
+	TxStatus          int                   `json:"txstatus"`
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 }
 
