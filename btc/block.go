@@ -18,7 +18,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
-const (
+const ( // currency id  nsq
 	TxStatusAppearedInMempoolIncoming = 1
 	TxStatusAppearedInBlockIncoming   = 2
 
@@ -122,6 +122,7 @@ func notifyNewBlockTx(hash *chainhash.Hash) {
 					txMsq := BtcTransactionWithUserID{
 						UserID: user.UserID,
 						NotificationMsg: &BtcTransaction{
+							// currency id
 							TransactionType: TxStatusAppearedInBlockOutcoming,
 							Amount:          out.Value,
 							TxID:            blockTxVerbose.Txid,
