@@ -428,7 +428,7 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 
 		var unspendTxs []store.MultyTX
 		for _, tx := range userTxs.Transactions {
-			if tx.TxStatus != 3 && tx.TxStatus != 4 && tx.TxStatus != 6 { //"spend in mempool" && "spend in block"
+			if tx.TxStatus == store.TxStatusAppearedInBlockIncoming || tx.TxStatus == store.TxStatusInBlockConfirmedIncoming { // all spendable txs
 				unspendTxs = append(unspendTxs, tx)
 			}
 		}
@@ -664,7 +664,7 @@ func (restClient *RestClient) getSpendableOutputs() gin.HandlerFunc {
 
 			for _, tx := range userTxs.Transactions {
 				if tx.TxAddress == address {
-					if tx.TxStatus != 3 && tx.TxStatus != 4 && tx.TxStatus != 6 { // "incoming in block" || "in block confirmed"
+					if tx.TxStatus == store.TxStatusAppearedInBlockIncoming || tx.TxStatus == store.TxStatusInBlockConfirmedIncoming { // all spendable txs
 						spOuts = append(spOuts, store.SpendableOutputs{
 							TxID:        tx.TxID,
 							TxOutID:     tx.TxOutID,
@@ -887,7 +887,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 
 		var unspendTxs []store.MultyTX
 		for _, tx := range userTxs.Transactions {
-			if tx.TxStatus != 3 && tx.TxStatus != 4 && tx.TxStatus != 6 { // "spend in mempool" && "spend in block"
+			if tx.TxStatus == store.TxStatusAppearedInMempoolIncoming || tx.TxStatus == store.TxStatusAppearedInBlockIncoming || tx.TxStatus == store.TxStatusInBlockConfirmedIncoming { // pending and actual ballance
 				unspendTxs = append(unspendTxs, tx)
 			}
 		}
@@ -1015,7 +1015,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 		var unspendTxs []store.MultyTX
 		for _, tx := range userTxs.Transactions {
-			if tx.TxStatus != 3 && tx.TxStatus != 4 && tx.TxStatus != 6 { // "spend in mempool" && "spend in block"
+			if tx.TxStatus == store.TxStatusAppearedInMempoolIncoming || tx.TxStatus == store.TxStatusAppearedInBlockIncoming || tx.TxStatus == store.TxStatusInBlockConfirmedIncoming { // pending and actual ballance
 				unspendTxs = append(unspendTxs, tx)
 			}
 		}
@@ -1150,6 +1150,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				BtcToUsd:    walletTx.StockExchangeRate[0].Exchanges.BTCtoUSD,
 				TxInputs:    walletTx.TxInputs,
 				TxOutputs:   walletTx.TxOutputs,
+				MempoolTime: walletTx.MempoolTime,
 			})
 		}
 
@@ -1173,6 +1174,7 @@ type TxHistory struct {
 	BlockTime   int64                `json:"blocktime"`
 	BlockHeight int64                `json:"blockheight"`
 	TxFee       int64                `json:"txfee"`
+	MempoolTime int64                `json:"mempooltime"`
 	BtcToUsd    float64              `json:"btctousd"`
 	TxInputs    []store.AddresAmount `json:"txinputs"`
 	TxOutputs   []store.AddresAmount `json:"txoutputs"`
