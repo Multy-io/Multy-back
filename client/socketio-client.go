@@ -150,7 +150,17 @@ func newSocketIOUser(id string, newUser *SocketIOUser, conn *gosocketio.Channel,
 	return newUser
 }
 
+// send right now exchanges to prevent pauses
+func sendExchange(newUser *SocketIOUser, conn *gosocketio.Channel) {
+	gdaxRate := newUser.chart.getExchangeGdax()
+	poloniexRate := newUser.chart.getExchangePoloniex()
+
+	conn.Emit(topicExchangeGdax, gdaxRate)
+	conn.Emit(topicExchangePoloniex, poloniexRate)
+}
+
 func (sIOUser *SocketIOUser) runUpdateExchange() {
+	// sending data by ticket
 	sIOUser.tickerLastExchange = time.NewTicker(updateExchangeClient)
 
 	for {

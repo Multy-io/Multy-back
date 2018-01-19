@@ -89,6 +89,8 @@ func SetSocketIOHandlers(r *gin.RouterGroup, address, nsqAddr string, ratesDB st
 			pool.users[user.userID] = user
 			userFromPool = user
 		}
+		sendExchange(user, c)
+
 		userFromPool.conns[connectionID] = c
 		pool.closeChByConnID[connectionID] = userFromPool.closeCh
 		pool.m.Unlock()
