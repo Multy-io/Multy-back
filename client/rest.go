@@ -376,7 +376,7 @@ func (restClient *RestClient) changeWalletName() gin.HandlerFunc {
 
 func (restClient *RestClient) statusCheck() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO: add additional info
+		// TODO: add additional info.
 		c.JSON(http.StatusOK, `{"Status":"ok"}`)
 	}
 }
@@ -1238,6 +1238,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 				"topindex": walletIndex,
 			})
 			return
+
 		}
 
 		c.JSON(code, gin.H{
