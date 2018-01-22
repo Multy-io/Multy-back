@@ -106,16 +106,16 @@ func SetRestHandlers(
 	v1 := r.Group("/api/v1")
 	v1.Use(restClient.middlewareJWT.MiddlewareFunc())
 	{
-		v1.POST("/wallet", restClient.addWallet())                                                           //nothing to change
-		v1.DELETE("/wallet/:currencyid/:walletindex", restClient.deleteWallet())                             //todo add currency id √
-		v1.POST("/address", restClient.addAddress())                                                         //todo add currency id √
-		v1.GET("/transaction/feerate/:currencyid", restClient.getFeeRate())                                  //todo add currency id √
-		v1.GET("/outputs/spendable/:currencyid/:addr", restClient.getSpendableOutputs())                     //nothing to change	√
-		v1.POST("/transaction/send/:currencyid", restClient.sendRawTransaction(btcNodeAddress))              //todo add currency id √
-		v1.GET("/wallet/:walletindex/verbose/:currencyid", restClient.getWalletVerbose())                    //todo add currency id √
-		v1.GET("/wallets/verbose/:currencyid", restClient.getAllWalletsVerbose())                            //nothing to change	√
-		v1.GET("/wallets/transactions/:currencyid/:walletindex/", restClient.getWalletTransactionsHistory()) //todo add currency id	√
-		v1.POST("/wallet/name/:currencyid/:walletindex", restClient.changeWalletName())                      //todo add currency id √
+		v1.POST("/wallet", restClient.addWallet())                                                          //nothing to change
+		v1.DELETE("/wallet/:currencyid/:walletindex", restClient.deleteWallet())                            //todo add currency id √
+		v1.POST("/address", restClient.addAddress())                                                        //todo add currency id √
+		v1.GET("/transaction/feerate/:currencyid", restClient.getFeeRate())                                 //todo add currency id √
+		v1.GET("/outputs/spendable/:currencyid/:addr", restClient.getSpendableOutputs())                    //nothing to change	√
+		v1.POST("/transaction/send/:currencyid", restClient.sendRawTransaction(btcNodeAddress))             //todo add currency id √
+		v1.GET("/wallet/:walletindex/verbose/:currencyid", restClient.getWalletVerbose())                   //todo add currency id √
+		v1.GET("/wallets/verbose/:currencyid", restClient.getAllWalletsVerbose())                           //nothing to change	√
+		v1.GET("/wallets/transactions/:currencyid/:walletindex", restClient.getWalletTransactionsHistory()) //todo add currency id	√
+		v1.POST("/wallet/name/:currencyid/:walletindex", restClient.changeWalletName())                     //todo add currency id √
 		v1.GET("/exchange/changelly/list", restClient.changellyListCurrencies())
 	}
 	return restClient, nil
@@ -376,7 +376,6 @@ func (restClient *RestClient) changeWalletName() gin.HandlerFunc {
 
 func (restClient *RestClient) statusCheck() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO: add additional info.
 		c.JSON(http.StatusOK, `{"Status":"ok"}`)
 	}
 }
@@ -1225,7 +1224,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 		case currencies.Ether:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":     http.StatusBadRequest,
-				"message":  msgErrDecodeWalletIndexErr,
+				"message":  msgErrChainIsNotImplemented,
 				"wallets":  wv,
 				"topindex": walletIndex,
 			})
@@ -1233,7 +1232,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":     http.StatusBadRequest,
-				"message":  msgErrDecodeWalletIndexErr,
+				"message":  msgErrChainIsNotImplemented,
 				"wallets":  wv,
 				"topindex": walletIndex,
 			})
@@ -1283,7 +1282,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
-				"message": msgErrDecodeWalletIndexErr,
+				"message": msgErrUserNotFound,
 				"history": walletTxs,
 			})
 			return
