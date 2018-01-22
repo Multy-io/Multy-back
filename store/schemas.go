@@ -98,11 +98,12 @@ type MultyTX struct {
 	TxID              string                `json:"txid"`
 	TxHash            string                `json:"txhash"`
 	TxOutScript       string                `json:"txoutscript"`
-	TxAddress         string                `json:"address"`
+	TxAddress         []string                `json:"address"` //this is major addresses of the transaction (if send - inputs addresses of our user, if get - outputs addresses of our user)
 	TxStatus          int                   `json:"txstatus"`
 	TxOutAmount       int64                 `json:"txoutamount"`
-	TxOutID           int                   `json:"txoutid"`
-	WalletIndex       int                   `json:"walletindex"`
+	TxOutIndexes          []int                 `json:"txoutindexes"` //This is outputs indexes of the transaction
+	TxInAmount       int64                 `json:"txinamount"`
+	TxInIndexes			  []int					`json:"txoutindexes"` //This is inputs indexes of the transaction
 	BlockTime         int64                 `json:"blocktime"`
 	BlockHeight       int64                 `json:"blockheight"`
 	TxFee             int64                 `json:"txfee"`
@@ -110,6 +111,8 @@ type MultyTX struct {
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 	TxInputs          []AddresAmount        `json:"txinputs"`
 	TxOutputs         []AddresAmount        `json:"txoutputs"`
+	WalletsInput	[]WalletsSelect			`json:"walletsinput"`   //here we storing all wallets and addresses that took part in Inputs of the transaction
+	WalletsOutput	[]WalletsSelect			`json:"walletsoutput"`  //here we storing all wallets and addresses that took part in Outputs of the transaction
 }
 type AddresAmount struct {
 	Address string `json:"address"`
