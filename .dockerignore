@@ -1,2 +1,4 @@
 cmd/rpc.cert
 cmd/multy.config
+.drone.yml
+.drone/

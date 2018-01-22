@@ -1,0 +1,62 @@
+workspace:
+  base: /go
+  path: src/github.com/Appscrunch/Multy-back
+
+pipeline:
+  build:
+    image: golang:1.9.2
+    commands:
+      - make build
+
+  publish-except-master:
+    image: plugins/docker
+    repo: multyio/backend
+    tags: 
+      - latest
+      - 1.0.3
+    secrets: [ docker_username, docker_password ]
+    when:
+      exclude: [ master ]
+      event: [ push ]
+
+  publish-master:
+    image: plugins/docker
+    repo: multyio/backend
+    tags: 
+      - 1.0.8
+    secrets: [ docker_username, docker_password ]
+    when:
+      branch: master
+      event: [ push ]
+
+  ssh-master:
+    image: appleboy/drone-ssh
+    host: 88.198.47.112
+    username: multy
+    secrets: [ ssh_password ]
+    script:
+      - cd /data2/home/multy/prod/
+      - docker-compose -f docker-compose-prod.yml stop 
+      - docker-compose -f docker-compose-prod.yml up -d
+    when:
+      branch: master
+      event: [ push, tag ]
+
+  ssh-except-master:
+    image: appleboy/drone-ssh
+    host: 88.198.47.112
+    username: multy
+    secrets: [ ssh_password ]
+    script:
+      - cd /data2/home/multy/test
+      - docker-compose -f docker-compose-test.yml stop 
+      - docker-compose -f docker-compose-test.yml up -d
+    when:
+      exclude: [ master ]
+      event: [ push ]
+ 
+  telegram:
+    image: appleboy/drone-telegram
+    secrets: [ telegram_token, telegram_to ]
+    when:
+      status: [ success, failure ]
