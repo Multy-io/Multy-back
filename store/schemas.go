@@ -117,7 +117,7 @@ type MultyTX struct {
 	TxOutAmount       int64                 `json:"txoutamount"`
 	TxOutIndexes          []int                 `json:"txoutindexes"` //This is outputs indexes of the transaction
 	TxInAmount       int64                 `json:"txinamount"`
-	TxInIndexes			  []int					`json:"txoutindexes"` //This is inputs indexes of the transaction
+	TxInIndexes			  []int					`json:"txinindexes"` //This is inputs indexes of the transaction
 	BlockTime         int64                 `json:"blocktime"`
 	BlockHeight       int64                 `json:"blockheight"`
 	TxFee             int64                 `json:"txfee"`
