@@ -1,11 +1,12 @@
 version: '3.4'
 services:
   multy-back:
-    image:  multyio/backend:1.0.2
+    image:  multyio/backend:latest
     command: ["make", "all"]
+    env_file: .env
     volumes:
-        - "./cmd/multy.config:/go/src/github.com/Appscrunch/Multy-back/cmd/multy.config"
-        - "./cmd/rpc.cert:/go/src/github.com/Appscrunch/Multy-back/cmd/rpc.cert"
+        - "${BACKEND_CONF}:/go/src/github.com/Appscrunch/Multy-back/cmd/multy.config"
+        - "${BTCD_CERT}:/go/src/github.com/Appscrunch/Multy-back/cmd/rpc.cert"
     ports:
       - "6678:6678"
       - "6680:6680"
@@ -15,6 +16,20 @@ services:
       - nsqadmin
       - mongodb
       # - btcd-testnet
+      
+  mongodb:
+    container_name: "mongodb"
+    image: mongo:3.6.2
+    env_file: .env
+    command: mongod --smallfiles 
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/data/logs
+    volumes:
+      - ${MONGO_DATA_DIR}:/data/db
+      - ${MONGO_LOG_DIR}:/data/logs
+    ports:
+      - 27017:27017
 
   nsqlookup:
     image: nsqio/nsq
@@ -32,7 +47,12 @@ services:
       - "4151:4151"
     links:
       - nsqlookup:nsqlookup
-    command: nsqd --broadcast-address nsq --lookupd-tcp-address=nsqlookup:4160
+    env_file: .env
+    environment:
+      - NSQD_DATA_DIR=/data/nsqd
+    volumes:
+      - ${NSQD_DATA_DIR}:/data/nsqd
+    command: nsqd --broadcast-address nsq --lookupd-tcp-address=nsqlookup:4160 -data-path=/data
 
   nsqadmin:
     image: nsqio/nsq
@@ -43,25 +63,14 @@ services:
       - "4171:4171"
     command: nsqadmin --lookupd-http-address=nsqlookup:4161
 
-  mongodb:
-    container_name: "mongodb"
-    image: mongo:3.4
-    command: mongod --smallfiles 
-    environment:
-      - MONGO_DATA_DIR=/data/db
+  btcd-testnet:
+    image: multyio/btcd-testnet:1.0.0
+    env_file: .env
     volumes:
-      - ./data-db/db:/data/db
-      # add logpath
+     - "${BTCD}:/root/.btcd"
+     - "${BTCCTL}:/root/.btcctl"
+     - "${BTCD_CERT}:/root/rpc.cert"
+     - "${BTCD_KEY}:/root/rpc.key"
     ports:
-      - 27017:27017
-
-#  btcd-testnet:
-#    image: multyio/btcd-testnet:1.0.0
-#    volumes:
-#     - ${BTCD}:/root/.btcd
-#     - ${BTCCTL}:/root/.btcctl
-#     - "./cmd/rpc.cert:/root/rpc.cert"
-#     - "./cmd/rpc.key:/root/rpc.key"
-#    ports:
-#     - 1334:1334
-#     - 18334:18334
+     - 1334:1334
+     - 18334:18334
