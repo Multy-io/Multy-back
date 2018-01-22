@@ -88,9 +88,23 @@ type WalletsSelect struct {
 		Addresses []struct {
 			AddressIndex int    `bson:"addressIndex"`
 			Address      string `bson:"address"`
-		} `bson:"addresses"`
+		}						 `bson:"addresses"`
 		WalletIndex int `bson:"walletIndex"`
 	} `bson:"wallets"`
+}
+
+
+type WalletForTx struct {
+	UserId			string				`json:"userid"`
+	WalletIndex		int					`json:"walletindex"`
+	Address			AddressWorWallet	`bson:"address"`
+}
+
+type AddressWorWallet struct {
+		AddressIndex	int		`bson:"addressIndex"`
+		Address			string	`bson:"address"`
+		Amount			int64	`bson:"amount"`
+
 }
 
 // the way how user transations store in db
@@ -111,8 +125,8 @@ type MultyTX struct {
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 	TxInputs          []AddresAmount        `json:"txinputs"`
 	TxOutputs         []AddresAmount        `json:"txoutputs"`
-	WalletsInput	[]WalletsSelect			`json:"walletsinput"`   //here we storing all wallets and addresses that took part in Inputs of the transaction
-	WalletsOutput	[]WalletsSelect			`json:"walletsoutput"`  //here we storing all wallets and addresses that took part in Outputs of the transaction
+	WalletsInput	[]WalletForTx			`json:"walletsinput"`   //here we storing all wallets and addresses that took part in Inputs of the transaction
+	WalletsOutput	[]WalletForTx			`json:"walletsoutput"`  //here we storing all wallets and addresses that took part in Outputs of the transaction
 }
 type AddresAmount struct {
 	Address string `json:"address"`
