@@ -112,13 +112,13 @@ type WalletsSelect struct {
 type WalletForTx struct {
 	UserId			string				`json:"userid"`
 	WalletIndex		int					`json:"walletindex"`
-	Address			AddressWorWallet	`bson:"address"`
+	Address			AddressForWallet	`json:"address"`
 }
 
-type AddressWorWallet struct {
-		AddressIndex	int		`bson:"addressIndex"`
-		Address			string	`bson:"address"`
-		Amount			int64	`bson:"amount"`
+type AddressForWallet struct {
+		AddressIndex	int		`json:"addressIndex"`
+		Address			string	`json:"address"`
+		Amount			int64	`json:"amount"`
 
 }
 
