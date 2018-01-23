@@ -74,6 +74,7 @@ func parseMempoolTransaction(inTx *btcjson.TxRawResult) {
 func mempoolTransaction(inTx *btcjson.TxRawResult) {
 	log.Debugf("[MEMPOOL TX]")
 
+	processTransaction(-1, inTx)
 	// apear as output
 	// err := parseOutput(inTx, -1, TxStatusAppearedInMempoolIncoming)
 	// if err != nil {
