@@ -139,6 +139,8 @@ func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRes
 			transaction.StockExchangeRate = rates
 			updateWalletAndAddressDate(transaction)
 
+
+
 			saveMultyTransaction(transaction)
 			sendNotifyToClients(transaction)
 		}

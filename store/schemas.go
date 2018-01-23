@@ -114,10 +114,10 @@ type MultyTX struct {
 	TxOutScript       string                `json:"txoutscript"`
 	TxAddress         []string                `json:"address"` //this is major addresses of the transaction (if send - inputs addresses of our user, if get - outputs addresses of our user)
 	TxStatus          int                   `json:"txstatus"`
-	TxOutAmount       int64                 `json:"txoutamount"`
+	TxOutAmount       int64                 `json:"txoutamount"` //Here we storing all TX amount for our current user!
 	TxOutIndexes          []int                 `json:"txoutindexes"` //This is outputs indexes of the transaction
-	TxInAmount       int64                 `json:"txinamount"`
-	TxInIndexes			  []int					`json:"txinindexes"` //This is inputs indexes of the transaction
+	TxInAmount       int64                 `json:"txinamount"`  //TODO think about we need this fields?
+	TxInIndexes			  []int					`json:"txinindexes"` //This is inputs indexes of the transaction //TODO think about it!
 	BlockTime         int64                 `json:"blocktime"`
 	BlockHeight       int64                 `json:"blockheight"`
 	TxFee             int64                 `json:"txfee"`
