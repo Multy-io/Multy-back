@@ -773,7 +773,7 @@ func setTransactionStatus(tx *store.MultyTX, blockDiff int64, currentBlockHeight
 }
 
 func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult){
-
+	
 	if tx.TxAddress == nil{
 		tx.TxAddress = make([]string,1)
 	}
@@ -808,7 +808,7 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult){
 
 
 	//transactionTime := time.Now().Unix()
-	
+
 
 	//TODO check blockTime! and mempool time
 
