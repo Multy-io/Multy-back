@@ -16,8 +16,8 @@ pipeline:
       - 1.0.3
     secrets: [ docker_username, docker_password ]
     when:
-      exclude: [ master ]
-      event: [ push ]
+      branch:
+        exclude: master
 
   publish-master:
     image: plugins/docker
@@ -27,7 +27,6 @@ pipeline:
     secrets: [ docker_username, docker_password ]
     when:
       branch: master
-      event: [ push ]
 
   ssh-master:
     image: appleboy/drone-ssh
@@ -40,7 +39,6 @@ pipeline:
       - docker-compose -f docker-compose-prod.yml up -d
     when:
       branch: master
-      event: [ push, tag ]
 
   ssh-except-master:
     image: appleboy/drone-ssh
@@ -52,8 +50,8 @@ pipeline:
       - docker-compose -f docker-compose-test.yml stop 
       - docker-compose -f docker-compose-test.yml up -d
     when:
-      exclude: [ master ]
-      event: [ push ]
+      branch:
+        exclude: master
  
   telegram:
     image: appleboy/drone-telegram
