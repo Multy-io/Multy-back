@@ -7,12 +7,12 @@ package btc
 
 import (
 	"fmt"
-	"os/user"
 	"time"
 
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -243,31 +243,103 @@ func saveMultyTransaction(tx store.MultyTX) {
 
 	// User have this transaction but with another status.
 	// Update statsus, block height and block time.
-	sel = bson.M{"userid": user.UserID, "transactions.txid": txVerbose.Txid, "transactions.txaddress": address}
-	update = bson.M{
-		"$set": bson.M{
-			"transactions.$.txstatus":    txStatus,
-			"transactions.$.blockheight": blockHeight,
-			"transactions.$.blocktime":   blockTimeUnix,
-		},
+	for _, walletInput := range tx.WalletsInput {
+
+		sel = bson.M{"userid": walletInput.UserId, "transactions.txid": tx.TxID, "transactions.txaddress": walletInput.Address}
+		update = bson.M{
+			"$set": bson.M{
+				"transactions.$.txstatus":    tx.TxStatus,
+				"transactions.$.blockheight": tx.BlockHeight,
+				"transactions.$.blocktime":   tx.BlockTime,
+			},
+		}
+		err = txsData.Update(sel, update)
+
+		if err != mgo.ErrNotFound {
+			sel := bson.M{"userid": walletInput.UserId}
+			update := bson.M{"$push": bson.M{"transactions": tx}}
+			err := txsData.Update(sel, update)
+			if err != nil {
+				log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
+			}
+		}
+
 	}
 
-	err = txsData.Update(sel, update)
-	if err != nil {
-		log.Errorf("parseInput:outputsData.Insert case nil: %s", err.Error())
+	for _, walletOutput := range tx.WalletsOutput {
+		sel = bson.M{"userid": walletOutput.UserId, "transactions.txid": tx.TxID, "transactions.txaddress": walletOutput.Address}
+		update = bson.M{
+			"$set": bson.M{
+				"transactions.$.txstatus":    tx.TxStatus,
+				"transactions.$.blockheight": tx.BlockHeight,
+				"transactions.$.blocktime":   tx.BlockTime,
+			},
+		}
+		err = txsData.Update(sel, update)
+
+		if err != mgo.ErrNotFound {
+			sel := bson.M{"userid": walletOutput.UserId}
+			update := bson.M{"$push": bson.M{"transactions": tx}}
+			err := txsData.Update(sel, update)
+			if err != nil {
+				log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
+			}
+		}
 	}
 
-	newTx := newMultyTX(txVerbose.Txid, txVerbose.Hash, output.ScriptPubKey.Hex, address, txStatus, int(output.N), walletIndex, txOutAmount, blockTime, blockHeight, fee, blockTimeUnix, exRates, inputs, outputs)
-	sel = bson.M{"userid": user.UserID}
-	update := bson.M{"$push": bson.M{"transactions": newTx}}
-	err = txsData.Update(sel, update)
-	if err != nil {
-		log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
-	}
+	/*
+		sel = bson.M{"userid": user.UserID, "transactions.txid": txVerbose.Txid, "transactions.txaddress": address}
+		update = bson.M{
+			"$set": bson.M{
+				"transactions.$.txstatus":    txStatus,
+				"transactions.$.blockheight": blockHeight,
+				"transactions.$.blocktime":   blockTimeUnix,
+			},
+		}
 
+		err = txsData.Update(sel, update)
+		if err != nil {
+			log.Errorf("parseInput:outputsData.Insert case nil: %s", err.Error())
+		}
+
+		newTx := newMultyTX(txVerbose.Txid, txVerbose.Hash, output.ScriptPubKey.Hex, address, txStatus, int(output.N), walletIndex, txOutAmount, blockTime, blockHeight, fee, blockTimeUnix, exRates, inputs, outputs)
+		sel = bson.M{"userid": user.UserID}
+		update := bson.M{"$push": bson.M{"transactions": newTx}}
+		err = txsData.Update(sel, update)
+		if err != nil {
+			log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
+		}
+	*/
 }
 
-func sendNotifyToClients(transaction store.MultyTX) {
+func sendNotifyToClients(tx store.MultyTX) {
+
+	for _, walletOutput := range tx.WalletsOutput {
+		txMsq := BtcTransactionWithUserID{
+			UserID: walletOutput.UserId,
+			NotificationMsg: &BtcTransaction{
+				TransactionType: tx.TxStatus,
+				Amount:          tx.TxOutAmount,
+				TxID:            tx.TxID,
+				Address:         walletOutput.Address,
+			},
+		}
+		sendNotifyToClients(&txMsq)
+	}
+
+	for _, walletInput := range tx.WalletsInput {
+		txMsq := BtcTransactionWithUserID{
+			UserID: walletInput.UserId,
+			NotificationMsg: &BtcTransaction{
+				TransactionType: tx.TxStatus,
+				Amount:          tx.TxInAmount,
+				TxID:            tx.TxID,
+				Address:         walletInput.Address,
+			},
+		}
+		sendNotifyToClients(&txMsq)
+	}
+
 	//TODO make it correct
 	//func sendNotifyToClients(txMsq *BtcTransactionWithUserID) {
 	//	newTxJSON, err := json.Marshal(txMsq)
@@ -518,50 +590,108 @@ func GetLatestExchangeRate() ([]store.ExchangeRatesRecord, error) {
 
 }
 
-func updateWalletAndAddressDate(multyTx store.MultyTX) {
+func updateWalletAndAddressDate(tx store.MultyTX) {
 	blockTimeUnix := time.Now().Unix()
 	//TODO make all nesessary updates HERE
 
 	//TODO this code is just example of useage
 	//TODO change it to correct structure!
 
-	// Update wallets last action time on every new transaction.
-	// Set status to OK if some money transfered to this address
-	sel := bson.M{"userID": user.UserID, "wallets.walletIndex": walletIndex}
-	update := bson.M{
-		"$set": bson.M{
-			"wallets.$.status":         store.WalletStatusOK,
-			"wallets.$.lastActionTime": time.Now().Unix(),
-		},
-	}
-	err = usersData.Update(sel, update)
-	if err != nil {
-		log.Errorf("parseOutput:restClient.userStore.Update: %s", err.Error())
+	for _, walletOutput := range tx.WalletsOutput {
+
+		// update addresses last action time
+		sel = bson.M{"userID": walletOutput.UserId, "wallets.addresses.address": walletOutput.Address}
+		update = bson.M{
+			"$set": bson.M{
+				"wallets.$.addresses.$[].lastActionTime": time.Now().Unix(),
+			},
+		}
+		err = usersData.Update(sel, update)
+		if err != nil {
+			log.Errorf("updateWalletAndAddressDate:usersData.Update: %s", err.Error())
+		}
+
+		// update wallets last action time
+		// Set status to OK if some money transfered to this address
+		sel := bson.M{"userID": walletOutput.UserId, "wallets.walletIndex": walletOutput.WalletIndex}
+		update := bson.M{
+			"$set": bson.M{
+				"wallets.$.status":         store.WalletStatusOK,
+				"wallets.$.lastActionTime": time.Now().Unix(),
+			},
+		}
+		err = usersData.Update(sel, update)
+		if err != nil {
+			log.Errorf("updateWalletAndAddressDate:usersData.Update: %s", err.Error())
+		}
+
 	}
 
-	// Update wallets last action time on every new transaction.
-	sel := bson.M{"userID": user.UserID, "wallets.walletIndex": walletIndex}
-	update := bson.M{
-		"$set": bson.M{
-			"wallets.$.lastActionTime": time.Now().Unix(),
-		},
-	}
-	err := usersData.Update(sel, update)
-	if err != nil {
-		log.Errorf("parseOutput:restClient.userStore.Update: %s", err.Error())
+	for _, walletInput := range tx.WalletsInput {
+		// update addresses last action time
+		sel = bson.M{"userID": walletOutput.UserId, "wallets.addresses.address": walletOutput.Address}
+		update = bson.M{
+			"$set": bson.M{
+				"wallets.$.addresses.$[].lastActionTime": time.Now().Unix(),
+			},
+		}
+		err = usersData.Update(sel, update)
+		if err != nil {
+			log.Errorf("updateWalletAndAddressDate:usersData.Update: %s", err.Error())
+		}
+
+		// update wallets last action time
+		sel := bson.M{"userID": walletOutput.UserId, "wallets.walletIndex": walletOutput.WalletIndex}
+		update := bson.M{
+			"$set": bson.M{
+				"wallets.$.lastActionTime": time.Now().Unix(),
+			},
+		}
+		err = usersData.Update(sel, update)
+		if err != nil {
+			log.Errorf("updateWalletAndAddressDate:usersData.Update: %s", err.Error())
+		}
 	}
 
-	// Update address last action time on every new transaction.
-	sel = bson.M{"userID": user.UserID, "wallets.addresses.address": address}
-	update = bson.M{
-		"$set": bson.M{
-			"wallets.$.addresses.$[].lastActionTime": time.Now().Unix(),
-		},
-	}
-	err = usersData.Update(sel, update)
-	if err != nil {
-		log.Errorf("parseOutput:restClient.userStore.Update: %s", err.Error())
-	}
+	/*
+		// Update wallets last action time on every new transaction.
+		// Set status to OK if some money transfered to this address
+		sel := bson.M{"userID": user.UserID, "wallets.walletIndex": walletIndex}
+		update := bson.M{
+			"$set": bson.M{
+				"wallets.$.status":         store.WalletStatusOK,
+				"wallets.$.lastActionTime": time.Now().Unix(),
+			},
+		}
+		err = usersData.Update(sel, update)
+		if err != nil {
+			log.Errorf("parseOutput:restClient.userStore.Update: %s", err.Error())
+		}
+
+		// Update wallets last action time on every new transaction.
+		sel := bson.M{"userID": user.UserID, "wallets.walletIndex": walletIndex}
+		update := bson.M{
+			"$set": bson.M{
+				"wallets.$.lastActionTime": time.Now().Unix(),
+			},
+		}
+		err := usersData.Update(sel, update)
+		if err != nil {
+			log.Errorf("parseOutput:restClient.userStore.Update: %s", err.Error())
+		}
+
+		// Update address last action time on every new transaction.
+		sel = bson.M{"userID": user.UserID, "wallets.addresses.address": address}
+		update = bson.M{
+			"$set": bson.M{
+				"wallets.$.addresses.$[].lastActionTime": time.Now().Unix(),
+			},
+		}
+		err = usersData.Update(sel, update)
+		if err != nil {
+			log.Errorf("parseOutput:restClient.userStore.Update: %s", err.Error())
+		}
+	*/
 }
 
 func setTransactionStatus(tx *store.MultyTX, blockDiff int64, currentBlockHeight int64, fromInput bool) {

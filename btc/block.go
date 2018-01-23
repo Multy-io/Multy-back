@@ -6,15 +6,9 @@ See LICENSE for details
 package btc
 
 import (
-	"encoding/json"
-	"fmt"
-	"time"
-
-	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/Appscrunch/Multy-back/store"
-	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 

@@ -48,6 +48,7 @@ const (
 	msgErrDecodeCurIndexErr     = "wrong currency index"
 	msgErrAdressBalance         = "empty address or 3-rd party server error"
 	msgErrChainIsNotImplemented = "current chain is not implemented"
+	msgErrUserHaveNoTxs         = "user have no transactions"
 )
 
 type RestClient struct {
@@ -352,7 +353,6 @@ func (restClient *RestClient) changeWalletName() gin.HandlerFunc {
 				})
 				return
 			}
-
 		case currencies.Ether:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
@@ -466,9 +466,14 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 			query = bson.M{"userid": user.UserID}
 			if err := restClient.userStore.FindUserTxs(query, &userTxs); err != nil {
 				restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-				code = http.StatusOK
-				message = http.StatusText(http.StatusOK)
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": msgErrChainIsNotImplemented,
+				})
+				return
 			}
+			code = http.StatusOK
+			message = http.StatusText(http.StatusOK)
 
 			var unspendTxs []store.MultyTX
 			for _, tx := range userTxs.Transactions {
