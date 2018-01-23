@@ -9,6 +9,21 @@ import (
 	"time"
 )
 
+const (
+	TxStatusAppearedInMempoolIncoming = 1
+	TxStatusAppearedInBlockIncoming   = 2
+
+	TxStatusAppearedInMempoolOutcoming = 3
+	TxStatusAppearedInBlockOutcoming   = 4
+
+	TxStatusInBlockConfirmedIncoming  = 5
+	TxStatusInBlockConfirmedOutcoming = 6
+
+	// TxStatusInBlockConfirmed = 5
+
+	// TxStatusRejectedFromBlock = -1
+)
+
 // User represents a single app user
 type User struct {
 	UserID  string   `bson:"userID"`  // User uqnique identifier
