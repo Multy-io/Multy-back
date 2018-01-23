@@ -77,7 +77,7 @@ func fetchWalletAndAddressIndexes(wallets []store.Wallet, address string) (int, 
 	return walletIndex, addressIndex
 }
 
-func txInfo(txVerbose *btcjson.TxRawResult) ([]store.AddresAmount, []store.AddresAmount, int64, error) {
+func setTransactionInfo(multyTx *store.MultyTX, txVerbose *btcjson.TxRawResult) (error) {
 
 	inputs := []store.AddresAmount{}
 	outputs := []store.AddresAmount{}
@@ -95,12 +95,11 @@ func txInfo(txVerbose *btcjson.TxRawResult) ([]store.AddresAmount, []store.Addre
 		hash, err := chainhash.NewHashFromStr(input.Txid)
 		if err != nil {
 			log.Errorf("txInfo:chainhash.NewHashFromStr: %s", err.Error())
-			return nil, nil, 0, err
+
 		}
 		previousTxVerbose, err := rpcClient.GetRawTransactionVerbose(hash)
 		if err != nil {
 			log.Errorf("txInfo:rpcClient.GetRawTransactionVerbose: %s", err.Error())
-			return nil, nil, 0, err
 		}
 
 		for _, address := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses {
@@ -111,7 +110,12 @@ func txInfo(txVerbose *btcjson.TxRawResult) ([]store.AddresAmount, []store.Addre
 	}
 	fee := int64((inputSum - outputSum) * 100000000)
 
-	return inputs, outputs, fee, nil
+
+	multyTx.TxInputs = inputs
+	multyTx.TxOutputs = outputs
+	multyTx.TxFee = fee
+
+	return nil
 }
 
 /*
@@ -128,17 +132,17 @@ can be called from:
 func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult) {
 	var multyTx *store.MultyTX = parseRawTransaction(blockChainBlockHeight, txVerbose)
 	if multyTx != nil {
+
+		setTransactionInfo(multyTx, txVerbose)
+
 		transactions := splitTransaction(*multyTx, blockChainBlockHeight)
 
 		for _, transaction := range transactions {
 
-			rates, err := GetLatestExchangeRate()
-			if err != nil {
-				log.Errorf("processTransaction:ExchangeRates: %s", err.Error())
-			}
 
-			//TODO fit all fields in transaction!
-			transaction.StockExchangeRate = rates
+			finalizeTransaction(&transaction, txVerbose)
+
+
 			updateWalletAndAddressDate(transaction)
 
 			saveMultyTransaction(transaction)
@@ -177,6 +181,8 @@ func parseRawTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRe
 	}
 
 	if multyTx.TxID != "" {
+		multyTx.TxOutScript = txVerbose.Hex
+
 		return &multyTx
 	} else {
 		return nil
@@ -273,9 +279,9 @@ func newEntity(multyTx store.MultyTX) store.MultyTX {
 		TxAddress:         multyTx.TxAddress,
 		TxStatus:          multyTx.TxStatus,
 		TxOutAmount:       multyTx.TxOutAmount,
-		TxOutIndexes:      multyTx.TxOutIndexes,
-		TxInAmount:        multyTx.TxInAmount,
-		TxInIndexes:       multyTx.TxInIndexes,
+		//TxOutIndexes:      multyTx.TxOutIndexes,
+		//TxInAmount:        multyTx.TxInAmount,
+		//TxInIndexes:       multyTx.TxInIndexes,
 		BlockTime:         multyTx.BlockTime,
 		BlockHeight:       multyTx.BlockHeight,
 		TxFee:             multyTx.TxFee,
@@ -400,7 +406,7 @@ func sendNotifyToClients(tx store.MultyTX) {
 			UserID: walletInput.UserId,
 			NotificationMsg: &BtcTransaction{
 				TransactionType: tx.TxStatus,
-				Amount:          tx.TxInAmount,
+				Amount:          tx.TxOutAmount,
 				TxID:            tx.TxID,
 				Address:         walletInput.Address.Address,
 			},
@@ -453,9 +459,9 @@ func parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *sto
 
 			currentWallet := store.WalletForTx{UserId: user.UserID, WalletIndex: walletIndex}
 
-			if multyTx.TxInputs == nil {
-				multyTx.TxInputs = make([]store.AddresAmount, 2)
-			}
+			//if multyTx.TxInputs == nil {
+			//	multyTx.TxInputs = make([]store.AddresAmount, 2)
+			//}
 
 			if multyTx.WalletsInput == nil {
 				multyTx.WalletsInput = make([]store.WalletForTx, 2)
@@ -464,25 +470,7 @@ func parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *sto
 			currentWallet.Address = store.AddressForWallet{Address: txInAddress, AddressIndex: addressIndex, Amount: txInAmount}
 			multyTx.WalletsInput = append(multyTx.WalletsInput, currentWallet)
 
-			multyTx.TxInputs = append(multyTx.TxInputs, store.AddresAmount{Address: txInAddress, Amount: txInAmount})
-
-			//
-			//if len(multyTx.WalletsInput) > 0{
-			//	var haveTheSameWalletIndex = false
-			//	//Check if we already have the same wallet index
-			//	for _, walletInForTx := range multyTx.WalletsInput{
-			//		if walletInForTx.WalletIndex == currentWallet.WalletIndex{
-			//			haveTheSameWalletIndex = true
-			//		}
-			//	}
-			//	if !haveTheSameWalletIndex{
-			//		//This is not stored wallet
-			//
-			//	}
-			//} else {
-			//	currentWallet.Address = store.AddressWorWallet{Address:txInAddress, AddressIndex:addressIndex, Amount:txInAmount}
-			//	multyTx.WalletsInput = append(multyTx.WalletsInput, currentWallet)
-			//}
+			//multyTx.TxInputs = append(multyTx.TxInputs, store.AddresAmount{Address: txInAddress, Amount: txInAmount})
 
 			multyTx.TxID = txVerbose.Txid
 			multyTx.TxHash = txVerbose.Hash
@@ -659,11 +647,6 @@ func GetLatestExchangeRate() ([]store.ExchangeRatesRecord, error) {
 }
 
 func updateWalletAndAddressDate(tx store.MultyTX) {
-	// blockTimeUnix := time.Now().Unix()
-	//TODO make all nesessary updates HERE
-
-	//TODO this code is just example of useage
-	//TODO change it to correct structure!
 
 	for _, walletOutput := range tx.WalletsOutput {
 
@@ -788,3 +771,46 @@ func setTransactionStatus(tx *store.MultyTX, blockDiff int64, currentBlockHeight
 		}
 	}
 }
+
+func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult){
+
+	if tx.TxAddress == nil{
+		tx.TxAddress = make([]string,1)
+	}
+
+	if tx.TxStatus == TxStatusInBlockConfirmedOutcoming || tx.TxStatus == TxStatusAppearedInBlockOutcoming || tx.TxStatus == TxStatusAppearedInMempoolOutcoming{
+		for _, walletInput := range tx.WalletsInput{
+			tx.TxOutAmount += walletInput.Address.Amount
+			tx.TxAddress = append(tx.TxAddress, walletInput.Address.Address)
+		}
+	} else {
+		for i:=0; i<len(tx.WalletsOutput); i++{
+			tx.TxOutAmount += tx.WalletsOutput[i].Address.Amount
+			tx.TxAddress = append(tx.TxAddress, tx.WalletsOutput[i].Address.Address)
+
+			for _, output:= range txVerbose.Vout{
+				for _, outAddr := range output.ScriptPubKey.Addresses{
+					if tx.WalletsOutput[i].Address.Address == outAddr{
+						tx.WalletsOutput[i].Address.AddressOutIndex = int(output.N)
+					}
+				}
+			}
+		}
+		//TxOutIndexes we need only for incoming transactions
+	}
+
+	rates, err := GetLatestExchangeRate()
+	if err != nil {
+		log.Errorf("processTransaction:ExchangeRates: %s", err.Error())
+	}
+
+	tx.StockExchangeRate = rates
+
+
+	//transactionTime := time.Now().Unix()
+	
+
+	//TODO check blockTime! and mempool time
+
+}
+
