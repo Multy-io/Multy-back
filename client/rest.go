@@ -490,8 +490,11 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 					for _, address := range wallet.Adresses {
 
 						for _, tx := range unspendTxs {
-							if tx.TxAddress == address.Address {
-								balance += int(tx.TxOutAmount)
+							for _, walletOutput := range tx.WalletsOutput {
+
+								if walletOutput.Address.Address == address.Address {
+									balance += int(walletOutput.Address.Amount)
+								}
 							}
 						}
 						totalBalance += balance
@@ -499,6 +502,27 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 					}
 				}
 			}
+			// for _,tx := range unspendTxs {
+			// 	tx.WalletsInput
+			// }
+
+			/*
+				for _, wallet := range user.Wallets {
+					if wallet.WalletIndex == walletIndex {
+						for _, address := range wallet.Adresses {
+
+							for _, tx := range unspendTxs {
+								if tx.TxAddress == address.Address {
+									balance += int(tx.TxOutAmount)
+								}
+							}
+							totalBalance += balance
+							balance = 0
+						}
+					}
+				}
+			*/
+
 			if totalBalance != 0 {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"code":    http.StatusBadRequest,
@@ -757,17 +781,34 @@ func (restClient *RestClient) getSpendableOutputs() gin.HandlerFunc {
 			}
 
 			for _, tx := range userTxs.Transactions {
-				if tx.TxAddress == address {
-					if tx.TxStatus == store.TxStatusAppearedInBlockIncoming || tx.TxStatus == store.TxStatusInBlockConfirmedIncoming { // all spendable txs
-						spOuts = append(spOuts, store.SpendableOutputs{
-							TxID:        tx.TxID,
-							TxOutID:     tx.TxOutID,
-							TxOutAmount: int(tx.TxOutAmount),
-							TxOutScript: tx.TxOutScript,
-						})
+				if tx.TxStatus == store.TxStatusAppearedInBlockIncoming || tx.TxStatus == store.TxStatusInBlockConfirmedIncoming { // all spendable txs
+					for _, output := range tx.WalletsOutput {
+						if output.Address.Address == address {
+							spOuts = append(spOuts, store.SpendableOutputs{
+								TxID:        tx.TxID,
+								TxOutID:     output.Address.AddressOutIndex,
+								TxOutAmount: int(output.Address.Amount),
+								TxOutScript: tx.TxOutScript,
+							})
+						}
 					}
 				}
 			}
+			/*
+
+				for _, tx := range userTxs.Transactions {
+					if tx.TxAddress == address {
+						if tx.TxStatus == store.TxStatusAppearedInBlockIncoming || tx.TxStatus == store.TxStatusInBlockConfirmedIncoming { // all spendable txs
+							spOuts = append(spOuts, store.SpendableOutputs{
+								TxID:        tx.TxID,
+								TxOutID:     tx.TxOutID,
+								TxOutAmount: int(tx.TxOutAmount),
+								TxOutScript: tx.TxOutScript,
+							})
+						}
+					}
+				}
+			*/
 
 		// case currencies.Bitcoin:
 		default:
@@ -1028,22 +1069,23 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			var balance int
 
 			for _, wallet := range user.Wallets {
-				if wallet.WalletIndex == walletIndex {
+				if wallet.WalletIndex == walletIndex { // specify wallet index
+
 					for _, address := range wallet.Adresses {
-
 						for _, tx := range unspendTxs {
-							if tx.TxAddress == address.Address {
-								balance += int(tx.TxOutAmount)
 
-								spOuts = append(spOuts, store.SpendableOutputs{
-									TxID:              tx.TxID,
-									TxOutID:           tx.TxOutID,
-									TxOutAmount:       int(tx.TxOutAmount),
-									TxOutScript:       tx.TxOutScript,
-									TxStatus:          tx.TxStatus,
-									AddressIndex:      address.AddressIndex,
-									StockExchangeRate: tx.StockExchangeRate, // from db
-								})
+							for _, output := range tx.WalletsOutput {
+								if address.Address == output.Address.Address {
+									spOuts = append(spOuts, store.SpendableOutputs{
+										TxID:              tx.TxID,
+										TxOutID:           output.Address.AddressOutIndex,
+										TxOutAmount:       int(output.Address.Amount),
+										TxOutScript:       tx.TxOutScript,
+										TxStatus:          tx.TxStatus,
+										AddressIndex:      output.Address.AddressIndex,
+										StockExchangeRate: tx.StockExchangeRate, // from db
+									})
+								}
 							}
 						}
 
@@ -1189,18 +1231,19 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					for _, address := range wallet.Adresses {
 
 						for _, tx := range unspendTxs {
-							if tx.TxAddress == address.Address {
-								balance += int(tx.TxOutAmount)
 
-								spOuts = append(spOuts, store.SpendableOutputs{
-									TxID:              tx.TxID,
-									TxOutID:           tx.TxOutID,
-									TxOutAmount:       int(tx.TxOutAmount),
-									TxOutScript:       tx.TxOutScript,
-									TxStatus:          tx.TxStatus,
-									AddressIndex:      address.AddressIndex,
-									StockExchangeRate: tx.StockExchangeRate, // from db
-								})
+							for _, output := range tx.WalletsOutput {
+								if address.Address == output.Address.Address {
+									spOuts = append(spOuts, store.SpendableOutputs{
+										TxID:              tx.TxID,
+										TxOutID:           output.Address.AddressOutIndex,
+										TxOutAmount:       int(output.Address.Amount),
+										TxOutScript:       tx.TxOutScript,
+										TxStatus:          tx.TxStatus,
+										AddressIndex:      output.Address.AddressIndex,
+										StockExchangeRate: tx.StockExchangeRate, // from db
+									})
+								}
 							}
 						}
 
@@ -1304,7 +1347,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 			return
 		}
 
-		txHistory := []TxHistory{}
+		// txHistory := []TxHistory{}
 		switch currencyId {
 		case currencies.Bitcoin:
 			query := bson.M{"userid": user.UserID}
@@ -1320,30 +1363,39 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 			}
 
 			for _, tx := range userTxs.Transactions {
-				if tx.WalletIndex == walletIndex {
-					walletTxs = append(walletTxs, tx)
+				for _, output := range tx.WalletsOutput {
+					if output.WalletIndex == walletIndex {
+						walletTxs = append(walletTxs, tx)
+					}
+				}
+				for _, input := range tx.WalletsInput {
+					if input.WalletIndex == walletIndex {
+						walletTxs = append(walletTxs, tx)
+					}
 				}
 			}
 
-			for _, walletTx := range walletTxs {
-				txHistory = append(txHistory, TxHistory{
-					TxID:        walletTx.TxID,
-					TxHash:      walletTx.TxHash,
-					TxOutScript: walletTx.TxOutScript,
-					TxAddress:   walletTx.TxAddress,
-					TxStatus:    walletTx.TxStatus,
-					TxOutAmount: walletTx.TxOutAmount,
-					TxOutID:     walletTx.TxOutID,
-					WalletIndex: walletTx.WalletIndex,
-					BlockTime:   walletTx.BlockTime,
-					BlockHeight: walletTx.BlockHeight,
-					TxFee:       walletTx.TxFee,
-					BtcToUsd:    walletTx.StockExchangeRate[0].Exchanges.BTCtoUSD,
-					TxInputs:    walletTx.TxInputs,
-					TxOutputs:   walletTx.TxOutputs,
-					MempoolTime: walletTx.MempoolTime,
-				})
-			}
+			/*
+				for _, walletTx := range walletTxs {
+					txHistory = append(txHistory, TxHistory{
+						TxID:        walletTx.TxID,
+						TxHash:      walletTx.TxHash,
+						TxOutScript: walletTx.TxOutScript,
+						TxAddress:   walletTx.TxAddress,
+						TxStatus:    walletTx.TxStatus,
+						TxOutAmount: walletTx.TxOutAmount,
+						TxOutID:     walletTx.TxOutID,
+						WalletIndex: walletTx.WalletIndex,
+						BlockTime:   walletTx.BlockTime,
+						BlockHeight: walletTx.BlockHeight,
+						TxFee:       walletTx.TxFee,
+						BtcToUsd:    walletTx.StockExchangeRate[0].Exchanges.BTCtoUSD,
+						TxInputs:    walletTx.TxInputs,
+						TxOutputs:   walletTx.TxOutputs,
+						MempoolTime: walletTx.MempoolTime,
+					})
+				}
+			*/
 		case currencies.Ether:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
@@ -1363,7 +1415,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{
 			"code":    http.StatusOK,
 			"message": http.StatusText(http.StatusOK),
-			"history": txHistory,
+			"history": walletTxs,
 		})
 	}
 }

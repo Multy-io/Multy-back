@@ -148,41 +148,40 @@ func notifyNewBlockTx(hash *chainhash.Hash) {
 //}
 
 func blockTransactions(hash *chainhash.Hash) {
-	/*
-		log.Debugf("New block connected %s", hash.String())
+	log.Debugf("New block connected %s", hash.String())
 
-		// block Height
-		blockVerbose, err := rpcClient.GetBlockVerbose(hash)
-		blockHeight := blockVerbose.Height
+	// block Height
+	blockVerbose, err := rpcClient.GetBlockVerbose(hash)
+	blockHeight := blockVerbose.Height
 
-		//parse all block transactions
-		rawBlock, err := rpcClient.GetBlock(hash)
-		allBlockTransactions, err := rawBlock.TxHashes()
+	//parse all block transactions
+	rawBlock, err := rpcClient.GetBlock(hash)
+	allBlockTransactions, err := rawBlock.TxHashes()
+	if err != nil {
+		log.Errorf("parseNewBlock:rawBlock.TxHashes: %s", err.Error())
+	}
+
+	for _, txHash := range allBlockTransactions {
+
+		blockTxVerbose, err := rpcClient.GetRawTransactionVerbose(&txHash)
 		if err != nil {
-			log.Errorf("parseNewBlock:rawBlock.TxHashes: %s", err.Error())
+			log.Errorf("parseNewBlock:rpcClient.GetRawTransactionVerbose: %s", err.Error())
+			continue
 		}
 
-		for _, txHash := range allBlockTransactions {
+		processTransaction(blockHeight, blockTxVerbose)
+		// // apear as output
+		// err = parseOutput(blockTxVerbose, blockHeight, TxStatusAppearedInBlockIncoming)
+		// if err != nil {
+		// 	log.Errorf("parseNewBlock:parseOutput: %s", err.Error())
+		// }
 
-			blockTxVerbose, err := rpcClient.GetRawTransactionVerbose(&txHash)
-			if err != nil {
-				log.Errorf("parseNewBlock:rpcClient.GetRawTransactionVerbose: %s", err.Error())
-				continue
-			}
-
-			// // apear as output
-			// err = parseOutput(blockTxVerbose, blockHeight, TxStatusAppearedInBlockIncoming)
-			// if err != nil {
-			// 	log.Errorf("parseNewBlock:parseOutput: %s", err.Error())
-			// }
-
-			// // apear as input
-			// err = parseInput(blockTxVerbose, blockHeight, TxStatusAppearedInBlockOutcoming)
-			// if err != nil {
-			// 	log.Errorf("parseNewBlock:parseInput: %s", err.Error())
-			// }
-		}
-	*/
+		// // apear as input
+		// err = parseInput(blockTxVerbose, blockHeight, TxStatusAppearedInBlockOutcoming)
+		// if err != nil {
+		// 	log.Errorf("parseNewBlock:parseInput: %s", err.Error())
+		// }
+	}
 }
 
 //func parseOutput(txVerbose *btcjson.TxRawResult, blockHeight int64, txStatus int) error {
