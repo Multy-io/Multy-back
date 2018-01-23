@@ -60,8 +60,9 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 		data := map[string]string{
 			"txid":            msg.NotificationMsg.TxID,
 			"transactionType": strconv.Itoa(msg.NotificationMsg.TransactionType),
-			"amount":          strconv.FormatFloat(msg.NotificationMsg.Amount, 'f', 3, 64),
-			"address":         msg.NotificationMsg.Address,
+			// "amount":          strconv.FormatFloat(msg.NotificationMsg.Amount, 'f', 3, 64),
+			"amount":  strconv.FormatInt(msg.NotificationMsg.Amount, 10),
+			"address": msg.NotificationMsg.Address,
 		}
 		fClient.log.Debugf("data=%+v", data)
 

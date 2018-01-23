@@ -6,12 +6,10 @@ See LICENSE for details
 package btc
 
 import (
-	"github.com/Appscrunch/Multy-back/store"
 	"github.com/btcsuite/btcd/btcjson"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"gopkg.in/mgo.v2/bson"
 )
 
+/*
 func parseMempoolTransaction(inTx *btcjson.TxRawResult) {
 	var user store.User
 	// parse every new transaction out from mempool and notify user with websocket
@@ -34,7 +32,7 @@ func parseMempoolTransaction(inTx *btcjson.TxRawResult) {
 					Address:         address,
 				},
 			}
-			sendNotifyToClients(&txMsq)
+			// sendNotifyToClients(&txMsq)
 		}
 	}
 
@@ -72,20 +70,20 @@ func parseMempoolTransaction(inTx *btcjson.TxRawResult) {
 		}
 	}
 }
-
+*/
 func mempoolTransaction(inTx *btcjson.TxRawResult) {
 	log.Debugf("[MEMPOOL TX]")
 
 	// apear as output
-	err := parseOutput(inTx, -1, TxStatusAppearedInMempoolIncoming)
-	if err != nil {
-		log.Errorf("mempoolTransaction:parseOutput: %s", err.Error())
-	}
+	// err := parseOutput(inTx, -1, TxStatusAppearedInMempoolIncoming)
+	// if err != nil {
+	// 	log.Errorf("mempoolTransaction:parseOutput: %s", err.Error())
+	// }
 
 	// apear as input
-	err = parseInput(inTx, -1, TxStatusAppearedInMempoolOutcoming)
-	if err != nil {
-		log.Errorf("mempoolTransaction:parseInput: %s", err.Error())
-	}
+	// err = parseInput(inTx, -1, TxStatusAppearedInMempoolOutcoming)
+	// if err != nil {
+	// 	log.Errorf("mempoolTransaction:parseInput: %s", err.Error())
+	// }
 
 }

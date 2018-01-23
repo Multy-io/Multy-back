@@ -32,6 +32,7 @@ const (
 	SixPlusBlockConfirmation = 7
 )
 
+/*
 func notifyNewBlockTx(hash *chainhash.Hash) {
 	log.Debugf("New block connected %s", hash.String())
 
@@ -76,7 +77,7 @@ func notifyNewBlockTx(hash *chainhash.Hash) {
 				if err != nil {
 					continue
 				}
-				log.Debugf("[IS OUR USER] parseNewBlock: usersData.Find = %s", address)
+				log.Debugf("[IS OUR USER] parseNewBlock:usersData.Find = %s", address)
 
 				txMsq := BtcTransactionWithUserID{
 					UserID: user.UserID,
@@ -129,6 +130,7 @@ func notifyNewBlockTx(hash *chainhash.Hash) {
 		}
 	}
 }
+*/
 
 //func sendNotifyToClients(txMsq *BtcTransactionWithUserID) {
 //	newTxJSON, err := json.Marshal(txMsq)
@@ -146,39 +148,41 @@ func notifyNewBlockTx(hash *chainhash.Hash) {
 //}
 
 func blockTransactions(hash *chainhash.Hash) {
-	log.Debugf("New block connected %s", hash.String())
+	/*
+		log.Debugf("New block connected %s", hash.String())
 
-	// block Height
-	blockVerbose, err := rpcClient.GetBlockVerbose(hash)
-	blockHeight := blockVerbose.Height
+		// block Height
+		blockVerbose, err := rpcClient.GetBlockVerbose(hash)
+		blockHeight := blockVerbose.Height
 
-	//parse all block transactions
-	rawBlock, err := rpcClient.GetBlock(hash)
-	allBlockTransactions, err := rawBlock.TxHashes()
-	if err != nil {
-		log.Errorf("parseNewBlock:rawBlock.TxHashes: %s", err.Error())
-	}
-
-	for _, txHash := range allBlockTransactions {
-
-		blockTxVerbose, err := rpcClient.GetRawTransactionVerbose(&txHash)
+		//parse all block transactions
+		rawBlock, err := rpcClient.GetBlock(hash)
+		allBlockTransactions, err := rawBlock.TxHashes()
 		if err != nil {
-			log.Errorf("parseNewBlock:rpcClient.GetRawTransactionVerbose: %s", err.Error())
-			continue
+			log.Errorf("parseNewBlock:rawBlock.TxHashes: %s", err.Error())
 		}
 
-		// apear as output
-		err = parseOutput(blockTxVerbose, blockHeight, TxStatusAppearedInBlockIncoming)
-		if err != nil {
-			log.Errorf("parseNewBlock:parseOutput: %s", err.Error())
-		}
+		for _, txHash := range allBlockTransactions {
 
-		// apear as input
-		err = parseInput(blockTxVerbose, blockHeight, TxStatusAppearedInBlockOutcoming)
-		if err != nil {
-			log.Errorf("parseNewBlock:parseInput: %s", err.Error())
+			blockTxVerbose, err := rpcClient.GetRawTransactionVerbose(&txHash)
+			if err != nil {
+				log.Errorf("parseNewBlock:rpcClient.GetRawTransactionVerbose: %s", err.Error())
+				continue
+			}
+
+			// // apear as output
+			// err = parseOutput(blockTxVerbose, blockHeight, TxStatusAppearedInBlockIncoming)
+			// if err != nil {
+			// 	log.Errorf("parseNewBlock:parseOutput: %s", err.Error())
+			// }
+
+			// // apear as input
+			// err = parseInput(blockTxVerbose, blockHeight, TxStatusAppearedInBlockOutcoming)
+			// if err != nil {
+			// 	log.Errorf("parseNewBlock:parseInput: %s", err.Error())
+			// }
 		}
-	}
+	*/
 }
 
 //func parseOutput(txVerbose *btcjson.TxRawResult, blockHeight int64, txStatus int) error {
@@ -443,7 +447,7 @@ func blockConfirmations(hash *chainhash.Hash) {
 				TransactionType: TxStatusInBlockConfirmedIncoming,
 			},
 		}
-		sendNotifyToClients(&txMsq)
+		sendNotify(&txMsq)
 	}
 
 }

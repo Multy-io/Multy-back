@@ -71,13 +71,13 @@ func RunProcess(btcNodeAddress string) error {
 	ntfnHandlers := rpcclient.NotificationHandlers{
 		OnBlockConnected: func(hash *chainhash.Hash, height int32, t time.Time) {
 			log.Debugf("OnBlockConnected: %v (%d) %v", hash, height, t)
-			go notifyNewBlockTx(hash)
+			// go notifyNewBlockTx(hash)
 			go blockTransactions(hash)
 			go blockConfirmations(hash)
 		},
 		OnTxAcceptedVerbose: func(txDetails *btcjson.TxRawResult) {
 			log.Debugf("OnTxAcceptedVerbose: new transaction id = %v", txDetails.Txid)
-			go parseMempoolTransaction(txDetails)
+			// go parseMempoolTransaction(txDetails)
 			//add every new tx from mempool to db
 			//feeRate
 			go newTxToDB(txDetails)
