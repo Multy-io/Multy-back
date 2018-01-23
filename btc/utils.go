@@ -135,8 +135,12 @@ func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRes
 			if err != nil {
 				log.Errorf("processTransaction:ExchangeRates: %s", err.Error())
 			}
+
+			//TODO fit all fields in transaction!
 			transaction.StockExchangeRate = rates
 			updateWalletAndAddressDate(transaction)
+
+
 
 			saveMultyTransaction(transaction)
 			sendNotifyToClients(transaction)
@@ -195,18 +199,68 @@ func splitTransaction(multyTx store.MultyTX, blockHeight int64) []store.MultyTX 
 	blockDiff := currentBlockHeight - blockHeight
 
 	//This is implementatios for single wallet transaction for multi addresses not for multi wallets!
-	if multyTx.WalletsInput != nil && multyTx.WalletsOutput != nil && len(multyTx.WalletsInput) > 0 && len(multyTx.WalletsOutput) > 0 {
-		// outgoingTx := multyTx
-		// incomingTx := multyTx
-
+	if multyTx.WalletsInput != nil && len(multyTx.WalletsInput) > 0 {
 		outgoingTx := newEntity(multyTx)
-		incomingTx := newEntity(multyTx)
+		outgoingTx.WalletsOutput = make([]store.WalletForTx, 1)
+
+		for _, walletOutput:= range multyTx.WalletsOutput{
+			for _, walletInput:= range outgoingTx.WalletsInput{
+				if walletInput.UserId == walletOutput.UserId && walletInput.WalletIndex == walletOutput.WalletIndex{
+					outgoingTx.WalletsOutput = append(outgoingTx.WalletsOutput, walletOutput)
+				}
+			}
+		}
 
 		setTransactionStatus(&outgoingTx, blockDiff, currentBlockHeight, true)
-		setTransactionStatus(&incomingTx, blockDiff, currentBlockHeight, false)
-		transactions = append(transactions, outgoingTx, incomingTx)
-	} else {
-		transactions = append(transactions, multyTx)
+		transactions = append(transactions, outgoingTx)
+	}
+
+	if multyTx.WalletsOutput != nil && len(multyTx.WalletsOutput) >0 {
+		for _, walletOutput := range multyTx.WalletsOutput{
+			var alreadyAdded = false
+			for i:=0; i<len(transactions); i++{
+			//for _, splitedTx := range transactions{
+				//Check if our output wallet is in the inputs
+				//var walletOutputExistInInputs = false
+				if transactions[i].WalletsInput != nil && len(transactions[i].WalletsInput) >0{
+					for _, splitedInput := range transactions[i].WalletsInput{
+						if splitedInput.UserId == walletOutput.UserId && splitedInput.WalletIndex == walletOutput.WalletIndex{
+							alreadyAdded = true
+						}
+					}
+				}
+
+				if transactions[i].WalletsOutput != nil && len(transactions[i].WalletsOutput) > 0{
+					//var alreadyInOutputs = false
+					for j:=0; j<len(transactions[i].WalletsOutput); j++{
+						if walletOutput.UserId == transactions[i].WalletsOutput[j].UserId && walletOutput.WalletIndex == transactions[i].WalletsOutput[j].WalletIndex { //&& walletOutput.Address.Address != transactions[i].WalletsOutput[j].Address.Address Don't think this ckeck we need
+							//We have the same wallet index in output but different addres
+							alreadyAdded = true
+							//alreadyInOutputs = true
+							transactions[i].WalletsOutput = append(transactions[i].WalletsOutput, walletOutput)
+						}
+						//else if walletOutput.UserId == transactions[i].WalletsOutput[j].UserId && walletOutput.WalletIndex == transactions[i].WalletsOutput[j].WalletIndex && walletOutput.Address.Address == transactions[i].WalletsOutput[j].Address.Address{
+						//	//alreadyInOutputs = true
+						//	alreadyAdded = true
+						//}
+					}
+				}
+
+			}
+
+			if alreadyAdded{
+				continue
+			} else {
+				//Add output transaction here
+				incomingTx := newEntity(multyTx)
+				incomingTx.WalletsInput = nil
+				incomingTx.WalletsOutput = make ([]store.WalletForTx, 1)
+				incomingTx.WalletsOutput = append(incomingTx.WalletsOutput, walletOutput)
+				setTransactionStatus(&incomingTx, blockDiff, currentBlockHeight, false)
+				transactions = append(transactions, incomingTx)
+			}
+		}
+
 	}
 
 	return transactions
@@ -393,7 +447,7 @@ func parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *sto
 				multyTx.WalletsInput = make([]store.WalletForTx, 2)
 			}
 
-			currentWallet.Address = store.AddressWorWallet{Address: txInAddress, AddressIndex: addressIndex, Amount: txInAmount}
+			currentWallet.Address = store.AddressForWallet{Address: txInAddress, AddressIndex: addressIndex, Amount: txInAmount}
 			multyTx.WalletsInput = append(multyTx.WalletsInput, currentWallet)
 
 			multyTx.TxInputs = append(multyTx.TxInputs, store.AddresAmount{Address: txInAddress, Amount: txInAmount})
