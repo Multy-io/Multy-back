@@ -6,15 +6,14 @@ See LICENSE for details
 package btc
 
 import (
+	"fmt"
+	"os/user"
+	"time"
+
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"encoding/json"
 	"gopkg.in/mgo.v2/bson"
-	"time"
-	"gopkg.in/mgo.v2"
-	"fmt"
-	"os/user"
 )
 
 func newEmptyTx(userID string) store.TxRecord {
@@ -125,15 +124,15 @@ can be called from:
 
 */
 
-func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult){
+func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult) {
 	var multyTx *store.MultyTX = parseRawTransaction(blockChainBlockHeight, txVerbose)
 	if multyTx != nil {
 		transactions := splitTransaction(*multyTx, blockChainBlockHeight)
 
-		for _, transaction := range transactions  {
+		for _, transaction := range transactions {
 
 			rates, err := GetLatestExchangeRate()
-			if err != nil{
+			if err != nil {
 				log.Errorf("processTransaction:ExchangeRates: %s", err.Error())
 			}
 			transaction.StockExchangeRate = rates
@@ -146,9 +145,6 @@ func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRes
 		}
 	}
 }
-
-
-
 
 /*
 This method should parse raw transaction from BTC node
@@ -165,8 +161,8 @@ _________________________
 Output:
 * multyTX - multy transaction Structure
 
- */
-func parseRawTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult) (*store.MultyTX){
+*/
+func parseRawTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult) *store.MultyTX {
 	multyTx := store.MultyTX{}
 
 	err := parseInputs(txVerbose, blockChainBlockHeight, &multyTx)
@@ -175,36 +171,40 @@ func parseRawTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRe
 	}
 
 	err = parseOutputs(txVerbose, blockChainBlockHeight, &multyTx)
-	if err != nil{
+	if err != nil {
 		log.Errorf("parseRoawTransaction:parseOutputs: %s", err.Error())
 	}
 
-    if multyTx.TxID != ""{
-    	return &multyTx
-	} else{
+	if multyTx.TxID != "" {
+		return &multyTx
+	} else {
 		return nil
 	}
 }
 
 /*
-This method need if we have one transaction with more the one user's wallet
+This method need if we have one transaction with more the one u wser'sallet
 That means that from one btc transaction we should build more the one Multy Transaction
- */
-func splitTransaction(multyTx store.MultyTX, blockHeight int64) ([]store.MultyTX){
+*/
+func splitTransaction(multyTx store.MultyTX, blockHeight int64) []store.MultyTX {
 	transactions := make([]store.MultyTX, 1)
 
 	currentBlockHeight, err := rpcClient.GetBlockCount()
-	if err != nil{
+	if err != nil {
 		log.Errorf("splitTransaction:getBlockCount: %s", err.Error())
 	}
 
 	blockDiff := currentBlockHeight - blockHeight
 
 	//This is implementatios for single wallet transaction for multi addresses not for multi wallets!
-	if multyTx.WalletsInput!= nil && multyTx.WalletsOutput != nil && len(multyTx.WalletsInput) > 0 && len(multyTx.WalletsOutput) > 0 {
-		outgoingTx := multyTx
-		incomingTx := multyTx
-		setTransactionStatus(&outgoingTx, blockDiff, currentBlockHeight , true )
+	if multyTx.WalletsInput != nil && multyTx.WalletsOutput != nil && len(multyTx.WalletsInput) > 0 && len(multyTx.WalletsOutput) > 0 {
+		// outgoingTx := multyTx
+		// incomingTx := multyTx
+
+		outgoingTx := newEntity(multyTx)
+		incomingTx := newEntity(multyTx)
+
+		setTransactionStatus(&outgoingTx, blockDiff, currentBlockHeight, true)
 		setTransactionStatus(&incomingTx, blockDiff, currentBlockHeight, false)
 		transactions = append(transactions, outgoingTx, incomingTx)
 	} else {
@@ -214,11 +214,34 @@ func splitTransaction(multyTx store.MultyTX, blockHeight int64) ([]store.MultyTX
 	return transactions
 }
 
-func saveMultyTransaction(tx store.MultyTX){
+func newEntity(multyTx store.MultyTX) store.MultyTX {
+	newTx := store.MultyTX{
+		TxID:              multyTx.TxID,
+		TxHash:            multyTx.TxHash,
+		TxOutScript:       multyTx.TxOutScript,
+		TxAddress:         multyTx.TxAddress,
+		TxStatus:          multyTx.TxStatus,
+		TxOutAmount:       multyTx.TxOutAmount,
+		TxOutIndexes:      multyTx.TxOutIndexes,
+		TxInAmount:        multyTx.TxInAmount,
+		TxInIndexes:       multyTx.TxInIndexes,
+		BlockTime:         multyTx.BlockTime,
+		BlockHeight:       multyTx.BlockHeight,
+		TxFee:             multyTx.TxFee,
+		MempoolTime:       multyTx.MempoolTime,
+		StockExchangeRate: multyTx.StockExchangeRate,
+		TxInputs:          multyTx.TxInputs,
+		TxOutputs:         multyTx.TxOutputs,
+		WalletsInput:      multyTx.WalletsInput,
+		WalletsOutput:     multyTx.WalletsOutput,
+	}
+	return newTx
+}
+
+func saveMultyTransaction(tx store.MultyTX) {
 	//TODO save it
 	//TODO update wallet date
 	//TODO update address date
-
 
 	// User have this transaction but with another status.
 	// Update statsus, block height and block time.
@@ -236,7 +259,6 @@ func saveMultyTransaction(tx store.MultyTX){
 		log.Errorf("parseInput:outputsData.Insert case nil: %s", err.Error())
 	}
 
-
 	newTx := newMultyTX(txVerbose.Txid, txVerbose.Hash, output.ScriptPubKey.Hex, address, txStatus, int(output.N), walletIndex, txOutAmount, blockTime, blockHeight, fee, blockTimeUnix, exRates, inputs, outputs)
 	sel = bson.M{"userid": user.UserID}
 	update := bson.M{"$push": bson.M{"transactions": newTx}}
@@ -245,30 +267,26 @@ func saveMultyTransaction(tx store.MultyTX){
 		log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
 	}
 
-
-
-
 }
 
 func sendNotifyToClients(transaction store.MultyTX) {
 	//TODO make it correct
-//func sendNotifyToClients(txMsq *BtcTransactionWithUserID) {
-//	newTxJSON, err := json.Marshal(txMsq)
-//	if err != nil {
-//		log.Errorf("sendNotifyToClients: [%+v] %s\n", txMsq, err.Error())
-//		return
-//	}
-//
-//	err = nsqProducer.Publish(TopicTransaction, newTxJSON)
-//	if err != nil {
-//		log.Errorf("nsq publish new transaction: [%+v] %s\n", txMsq, err.Error())
-//		return
-//	}
-//	return
+	//func sendNotifyToClients(txMsq *BtcTransactionWithUserID) {
+	//	newTxJSON, err := json.Marshal(txMsq)
+	//	if err != nil {
+	//		log.Errorf("sendNotifyToClients: [%+v] %s\n", txMsq, err.Error())
+	//		return
+	//	}
+	//
+	//	err = nsqProducer.Publish(TopicTransaction, newTxJSON)
+	//	if err != nil {
+	//		log.Errorf("nsq publish new transaction: [%+v] %s\n", txMsq, err.Error())
+	//		return
+	//	}
+	//	return
 }
 
-
-func parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *store.MultyTX) (error ) {
+func parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *store.MultyTX) error {
 	//NEW LOGIC
 	user := store.User{}
 	//Ranging by inputs
@@ -281,10 +299,8 @@ func parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *sto
 			continue
 		}
 
-
-		for _, txInAddress := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses  {
+		for _, txInAddress := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses {
 			query := bson.M{"wallets.addresses.address": txInAddress}
-
 
 			err := usersData.Find(query).One(&user)
 			if err != nil {
@@ -297,22 +313,20 @@ func parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *sto
 
 			txInAmount := int64(100000000 * previousTxVerbose.Vout[input.Vout].Value)
 
-			currentWallet := store.WalletForTx{UserId:user.UserID, WalletIndex:walletIndex}
+			currentWallet := store.WalletForTx{UserId: user.UserID, WalletIndex: walletIndex}
 
-			if multyTx.TxInputs == nil{
-					multyTx.TxInputs = make([]store.AddresAmount, 2)
+			if multyTx.TxInputs == nil {
+				multyTx.TxInputs = make([]store.AddresAmount, 2)
 			}
 
-
-			if multyTx.WalletsInput == nil{
+			if multyTx.WalletsInput == nil {
 				multyTx.WalletsInput = make([]store.WalletForTx, 2)
 			}
 
-
-			currentWallet.Address = store.AddressWorWallet{Address:txInAddress, AddressIndex:addressIndex, Amount:txInAmount}
+			currentWallet.Address = store.AddressWorWallet{Address: txInAddress, AddressIndex: addressIndex, Amount: txInAmount}
 			multyTx.WalletsInput = append(multyTx.WalletsInput, currentWallet)
 
-			multyTx.TxInputs = append(multyTx.TxInputs, store.AddresAmount{Address:txInAddress, Amount:txInAmount})
+			multyTx.TxInputs = append(multyTx.TxInputs, store.AddresAmount{Address: txInAddress, Amount: txInAmount})
 
 			//
 			//if len(multyTx.WalletsInput) > 0{
@@ -422,15 +436,13 @@ func parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *sto
 	//return nil
 }
 
-
-func parseOutputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *store.MultyTX) ( error) {
+func parseOutputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *store.MultyTX) error {
 
 	user := store.User{}
 
 	for _, output := range txVerbose.Vout {
 		for _, txOutAddress := range output.ScriptPubKey.Addresses {
 			query := bson.M{"wallets.addresses.address": txOutAddress}
-
 
 			err := usersData.Find(query).One(&user)
 			if err != nil {
@@ -441,23 +453,20 @@ func parseOutputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *st
 
 			walletIndex, addressIndex := fetchWalletAndAddressIndexes(user.Wallets, txOutAddress)
 
+			currentWallet := store.WalletForTx{UserId: user.UserID, WalletIndex: walletIndex}
 
-			currentWallet := store.WalletForTx{UserId:user.UserID, WalletIndex:walletIndex}
-
-			if multyTx.TxOutputs == nil{
+			if multyTx.TxOutputs == nil {
 				multyTx.TxOutputs = make([]store.AddresAmount, 2)
 			}
 
-
-			if multyTx.WalletsOutput == nil{
+			if multyTx.WalletsOutput == nil {
 				multyTx.WalletsOutput = make([]store.WalletForTx, 2)
 			}
 
-			currentWallet.Address = store.AddressWorWallet{Address:txOutAddress, AddressIndex:addressIndex, Amount:int64(100000000 * output.Value)}
+			currentWallet.Address = store.AddressWorWallet{Address: txOutAddress, AddressIndex: addressIndex, Amount: int64(100000000 * output.Value)}
 			multyTx.WalletsOutput = append(multyTx.WalletsOutput, currentWallet)
 
-			multyTx.TxOutputs = append(multyTx.TxOutputs, store.AddresAmount{Address:txOutAddress, Amount:int64(100000000 * output.Value)})
-
+			multyTx.TxOutputs = append(multyTx.TxOutputs, store.AddresAmount{Address: txOutAddress, Amount: int64(100000000 * output.Value)})
 
 			//if len(multyTx.WalletsOutput) > 0{
 			//	var haveTheSameWalletIndex = false
@@ -511,7 +520,7 @@ func GetLatestExchangeRate() ([]store.ExchangeRatesRecord, error) {
 
 }
 
-func updateWalletAndAddressDate(multyTx store.MultyTX ){
+func updateWalletAndAddressDate(multyTx store.MultyTX) {
 	blockTimeUnix := time.Now().Unix()
 	//TODO make all nesessary updates HERE
 
@@ -531,7 +540,6 @@ func updateWalletAndAddressDate(multyTx store.MultyTX ){
 	if err != nil {
 		log.Errorf("parseOutput:restClient.userStore.Update: %s", err.Error())
 	}
-
 
 	// Update wallets last action time on every new transaction.
 	sel := bson.M{"userID": user.UserID, "wallets.walletIndex": walletIndex}
@@ -558,15 +566,15 @@ func updateWalletAndAddressDate(multyTx store.MultyTX ){
 	}
 }
 
-func setTransactionStatus(tx *store.MultyTX, blockDiff int64, currentBlockHeight int64, fromInput bool){
+func setTransactionStatus(tx *store.MultyTX, blockDiff int64, currentBlockHeight int64, fromInput bool) {
 	if blockDiff > currentBlockHeight {
 		//This call was made from memPool
 		if fromInput {
 			tx.TxStatus = TxStatusAppearedInMempoolOutcoming
-		} else{
+		} else {
 			tx.TxStatus = TxStatusAppearedInMempoolIncoming
 		}
-	} else if blockDiff >= 0 && blockDiff <6 {
+	} else if blockDiff >= 0 && blockDiff < 6 {
 		//This call was made from block or resync
 		//Transaction have no enough confirmations
 		if fromInput {
@@ -574,7 +582,7 @@ func setTransactionStatus(tx *store.MultyTX, blockDiff int64, currentBlockHeight
 		} else {
 			tx.TxStatus = TxStatusAppearedInBlockIncoming
 		}
-	} else if blockDiff >= 6 && blockDiff < currentBlockHeight{
+	} else if blockDiff >= 6 && blockDiff < currentBlockHeight {
 		//This call was made from resync
 		//Transaction have enough confirmations
 		if fromInput {
