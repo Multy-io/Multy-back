@@ -142,9 +142,8 @@ func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRes
 
 			finalizeTransaction(&transaction, txVerbose)
 
-			updateWalletAndAddressDate(transaction)
-
 			saveMultyTransaction(transaction)
+			updateWalletAndAddressDate(transaction)
 			sendNotifyToClients(transaction)
 		}
 	}
@@ -302,7 +301,7 @@ func saveMultyTransaction(tx store.MultyTX) {
 	// This is splited transaction! That means that transaction's WalletsInputs and WalletsOutput have the same WalletIndex!
 
 	//Here we have outgoing transaction for exact wallet!
-	if tx.WalletsInput != nil && len(tx.WalletsInput) >0{
+	if tx.WalletsInput != nil && len(tx.WalletsInput) > 0 {
 		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
 		update := bson.M{
 			"$set": bson.M{
@@ -324,7 +323,7 @@ func saveMultyTransaction(tx store.MultyTX) {
 				log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
 			}
 		}
-	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0{
+	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0 {
 
 		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
 		update := bson.M{
@@ -809,7 +808,6 @@ func setTransactionStatus(tx *store.MultyTX, blockDiff int64, currentBlockHeight
 	}
 }
 
-
 func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 
 	if tx.TxAddress == nil {
@@ -844,6 +842,5 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 	}
 
 	tx.StockExchangeRate = rates
-
 
 }
