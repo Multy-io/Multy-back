@@ -66,10 +66,10 @@ func fetchWalletAndAddressIndexes(wallets []store.Wallet, address string) (int, 
 	var walletIndex int
 	var addressIndex int
 	for _, wallet := range wallets {
-		for i, addr := range wallet.Adresses {
+		for _, addr := range wallet.Adresses {
 			if addr.Address == address {
 				walletIndex = wallet.WalletIndex
-				addressIndex = i
+				addressIndex = addr.AddressIndex
 				break
 			}
 		}
@@ -298,15 +298,12 @@ func newEntity(multyTx store.MultyTX) store.MultyTX {
 }
 
 func saveMultyTransaction(tx store.MultyTX) {
-	//TODO savsaveMultyTransactione it
-	//TODO update wallet date
-	//TODO update address date
 
-	// User have this transaction but with another status.
-	// Update statsus, block height and block time.
-	for _, walletInput := range tx.WalletsInput {
+	// This is splited transaction! That means that transaction's WalletsInputs and WalletsOutput have the same WalletIndex!
 
-		sel := bson.M{"userid": walletInput.UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": walletInput.WalletIndex}
+	//Here we have outgoing transaction for exact wallet!
+	if tx.WalletsInput != nil && len(tx.WalletsInput) >0{
+		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
 		update := bson.M{
 			"$set": bson.M{
 				"transactions.$.txstatus":    tx.TxStatus,
@@ -320,17 +317,16 @@ func saveMultyTransaction(tx store.MultyTX) {
 		}
 
 		if err == mgo.ErrNotFound {
-			sel := bson.M{"userid": walletInput.UserId}
+			sel := bson.M{"userid": tx.WalletsInput[0].UserId}
 			update := bson.M{"$push": bson.M{"transactions": tx}}
 			err := txsData.Update(sel, update)
 			if err != nil {
 				log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
 			}
 		}
-	}
+	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0{
 
-	for _, walletOutput := range tx.WalletsOutput {
-		sel := bson.M{"userid": walletOutput.UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": walletOutput.WalletIndex}
+		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
 		update := bson.M{
 			"$set": bson.M{
 				"transactions.$.txstatus":    tx.TxStatus,
@@ -341,7 +337,7 @@ func saveMultyTransaction(tx store.MultyTX) {
 		err := txsData.Update(sel, update)
 
 		if err == mgo.ErrNotFound {
-			sel := bson.M{"userid": walletOutput.UserId}
+			sel := bson.M{"userid": tx.WalletsOutput[0].UserId}
 			update := bson.M{"$push": bson.M{"transactions": tx}}
 			err := txsData.Update(sel, update)
 			if err != nil {
@@ -350,29 +346,55 @@ func saveMultyTransaction(tx store.MultyTX) {
 		}
 	}
 
-	/*
-		sel = bson.M{"userid": user.UserID, "transactions.txid": txVerbose.Txid, "transactions.txaddress": address}
-		update = bson.M{
-			"$set": bson.M{
-				"transactions.$.txstatus":    txStatus,
-				"transactions.$.blockheight": blockHeight,
-				"transactions.$.blocktime":   blockTimeUnix,
-			},
-		}
+	//
+	//
+	//
+	//for _, walletInput := range tx.WalletsInput {
+	//
+	//	sel := bson.M{"userid": walletInput.UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": walletInput.WalletIndex}
+	//	update := bson.M{
+	//		"$set": bson.M{
+	//			"transactions.$.txstatus":    tx.TxStatus,
+	//			"transactions.$.blockheight": tx.BlockHeight,
+	//			"transactions.$.blocktime":   tx.BlockTime,
+	//		},
+	//	}
+	//	err := txsData.Update(sel, update)
+	//	if err != nil {
+	//		log.Errorf("saveMultyTransaction:txsData.Update %s", err.Error())
+	//	}
+	//
+	//	if err == mgo.ErrNotFound {
+	//		sel := bson.M{"userid": walletInput.UserId}
+	//		update := bson.M{"$push": bson.M{"transactions": tx}}
+	//		err := txsData.Update(sel, update)
+	//		if err != nil {
+	//			log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
+	//		}
+	//	}
+	//}
+	//
+	//for _, walletOutput := range tx.WalletsOutput {
+	//	sel := bson.M{"userid": walletOutput.UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": walletOutput.WalletIndex}
+	//	update := bson.M{
+	//		"$set": bson.M{
+	//			"transactions.$.txstatus":    tx.TxStatus,
+	//			"transactions.$.blockheight": tx.BlockHeight,
+	//			"transactions.$.blocktime":   tx.BlockTime,
+	//		},
+	//	}
+	//	err := txsData.Update(sel, update)
+	//
+	//	if err == mgo.ErrNotFound {
+	//		sel := bson.M{"userid": walletOutput.UserId}
+	//		update := bson.M{"$push": bson.M{"transactions": tx}}
+	//		err := txsData.Update(sel, update)
+	//		if err != nil {
+	//			log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
+	//		}
+	//	}
+	//}
 
-		err = txsData.Update(sel, update)
-		if err != nil {
-			log.Errorf("parseInput:outputsData.Insert case nil: %s", err.Error())
-		}
-
-		newTx := newMultyTX(txVerbose.Txid, txVerbose.Hash, output.ScriptPubKey.Hex, address, txStatus, int(output.N), walletIndex, txOutAmount, blockTime, blockHeight, fee, blockTimeUnix, exRates, inputs, outputs)
-		sel = bson.M{"userid": user.UserID}
-		update := bson.M{"$push": bson.M{"transactions": newTx}}
-		err = txsData.Update(sel, update)
-		if err != nil {
-			log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
-		}
-	*/
 }
 
 func sendNotify(txMsq *BtcTransactionWithUserID) {
