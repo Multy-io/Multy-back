@@ -1,4 +1,5 @@
-    version: '3.4'
+version: '3.4'
+
 services:
   multy-back:
     image:  multyio/backend:1.0.1

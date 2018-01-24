@@ -58,7 +58,7 @@ func SetSocketIOHandlers(r *gin.RouterGroup, address, nsqAddr string, ratesDB st
 	if err != nil {
 		return nil, fmt.Errorf("connection pool initialization: %s", err.Error())
 	}
-	chart, err := initExchangeChart(ratesDB)
+	chart, err := newExchangeChart(ratesDB)
 	if err != nil {
 		return nil, fmt.Errorf("exchange chart initialization: %s", err.Error())
 	}

@@ -52,7 +52,7 @@ type exchangeChart struct {
 	log slf.StructuredLogger
 }
 
-func initExchangeChart(db store.UserStore) (*exchangeChart, error) {
+func newExchangeChart(db store.UserStore) (*exchangeChart, error) {
 	chart := &exchangeChart{
 		rates: &Rates{
 			exchangeGdax: &StockRate{
@@ -70,18 +70,18 @@ func initExchangeChart(db store.UserStore) (*exchangeChart, error) {
 		db:  db,
 		log: slf.WithContext("chart"),
 	}
-	chart.log.Debug("initExchangeChart")
+	chart.log.Debug("new exchange chart")
 
 	//moved to next release
 	//chart.getDayAPIBitstamp()
 
-	gDaxConn, err := chart.initGdaxAPI(chart.log)
+	gDaxConn, err := chart.newGdaxAPI(chart.log)
 	if err != nil {
 		return nil, fmt.Errorf("initGdaxAPI: %s", err)
 	}
 	chart.gdaxConn = gDaxConn
 
-	poloniexConn, err := chart.initPoloniexAPI(chart.log)
+	poloniexConn, err := chart.newPoloniexAPI(chart.log)
 	if err != nil {
 		return nil, fmt.Errorf("initPoloniexAPI: %s", err)
 	}

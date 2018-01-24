@@ -8,7 +8,6 @@ package client
 import (
 	"encoding/json"
 	"log"
-	"net/url"
 	"strconv"
 	"time"
 
@@ -20,7 +19,12 @@ const (
 	exchangeDdax     = "Gdax"
 	exchangePoloniex = "Poloniex"
 
-	backOffLimit = 86400 // reconnection stop
+	backOffLimit = time.Duration(time.Second * 600) // reconnection stop
+)
+
+const (
+	poloniexAPIAddr = "ws://api.hitbtc.com/api/2/ws"
+	gdaxAPIAddr     = "wss://ws-feed.gdax.com"
 )
 
 // GdaxAPI wraps websocket connection for GdaxAPI
@@ -37,36 +41,22 @@ type GDAXSocketEvent struct {
 	Price     string `json:"price"`
 }
 
-func (eChart *exchangeChart) initGdaxAPI(log slf.StructuredLogger) (*GdaxAPI, error) {
+func (eChart *exchangeChart) newGdaxAPI(log slf.StructuredLogger) (*GdaxAPI, error) {
 	gdaxAPI := &GdaxAPI{rates: eChart.rates.exchangeGdax, log: log.WithField("api", "gdax")}
 
-	c, err := initGdaxConn()
+	c, err := newWebSocketConn(gdaxAPIAddr)
 	if err != nil {
-		eChart.log.Errorf("initGdaxConn: %s", err.Error())
-		gdaxAPI.reconnect()
-		return nil, err
+		eChart.log.Errorf("new gdax connection: %s", err.Error())
+		c, err = reconnectWebSocketConn(gdaxAPIAddr, log)
+		if err != nil {
+			eChart.log.Errorf("gdax reconnection: %s", err.Error())
+			return nil, err
+		}
 	}
 
-	// TODO: Add Close() method
-	// defer c.Close()
-	// done := make(chan struct{})
-	// defer ticker.Stop()
-
-	// defer c.Close()
-	// defer close(done)
 	gdaxAPI.conn = c
 
 	return gdaxAPI, nil
-}
-
-func initGdaxConn() (*websocket.Conn, error) {
-	u := url.URL{Scheme: "wss", Host: "ws-feed.gdax.com", Path: ""}
-	//gdaxAPI.log.Infof("Connecting to %s", u.String())
-	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
 }
 
 func (gdax *GdaxAPI) subscribe() {
@@ -79,7 +69,12 @@ func (gdax *GdaxAPI) listen() {
 		_, message, err := gdax.conn.ReadMessage()
 		if err != nil {
 			gdax.log.Errorf("read message: %s", err.Error())
-			gdax.reconnect()
+			c, err := reconnectWebSocketConn(gdaxAPIAddr, gdax.log)
+			if err != nil {
+				gdax.log.Errorf("gdax reconnection: %s", err.Error())
+				return
+			}
+			gdax.conn = c
 			continue
 		}
 
@@ -89,52 +84,15 @@ func (gdax *GdaxAPI) listen() {
 			gdax.log.Errorf("unmarshal error %s", err.Error())
 			continue
 		}
+
 		gdax.updateRate(rateRaw)
-	}
-}
-
-func (gdax *GdaxAPI) reconnect() {
-	var (
-		c   *websocket.Conn
-		err error
-
-		secToRecon = time.Duration(time.Second * 2) // start time for reconnect function
-		numOfRecon = 0
-	)
-
-	for {
-		c, err = initGdaxConn()
-		if err == nil {
-			gdax.conn = c
-			gdax.subscribe()
-			break
-		}
-
-		gdax.log.Errorf("reconnecting: %s", err)
-
-		ticker := time.NewTicker(secToRecon)
-		select {
-		case _ = <-ticker.C:
-			{
-				if secToRecon < backOffLimit {
-					randomAdd := secToRecon / 100 * (20 + time.Duration(r1.Int31n(10)))
-					gdax.log.Debugf("Random addition=%d", randomAdd/1000000)
-					secToRecon = secToRecon*2 + time.Duration(randomAdd)
-					gdax.log.Debugf("secToRecon=%d", secToRecon/1000000)
-
-					numOfRecon++
-				}
-				ticker = time.NewTicker(secToRecon)
-				continue
-			}
-		}
 	}
 }
 
 func (gdax *GdaxAPI) updateRate(rawRate *GDAXSocketEvent) {
 	floatPrice, err := strconv.ParseFloat(rawRate.Price, 32)
 	if err != nil {
-		//gdax.log.Errorf("parseFloat %s: %s", rawRate.Price, err.Error())
+		gdax.log.Errorf("parseFloat %s: %s", rawRate.Price, err.Error())
 		return
 	}
 
@@ -173,26 +131,24 @@ type PoloniexSocketEvent struct {
 	Data struct {
 		Price     string `json:"last"`
 		ProductID string `json:"symbol"`
-	} `json:"data"`
+	} `json:"params"`
 }
 
-func (eChart *exchangeChart) initPoloniexAPI(log slf.StructuredLogger) (*PoloniexAPI, error) {
-	u := url.URL{Scheme: "ws", Host: "api.hitbtc.com", Path: "api/2/ws"}
-
+func (eChart *exchangeChart) newPoloniexAPI(log slf.StructuredLogger) (*PoloniexAPI, error) {
 	poloniexAPI := &PoloniexAPI{rates: eChart.rates.exchangePoloniex, log: log.WithField("api", "poloniex")}
-	poloniexAPI.log.Infof("Connecting to %s", u.String())
 
-	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	c, err := newWebSocketConn(poloniexAPIAddr)
 	if err != nil {
-		poloniexAPI.log.Errorf("Dial: %s", err.Error())
+		eChart.log.Errorf("new poloniex connection: %s", err.Error())
+		c, err = reconnectWebSocketConn(gdaxAPIAddr, log)
+		if err != nil {
+			eChart.log.Errorf("poloniex connection: %s", err.Error())
+			return nil, err
+		}
 		return nil, err
 	}
 
 	poloniexAPI.conn = c
-	//defer c.Close()
-	//done := make(chan struct{})
-	//defer cP.Close()
-	//defer close(done)
 
 	return poloniexAPI, nil
 }
@@ -208,14 +164,17 @@ func (poloniex *PoloniexAPI) subscribe() {
 }
 
 func (poloniex *PoloniexAPI) listen() {
-	//poloniex.log.Debugf("timeout=",poloniex.conn.)
 	for {
 		_, message, err := poloniex.conn.ReadMessage()
 		if err != nil {
-			poloniex.log.Errorf("Read message: %s", err.Error())
-			// TODO: add reconnect
-			break
-			//continue
+			poloniex.log.Errorf("read message: %s", err.Error())
+			c, err := reconnectWebSocketConn(poloniexAPIAddr, poloniex.log)
+			if err != nil {
+				poloniex.log.Errorf("gdax reconnection: %s", err.Error())
+				return
+			}
+			poloniex.conn = c
+			continue
 		}
 
 		rateRaw := PoloniexSocketEvent{}
