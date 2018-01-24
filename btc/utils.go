@@ -132,6 +132,8 @@ func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRes
 	var multyTx *store.MultyTX = parseRawTransaction(blockChainBlockHeight, txVerbose)
 	if multyTx != nil {
 
+		multyTx.BlockHeight = blockChainBlockHeight
+
 		setTransactionInfo(multyTx, txVerbose)
 		log.Debugf("processTransaction:setTransactionInfo %v", multyTx)
 
@@ -777,6 +779,7 @@ func setTransactionStatus(tx *store.MultyTX, blockDiff int64, currentBlockHeight
 	transactionTime := time.Now().Unix()
 	if blockDiff > currentBlockHeight {
 		//This call was made from memPool
+		tx.Confirmations = 0
 		if fromInput {
 			tx.TxStatus = TxStatusAppearedInMempoolOutcoming
 			tx.MempoolTime = transactionTime
@@ -790,6 +793,7 @@ func setTransactionStatus(tx *store.MultyTX, blockDiff int64, currentBlockHeight
 	} else if blockDiff >= 0 && blockDiff < 6 {
 		//This call was made from block or resync
 		//Transaction have no enough confirmations
+		tx.Confirmations = int(blockDiff)
 		if fromInput {
 			tx.TxStatus = TxStatusAppearedInBlockOutcoming
 			tx.BlockTime = transactionTime
@@ -800,6 +804,7 @@ func setTransactionStatus(tx *store.MultyTX, blockDiff int64, currentBlockHeight
 	} else if blockDiff >= 6 && blockDiff < currentBlockHeight {
 		//This call was made from resync
 		//Transaction have enough confirmations
+		tx.Confirmations = int(blockDiff)
 		if fromInput {
 			tx.TxStatus = TxStatusInBlockConfirmedOutcoming
 		} else {
