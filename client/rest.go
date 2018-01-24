@@ -22,6 +22,7 @@ import (
 	"github.com/KristinaEtc/slf"
 	"github.com/blockcypher/gobcy"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
 	mgo "gopkg.in/mgo.v2"
@@ -571,11 +572,37 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 	}
 }
 
+func resyncAddress(hash, RemoteAdd string, restClient *RestClient) {
+	addrInfo, err := restClient.apiBTCTest.GetAddrFull(hash, nil)
+	if err != nil {
+		restClient.log.Errorf("getWalletVerbose: restClient.apiBTCTest.GetAddrFull : %s \t[addr=%s]", err.Error(), RemoteAdd)
+	}
+
+	// allAddressTxs := []string{}
+	for _, tx := range addrInfo.TXs {
+		// allAddressTxs = append(allAddressTxs, tx.Hash)
+
+		txHash, err := chainhash.NewHashFromStr(tx.Hash)
+		if err != nil {
+			restClient.log.Errorf("resyncAddress: chainhash.NewHashFromStr = %s\t[addr=%s]", err, RemoteAdd)
+		}
+		rawTx, err := restClient.rpcClient.GetRawTransactionVerbose(txHash)
+		if err != nil {
+			restClient.log.Errorf("resyncAddress: rpcClient.GetRawTransactionVerbose = %s\t[addr=%s]", err, RemoteAdd)
+		}
+
+		btc.ProcessTransaction(int64(tx.BlockHeight), rawTx)
+
+	}
+
+}
+
 func (restClient *RestClient) addAddress() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := strings.Split(c.GetHeader("Authorization"), " ")
 		if len(authHeader) < 2 {
 			restClient.log.Errorf("addAddress: wrong Authorization header len\t[addr=%s]", c.Request.RemoteAddr)
+			// restClient.log.Errorf("getAllWalletsVerbose: wrong Authorization header len\t[addr=%s]", c.Request.RemoteAddr)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
 				"message": msgErrHeaderError,
@@ -646,7 +673,9 @@ func (restClient *RestClient) addAddress() gin.HandlerFunc {
 			} else {
 				code = http.StatusOK
 				message = "address added"
+				go resyncAddress(sw.Address, c.Request.RemoteAddr, restClient)
 			}
+
 		case currencies.Ether:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
