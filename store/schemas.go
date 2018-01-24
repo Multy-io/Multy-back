@@ -134,6 +134,7 @@ type MultyTX struct {
 	//TxInIndexes       []int                 `json:"txinindexes"` //This is inputs indexes of the transaction
 	BlockTime         int64                 `json:"blocktime"`
 	BlockHeight       int64                 `json:"blockheight"`
+	Confirmations		int					`json:"confirmations"`
 	TxFee             int64                 `json:"txfee"`
 	MempoolTime       int64                 `json:"mempooltime"`
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
