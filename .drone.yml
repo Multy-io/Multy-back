@@ -6,18 +6,8 @@ pipeline:
   build:
     image: golang:1.9.2
     commands:
+      - git checkout master
       - make build
-
-  publish-except-master:
-    image: plugins/docker
-    repo: multyio/backend
-    tags: 
-      - latest
-      - 1.0.3
-    secrets: [ docker_username, docker_password ]
-    when:
-      branch:
-        exclude: master
 
   publish-master:
     image: plugins/docker
@@ -40,18 +30,32 @@ pipeline:
     when:
       branch: master
 
-  ssh-except-master:
+  publish-test:
+    image: plugins/docker
+    repo: multyio/backend-test
+    tags: 
+      - latest
+      - 1.0.9
+    secrets: [ docker_username, docker_password ]
+    when: 
+      branch: test2
+
+  ssh-test:
     image: appleboy/drone-ssh
     host: 88.198.47.112
     username: multy
     secrets: [ ssh_password ]
     script:
       - cd /data2/home/multy/test
-      - docker-compose -f docker-compose-test.yml stop 
+      - docker-compose -f docker-compose-test.yml stop
+      - docker pull multyio/backend-test:latest
+      - now=$(date +"%m_%d_%Y__%H_%M_%S")
+      - cd backend 
+      - if [ -d logs ]; then mv logs logs_$now; fi
+      - cd ../
       - docker-compose -f docker-compose-test.yml up -d
     when:
-      branch:
-        exclude: master
+      branch: test2
  
   telegram:
     image: appleboy/drone-telegram
