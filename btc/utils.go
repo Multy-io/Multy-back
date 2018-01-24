@@ -306,7 +306,7 @@ func saveMultyTransaction(tx store.MultyTX) {
 	// Update statsus, block height and block time.
 	for _, walletInput := range tx.WalletsInput {
 
-		sel := bson.M{"userid": walletInput.UserId, "transactions.txid": tx.TxID, "transactions.txaddress": walletInput.Address, "walletsinput.walletindex": walletInput.WalletIndex}
+		sel := bson.M{"userid": walletInput.UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": walletInput.WalletIndex}
 		update := bson.M{
 			"$set": bson.M{
 				"transactions.$.txstatus":    tx.TxStatus,
@@ -327,11 +327,10 @@ func saveMultyTransaction(tx store.MultyTX) {
 				log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
 			}
 		}
-
 	}
 
 	for _, walletOutput := range tx.WalletsOutput {
-		sel := bson.M{"userid": walletOutput.UserId, "transactions.txid": tx.TxID, "transactions.txaddress": walletOutput.Address, "walletsoutput.walletindex": walletOutput.WalletIndex}
+		sel := bson.M{"userid": walletOutput.UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": walletOutput.WalletIndex}
 		update := bson.M{
 			"$set": bson.M{
 				"transactions.$.txstatus":    tx.TxStatus,
