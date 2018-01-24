@@ -309,6 +309,7 @@ func saveMultyTransaction(tx store.MultyTX) {
 			"$set": bson.M{
 				"transactions.$.txstatus":    tx.TxStatus,
 				"transactions.$.blockheight": tx.BlockHeight,
+				"transactions.$.confirmations": tx.Confirmations,
 				"transactions.$.blocktime":   tx.BlockTime,
 			},
 		}
@@ -332,6 +333,7 @@ func saveMultyTransaction(tx store.MultyTX) {
 			"$set": bson.M{
 				"transactions.$.txstatus":    tx.TxStatus,
 				"transactions.$.blockheight": tx.BlockHeight,
+				"transactions.$.confirmations": tx.Confirmations,
 				"transactions.$.blocktime":   tx.BlockTime,
 			},
 		}
