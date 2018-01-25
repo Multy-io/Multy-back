@@ -220,14 +220,18 @@ func splitTransaction(multyTx store.MultyTX, blockHeight int64) []store.MultyTX 
 	//This is implementatios for single wallet transaction for multi addresses not for multi wallets!
 	if multyTx.WalletsInput != nil && len(multyTx.WalletsInput) > 0 {
 		outgoingTx := newEntity(multyTx)
-		// outgoingTx.WalletsOutput = make([]store.WalletForTx, 1)
+		//By that code we are erasing WalletOutputs for new splited transaction
 		outgoingTx.WalletsOutput = []store.WalletForTx{}
 
 		for _, walletOutput := range multyTx.WalletsOutput {
+			var isTheSameWallet = false
 			for _, walletInput := range outgoingTx.WalletsInput {
 				if walletInput.UserId == walletOutput.UserId && walletInput.WalletIndex == walletOutput.WalletIndex {
-					outgoingTx.WalletsOutput = append(outgoingTx.WalletsOutput, walletOutput)
+					isTheSameWallet = true
 				}
+			}
+			if isTheSameWallet {
+				outgoingTx.WalletsOutput = append(outgoingTx.WalletsOutput, walletOutput)
 			}
 		}
 
