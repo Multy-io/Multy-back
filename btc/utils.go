@@ -128,6 +128,11 @@ can be called from:
 
 */
 
+// HACK is a wrapper for processTransaction. in future it will b in separate file
+func ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult) {
+	processTransaction(blockChainBlockHeight, txVerbose)
+}
+
 func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult) {
 	var multyTx *store.MultyTX = parseRawTransaction(blockChainBlockHeight, txVerbose)
 	if multyTx != nil {
