@@ -846,6 +846,7 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 			tx.TxAddress = append(tx.TxAddress, walletInput.Address.Address)
 		}
 		for _, walletOutput := range tx.WalletsOutput{
+			log.Errorf("processTransaction:Amount: %v :Address: %v", walletOutput.Address.Amount, walletOutput.Address.Address)
 			tx.TxOutAmount -= walletOutput.Address.Amount
 		}
 	} else {
