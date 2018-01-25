@@ -574,7 +574,7 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 }
 
 func resyncAddress(hash, RemoteAdd string, restClient *RestClient) {
-	addrInfo, err := restClient.apiBTCTest.GetAddrFull(hash, nil)
+	addrInfo, err := restClient.apiBTCTest.GetAddrFull(hash, map[string]string{"limit": "50"})
 	if err != nil {
 		restClient.log.Errorf("getWalletVerbose: restClient.apiBTCTest.GetAddrFull : %s \t[addr=%s]", err.Error(), RemoteAdd)
 	}
@@ -1240,6 +1240,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 		var av []AddressVerbose
 		var spOuts []store.SpendableOutputs
 		var balance int
+		var isTheSameWallet = false
 
 		for _, wallet := range user.Wallets {
 			if wallet.Status == store.WalletStatusOK {
@@ -1249,16 +1250,30 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					for _, tx := range unspendTxs {
 
 						for _, output := range tx.WalletsOutput {
-							if address.Address == output.Address.Address {
-								spOuts = append(spOuts, store.SpendableOutputs{
-									TxID:              tx.TxID,
-									TxOutID:           output.Address.AddressOutIndex,
-									TxOutAmount:       int(output.Address.Amount),
-									TxOutScript:       tx.TxOutScript,
-									TxStatus:          tx.TxStatus,
-									AddressIndex:      output.Address.AddressIndex,
-									StockExchangeRate: tx.StockExchangeRate, // from db
-								})
+							if wallet.WalletIndex == output.WalletIndex {
+								isTheSameWallet = true
+							}
+						}
+						for _, input := range tx.WalletsInput {
+							if walletIndex == input.WalletIndex {
+								isTheSameWallet = true
+							}
+						}
+
+						if isTheSameWallet {
+							for _, output := range tx.WalletsOutput {
+								if address.Address == output.Address.Address {
+									balance += int(output.Address.Amount)
+									spOuts = append(spOuts, store.SpendableOutputs{
+										TxID:              tx.TxID,
+										TxOutID:           output.Address.AddressOutIndex,
+										TxOutAmount:       int(output.Address.Amount),
+										TxOutScript:       tx.TxOutScript,
+										TxStatus:          tx.TxStatus,
+										AddressIndex:      output.Address.AddressIndex,
+										StockExchangeRate: tx.StockExchangeRate, // from db
+									})
+								}
 							}
 						}
 					}
@@ -1363,21 +1378,21 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 			for _, tx := range userTxs.Transactions {
 				//New Logic
 				var isTheSameWallet = false
-				for _, input := range tx.WalletsInput{
-					if walletIndex == input.WalletIndex{
+				for _, input := range tx.WalletsInput {
+					if walletIndex == input.WalletIndex {
 						isTheSameWallet = true
 					}
 				}
-				for _, output := range tx.WalletsOutput{
-					if walletIndex == output.WalletIndex{
+				for _, output := range tx.WalletsOutput {
+					if walletIndex == output.WalletIndex {
 						isTheSameWallet = true
 					}
 				}
 
-				if isTheSameWallet{
+				if isTheSameWallet {
 					walletTxs = append(walletTxs, tx)
 				}
-				
+
 				//OLD logic
 				//for _, output := range tx.WalletsOutput {
 				//	if output.WalletIndex == walletIndex {
