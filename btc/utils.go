@@ -849,9 +849,22 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 			tx.TxOutAmount += walletInput.Address.Amount
 			tx.TxAddress = append(tx.TxAddress, walletInput.Address.Address)
 		}
-		for _, walletOutput := range tx.WalletsOutput{
-			log.Errorf("processTransaction:Amount: %v :Address: %v", walletOutput.Address.Amount, walletOutput.Address.Address)
-			tx.TxOutAmount -= walletOutput.Address.Amount
+
+		for i:=0 ; i < len(tx.WalletsOutput) ; i++{
+			//Here we descreasing amount of the current transaction
+			tx.TxOutAmount -= tx.WalletsOutput[i].Address.Amount
+
+
+			for _, output := range txVerbose.Vout {
+				for _, outAddr := range output.ScriptPubKey.Addresses {
+					if tx.WalletsOutput[i].Address.Address == outAddr {
+						tx.WalletsOutput[i].Address.AddressOutIndex = int(output.N)
+						tx.TxOutScript = txVerbose.Vout[output.N].ScriptPubKey.Hex
+					}
+				}
+			}
+
+
 		}
 	} else {
 		for i := 0; i < len(tx.WalletsOutput); i++ {

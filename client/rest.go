@@ -1232,7 +1232,8 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 		var unspendTxs []store.MultyTX
 		for _, tx := range userTxs.Transactions {
-			if tx.TxStatus == store.TxStatusAppearedInMempoolIncoming || tx.TxStatus == store.TxStatusAppearedInBlockIncoming || tx.TxStatus == store.TxStatusInBlockConfirmedIncoming { // pending and actual ballance
+			if tx.WalletsOutput != nil && len(tx.WalletsOutput)> 0{
+			//if tx.TxStatus == store.TxStatusAppearedInMempoolIncoming || tx.TxStatus == store.TxStatusAppearedInBlockIncoming || tx.TxStatus == store.TxStatusInBlockConfirmedIncoming { // pending and actual ballance
 				unspendTxs = append(unspendTxs, tx)
 			}
 		}
