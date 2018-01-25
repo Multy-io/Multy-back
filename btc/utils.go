@@ -132,6 +132,12 @@ can be called from:
 func ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult) {
 	processTransaction(blockChainBlockHeight, txVerbose)
 }
+func GetRawTransactionVerbose(txHash *chainhash.Hash) (*btcjson.TxRawResult, error) {
+	// rawTx, err := rpcClient.GetRawTransactionVerbose(txHash)
+	// return rawTx, err
+	return rpcClient.GetRawTransactionVerbose(txHash)
+	// return rawTx, err
+}
 
 func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult) {
 	var multyTx *store.MultyTX = parseRawTransaction(blockChainBlockHeight, txVerbose)
@@ -186,7 +192,9 @@ func parseRawTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRe
 	}
 
 	if multyTx.TxID != "" {
-		multyTx.TxOutScript = txVerbose.Hex
+		// TODO fix tx out script
+		// maybe fix
+		// multyTx.TxOutScript = txVerbose.Hex
 
 		return &multyTx
 	} else {
@@ -249,7 +257,12 @@ func splitTransaction(multyTx store.MultyTX, blockHeight int64) []store.MultyTX 
 							//We have the same wallet index in output but different addres
 							alreadyAdded = true
 							//alreadyInOutputs = true
-							transactions[i].WalletsOutput = append(transactions[i].WalletsOutput, walletOutput)
+							if &transactions[i] == nil {
+								transactions[i].WalletsOutput = append(transactions[i].WalletsOutput, walletOutput)
+								log.Errorf("splitTransaction error allocate memory")
+							}
+							log.Errorf("splitTransaction ! no ! error allocate memory")
+
 						}
 						//else if walletOutput.UserId == transactions[i].WalletsOutput[j].UserId && walletOutput.WalletIndex == transactions[i].WalletsOutput[j].WalletIndex && walletOutput.Address.Address == transactions[i].WalletsOutput[j].Address.Address{
 						//	//alreadyInOutputs = true
@@ -839,6 +852,7 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 				for _, outAddr := range output.ScriptPubKey.Addresses {
 					if tx.WalletsOutput[i].Address.Address == outAddr {
 						tx.WalletsOutput[i].Address.AddressOutIndex = int(output.N)
+						tx.TxOutScript = txVerbose.Vout[output.N].ScriptPubKey.Hex
 					}
 				}
 			}
