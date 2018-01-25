@@ -160,6 +160,7 @@ type ExchangeRatesRecord struct {
 	Timestamp     int64         `json:"timestamp"`
 	StockExchange string        `json:"stock_exchange"`
 }
+
 type SpendableOutputs struct {
 	TxID              string                `json:"txid"`
 	TxOutID           int                   `json:"txoutid"`
@@ -185,4 +186,14 @@ type ExchangeRates struct {
 type RatesAPIBitstamp struct {
 	Date  string `json:"date"`
 	Price string `json:"price"`
+}
+type SpendableOutputs1 struct {
+	TxID        string `json:"txid"`
+	TxOutID     int    `json:"txoutid"`
+	TxOutAmount int64  `json:"txoutamount"`
+	TxOutScript string `json:"txoutscript"`
+	Address     string `json:"address"`
+	UserID      string `json:"userid"`
+	WalletIndex int    `json:"walletindex"`
+	Blocked     bool   `json:"blocked"`
 }

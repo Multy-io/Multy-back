@@ -39,10 +39,11 @@ type rpcClientWrapper struct {
 }
 
 var (
-	usersData    *mgo.Collection
-	mempoolRates *mgo.Collection
-	txsData      *mgo.Collection
-	exRate       *mgo.Collection
+	usersData        *mgo.Collection
+	mempoolRates     *mgo.Collection
+	txsData          *mgo.Collection
+	exRate           *mgo.Collection
+	spendableOutputs *mgo.Collection
 )
 
 var Cert = `testcert`

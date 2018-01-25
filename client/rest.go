@@ -1232,8 +1232,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 		var unspendTxs []store.MultyTX
 		for _, tx := range userTxs.Transactions {
-			if tx.WalletsOutput != nil && len(tx.WalletsOutput)> 0{
-			//if tx.TxStatus == store.TxStatusAppearedInMempoolIncoming || tx.TxStatus == store.TxStatusAppearedInBlockIncoming || tx.TxStatus == store.TxStatusInBlockConfirmedIncoming { // pending and actual ballance
+			if tx.TxStatus == store.TxStatusAppearedInMempoolIncoming || tx.TxStatus == store.TxStatusAppearedInBlockIncoming || tx.TxStatus == store.TxStatusInBlockConfirmedIncoming { // pending and actual ballance
 				unspendTxs = append(unspendTxs, tx)
 			}
 		}
@@ -1250,13 +1249,13 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 					for _, tx := range unspendTxs {
 
-						for _, output := range tx.WalletsOutput {
-							if wallet.WalletIndex == output.WalletIndex {
+						for _, input := range tx.WalletsInput {
+							if wallet.WalletIndex == input.WalletIndex {
 								isTheSameWallet = true
 							}
 						}
-						for _, input := range tx.WalletsInput {
-							if walletIndex == input.WalletIndex {
+						for _, output := range tx.WalletsOutput {
+							if wallet.WalletIndex == output.WalletIndex {
 								isTheSameWallet = true
 							}
 						}

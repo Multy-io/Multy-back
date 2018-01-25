@@ -329,10 +329,10 @@ func saveMultyTransaction(tx store.MultyTX) {
 		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
 		update := bson.M{
 			"$set": bson.M{
-				"transactions.$.txstatus":    tx.TxStatus,
-				"transactions.$.blockheight": tx.BlockHeight,
+				"transactions.$.txstatus":      tx.TxStatus,
+				"transactions.$.blockheight":   tx.BlockHeight,
 				"transactions.$.confirmations": tx.Confirmations,
-				"transactions.$.blocktime":   tx.BlockTime,
+				"transactions.$.blocktime":     tx.BlockTime,
 			},
 		}
 		err := txsData.Update(sel, update)
@@ -353,10 +353,10 @@ func saveMultyTransaction(tx store.MultyTX) {
 		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
 		update := bson.M{
 			"$set": bson.M{
-				"transactions.$.txstatus":    tx.TxStatus,
-				"transactions.$.blockheight": tx.BlockHeight,
+				"transactions.$.txstatus":      tx.TxStatus,
+				"transactions.$.blockheight":   tx.BlockHeight,
 				"transactions.$.confirmations": tx.Confirmations,
-				"transactions.$.blocktime":   tx.BlockTime,
+				"transactions.$.blocktime":     tx.BlockTime,
 			},
 		}
 		err := txsData.Update(sel, update)
@@ -850,10 +850,9 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 			tx.TxAddress = append(tx.TxAddress, walletInput.Address.Address)
 		}
 
-		for i:=0 ; i < len(tx.WalletsOutput) ; i++{
+		for i := 0; i < len(tx.WalletsOutput); i++ {
 			//Here we descreasing amount of the current transaction
 			tx.TxOutAmount -= tx.WalletsOutput[i].Address.Amount
-
 
 			for _, output := range txVerbose.Vout {
 				for _, outAddr := range output.ScriptPubKey.Addresses {
@@ -863,7 +862,6 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 					}
 				}
 			}
-
 
 		}
 	} else {
@@ -890,4 +888,102 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 
 	tx.StockExchangeRate = rates
 
+}
+
+func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
+	user := store.User{}
+	for _, output := range tx.Vout {
+		if len(output.ScriptPubKey.Addresses) >= 1 {
+			address := output.ScriptPubKey.Addresses[0]
+			query := bson.M{"wallets.addresses.address": address}
+			err := usersData.Find(query).One(&user)
+			if err != nil {
+				continue
+				// is not our user
+			}
+			walletindex := fetchWalletIndex(user.Wallets, address)
+			blocked := false
+			if blockHeight == -1 {
+				blocked = true
+			}
+			// TODO make update blocked
+
+			amount := int64(output.Value * 100000000)
+			spendableOutput := store.SpendableOutputs1{
+				TxID:        tx.Txid,
+				TxOutID:     int(output.N),
+				TxOutAmount: amount,
+				TxOutScript: output.ScriptPubKey.Hex,
+				Address:     address,
+				UserID:      user.UserID,
+				WalletIndex: walletindex,
+				Blocked:     blocked,
+			}
+
+			query = bson.M{"userid": user.UserID, "txid": tx.Txid, "address": address}
+			err = spendableOutputs.Find(query).All(nil)
+			if err == mgo.ErrNotFound {
+				//insertion
+				err := txsData.Insert(spendableOutput)
+				if err != nil {
+					log.Errorf("CreateSpendableOutputs:txsData.Insert: %s", err.Error())
+				}
+			}
+			if err != nil && err != mgo.ErrNotFound {
+				log.Errorf("CreateSpendableOutputs:spendableOutputs.Find %s", err.Error())
+			}
+
+			update := bson.M{
+				"$set": bson.M{
+					"blocked": blocked,
+				},
+			}
+			err = spendableOutputs.Update(query, update)
+			if err != nil {
+				log.Errorf("CreateSpendableOutputs:spendableOutputs.Update: %s", err.Error())
+			}
+		}
+	}
+}
+
+func DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
+	user := store.User{}
+	for _, input := range tx.Vin {
+		previousTx, err := rawTxByTxid(input.Txid)
+		if err != nil {
+			log.Errorf("DeleteSpendableOutputs:rawTxByTxid: %s", err.Error())
+		}
+		for _, previousOutput := range previousTx.Vout {
+			if len(previousOutput.ScriptPubKey.Addresses) >= 1 {
+				address := previousOutput.ScriptPubKey.Addresses[0]
+				query := bson.M{"wallets.addresses.address": address}
+				err := usersData.Find(query).One(&user)
+				if err != nil {
+					continue
+					// is not our user
+				}
+
+				query = bson.M{"userid": user.UserID, "txid": tx.Txid, "address": address, "txoutamount": int(input.Vout)}
+				err = spendableOutputs.Remove(query)
+				if err != nil {
+					log.Errorf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err.Error())
+				}
+				log.Debugf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err)
+
+			}
+		}
+	}
+}
+
+func fetchWalletIndex(wallets []store.Wallet, address string) int {
+	var walletIndex int
+	for _, wallet := range wallets {
+		for _, addr := range wallet.Adresses {
+			if addr.Address == address {
+				walletIndex = wallet.WalletIndex
+				break
+			}
+		}
+	}
+	return walletIndex
 }
