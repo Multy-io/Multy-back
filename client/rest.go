@@ -256,6 +256,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 			} else {
 				code = http.StatusOK
 				message = "wallet created"
+				go resyncAddress(wp.Address, c.Request.RemoteAddr, restClient)
 			}
 		case currencies.Ether:
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -586,7 +587,7 @@ func resyncAddress(hash, RemoteAdd string, restClient *RestClient) {
 		if err != nil {
 			restClient.log.Errorf("resyncAddress: chainhash.NewHashFromStr = %s\t[addr=%s]", err, RemoteAdd)
 		}
-		rawTx, err := restClient.rpcClient.GetRawTransactionVerbose(txHash)
+		rawTx, err := btc.GetRawTransactionVerbose(txHash)
 		if err != nil {
 			restClient.log.Errorf("resyncAddress: rpcClient.GetRawTransactionVerbose = %s\t[addr=%s]", err, RemoteAdd)
 		}
