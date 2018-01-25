@@ -1361,16 +1361,34 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 			}
 
 			for _, tx := range userTxs.Transactions {
-				for _, output := range tx.WalletsOutput {
-					if output.WalletIndex == walletIndex {
-						walletTxs = append(walletTxs, tx)
+				//New Logic
+				var isTheSameWallet = false
+				for _, input := range tx.WalletsInput{
+					if walletIndex == input.WalletIndex{
+						isTheSameWallet = true
 					}
 				}
-				for _, input := range tx.WalletsInput {
-					if input.WalletIndex == walletIndex {
-						walletTxs = append(walletTxs, tx)
+				for _, output := range tx.WalletsOutput{
+					if walletIndex == output.WalletIndex{
+						isTheSameWallet = true
 					}
 				}
+
+				if isTheSameWallet{
+					walletTxs = append(walletTxs, tx)
+				}
+				
+				//OLD logic
+				//for _, output := range tx.WalletsOutput {
+				//	if output.WalletIndex == walletIndex {
+				//		walletTxs = append(walletTxs, tx)
+				//	}
+				//}
+				//for _, input := range tx.WalletsInput {
+				//	if input.WalletIndex == walletIndex {
+				//		walletTxs = append(walletTxs, tx)
+				//	}
+				//}
 			}
 
 			/*
