@@ -845,6 +845,9 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 			tx.TxOutAmount += walletInput.Address.Amount
 			tx.TxAddress = append(tx.TxAddress, walletInput.Address.Address)
 		}
+		for _, walletOutput := range tx.WalletsOutput{
+			tx.TxOutAmount -= walletOutput.Address.Amount
+		}
 	} else {
 		for i := 0; i < len(tx.WalletsOutput); i++ {
 			tx.TxOutAmount += tx.WalletsOutput[i].Address.Amount
