@@ -893,7 +893,7 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 	user := store.User{}
 	for _, output := range tx.Vout {
-		if len(output.ScriptPubKey.Addresses) >= 1 {
+		if len(output.ScriptPubKey.Addresses) > 0 {
 			address := output.ScriptPubKey.Addresses[0]
 			query := bson.M{"wallets.addresses.address": address}
 			err := usersData.Find(query).One(&user)
@@ -906,7 +906,6 @@ func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 			if blockHeight == -1 {
 				blocked = true
 			}
-			// TODO make update blocked
 
 			amount := int64(output.Value * 100000000)
 			spendableOutput := store.SpendableOutputs1{
@@ -928,6 +927,7 @@ func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 				if err != nil {
 					log.Errorf("CreateSpendableOutputs:txsData.Insert: %s", err.Error())
 				}
+				continue
 			}
 			if err != nil && err != mgo.ErrNotFound {
 				log.Errorf("CreateSpendableOutputs:spendableOutputs.Find %s", err.Error())
@@ -954,7 +954,7 @@ func DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 			log.Errorf("DeleteSpendableOutputs:rawTxByTxid: %s", err.Error())
 		}
 		for _, previousOutput := range previousTx.Vout {
-			if len(previousOutput.ScriptPubKey.Addresses) >= 1 {
+			if len(previousOutput.ScriptPubKey.Addresses) > 0 {
 				address := previousOutput.ScriptPubKey.Addresses[0]
 				query := bson.M{"wallets.addresses.address": address}
 				err := usersData.Find(query).One(&user)
