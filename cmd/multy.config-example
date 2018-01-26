@@ -10,8 +10,8 @@
     },
     "NSQAddress": "nsq:4150",
     "BTCNodeAddress": "localhost:18334",
-    "RestAddress": "localhost:6678",
-    "SocketioAddr": "localhost:6680",
+    "RestAddress": "localhost:7778",
+    "SocketioAddr": "localhost:7780",
     "BTCAPITest": {
         "Token": "test-token",
         "Coin": "btc",

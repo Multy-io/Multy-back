@@ -7,10 +7,13 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/Appscrunch/Multy-back/store"
+	"github.com/KristinaEtc/slf"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 func decodeBody(c *gin.Context, to interface{}) error {
@@ -60,5 +63,46 @@ func newEmptyTx(userID string) store.TxRecord {
 	return store.TxRecord{
 		UserID:       userID,
 		Transactions: []store.MultyTX{},
+	}
+}
+
+func newWebSocketConn(addr string) (*websocket.Conn, error) {
+	fmt.Printf("addr=%s", addr)
+	c, _, err := websocket.DefaultDialer.Dial(addr, nil)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func reconnectWebSocketConn(addr string, log slf.StructuredLogger) (*websocket.Conn, error) {
+	var (
+		c   *websocket.Conn
+		err error
+
+		secToRecon = time.Duration(time.Second * 2) // start time for reconnect function
+		numOfRecon = 0
+	)
+
+	for {
+		c, err = newWebSocketConn(addr)
+		if err == nil {
+			return c, nil
+		}
+
+		log.Errorf("reconnecting: %s", err)
+		log.Errorf("secToRecon=%f/numOfRecon=%d", secToRecon.Seconds(), numOfRecon)
+		ticker := time.NewTicker(secToRecon)
+		select {
+		case _ = <-ticker.C:
+			if secToRecon < backOffLimit {
+				randomAdd := secToRecon / 100 * (20 + time.Duration(r1.Int31n(10)))
+				secToRecon = secToRecon*2 + time.Duration(randomAdd)
+				numOfRecon++
+			} else {
+				// back off limit was reached
+				return nil, err
+			}
+		}
 	}
 }

@@ -173,14 +173,14 @@ type SpendableOutputs struct {
 
 // ExchangeRates stores exchange rates
 type ExchangeRates struct {
-	EURtoBTC float64 `json:"eur_btc,omitempty"`
-	USDtoBTC float64 `json:"usd_btc,omitempty"`
-	ETHtoBTC float64 `json:"eth_btc,omitempty"`
+	EURtoBTC float64 `json:"eur_btc"`
+	USDtoBTC float64 `json:"usd_btc"`
+	ETHtoBTC float64 `json:"eth_btc"`
 
-	ETHtoUSD float64 `json:"eth_usd,omitempty"`
-	ETHtoEUR float64 `json:"eth_eur,omitempty"`
+	ETHtoUSD float64 `json:"eth_usd"`
+	ETHtoEUR float64 `json:"eth_eur"`
 
-	BTCtoUSD float64 `json:"btc_usd,omitempty"`
+	BTCtoUSD float64 `json:"btc_usd"`
 }
 
 type RatesAPIBitstamp struct {
