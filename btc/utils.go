@@ -624,7 +624,6 @@ func setExchangeRates(tx *store.MultyTX) {
 }
 
 func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
-	log.Debugf("CreateSpendableOutputs!!!")
 	user := store.User{}
 	for _, output := range tx.Vout {
 		if len(output.ScriptPubKey.Addresses) > 0 {
@@ -635,14 +634,11 @@ func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 				continue
 				// is not our user
 			}
-			log.Debugf("CreateSpendableOutputs OUR USER %s\n", user.UserID)
 			walletindex, addressIndex := fetchWalletAndAddressIndexes(user.Wallets, address)
-			log.Debugf("walletindex = %s addressIndex =  %s\n", walletindex, addressIndex)
 			txStatus := store.TxStatusAppearedInMempoolIncoming
 			if blockHeight != -1 {
 				txStatus = store.TxStatusAppearedInBlockIncoming
 			}
-			log.Debugf("txStatus = %s \n", txStatus)
 
 			exRate, err := GetLatestExchangeRate()
 			if err != nil {
@@ -662,11 +658,9 @@ func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 				TxStatus:          txStatus,
 				StockExchangeRate: exRate,
 			}
-			log.Debugf("spendableOutput = %s \n", spendableOutput)
 
 			query = bson.M{"userid": user.UserID, "txid": tx.Txid, "address": address}
 			err = spendableOutputs.Find(query).One(nil)
-			log.Debugf("spendableOutputs.Find(query).One(nil) = %v \n", err)
 			if err == mgo.ErrNotFound {
 				//insertion
 				err := spendableOutputs.Insert(spendableOutput)
@@ -686,7 +680,6 @@ func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 				},
 			}
 			err = spendableOutputs.Update(query, update)
-			log.Debugf("spendableOutputs.Find(query).One(nil) = %v \n", err)
 			if err != nil {
 				log.Errorf("CreateSpendableOutputs:spendableOutputs.Update: %s", err.Error())
 			}
@@ -714,7 +707,8 @@ func DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 					// is not our user
 				}
 
-				query = bson.M{"userid": user.UserID, "txid": tx.Txid, "address": address, "txoutid": int(input.Vout)}
+				// query = bson.M{"userid": user.UserID, "txid": previousTx.Txid, "address": address, "txoutid": int(input.Vout)}
+				query = bson.M{"userid": user.UserID, "txid": previousTx.Txid, "address": address}
 				err = spendableOutputs.Remove(query)
 				if err != nil {
 					log.Errorf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err.Error())

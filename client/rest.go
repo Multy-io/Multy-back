@@ -1224,58 +1224,37 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 		walletIndex = len(user.Wallets)
 
-		userTxs := store.TxRecord{}
+		userTxs := []store.SpendableOutputs1{}
 		query = bson.M{"userid": user.UserID}
-		if err := restClient.userStore.FindUserTxs(query, &userTxs); err != nil {
-			restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: user %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-		}
 
-		var unspendTxs []store.MultyTX
-		for _, tx := range userTxs.Transactions {
-			if tx.TxStatus == store.TxStatusAppearedInMempoolIncoming || tx.TxStatus == store.TxStatusAppearedInBlockIncoming || tx.TxStatus == store.TxStatusInBlockConfirmedIncoming { // pending and actual ballance
-				unspendTxs = append(unspendTxs, tx)
-			}
+		if err := restClient.userStore.GetAllSpendableOutputs(query, &userTxs); err != nil {
+			restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: user %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 		}
 
 		var av []AddressVerbose
 		var spOuts []store.SpendableOutputs
 		var balance int
-		var isTheSameWallet = false
 
 		for _, wallet := range user.Wallets {
 			if wallet.Status == store.WalletStatusOK {
 
 				for _, address := range wallet.Adresses {
 
-					for _, tx := range unspendTxs {
+					for _, tx := range userTxs {
 
-						for _, input := range tx.WalletsInput {
-							if wallet.WalletIndex == input.WalletIndex {
-								isTheSameWallet = true
-							}
-						}
-						for _, output := range tx.WalletsOutput {
-							if wallet.WalletIndex == output.WalletIndex {
-								isTheSameWallet = true
-							}
+						if address.Address == tx.Address {
+							balance += int(tx.TxOutAmount)
+							spOuts = append(spOuts, store.SpendableOutputs{
+								TxID:              tx.TxID,
+								TxOutID:           tx.TxOutID,
+								TxOutAmount:       int(tx.TxOutAmount),
+								TxOutScript:       tx.TxOutScript,
+								TxStatus:          tx.TxStatus,
+								AddressIndex:      tx.AddressIndex,
+								StockExchangeRate: tx.StockExchangeRate, // from db
+							})
 						}
 
-						if isTheSameWallet {
-							for _, output := range tx.WalletsOutput {
-								if address.Address == output.Address.Address {
-									balance += int(output.Address.Amount)
-									spOuts = append(spOuts, store.SpendableOutputs{
-										TxID:              tx.TxID,
-										TxOutID:           output.Address.AddressOutIndex,
-										TxOutAmount:       int(output.Address.Amount),
-										TxOutScript:       tx.TxOutScript,
-										TxStatus:          tx.TxStatus,
-										AddressIndex:      output.Address.AddressIndex,
-										StockExchangeRate: tx.StockExchangeRate, // from db
-									})
-								}
-							}
-						}
 					}
 
 					av = append(av, AddressVerbose{
