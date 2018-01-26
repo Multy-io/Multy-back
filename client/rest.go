@@ -573,17 +573,20 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 	}
 }
 
+func reverse(ss []string) {
+	last := len(ss) - 1
+	for i := 0; i < len(ss)/2; i++ {
+		ss[i], ss[last-i] = ss[last-i], ss[i]
+	}
+}
 func resyncAddress(hash, RemoteAdd string, restClient *RestClient) {
 	addrInfo, err := restClient.apiBTCTest.GetAddrFull(hash, map[string]string{"limit": "50"})
 	if err != nil {
 		restClient.log.Errorf("getWalletVerbose: restClient.apiBTCTest.GetAddrFull : %s \t[addr=%s]", err.Error(), RemoteAdd)
 	}
 
-	// allAddressTxs := []string{}
-	for _, tx := range addrInfo.TXs {
-		// allAddressTxs = append(allAddressTxs, tx.Hash)
-
-		txHash, err := chainhash.NewHashFromStr(tx.Hash)
+	for i := len(addrInfo.TXs) - 1; i >= 0; i-- {
+		txHash, err := chainhash.NewHashFromStr(addrInfo.TXs[i].Hash)
 		if err != nil {
 			restClient.log.Errorf("resyncAddress: chainhash.NewHashFromStr = %s\t[addr=%s]", err, RemoteAdd)
 		}
@@ -592,7 +595,7 @@ func resyncAddress(hash, RemoteAdd string, restClient *RestClient) {
 			restClient.log.Errorf("resyncAddress: rpcClient.GetRawTransactionVerbose = %s\t[addr=%s]", err, RemoteAdd)
 		}
 
-		btc.ProcessTransaction(int64(tx.BlockHeight), rawTx)
+		btc.ProcessTransaction(int64(addrInfo.TXs[i].BlockHeight), rawTx)
 
 	}
 
