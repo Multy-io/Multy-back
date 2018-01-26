@@ -170,6 +170,7 @@ func blockTransactions(hash *chainhash.Hash) {
 		}
 
 		processTransaction(blockHeight, blockTxVerbose)
+
 		// // apear as output
 		// err = parseOutput(blockTxVerbose, blockHeight, TxStatusAppearedInBlockIncoming)
 		// if err != nil {
@@ -384,28 +385,6 @@ func blockTransactions(hash *chainhash.Hash) {
 //		}
 //	}
 //	return nil
-//}
-
-//func GetLatestExchangeRate() ([]store.ExchangeRatesRecord, error) {
-//	selGdax := bson.M{
-//		"stockexchange": "Gdax",
-//	}
-//	selPoloniex := bson.M{
-//		"stockexchange": "Poloniex",
-//	}
-//	stocksGdax := store.ExchangeRatesRecord{}
-//	err := exRate.Find(selGdax).Sort("-timestamp").One(&stocksGdax)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	stocksPoloniex := store.ExchangeRatesRecord{}
-//	err = exRate.Find(selPoloniex).Sort("-timestamp").One(&stocksPoloniex)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return []store.ExchangeRatesRecord{stocksPoloniex, stocksGdax}, nil
-//
 //}
 
 func blockConfirmations(hash *chainhash.Hash) {

@@ -141,6 +141,8 @@ func GetRawTransactionVerbose(txHash *chainhash.Hash) (*btcjson.TxRawResult, err
 
 func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult) {
 	var multyTx *store.MultyTX = parseRawTransaction(blockChainBlockHeight, txVerbose)
+	CreateSpendableOutputs(txVerbose, blockChainBlockHeight)
+	DeleteSpendableOutputs(txVerbose, blockChainBlockHeight)
 	if multyTx != nil {
 
 		multyTx.BlockHeight = blockChainBlockHeight
@@ -678,28 +680,6 @@ func parseOutputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *st
 	return nil
 }
 
-func GetLatestExchangeRate() ([]store.ExchangeRatesRecord, error) {
-	selGdax := bson.M{
-		"stockexchange": "Gdax",
-	}
-	selPoloniex := bson.M{
-		"stockexchange": "Poloniex",
-	}
-	stocksGdax := store.ExchangeRatesRecord{}
-	err := exRate.Find(selGdax).Sort("-timestamp").One(&stocksGdax)
-	if err != nil {
-		return nil, err
-	}
-
-	stocksPoloniex := store.ExchangeRatesRecord{}
-	err = exRate.Find(selPoloniex).Sort("-timestamp").One(&stocksPoloniex)
-	if err != nil {
-		return nil, err
-	}
-	return []store.ExchangeRatesRecord{stocksPoloniex, stocksGdax}, nil
-
-}
-
 func updateWalletAndAddressDate(tx store.MultyTX) {
 
 	for _, walletOutput := range tx.WalletsOutput {
@@ -891,6 +871,7 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 }
 
 func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
+	log.Debugf("CreateSpendableOutputs!!!")
 	user := store.User{}
 	for _, output := range tx.Vout {
 		if len(output.ScriptPubKey.Addresses) > 0 {
@@ -901,29 +882,42 @@ func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 				continue
 				// is not our user
 			}
-			walletindex := fetchWalletIndex(user.Wallets, address)
-			blocked := false
-			if blockHeight == -1 {
-				blocked = true
+			log.Debugf("CreateSpendableOutputs OUR USER %s\n", user.UserID)
+			walletindex, addressIndex := fetchWalletAndAddressIndexes(user.Wallets, address)
+			log.Debugf("walletindex = %s addressIndex =  %s\n", walletindex, addressIndex)
+			txStatus := store.TxStatusAppearedInMempoolIncoming
+			if blockHeight != -1 {
+				txStatus = store.TxStatusAppearedInBlockIncoming
+			}
+			log.Debugf("txStatus = %s \n", txStatus)
+
+			exRate, err := GetLatestExchangeRate()
+			if err != nil {
+				log.Errorf("CreateSpendableOutputs:GetLatestExchangeRate: %s", err.Error())
 			}
 
 			amount := int64(output.Value * 100000000)
 			spendableOutput := store.SpendableOutputs1{
-				TxID:        tx.Txid,
-				TxOutID:     int(output.N),
-				TxOutAmount: amount,
-				TxOutScript: output.ScriptPubKey.Hex,
-				Address:     address,
-				UserID:      user.UserID,
-				WalletIndex: walletindex,
-				Blocked:     blocked,
+				TxID:              tx.Txid,
+				TxOutID:           int(output.N),
+				TxOutAmount:       amount,
+				TxOutScript:       output.ScriptPubKey.Hex,
+				Address:           address,
+				UserID:            user.UserID,
+				WalletIndex:       walletindex,
+				AddressIndex:      addressIndex,
+				TxStatus:          txStatus,
+				StockExchangeRate: exRate,
 			}
+			log.Debugf("spendableOutput = %s \n", spendableOutput)
 
 			query = bson.M{"userid": user.UserID, "txid": tx.Txid, "address": address}
-			err = spendableOutputs.Find(query).All(nil)
+			err = spendableOutputs.Find(query).One(nil)
+			log.Debugf("spendableOutputs.Find(query).One(nil) = %v \n", err)
 			if err == mgo.ErrNotFound {
 				//insertion
-				err := txsData.Insert(spendableOutput)
+				err := spendableOutputs.Insert(spendableOutput)
+				log.Errorf("txsData.Insert = %s \n", err)
 				if err != nil {
 					log.Errorf("CreateSpendableOutputs:txsData.Insert: %s", err.Error())
 				}
@@ -935,10 +929,11 @@ func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 
 			update := bson.M{
 				"$set": bson.M{
-					"blocked": blocked,
+					"txstatus": txStatus,
 				},
 			}
 			err = spendableOutputs.Update(query, update)
+			log.Debugf("spendableOutputs.Find(query).One(nil) = %v \n", err)
 			if err != nil {
 				log.Errorf("CreateSpendableOutputs:spendableOutputs.Update: %s", err.Error())
 			}
@@ -953,6 +948,9 @@ func DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 		if err != nil {
 			log.Errorf("DeleteSpendableOutputs:rawTxByTxid: %s", err.Error())
 		}
+		if previousTx == nil {
+			continue
+		}
 		for _, previousOutput := range previousTx.Vout {
 			if len(previousOutput.ScriptPubKey.Addresses) > 0 {
 				address := previousOutput.ScriptPubKey.Addresses[0]
@@ -963,7 +961,7 @@ func DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 					// is not our user
 				}
 
-				query = bson.M{"userid": user.UserID, "txid": tx.Txid, "address": address, "txoutamount": int(input.Vout)}
+				query = bson.M{"userid": user.UserID, "txid": tx.Txid, "address": address, "txoutid": int(input.Vout)}
 				err = spendableOutputs.Remove(query)
 				if err != nil {
 					log.Errorf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err.Error())
@@ -975,15 +973,23 @@ func DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 	}
 }
 
-func fetchWalletIndex(wallets []store.Wallet, address string) int {
-	var walletIndex int
-	for _, wallet := range wallets {
-		for _, addr := range wallet.Adresses {
-			if addr.Address == address {
-				walletIndex = wallet.WalletIndex
-				break
-			}
-		}
+func GetLatestExchangeRate() ([]store.ExchangeRatesRecord, error) {
+	selGdax := bson.M{
+		"stockexchange": "Gdax",
 	}
-	return walletIndex
+	selPoloniex := bson.M{
+		"stockexchange": "Poloniex",
+	}
+	stocksGdax := store.ExchangeRatesRecord{}
+	err := exRate.Find(selGdax).Sort("-timestamp").One(&stocksGdax)
+	if err != nil {
+		return nil, err
+	}
+
+	stocksPoloniex := store.ExchangeRatesRecord{}
+	err = exRate.Find(selPoloniex).Sort("-timestamp").One(&stocksPoloniex)
+	if err != nil {
+		return nil, err
+	}
+	return []store.ExchangeRatesRecord{stocksPoloniex, stocksGdax}, nil
 }

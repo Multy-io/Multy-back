@@ -52,7 +52,7 @@ func InitHandlers(certFromConf string, dbConf *store.Conf, nsqAddr, btcNodeAddre
 	mempoolRates = db.DB(dbConf.DBFeeRates).C(store.TableFeeRates)
 	txsData = db.DB(dbConf.DBTx).C(store.TableBTC)
 	exRate = db.DB("dev-DBStockExchangeRate").C("TableStockExchangeRate")
-	spendableOutputs = db.DB("dev-DB-BTC-SpendableOutputs").C("SpendableOutputs")
+	spendableOutputs = db.DB(dbConf.DBTx).C("SpendableOutputs")
 
 	go RunProcess(btcNodeAddress)
 	return rpcClient, nil
