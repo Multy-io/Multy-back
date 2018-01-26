@@ -1,27 +1,29 @@
 version: '3.4'
+
 services:
   multy-back:
-    image:  multyio/backend:latest
+    image:  multyio/backend:1.0.1
     command: ["make", "all"]
     env_file: .env
     volumes:
+        - "${BACKEND_LOGS}:/go/src/github.com/Appscrunch/Multy-back/cmd/logs"
         - "${BACKEND_CONF}:/go/src/github.com/Appscrunch/Multy-back/cmd/multy.config"
         - "${BTCD_CERT}:/go/src/github.com/Appscrunch/Multy-back/cmd/rpc.cert"
     ports:
-      - "6678:6678"
-      - "6680:6680"
+      - "7778:7778"
+      - "7780:7780"
     depends_on:
       - nsq
       - nsqlookup
       - nsqadmin
       - mongodb
       # - btcd-testnet
-      
+
   mongodb:
     container_name: "mongodb"
     image: mongo:3.6.2
     env_file: .env
-    command: mongod --smallfiles 
+    command: mongod --smallfiles
     environment:
       - MONGO_DATA_DIR=/data/db
       - MONGO_LOG_DIR=/data/logs
@@ -63,14 +65,14 @@ services:
       - "4171:4171"
     command: nsqadmin --lookupd-http-address=nsqlookup:4161
 
-  btcd-testnet:
-    image: multyio/btcd-testnet:1.0.0
-    env_file: .env
-    volumes:
-     - "${BTCD}:/root/.btcd"
-     - "${BTCCTL}:/root/.btcctl"
-     - "${BTCD_CERT}:/root/rpc.cert"
-     - "${BTCD_KEY}:/root/rpc.key"
-    ports:
-     - 1334:1334
-     - 18334:18334
+ # btcd-testnet:
+ #   image: multyio/btcd-testnet:1.0.0
+ #   env_file: .env
+ #   volumes:
+ #    - "${BTCD}:/root/.btcd"
+ #    - "${BTCCTL}:/root/.btcctl"
+ #    - "${BTCD_CERT}:/root/rpc.cert"
+ #    - "${BTCD_KEY}:/root/rpc.key"
+ #   ports:
+ #    - 1334:1334
+ #   - 18334:18334

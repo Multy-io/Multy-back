@@ -22,6 +22,8 @@ const ( // currency id  nsq
 	TxStatusInBlockConfirmedIncoming  = 5
 	TxStatusInBlockConfirmedOutcoming = 6
 
+	SatoshiInBitcoint = 100000000
+
 	// TxStatusInBlockConfirmed = 5
 
 	// TxStatusRejectedFromBlock = -1
