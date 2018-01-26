@@ -581,13 +581,41 @@ func reverse(ss []string) {
 	}
 }
 func resyncAddress(hash, RemoteAdd string, restClient *RestClient) {
+	allResync := []resyncTx{}
+	requestTimes := 0
 	addrInfo, err := restClient.apiBTCTest.GetAddrFull(hash, map[string]string{"limit": "50"})
 	if err != nil {
-		restClient.log.Errorf("getWalletVerbose: restClient.apiBTCTest.GetAddrFull : %s \t[addr=%s]", err.Error(), RemoteAdd)
+		restClient.log.Errorf("resyncAddress: restClient.apiBTCTest.GetAddrFull : %s \t[addr=%s]", err.Error(), RemoteAdd)
 	}
 
-	for i := len(addrInfo.TXs) - 1; i >= 0; i-- {
-		txHash, err := chainhash.NewHashFromStr(addrInfo.TXs[i].Hash)
+	if addrInfo.FinalNumTX > 50 {
+		requestTimes = int(float64(addrInfo.FinalNumTX) / 50.0)
+	}
+
+	for _, tx := range addrInfo.TXs {
+		allResync = append(allResync, resyncTx{
+			hash:        tx.Hash,
+			blockHeight: tx.BlockHeight,
+		})
+	}
+
+	for i := 0; i < requestTimes; i++ {
+		addrInfo, err := restClient.apiBTCTest.GetAddrFull(hash, map[string]string{"limit": "50", "before": strconv.Itoa(allResync[len(allResync)-1].blockHeight)})
+		if err != nil {
+			restClient.log.Errorf("resyncAddress: restClient.apiBTCTest.GetAddrFull: %s \t[addr=%s]", err.Error(), RemoteAdd)
+		}
+		for _, tx := range addrInfo.TXs {
+			allResync = append(allResync, resyncTx{
+				hash:        tx.Hash,
+				blockHeight: tx.BlockHeight,
+			})
+		}
+	}
+
+	reverseResyncTx(allResync)
+
+	for _, reTx := range allResync {
+		txHash, err := chainhash.NewHashFromStr(reTx.hash)
 		if err != nil {
 			restClient.log.Errorf("resyncAddress: chainhash.NewHashFromStr = %s\t[addr=%s]", err, RemoteAdd)
 		}
@@ -595,11 +623,19 @@ func resyncAddress(hash, RemoteAdd string, restClient *RestClient) {
 		if err != nil {
 			restClient.log.Errorf("resyncAddress: rpcClient.GetRawTransactionVerbose = %s\t[addr=%s]", err, RemoteAdd)
 		}
-
-		btc.ProcessTransaction(int64(addrInfo.TXs[i].BlockHeight), rawTx)
-
+		btc.ProcessTransaction(int64(reTx.blockHeight), rawTx)
 	}
+}
+func reverseResyncTx(ss []resyncTx) {
+	last := len(ss) - 1
+	for i := 0; i < len(ss)/2; i++ {
+		ss[i], ss[last-i] = ss[last-i], ss[i]
+	}
+}
 
+type resyncTx struct {
+	hash        string
+	blockHeight int
 }
 
 func (restClient *RestClient) addAddress() gin.HandlerFunc {
