@@ -52,7 +52,7 @@ type UserStore interface {
 	InsertExchangeRate(ExchangeRates, string) error
 	GetExchangeRatesDay() ([]RatesAPIBitstamp, error)
 	GetAllWalletTransactions(query bson.M, walletTxs *TxRecord) error
-	GetAllSpendableOutputs(query bson.M, spOuts *[]SpendableOutputs1) error
+	GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs1)
 }
 
 type MongoUserStore struct {
@@ -83,8 +83,10 @@ func InitUserStore(conf Conf) (UserStore, error) {
 	return uStore, nil
 }
 
-func (mStore *MongoUserStore) GetAllSpendableOutputs(query bson.M, spOuts *[]SpendableOutputs1) error {
-	return mStore.spendableOutputs.Find(query).One(spOuts)
+func (mStore *MongoUserStore) GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs1) {
+	spOuts := []SpendableOutputs1{}
+	err := mStore.spendableOutputs.Find(query).All(&spOuts)
+	return err, spOuts
 }
 
 func (mStore *MongoUserStore) UpdateUser(sel bson.M, user *User) error {

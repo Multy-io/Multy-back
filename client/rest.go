@@ -1224,12 +1224,14 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 		walletIndex = len(user.Wallets)
 
-		userTxs := []store.SpendableOutputs1{}
+		// userTxs := []store.SpendableOutputs1{}
 		query = bson.M{"userid": user.UserID}
 
-		if err := restClient.userStore.GetAllSpendableOutputs(query, &userTxs); err != nil {
+		err, userTxs := restClient.userStore.GetAllSpendableOutputs(query)
+		if err != nil {
 			restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: user %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 		}
+		restClient.log.Errorf("sp outs: %s\t[addr=%s]", userTxs, c.Request.RemoteAddr)
 
 		var av []AddressVerbose
 		var spOuts []store.SpendableOutputs
