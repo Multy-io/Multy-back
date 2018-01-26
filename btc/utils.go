@@ -141,6 +141,7 @@ func GetRawTransactionVerbose(txHash *chainhash.Hash) (*btcjson.TxRawResult, err
 
 func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult) {
 	var multyTx *store.MultyTX = parseRawTransaction(blockChainBlockHeight, txVerbose)
+	//TODO Add save unspendable outputs Here
 	if multyTx != nil {
 
 		multyTx.BlockHeight = blockChainBlockHeight
