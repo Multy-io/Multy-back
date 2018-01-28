@@ -428,6 +428,16 @@ func checkBTCAddressbalance(address string, restClient *RestClient) int64 {
 	return balance
 }
 
+func getBTCAddressSpendableOutputs(address string, restClient *RestClient) []store.SpendableOutputs {
+	query := bson.M{"address": address}
+	spOuts, err := restClient.userStore.GetAddressSpendableOutputs(query)
+	if err != nil && err != mgo.ErrNotFound {
+		restClient.log.Errorf("getkBTCAddressSpendableOutputs: rGetAddressSpendableOutputs: %s\t", err.Error())
+	}
+
+	return spOuts
+}
+
 func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, err := getToken(c)
@@ -783,8 +793,15 @@ func (restClient *RestClient) getSpendableOutputs() gin.HandlerFunc {
 
 		switch currencyID {
 		case currencies.Bitcoin:
-			userTxs := store.TxRecord{}
+
+			//todo remove query
 			query := bson.M{"userid": user.UserID, "transactions.txaddress": address}
+			spOuts, err = restClient.userStore.GetAddressSpendableOutputs(query)
+			if err != nil {
+				restClient.log.Errorf("getSpendableOutputs: GetAddressSpendableOutputs:[%d] %s \t[addr=%s]", currencyID, err.Error(), c.Request.RemoteAddr)
+			}
+			userTxs := store.TxRecord{}
+
 			restClient.userStore.FindUserTxs(query, &userTxs)
 			if err != nil {
 				c.JSON(http.StatusOK, gin.H{
@@ -795,37 +812,6 @@ func (restClient *RestClient) getSpendableOutputs() gin.HandlerFunc {
 				return
 			}
 
-			for _, tx := range userTxs.Transactions {
-				if tx.TxStatus == store.TxStatusAppearedInBlockIncoming || tx.TxStatus == store.TxStatusInBlockConfirmedIncoming { // all spendable txs
-					for _, output := range tx.WalletsOutput {
-						if output.Address.Address == address {
-							spOuts = append(spOuts, store.SpendableOutputs{
-								TxID:        tx.TxID,
-								TxOutID:     output.Address.AddressOutIndex,
-								TxOutAmount: int(output.Address.Amount),
-								TxOutScript: tx.TxOutScript,
-							})
-						}
-					}
-				}
-			}
-			/*
-
-				for _, tx := range userTxs.Transactions {
-					if tx.TxAddress == address {
-						if tx.TxStatus == store.TxStatusAppearedInBlockIncoming || tx.TxStatus == store.TxStatusInBlockConfirmedIncoming { // all spendable txs
-							spOuts = append(spOuts, store.SpendableOutputs{
-								TxID:        tx.TxID,
-								TxOutID:     tx.TxOutID,
-								TxOutAmount: int(tx.TxOutAmount),
-								TxOutScript: tx.TxOutScript,
-							})
-						}
-					}
-				}
-			*/
-
-		// case currencies.Bitcoin:
 		default:
 			code = http.StatusBadRequest
 			message = msgErrMethodNotImplennted
@@ -905,98 +891,6 @@ type RawTx struct { // remane RawClientTransaction
 	Transaction string `json:"transaction"` //HexTransaction
 }
 
-func (restClient *RestClient) getWalletVerboseOld() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var av []AddressVerbose
-		token, err := getToken(c)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrHeaderError,
-			})
-			return
-		}
-
-		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
-		restClient.log.Debugf("getWalletVerbose [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
-		if err != nil {
-			restClient.log.Errorf("getWalletVerbose: non int wallet index:[%d] %s \t[addr=%s]", walletIndex, err.Error(), c.Request.RemoteAddr)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrDecodeWalletIndexErr,
-				"wallet":  av,
-			})
-			return
-		}
-
-		query := bson.M{"devices.JWT": token}
-
-		user := store.User{}
-		var (
-			code    int
-			message string
-		)
-
-		if err := restClient.userStore.FindUser(query, &user); err != nil {
-			restClient.log.Errorf("getWalletVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			code = http.StatusBadRequest
-			message = msgErrUserNotFound
-		} else {
-			code = http.StatusOK
-			message = http.StatusText(http.StatusOK)
-		}
-
-		var spOuts []store.SpendableOutputs
-
-		params := map[string]string{
-			"unspentOnly": "true",
-		}
-
-		for _, wallet := range user.Wallets {
-			if wallet.WalletIndex == walletIndex {
-				for _, address := range wallet.Adresses {
-					addrInfo, err := restClient.apiBTCTest.GetAddrFull(address.Address, params)
-					if err != nil {
-						restClient.log.Errorf("getWalletVerbose: restClient.apiBTCTest.GetAddrFull : %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-						code = http.StatusInternalServerError
-						message = http.StatusText(http.StatusInternalServerError) // fix naming
-						continue
-					}
-
-					for _, v := range addrInfo.TXs {
-						for key, output := range v.Outputs {
-							for _, addr := range output.Addresses {
-								if addr == address.Address {
-									spOuts = append(spOuts, store.SpendableOutputs{
-										TxID:        v.Hash,
-										TxOutID:     key,
-										TxOutAmount: output.Value,
-										TxOutScript: output.Script,
-									})
-								}
-							}
-						}
-					}
-
-					av = append(av, AddressVerbose{
-						Address:       address.Address,
-						AddressIndex:  address.AddressIndex,
-						Amount:        addrInfo.Balance,
-						SpendableOuts: spOuts,
-					})
-				}
-				spOuts = []store.SpendableOutputs{}
-			}
-		}
-
-		c.JSON(code, gin.H{
-			"code":    code,
-			"message": message,
-			"wallet":  av,
-		})
-	}
-}
-
 func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var wv []WalletVerbose
@@ -1074,39 +968,18 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			}
 
 			var av []AddressVerbose
-			var spOuts []store.SpendableOutputs
-			var balance int
 
 			for _, wallet := range user.Wallets {
 				if wallet.WalletIndex == walletIndex { // specify wallet index
 
 					for _, address := range wallet.Adresses {
-						for _, tx := range unspendTxs {
-
-							for _, output := range tx.WalletsOutput {
-								if address.Address == output.Address.Address {
-									spOuts = append(spOuts, store.SpendableOutputs{
-										TxID:              tx.TxID,
-										TxOutID:           output.Address.AddressOutIndex,
-										TxOutAmount:       int(output.Address.Amount),
-										TxOutScript:       tx.TxOutScript,
-										TxStatus:          tx.TxStatus,
-										AddressIndex:      output.Address.AddressIndex,
-										StockExchangeRate: tx.StockExchangeRate, // from db
-									})
-								}
-							}
-						}
-
 						av = append(av, AddressVerbose{
 							LastActionTime: address.LastActionTime,
 							Address:        address.Address,
 							AddressIndex:   address.AddressIndex,
-							Amount:         balance,
-							SpendableOuts:  spOuts,
+							Amount:         int(checkBTCAddressbalance(address.Address, restClient)),
+							SpendableOuts:  getBTCAddressSpendableOutputs(address.Address, restClient),
 						})
-						spOuts = []store.SpendableOutputs{}
-						balance = 0
 					}
 					wv = append(wv, WalletVerbose{
 						WalletIndex:    wallet.WalletIndex,
@@ -1167,7 +1040,6 @@ type StockExchangeRate struct {
 func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var wv []WalletVerbose
-		var walletIndex int
 		token, err := getToken(c)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -1176,7 +1048,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 			})
 			return
 		}
-
 		var (
 			code    int
 			message string
@@ -1187,64 +1058,61 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 		if err := restClient.userStore.FindUser(query, &user); err != nil {
 			restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 			c.JSON(code, gin.H{
-				"code":     http.StatusBadRequest,
-				"message":  msgErrUserNotFound,
-				"wallets":  wv,
-				"topindex": walletIndex,
+				"code":    http.StatusBadRequest,
+				"message": msgErrUserNotFound,
+				"wallet":  wv,
 			})
 			return
 		}
-		code = http.StatusOK
-		message = http.StatusText(http.StatusOK)
 
-		walletIndex = len(user.Wallets)
-
-		// userTxs := []store.SpendableOutputs1{}
-		query = bson.M{"userid": user.UserID}
-
-		err, userTxs := restClient.userStore.GetAllSpendableOutputs(query)
+		currencyId, err := strconv.Atoi(c.Param("currencyid"))
 		if err != nil {
-			restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: user %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+			restClient.log.Errorf("getWalletVerbose: non int currency id:[%d] %s \t[addr=%s]", currencyId, err.Error(), c.Request.RemoteAddr)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrDecodeCurIndexErr,
+			})
+			return
 		}
-		restClient.log.Errorf("sp outs: %s\t[addr=%s]", userTxs, c.Request.RemoteAddr)
 
-		var av []AddressVerbose
-		var spOuts []store.SpendableOutputs
-		var balance int
+		switch currencyId {
+		case currencies.Bitcoin:
+			code = http.StatusOK
+			message = http.StatusText(http.StatusOK)
 
-		for _, wallet := range user.Wallets {
-			if wallet.Status == store.WalletStatusOK {
+			userTxs := store.TxRecord{}
+			query = bson.M{"userid": user.UserID}
+			if err := restClient.userStore.FindUserTxs(query, &userTxs); err != nil {
+				restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+				c.JSON(http.StatusOK, gin.H{
+					"code":    http.StatusOK,
+					"message": msgErrNoSpendableOutputs,
+					"wallet":  wv,
+				})
+				return
+			}
+
+			var unspendTxs []store.MultyTX
+			for _, tx := range userTxs.Transactions {
+				if tx.TxStatus == store.TxStatusAppearedInMempoolIncoming || tx.TxStatus == store.TxStatusAppearedInBlockIncoming || tx.TxStatus == store.TxStatusInBlockConfirmedIncoming { // pending and actual ballance
+					unspendTxs = append(unspendTxs, tx)
+				}
+			}
+
+			var av []AddressVerbose
+
+
+			for _, wallet := range user.Wallets {
 
 				for _, address := range wallet.Adresses {
-
-					for _, tx := range userTxs {
-
-						if address.Address == tx.Address {
-							balance += int(tx.TxOutAmount)
-							spOuts = append(spOuts, store.SpendableOutputs{
-								TxID:              tx.TxID,
-								TxOutID:           tx.TxOutID,
-								TxOutAmount:       int(tx.TxOutAmount),
-								TxOutScript:       tx.TxOutScript,
-								TxStatus:          tx.TxStatus,
-								AddressIndex:      tx.AddressIndex,
-								StockExchangeRate: tx.StockExchangeRate, // from db
-							})
-						}
-
-					}
-
 					av = append(av, AddressVerbose{
 						LastActionTime: address.LastActionTime,
 						Address:        address.Address,
 						AddressIndex:   address.AddressIndex,
-						Amount:         balance,
-						SpendableOuts:  spOuts,
+						Amount:         int(checkBTCAddressbalance(address.Address, restClient)),
+						SpendableOuts:  getBTCAddressSpendableOutputs(address.Address, restClient),
 					})
-					spOuts = []store.SpendableOutputs{}
-					balance = 0
 				}
-
 				wv = append(wv, WalletVerbose{
 					WalletIndex:    wallet.WalletIndex,
 					CurrencyID:     wallet.CurrencyID,
@@ -1254,14 +1122,26 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					VerboseAddress: av,
 				})
 				av = []AddressVerbose{}
+
 			}
+		case currencies.Ether:
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrChainIsNotImplemented,
+			})
+			return
+		default:
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrChainIsNotImplemented,
+			})
+			return
 		}
 
 		c.JSON(code, gin.H{
-			"code":     code,
-			"message":  message,
-			"wallets":  wv,
-			"topindex": walletIndex,
+			"code":    code,
+			"message": message,
+			"wallet":  wv,
 		})
 	}
 }

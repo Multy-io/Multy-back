@@ -52,8 +52,8 @@ type UserStore interface {
 	InsertExchangeRate(ExchangeRates, string) error
 	GetExchangeRatesDay() ([]RatesAPIBitstamp, error)
 	GetAllWalletTransactions(query bson.M, walletTxs *TxRecord) error
-	GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs1)
-	GetAddressSpendableOutputs(query bson.M) ([]SpendableOutputs1, error)
+	GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs)
+	GetAddressSpendableOutputs(query bson.M) ([]SpendableOutputs, error)
 	DeleteWallet(userid string, walletindex int) error
 }
 
@@ -94,13 +94,13 @@ func (mStore *MongoUserStore) DeleteWallet(userid string, walletindex int) error
 	}
 	return mStore.usersData.Update(sel, update)
 }
-func (mStore *MongoUserStore) GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs1) {
-	spOuts := []SpendableOutputs1{}
+func (mStore *MongoUserStore) GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs) {
+	spOuts := []SpendableOutputs{}
 	err := mStore.spendableOutputs.Find(query).All(&spOuts)
 	return err, spOuts
 }
-func (mStore *MongoUserStore) GetAddressSpendableOutputs(query bson.M) ([]SpendableOutputs1, error) {
-	spOuts := []SpendableOutputs1{}
+func (mStore *MongoUserStore) GetAddressSpendableOutputs(query bson.M) ([]SpendableOutputs, error) {
+	spOuts := []SpendableOutputs{}
 	err := mStore.spendableOutputs.Find(query).All(&spOuts)
 	return spOuts, err
 }

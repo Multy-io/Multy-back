@@ -646,7 +646,7 @@ func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 			}
 
 			amount := int64(output.Value * SatoshiInBitcoint)
-			spendableOutput := store.SpendableOutputs1{
+			spendableOutput := store.SpendableOutputs{
 				TxID:              tx.Txid,
 				TxOutID:           int(output.N),
 				TxOutAmount:       amount,
