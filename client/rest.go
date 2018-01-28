@@ -204,11 +204,39 @@ func getToken(c *gin.Context) (string, error) {
 	return authHeader[1], nil
 }
 
+func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c *gin.Context) error {
+	// we can't append wallet to user with already existed wallet id
+	sel := bson.M{"devices.JWT": token, "wallets.walletIndex": wp.WalletIndex, "wallets.currencyID": wp.CurrencyID}
+	err := restClient.userStore.FindUserErr(sel)
+
+	if err == nil {
+		// existed wallet
+		return errors.New(msgErrWalletIndex)
+	}
+	if err != mgo.ErrNotFound {
+		restClient.log.Errorf("addWallet: restClient.userStore.FindUser %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+		return errors.New(http.StatusText(http.StatusInternalServerError))
+	}
+
+	wallet := createWallet(wp.CurrencyID, wp.Address, wp.AddressIndex, wp.WalletIndex, wp.WalletName)
+
+	sel = bson.M{"devices.JWT": token}
+	update := bson.M{"$push": bson.M{"wallets": wallet}}
+
+	if err := restClient.userStore.Update(sel, update); err != nil {
+		restClient.log.Errorf("addWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+		return errors.New(msgErrUserNotFound)
+	} else {
+		return nil
+	}
+}
+
 func (restClient *RestClient) addWallet() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		token, err := getToken(c)
 		if err != nil {
+			restClient.log.Errorf("addWallet: getToken: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
 				"message": msgErrHeaderError,
@@ -217,8 +245,8 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 		}
 
 		var (
-			code    int
-			message string
+			code    = http.StatusOK
+			message = http.StatusText(http.StatusOK)
 		)
 
 		var wp WalletParams
@@ -230,41 +258,15 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 
 		switch wp.CurrencyID {
 		case currencies.Bitcoin:
-			// we can't append wallet to user with already existed wallet id
-			sel := bson.M{"wallets.walletIndex": wp.WalletIndex, "devices.JWT": token}
-			err = restClient.userStore.FindUserErr(sel)
-
-			if err == nil {
-				// existed wallet
+			err := createCustomWallet(wp, token, restClient, c)
+			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{
-					"code":    http.StatusBadRequest,
-					"message": msgErrWalletIndex,
-				})
-				return
-			}
-			if err != mgo.ErrNotFound {
-				restClient.log.Errorf("addWallet: restClient.userStore.FindUser %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-				c.JSON(http.StatusInternalServerError, gin.H{
 					"code":    http.StatusInternalServerError,
-					"message": http.StatusText(http.StatusInternalServerError),
+					"message": err.Error,
 				})
 				return
 			}
-
-			wallet := createWallet(wp.CurrencyID, wp.Address, wp.AddressIndex, wp.WalletIndex, wp.WalletName)
-
-			sel = bson.M{"devices.JWT": token}
-			update := bson.M{"$push": bson.M{"wallets": wallet}}
-
-			if err := restClient.userStore.Update(sel, update); err != nil {
-				restClient.log.Errorf("addWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-				code = http.StatusBadRequest
-				message = msgErrUserNotFound
-			} else {
-				code = http.StatusOK
-				message = "wallet created"
-				go resyncAddress(wp.Address, c.Request.RemoteAddr, restClient)
-			}
+			go resyncBTCAddress(wp.Address, c.Request.RemoteAddr, restClient)
 		case currencies.Ether:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    code,
@@ -304,7 +306,6 @@ func (restClient *RestClient) changeWalletName() gin.HandlerFunc {
 		}
 
 		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
-		restClient.log.Debugf("getWalletVerbose [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
 		if err != nil {
 			restClient.log.Errorf("getWalletVerbose: non int wallet index:[%d] %s \t[addr=%s]", walletIndex, err.Error(), c.Request.RemoteAddr)
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -413,6 +414,20 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 	}
 }
 
+func checkBTCAddressbalance(address string, restClient *RestClient) int64 {
+	var balance int64
+	query := bson.M{"address": address}
+	spOuts, err := restClient.userStore.GetAddressSpendableOutputs(query)
+	if err != nil {
+		return balance
+	}
+
+	for _, out := range spOuts {
+		balance += out.TxOutAmount
+	}
+	return balance
+}
+
 func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, err := getToken(c)
@@ -466,67 +481,14 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 
 		switch currencyId {
 		case currencies.Bitcoin:
-			// Check ballance on wallet
-			userTxs := store.TxRecord{}
-			query = bson.M{"userid": user.UserID}
-			if err := restClient.userStore.FindUserTxs(query, &userTxs); err != nil {
-				restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-				c.JSON(http.StatusBadRequest, gin.H{
-					"code":    http.StatusBadRequest,
-					"message": msgErrChainIsNotImplemented,
-				})
-				return
-			}
-			code = http.StatusOK
-			message = http.StatusText(http.StatusOK)
-
-			var unspendTxs []store.MultyTX
-			for _, tx := range userTxs.Transactions {
-				if tx.TxStatus == store.TxStatusAppearedInBlockIncoming || tx.TxStatus == store.TxStatusInBlockConfirmedIncoming { // all spendable txs
-					unspendTxs = append(unspendTxs, tx)
-				}
-			}
-
-			var balance int
-			var totalBalance int
-
+			var totalBalance int64
 			for _, wallet := range user.Wallets {
 				if wallet.WalletIndex == walletIndex {
 					for _, address := range wallet.Adresses {
-
-						for _, tx := range unspendTxs {
-							for _, walletOutput := range tx.WalletsOutput {
-
-								if walletOutput.Address.Address == address.Address {
-									balance += int(walletOutput.Address.Amount)
-								}
-							}
-						}
-						totalBalance += balance
-						balance = 0
+						totalBalance += checkBTCAddressbalance(address.Address, restClient)
 					}
 				}
 			}
-			// for _,tx := range unspendTxs {
-			// 	tx.WalletsInput
-			// }
-
-			/*
-				for _, wallet := range user.Wallets {
-					if wallet.WalletIndex == walletIndex {
-						for _, address := range wallet.Adresses {
-
-							for _, tx := range unspendTxs {
-								if tx.TxAddress == address.Address {
-									balance += int(tx.TxOutAmount)
-								}
-							}
-							totalBalance += balance
-							balance = 0
-						}
-					}
-				}
-			*/
 
 			if totalBalance != 0 {
 				c.JSON(http.StatusBadRequest, gin.H{
@@ -536,13 +498,7 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 				return
 			}
 
-			sel := bson.M{"userID": user.UserID, "wallets.walletIndex": walletIndex}
-			update := bson.M{
-				"$set": bson.M{
-					"wallets.$.status": store.WalletStatusDeleted,
-				},
-			}
-			err = restClient.userStore.Update(sel, update)
+			err := restClient.userStore.DeleteWallet(user.UserID, walletIndex)
 			if err != nil {
 				restClient.log.Errorf("deleteWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 				c.JSON(http.StatusBadRequest, gin.H{
@@ -551,6 +507,8 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 				})
 				return
 			}
+			code = http.StatusOK
+			message = http.StatusText(http.StatusOK)
 
 		case currencies.Ether:
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -566,8 +524,6 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 			return
 		}
 
-		/////////
-
 		c.JSON(code, gin.H{
 			"code":    code,
 			"message": message,
@@ -576,14 +532,7 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 	}
 }
 
-func reverse(ss []string) {
-	last := len(ss) - 1
-	for i := 0; i < len(ss)/2; i++ {
-		ss[i], ss[last-i] = ss[last-i], ss[i]
-		//
-	}
-}
-func resyncAddress(hash, RemoteAdd string, restClient *RestClient) {
+func resyncBTCAddress(hash, RemoteAdd string, restClient *RestClient) {
 	allResync := []resyncTx{}
 	requestTimes := 0
 	addrInfo, err := restClient.apiBTCTest.GetAddrFull(hash, map[string]string{"limit": "50"})
@@ -713,7 +662,7 @@ func (restClient *RestClient) addAddress() gin.HandlerFunc {
 			} else {
 				code = http.StatusOK
 				message = "address added"
-				go resyncAddress(sw.Address, c.Request.RemoteAddr, restClient)
+				go resyncBTCAddress(sw.Address, c.Request.RemoteAddr, restClient)
 			}
 
 		case currencies.Ether:
