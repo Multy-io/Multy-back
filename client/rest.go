@@ -643,10 +643,8 @@ type resyncTx struct {
 
 func (restClient *RestClient) addAddress() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := strings.Split(c.GetHeader("Authorization"), " ")
-		if len(authHeader) < 2 {
-			restClient.log.Errorf("addAddress: wrong Authorization header len\t[addr=%s]", c.Request.RemoteAddr)
-			// restClient.log.Errorf("getAllWalletsVerbose: wrong Authorization header len\t[addr=%s]", c.Request.RemoteAddr)
+		token, err := getToken(c)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
 				"message": msgErrHeaderError,
@@ -654,10 +652,8 @@ func (restClient *RestClient) addAddress() gin.HandlerFunc {
 			return
 		}
 
-		token := authHeader[1]
-
 		var sw SelectWallet
-		err := decodeBody(c, &sw)
+		err = decodeBody(c, &sw)
 		if err != nil {
 			restClient.log.Errorf("addAddress: decodeBody: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 		}
@@ -792,17 +788,14 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 
 func (restClient *RestClient) getSpendableOutputs() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := strings.Split(c.GetHeader("Authorization"), " ")
-		if len(authHeader) < 2 {
-			restClient.log.Errorf("getSpendableOutputs: wrong Authorization header len\t[addr=%s]", c.Request.RemoteAddr)
+		token, err := getToken(c)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
 				"message": msgErrHeaderError,
-				"outs":    0,
 			})
 			return
 		}
-		token := authHeader[1]
 
 		currencyID, err := strconv.Atoi(c.Param("currencyid"))
 		restClient.log.Errorf("getSpendableOutputs [%d] \t[addr=%s]", currencyID, c.Request.RemoteAddr)
@@ -966,17 +959,14 @@ type RawTx struct { // remane RawClientTransaction
 func (restClient *RestClient) getWalletVerboseOld() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var av []AddressVerbose
-		authHeader := strings.Split(c.GetHeader("Authorization"), " ")
-		if len(authHeader) < 2 {
-			restClient.log.Errorf("getWalletVerbose: wrong Authorization header len\t[addr=%s]", c.Request.RemoteAddr)
+		token, err := getToken(c)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
 				"message": msgErrHeaderError,
-				"wallet":  av,
 			})
 			return
 		}
-		token := authHeader[1]
 
 		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
 		restClient.log.Debugf("getWalletVerbose [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
@@ -1061,17 +1051,14 @@ func (restClient *RestClient) getWalletVerboseOld() gin.HandlerFunc {
 func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var wv []WalletVerbose
-		authHeader := strings.Split(c.GetHeader("Authorization"), " ")
-		if len(authHeader) < 2 {
-			restClient.log.Errorf("getAllWalletsVerbose: wrong Authorization header len\t[addr=%s]", c.Request.RemoteAddr)
+		token, err := getToken(c)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
 				"message": msgErrHeaderError,
-				"wallet":  wv,
 			})
 			return
 		}
-		token := authHeader[1]
 
 		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
 		restClient.log.Debugf("getWalletVerbose [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
@@ -1232,18 +1219,14 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var wv []WalletVerbose
 		var walletIndex int
-		authHeader := strings.Split(c.GetHeader("Authorization"), " ")
-		if len(authHeader) < 2 {
-			restClient.log.Errorf("getAllWalletsVerbose: wrong Authorization header len\t[addr=%s]", c.Request.RemoteAddr)
+		token, err := getToken(c)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"code":     http.StatusBadRequest,
-				"message":  msgErrHeaderError,
-				"wallets":  wv,
-				"topindex": walletIndex,
+				"code":    http.StatusBadRequest,
+				"message": msgErrHeaderError,
 			})
 			return
 		}
-		token := authHeader[1]
 
 		var (
 			code    int
@@ -1337,17 +1320,14 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var walletTxs []store.MultyTX
-		authHeader := strings.Split(c.GetHeader("Authorization"), " ")
-		if len(authHeader) < 2 {
-			restClient.log.Errorf("getAllWalletsVerbose: wrong Authorization header len\t[addr=%s]", c.Request.RemoteAddr)
+		token, err := getToken(c)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
 				"message": msgErrHeaderError,
-				"history": walletTxs,
 			})
 			return
 		}
-		token := authHeader[1]
 
 		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
 		restClient.log.Debugf("getWalletVerbose [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
