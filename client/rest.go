@@ -109,12 +109,13 @@ func SetRestHandlers(
 	v1 := r.Group("/api/v1")
 	v1.Use(restClient.middlewareJWT.MiddlewareFunc())
 	{
-		v1.POST("/wallet", restClient.addWallet())                                                          //nothing to change
-		v1.DELETE("/wallet/:currencyid/:walletindex", restClient.deleteWallet())                            //todo add currency id √
-		v1.POST("/address", restClient.addAddress())                                                        //todo add currency id √
-		v1.GET("/transaction/feerate/:currencyid", restClient.getFeeRate())                                 //todo add currency id √
-		v1.GET("/outputs/spendable/:currencyid/:addr", restClient.getSpendableOutputs())                    //nothing to change	√
-		v1.POST("/transaction/send/:currencyid", restClient.sendRawTransaction(btcNodeAddress))             //todo add currency id √
+		v1.POST("/wallet", restClient.addWallet())                                              //nothing to change
+		v1.DELETE("/wallet/:currencyid/:walletindex", restClient.deleteWallet())                //todo add currency id √
+		v1.POST("/address", restClient.addAddress())                                            //todo add currency id √
+		v1.GET("/transaction/feerate/:currencyid", restClient.getFeeRate())                     //todo add currency id √
+		v1.GET("/outputs/spendable/:currencyid/:addr", restClient.getSpendableOutputs())        //nothing to change	√
+		v1.POST("/transaction/send/:currencyid", restClient.sendRawTransaction(btcNodeAddress)) //todo add currency id √
+		v1.POST("/transaction/send", restClient.sendRawHDTransaction(btcNodeAddress))
 		v1.GET("/wallet/:walletindex/verbose/:currencyid", restClient.getWalletVerbose())                   //todo add currency id √
 		v1.GET("/wallets/verbose", restClient.getAllWalletsVerbose())                                       //nothing to change	√
 		v1.GET("/wallets/transactions/:currencyid/:walletindex", restClient.getWalletTransactionsHistory()) //todo add currency id	√
@@ -205,29 +206,72 @@ func getToken(c *gin.Context) (string, error) {
 }
 
 func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c *gin.Context) error {
-	// we can't append wallet to user with already existed wallet id
-	sel := bson.M{"devices.JWT": token, "wallets.walletIndex": wp.WalletIndex, "wallets.currencyID": wp.CurrencyID}
-	err := restClient.userStore.FindUserErr(sel)
+	user := store.User{}
+	query := bson.M{"devices.JWT": token}
 
-	if err == nil {
-		// existed wallet
+	if err := restClient.userStore.FindUser(query, &user); err != nil {
+		restClient.log.Errorf("deleteWallet: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+		return errors.New(msgErrUserNotFound)
+	}
+
+	flag := true
+	for _, wallet := range user.Wallets {
+		if wallet.CurrencyID == wp.CurrencyID && wallet.WalletIndex == wp.WalletIndex {
+			flag = false
+		}
+	}
+
+	if flag {
+		wallet := createWallet(wp.CurrencyID, wp.Address, wp.AddressIndex, wp.WalletIndex, wp.WalletName)
+		sel := bson.M{"devices.JWT": token}
+		update := bson.M{"$push": bson.M{"wallets": wallet}}
+		err := restClient.userStore.Update(sel, update)
+		if err != nil {
+			restClient.log.Errorf("addWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+			return errors.New(msgErrServerError)
+		}
+		return nil
+	} else {
 		return errors.New(msgErrWalletIndex)
 	}
-	if err != mgo.ErrNotFound {
-		restClient.log.Errorf("addWallet: restClient.userStore.FindUser %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-		return errors.New(http.StatusText(http.StatusInternalServerError))
+}
+
+func addAddressToWallet(address, token string, currencyID, walletIndex, addressIndex int, restClient *RestClient, c *gin.Context) error {
+	user := store.User{}
+	query := bson.M{"devices.JWT": token}
+
+	if err := restClient.userStore.FindUser(query, &user); err != nil {
+		restClient.log.Errorf("deleteWallet: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+		return errors.New(msgErrUserNotFound)
 	}
 
-	wallet := createWallet(wp.CurrencyID, wp.Address, wp.AddressIndex, wp.WalletIndex, wp.WalletName)
+	flag := true
+	for _, wallet := range user.Wallets {
+		if wallet.CurrencyID == currencyID && wallet.WalletIndex == walletIndex {
+			for _, address := range wallet.Adresses {
+				if addressIndex == address.AddressIndex {
+					flag = false
+				}
+			}
+		}
+	}
 
-	sel = bson.M{"devices.JWT": token}
-	update := bson.M{"$push": bson.M{"wallets": wallet}}
-
-	if err := restClient.userStore.Update(sel, update); err != nil {
-		restClient.log.Errorf("addWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-		return errors.New(msgErrUserNotFound)
-	} else {
+	if flag {
+		addr := store.Address{
+			Address:        address,
+			AddressIndex:   addressIndex,
+			LastActionTime: time.Now().Unix(),
+		}
+		sel := bson.M{"devices.JWT": token, "wallets.walletIndex": walletIndex}
+		update := bson.M{"$push": bson.M{"wallets.$.addresses": addr}}
+		if err := restClient.userStore.Update(sel, update); err != nil {
+			restClient.log.Errorf("addAddressToWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+			return errors.New(msgErrServerError)
+		}
+		go resyncBTCAddress(address, c.Request.RemoteAddr, restClient)
 		return nil
+	} else {
+		return errors.New(msgErrAddressIndex)
 	}
 }
 
@@ -434,7 +478,6 @@ func getBTCAddressSpendableOutputs(address string, restClient *RestClient) []sto
 	if err != nil && err != mgo.ErrNotFound {
 		restClient.log.Errorf("getkBTCAddressSpendableOutputs: rGetAddressSpendableOutputs: %s\t", err.Error())
 	}
-
 	return spOuts
 }
 
@@ -610,88 +653,23 @@ func (restClient *RestClient) addAddress() gin.HandlerFunc {
 			})
 			return
 		}
-
 		var sw SelectWallet
 		err = decodeBody(c, &sw)
 		if err != nil {
 			restClient.log.Errorf("addAddress: decodeBody: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 		}
 
-		var (
-			code    int
-			message string
-		)
-
-		switch sw.CurrencyID {
-		case currencies.Bitcoin:
-			// we can't append to wallet addresses with same indexes
-			query := bson.M{"devices.JWT": token, "wallets.walletIndex": sw.WalletIndex, "wallets.addresses.addressIndex": sw.AddressIndex}
-			sel := bson.M{
-				"wallets": 1,
-			}
-			ws := store.WalletsSelect{}
-			err = restClient.userStore.FindUserAddresses(query, sel, &ws)
-			if err != nil {
-				restClient.log.Errorf("addAddress: restClient.userStore.FindUserAddresses: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			}
-
-			flag := false // add to db flag
-
-			for _, wallet := range ws.Wallets {
-				if wallet.WalletIndex == sw.WalletIndex {
-					for _, addrVerbose := range wallet.Addresses {
-						if addrVerbose.AddressIndex == sw.AddressIndex {
-							flag = true
-						}
-					}
-				}
-			}
-
-			if flag {
-				// existed address
-				c.JSON(http.StatusBadRequest, gin.H{
-					"code":    http.StatusBadRequest,
-					"message": msgErrAddressIndex,
-				})
-				return
-			}
-
-			addr := store.Address{
-				Address:        sw.Address,
-				AddressIndex:   sw.AddressIndex,
-				LastActionTime: time.Now().Unix(),
-			}
-
-			sel = bson.M{"devices.JWT": token, "wallets.walletIndex": sw.WalletIndex}
-			update := bson.M{"$push": bson.M{"wallets.$.addresses": addr}}
-
-			if err = restClient.userStore.Update(sel, update); err != nil {
-				restClient.log.Errorf("addAddress: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-				code = http.StatusBadRequest
-				message = msgErrUserNotFound
-			} else {
-				code = http.StatusOK
-				message = "address added"
-				go resyncBTCAddress(sw.Address, c.Request.RemoteAddr, restClient)
-			}
-
-		case currencies.Ether:
+		err = addAddressToWallet(sw.Address, token, sw.CurrencyID, sw.WalletIndex, sw.AddressIndex, restClient, c)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrChainIsNotImplemented,
+				"code":    http.StatusText(http.StatusBadRequest),
+				"message": err.Error(),
 			})
-			return
-		default:
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrChainIsNotImplemented,
-			})
-			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"code":    code,
-			"message": message,
+		c.JSON(http.StatusCreated, gin.H{
+			"code":    http.StatusText(http.StatusCreated),
+			"message": "wallet created",
 		})
 	}
 }
@@ -825,6 +803,85 @@ func (restClient *RestClient) getSpendableOutputs() gin.HandlerFunc {
 	}
 }
 
+type RawHDTx struct { // remane RawClientTransaction
+	Address      string `json:"address"`
+	AddressIndex int    `json:"addressindex"`
+	WalletIndex  int    `json:"walletindex"`
+	CurrencyID   int    `json:"currencyid"`
+	Transaction  string `json:"transaction"` //HexTransaction
+}
+
+func (restClient *RestClient) sendRawHDTransaction(btcNodeAddress string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var rawTx RawHDTx
+		if err := decodeBody(c, &rawTx); err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrRequestBodyError,
+			})
+		}
+
+		token, err := getToken(c)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrHeaderError,
+			})
+			return
+		}
+
+		err = addAddressToWallet(rawTx.Address, token, rawTx.CurrencyID, rawTx.WalletIndex, rawTx.AddressIndex, restClient, c)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": err.Error(),
+			})
+			return
+		}
+
+		switch rawTx.CurrencyID {
+		case currencies.Bitcoin:
+			connCfg := &rpcclient.ConnConfig{
+				Host:         btcNodeAddress,
+				User:         "multy",
+				Pass:         "multy",
+				HTTPPostMode: true,  // Bitcoin core only supports HTTP POST mode
+				DisableTLS:   false, // Bitcoin core does not provide TLS by default
+				Certificates: []byte(btc.Cert),
+			}
+
+			client, err := rpcclient.New(connCfg, nil)
+			if err != nil {
+				restClient.log.Errorf("sendRawTransaction: rpcclient.New  \t[addr=%s]", err, c.Request.RemoteAddr)
+			}
+			defer client.Shutdown()
+
+			txid, err := client.SendCyberRawTransaction(rawTx.Transaction, true)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": err.Error(),
+				})
+			} else {
+				c.JSON(http.StatusOK, gin.H{
+					"code":            http.StatusOK,
+					"message":         http.StatusText(http.StatusOK),
+					"TransactionHash": txid,
+				})
+			}
+		case currencies.Ether:
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrChainIsNotImplemented,
+			})
+		default:
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrChainIsNotImplemented,
+			})
+		}
+	}
+}
 func (restClient *RestClient) sendRawTransaction(btcNodeAddress string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -1100,7 +1157,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 			}
 
 			var av []AddressVerbose
-
 
 			for _, wallet := range user.Wallets {
 
