@@ -11,6 +11,7 @@ import (
 
 	"github.com/Appscrunch/Multy-back/btc"
 	"github.com/Appscrunch/Multy-back/client"
+	"github.com/Appscrunch/Multy-back/eth"
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	"github.com/btcsuite/btcd/rpcclient"
@@ -38,6 +39,8 @@ type Multy struct {
 	btcClient      *rpcclient.Client
 	restClient     *client.RestClient
 	firebaseClient *client.FirebaseClient
+
+	ethClient *ethereum.Client
 }
 
 // Init initializes Multy instance
@@ -56,8 +59,11 @@ func Init(conf *Configuration) (*Multy, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Blockchain api initialization: %s", err.Error())
 	}
-	log.Debug("BTC handlers initialization done")
+	log.Debug("BTC client initialization done")
 	multy.btcClient = btcClient
+
+	multy.ethClient = ethereum.NewClient(&conf.Etherium, userStore)
+	log.Debug("ETH client initialization done")
 
 	if err = multy.initRoutes(conf); err != nil {
 		return nil, fmt.Errorf("Router initialization: %s", err.Error())
@@ -93,6 +99,7 @@ func (multy *Multy) initRoutes(conf *Configuration) error {
 	multy.clientPool = socketIOPool
 
 	restClient, err := client.SetRestHandlers(
+		multy.ethClient,
 		multy.userStore,
 		conf.BTCAPITest,
 		conf.BTCAPIMain,

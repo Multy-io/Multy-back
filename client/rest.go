@@ -24,6 +24,7 @@ import (
 	"github.com/KristinaEtc/slf"
 	"github.com/blockcypher/gobcy"
 
+	"github.com/Appscrunch/Multy-back/eth"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
@@ -64,6 +65,8 @@ type RestClient struct {
 	// ballance api for main net
 	apiBTCMain     gobcy.API
 	btcConfMainnet BTCApiConf
+	//
+	eth *ethereum.Client
 
 	log slf.StructuredLogger
 }
@@ -73,6 +76,7 @@ type BTCApiConf struct {
 }
 
 func SetRestHandlers(
+	ethClient *ethereum.Client,
 	userDB store.UserStore,
 	btcConfTest,
 	btcConfMain BTCApiConf,
@@ -97,6 +101,7 @@ func SetRestHandlers(
 			Coin:  btcConfMain.Coin,
 			Chain: btcConfMain.Chain,
 		},
+		eth: ethClient,
 		log: slf.WithContext("rest-client"),
 	}
 
@@ -279,8 +284,8 @@ func addAddressToWallet(address, token string, currencyID, walletIndex, addressI
 
 	for _, wallet := range user.Wallets {
 		if wallet.CurrencyID == currencyID && wallet.WalletIndex == walletIndex {
-			for _, address := range wallet.Adresses {
-				if addressIndex == address.AddressIndex {
+			for _, walletAddress := range wallet.Adresses {
+				if walletAddress.AddressIndex == addressIndex {
 					err := errors.New(msgErrAddressIndex)
 					return err
 				}
@@ -300,7 +305,7 @@ func addAddressToWallet(address, token string, currencyID, walletIndex, addressI
 		err := errors.New(msgErrServerError)
 		return err
 	}
-	go resyncBTCAddress(address, c.Request.RemoteAddr, restClient)
+
 	return nil
 
 }
@@ -347,11 +352,16 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 			}
 			go resyncBTCAddress(wp.Address, c.Request.RemoteAddr, restClient)
 		case currencies.Ether:
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    code,
-				"message": msgErrMethodNotImplennted,
-			})
-			return
+			err := createCustomWallet(wp, token, restClient, c)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": err.Error(),
+				})
+				return
+			}
+			// TODO implement ethereum re-sync method
+			// go resyncETHAddress(wp.Address, c.Request.RemoteAddr, restClient)
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    code,
@@ -550,11 +560,36 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 			message = http.StatusText(http.StatusOK)
 
 		case currencies.Ether:
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrChainIsNotImplemented,
-			})
-			return
+			var totalBalance int64
+			for _, wallet := range user.Wallets {
+				if wallet.WalletIndex == walletIndex {
+					for _, address := range wallet.Adresses {
+						balance, err := restClient.eth.GetAddressBalance(address.Address)
+						if err != nil {
+							restClient.log.Errorf("deleteWallet: eth.GetAddressBalance: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+						}
+						totalBalance += balance.Int64()
+					}
+				}
+			}
+			if totalBalance != 0 {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": msgErrWalletNonZeroBalance,
+				})
+				return
+			}
+			err := restClient.userStore.DeleteWallet(user.UserID, walletIndex)
+			if err != nil {
+				restClient.log.Errorf("deleteWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": msgErrNoWallet,
+				})
+				return
+			}
+			code = http.StatusOK
+			message = http.StatusText(http.StatusOK)
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
@@ -653,6 +688,15 @@ func (restClient *RestClient) addAddress() gin.HandlerFunc {
 				"code":    http.StatusText(http.StatusBadRequest),
 				"message": err.Error(),
 			})
+		}
+
+		switch sw.CurrencyID {
+		case currencies.Biocoin:
+			go resyncBTCAddress(sw.Address, c.Request.RemoteAddr, restClient)
+		case currencies.Ether:
+			// TODO implement re-sync method
+		default:
+
 		}
 
 		c.JSON(http.StatusCreated, gin.H{
@@ -864,10 +908,22 @@ func (restClient *RestClient) sendRawHDTransaction(btcNodeAddress string) gin.Ha
 				})
 			}
 		case currencies.Ether:
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrChainIsNotImplemented,
+
+			hash, err := restClient.eth.SendRawTransaction(rawTx.Transaction)
+			if err != nil {
+				restClient.log.Errorf("sendRawHDTransaction:eth.SendRawTransaction %s", err.Error())
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"code":    http.StatusInternalServerError,
+					"message": err.Error(),
+				})
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"code":    http.StatusOK,
+				"message": hash,
 			})
+			return
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
@@ -1102,6 +1158,16 @@ func findTopIndexes(wallets []store.Wallet) []TopIndex {
 	return topIndex
 }
 
+func fetchUndeletedWallets(wallets []store.Wallet) []store.Wallet {
+	okWallets := []store.Wallet{}
+	for _, wallet := range wallets {
+		if wallet.Status == store.WalletStatusOK {
+			okWallets = append(okWallets, wallet)
+		}
+	}
+	return okWallets
+}
+
 func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var wv []WalletVerbose
@@ -1149,8 +1215,9 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 		var av []AddressVerbose
 
-		for _, wallet := range user.Wallets {
+		okWallets := fetchUndeletedWallets(user.Wallets)
 
+		for _, wallet := range okWallets {
 			for _, address := range wallet.Adresses {
 				spout := getBTCAddressSpendableOutputs(address.Address, restClient)
 				fmt.Println(spout)
@@ -1180,6 +1247,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 			"wallets":    wv,
 			"topindexes": topIndexes,
 		})
+
 	}
 }
 

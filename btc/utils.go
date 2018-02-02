@@ -297,7 +297,8 @@ func saveMultyTransaction(tx store.MultyTX) {
 
 	//Here we have outgoing transaction for exact wallet!
 	if tx.WalletsInput != nil && len(tx.WalletsInput) > 0 {
-		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
+		// sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
+		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID}
 		update := bson.M{
 			"$set": bson.M{
 				"transactions.$.txstatus":      tx.TxStatus,
@@ -321,7 +322,13 @@ func saveMultyTransaction(tx store.MultyTX) {
 		}
 	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0 {
 
-		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
+		multx := store.MultyTX{}
+		// sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
+		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID}
+		err := txsData.Find(sel).One(&multx)
+		log.Debugf("!!!txsData.Find!!!: %s, v tx %v", err, multx)
+		log.Debugf("!!!sel.Find!!!: %v, txid %v , wallet index %v", tx.WalletsOutput[0].UserId, tx.TxID, tx.WalletsOutput[0].WalletIndex)
+
 		update := bson.M{
 			"$set": bson.M{
 				"transactions.$.txstatus":      tx.TxStatus,
@@ -330,8 +337,8 @@ func saveMultyTransaction(tx store.MultyTX) {
 				"transactions.$.blocktime":     tx.BlockTime,
 			},
 		}
-		err := txsData.Update(sel, update)
-
+		err = txsData.Update(sel, update)
+		log.Debugf("!!!txsData.Update!!!: %s", err)
 		if err == mgo.ErrNotFound {
 			sel := bson.M{"userid": tx.WalletsOutput[0].UserId}
 			update := bson.M{"$push": bson.M{"transactions": tx}}
@@ -477,7 +484,7 @@ func updateWalletAndAddressDate(tx store.MultyTX) {
 	for _, walletOutput := range tx.WalletsOutput {
 
 		// update addresses last action time
-		sel := bson.M{"userID": walletOutput.UserId, "wallets.addresses.address": walletOutput.Address}
+		sel := bson.M{"userID": walletOutput.UserId, "wallets.addresses.address": walletOutput.Address.Address}
 		update := bson.M{
 			"$set": bson.M{
 				"wallets.$.addresses.$[].lastActionTime": time.Now().Unix(),
@@ -506,7 +513,7 @@ func updateWalletAndAddressDate(tx store.MultyTX) {
 
 	for _, walletInput := range tx.WalletsInput {
 		// update addresses last action time
-		sel := bson.M{"userID": walletInput.UserId, "wallets.addresses.address": walletInput.Address}
+		sel := bson.M{"userID": walletInput.UserId, "wallets.addresses.address": walletInput.Address.Address}
 		update := bson.M{
 			"$set": bson.M{
 				"wallets.$.addresses.$[].lastActionTime": time.Now().Unix(),
@@ -549,7 +556,7 @@ func setTransactionStatus(tx *store.MultyTX, blockDiff int64, currentBlockHeight
 	} else if blockDiff >= 0 && blockDiff < 6 {
 		//This call was made from block or resync
 		//Transaction have no enough confirmations
-		tx.Confirmations = int(blockDiff)
+		tx.Confirmations = int(blockDiff + 1)
 		if fromInput {
 			tx.TxStatus = TxStatusAppearedInBlockOutcoming
 			tx.BlockTime = transactionTime
@@ -560,9 +567,10 @@ func setTransactionStatus(tx *store.MultyTX, blockDiff int64, currentBlockHeight
 	} else if blockDiff >= 6 && blockDiff < currentBlockHeight {
 		//This call was made from resync
 		//Transaction have enough confirmations
-		tx.Confirmations = int(blockDiff)
+		tx.Confirmations = int(blockDiff + 1)
 		if fromInput {
 			tx.TxStatus = TxStatusInBlockConfirmedOutcoming
+			//TODO add block time for re-sync
 		} else {
 			tx.TxStatus = TxStatusInBlockConfirmedIncoming
 		}
@@ -664,7 +672,6 @@ func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 			if err == mgo.ErrNotFound {
 				//insertion
 				err := spendableOutputs.Insert(spendableOutput)
-				log.Errorf("txsData.Insert = %s \n", err)
 				if err != nil {
 					log.Errorf("CreateSpendableOutputs:txsData.Insert: %s", err.Error())
 				}

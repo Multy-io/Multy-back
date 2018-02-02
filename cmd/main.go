@@ -5,13 +5,13 @@ See LICENSE for details
 */
 package main
 
-import _ "github.com/KristinaEtc/slflog"
-
 import (
 	"github.com/KristinaEtc/config"
+	_ "github.com/KristinaEtc/slflog"
 
 	multy "github.com/Appscrunch/Multy-back"
 	"github.com/Appscrunch/Multy-back/client"
+	"github.com/Appscrunch/Multy-back/eth"
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 )
@@ -48,6 +48,11 @@ var globalOpt = multy.Configuration{
 	},
 	NSQAddress:     "nsq:4150",
 	BTCNodeAddress: "localhost:18334",
+	Etherium: ethereum.Conf{
+		Address: "88.198.47.112",
+		RpcPort: ":18545",
+		WsPort:  ":8545",
+	},
 }
 
 func main() {
