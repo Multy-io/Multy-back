@@ -123,6 +123,7 @@ type AddressForWallet struct {
 
 // the way how user transations store in db
 type MultyTX struct {
+	UserId      string   `json:"userid"`
 	TxID        string   `json:"txid"`
 	TxHash      string   `json:"txhash"`
 	TxOutScript string   `json:"txoutscript"`

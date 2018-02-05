@@ -810,17 +810,6 @@ func (restClient *RestClient) getSpendableOutputs() gin.HandlerFunc {
 			if err != nil {
 				restClient.log.Errorf("getSpendableOutputs: GetAddressSpendableOutputs:[%d] %s \t[addr=%s]", currencyID, err.Error(), c.Request.RemoteAddr)
 			}
-			userTxs := store.TxRecord{}
-
-			restClient.userStore.FindUserTxs(query, &userTxs)
-			if err != nil {
-				c.JSON(http.StatusOK, gin.H{
-					"code":    http.StatusOK,
-					"message": msgErrNoTransactionAddress,
-					"outs":    0,
-				})
-				return
-			}
 
 		default:
 			code = http.StatusBadRequest
@@ -1055,18 +1044,6 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			code = http.StatusOK
 			message = http.StatusText(http.StatusOK)
 
-			userTxs := store.TxRecord{}
-			query = bson.M{"userid": user.UserID}
-			if err := restClient.userStore.FindUserTxs(query, &userTxs); err != nil {
-				restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-				c.JSON(http.StatusOK, gin.H{
-					"code":    http.StatusOK,
-					"message": msgErrNoSpendableOutputs,
-					"wallet":  wv,
-				})
-				return
-			}
-
 			var av []AddressVerbose
 
 			for _, wallet := range user.Wallets {
@@ -1201,18 +1178,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 		code = http.StatusOK
 		message = http.StatusText(http.StatusOK)
 
-		userTxs := store.TxRecord{}
-		query = bson.M{"userid": user.UserID}
-		if err := restClient.userStore.FindUserTxs(query, &userTxs); err != nil {
-			restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			c.JSON(http.StatusOK, gin.H{
-				"code":    http.StatusOK,
-				"message": msgErrNoSpendableOutputs,
-				"wallets": wv,
-			})
-			return
-		}
-
 		var av []AddressVerbose
 
 		okWallets := fetchUndeletedWallets(user.Wallets)
@@ -1302,7 +1267,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 		switch currencyId {
 		case currencies.Bitcoin:
 			query := bson.M{"userid": user.UserID}
-			userTxs := store.TxRecord{}
+			userTxs := []store.MultyTX{}
 			err = restClient.userStore.GetAllWalletTransactions(query, &userTxs)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{
@@ -1313,7 +1278,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				return
 			}
 
-			for _, tx := range userTxs.Transactions {
+			for _, tx := range userTxs {
 				//New Logic
 				var isTheSameWallet = false
 				for _, input := range tx.WalletsInput {

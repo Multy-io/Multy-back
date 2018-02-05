@@ -17,13 +17,6 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func newEmptyTx(userID string) store.TxRecord {
-	return store.TxRecord{
-		UserID:       userID,
-		Transactions: []store.MultyTX{},
-	}
-}
-
 func newAddresAmount(address string, amount int64) store.AddresAmount {
 	return store.AddresAmount{
 		Address: address,
@@ -122,7 +115,6 @@ func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRes
 	CreateSpendableOutputs(txVerbose, blockChainBlockHeight)
 	DeleteSpendableOutputs(txVerbose, blockChainBlockHeight)
 	if multyTx != nil {
-
 		multyTx.BlockHeight = blockChainBlockHeight
 
 		setExchangeRates(multyTx)
@@ -136,11 +128,23 @@ func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRes
 		for _, transaction := range transactions {
 
 			finalizeTransaction(&transaction, txVerbose)
-
+			setUserID(&transaction)
 			saveMultyTransaction(transaction)
 			updateWalletAndAddressDate(transaction)
 			sendNotifyToClients(transaction)
 		}
+	}
+}
+
+func setUserID(tx *store.MultyTX) {
+	user := store.User{}
+	for _, address := range tx.TxAddress {
+		query := bson.M{"wallets.addresses.address": address}
+		err := usersData.Find(query).One(&user)
+		if err != nil {
+			log.Errorf("setUserID: usersData.Find: %s", err.Error())
+		}
+		tx.UserId = user.UserID
 	}
 }
 
@@ -292,61 +296,71 @@ func newEntity(multyTx store.MultyTX) store.MultyTX {
 }
 
 func saveMultyTransaction(tx store.MultyTX) {
-
 	// This is splited transaction! That means that transaction's WalletsInputs and WalletsOutput have the same WalletIndex!
-
 	//Here we have outgoing transaction for exact wallet!
+	multyTX := store.MultyTX{}
 	if tx.WalletsInput != nil && len(tx.WalletsInput) > 0 {
 		// sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
-		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID}
-		update := bson.M{
-			"$set": bson.M{
-				"transactions.$.txstatus":      tx.TxStatus,
-				"transactions.$.blockheight":   tx.BlockHeight,
-				"transactions.$.confirmations": tx.Confirmations,
-				"transactions.$.blocktime":     tx.BlockTime,
-			},
-		}
-		err := txsData.Update(sel, update)
-		if err != nil {
-			log.Errorf("saveMultyTransaction:txsData.Update %s", err.Error())
-		}
-
+		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
+		err := txsData.Find(sel).One(&multyTX)
 		if err == mgo.ErrNotFound {
-			sel := bson.M{"userid": tx.WalletsInput[0].UserId}
-			update := bson.M{"$push": bson.M{"transactions": tx}}
-			err := txsData.Update(sel, update)
+			// initial insertion
+			err := txsData.Insert(tx)
 			if err != nil {
 				log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
 			}
+			return
 		}
-	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0 {
-
-		multx := store.MultyTX{}
-		// sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
-		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID}
-		err := txsData.Find(sel).One(&multx)
-		log.Debugf("!!!txsData.Find!!!: %s, v tx %v", err, multx)
-		log.Debugf("!!!sel.Find!!!: %v, txid %v , wallet index %v", tx.WalletsOutput[0].UserId, tx.TxID, tx.WalletsOutput[0].WalletIndex)
+		if err != nil && err != mgo.ErrNotFound {
+			// database error
+			log.Errorf("saveMultyTransaction:txsData.Find %s", err.Error())
+			return
+		}
 
 		update := bson.M{
 			"$set": bson.M{
-				"transactions.$.txstatus":      tx.TxStatus,
-				"transactions.$.blockheight":   tx.BlockHeight,
-				"transactions.$.confirmations": tx.Confirmations,
-				"transactions.$.blocktime":     tx.BlockTime,
+				"txstatus":      tx.TxStatus,
+				"blockheight":   tx.BlockHeight,
+				"confirmations": tx.Confirmations,
+				"blocktime":     tx.BlockTime,
 			},
 		}
 		err = txsData.Update(sel, update)
-		log.Debugf("!!!txsData.Update!!!: %s", err)
+		if err != nil {
+			log.Errorf("saveMultyTransaction:txsData.Update %s", err.Error())
+		}
+		return
+	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0 {
+		// sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
+		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
+		err := txsData.Find(sel).One(&multyTX)
 		if err == mgo.ErrNotFound {
-			sel := bson.M{"userid": tx.WalletsOutput[0].UserId}
-			update := bson.M{"$push": bson.M{"transactions": tx}}
-			err := txsData.Update(sel, update)
+			// initial insertion
+			err := txsData.Insert(tx)
 			if err != nil {
 				log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
 			}
+			return
 		}
+		if err != nil && err != mgo.ErrNotFound {
+			// database error
+			log.Errorf("saveMultyTransaction:txsData.Find %s", err.Error())
+			return
+		}
+
+		update := bson.M{
+			"$set": bson.M{
+				"txstatus":      tx.TxStatus,
+				"blockheight":   tx.BlockHeight,
+				"confirmations": tx.Confirmations,
+				"blocktime":     tx.BlockTime,
+			},
+		}
+		err = txsData.Update(sel, update)
+		if err != nil {
+			log.Errorf("saveMultyTransaction:txsData.Update %s", err.Error())
+		}
+		return
 	}
 }
 

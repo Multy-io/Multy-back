@@ -34,14 +34,6 @@ func parseRawTransaction(rawTX ethrpc.Transaction, pending bool) MultyETHTransac
 	return tx
 }
 
-// func sendRawTransaction(rpcClient *ethrpc.EthRPC, rawTX string)  {
-// 	hash , err rpcClient.EthSendRawTransaction(rawTX)
-// 	if err != nil {
-
-// 		return
-// 	}
-// }
-
 func (client *Client) SendRawTransaction(rawTX string) (string, error) {
 	hash, err := client.rpc.EthSendRawTransaction(rawTX)
 	if err != nil {
