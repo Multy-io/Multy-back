@@ -45,8 +45,6 @@ func (c *Client) Run() error {
 
 	// c.rpc = ethrpc.NewEthRPC("http://" + c.config.Address + c.config.RpcPort)
 	c.rpc = ethrpc.NewEthRPC("http://" + c.config.Address + c.config.RpcPort)
-	// http://88.198.47.112:18545
-	// ws://88.198.47.112:8545
 	c.log.Debugf("ETH RPC Connectedon %s", "http://"+c.config.Address+c.config.RpcPort)
 
 	_, err := c.rpc.EthNewPendingTransactionFilter()
@@ -86,10 +84,10 @@ func (c *Client) Run() error {
 			log.Printf("Not found type:", v)
 		case string:
 			// tx pool transaction
-			go getTrasaction(v, c.rpc)
+			go getTrasaction(v, c.rpc, c)
 		case map[string]interface{}:
 			// tx block transactions
-			go getBlock(v["hash"].(string), c.rpc)
+			go getBlock(v["hash"].(string), c.rpc, c)
 		}
 	}
 

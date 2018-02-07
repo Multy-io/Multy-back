@@ -5,12 +5,15 @@ See LICENSE for details
 */
 package ethereum
 
-type MultyETHTransaction struct {
-	Hash     string  `json:"hash"`
-	From     string  `json:"from"`
-	To       string  `json:"to"`
-	Amount   float64 `json:"amount"`
-	Gas      int     `json:"gas"`
-	GasPrice int     `json:"gasprice"`
-	Nonce    int     `json:"nonce"`
-}
+const ( // currency id  nsq
+	TxStatusAppearedInMempoolIncoming = 1
+	TxStatusAppearedInBlockIncoming   = 2
+
+	TxStatusAppearedInMempoolOutcoming = 3
+	TxStatusAppearedInBlockOutcoming   = 4
+
+	TxStatusInBlockConfirmedIncoming  = 5
+	TxStatusInBlockConfirmedOutcoming = 6
+
+	WeiInEthereum = 1000000000000000000
+)

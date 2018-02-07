@@ -154,6 +154,10 @@ func blockTransactions(hash *chainhash.Hash) {
 
 	// block Height
 	blockVerbose, err := rpcClient.GetBlockVerbose(hash)
+	if err != nil {
+		log.Errorf("parseNewBlock:GetBlockVerbose: %s", err.Error())
+		return
+	}
 	blockHeight := blockVerbose.Height
 
 	//parse all block transactions
@@ -391,6 +395,10 @@ func blockTransactions(hash *chainhash.Hash) {
 
 func blockConfirmations(hash *chainhash.Hash) {
 	blockVerbose, err := rpcClient.GetBlockVerbose(hash)
+	if err != nil {
+		log.Errorf("blockConfirmations:rpcClient.GetBlockVerbose: %s", err.Error())
+	}
+
 	blockHeight := blockVerbose.Height
 
 	sel := bson.M{"transactions.txstatus": TxStatusAppearedInBlockIncoming, "transactions.blockheight": bson.M{"$lte": blockHeight - SixBlockConfirmation, "$gte": blockHeight - SixPlusBlockConfirmation}}

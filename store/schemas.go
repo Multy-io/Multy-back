@@ -200,3 +200,18 @@ type SpendableOutputs struct {
 	TxStatus          int                   `json:"txstatus"`
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 }
+
+type MultyETHTransaction struct {
+	//TODO: add mempool time and block time
+	Hash       string  `json:"hash"`
+	From       string  `json:"from"`
+	To         string  `json:"to"`
+	Amount     float64 `json:"amount"`
+	Gas        int     `json:"gas"`
+	GasPrice   int     `json:"gasprice"`
+	Nonce      int     `json:"nonce"`
+	Status     int     `json:"status"`
+	UserID     string  `json:"userid"`
+	BlockTime  int64   `json:"blocktime"`
+	TxPoolTime int64   `json:"blocktime"`
+}

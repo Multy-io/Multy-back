@@ -472,7 +472,7 @@ func getBTCAddressSpendableOutputs(address string, restClient *RestClient) []sto
 	query := bson.M{"address": address}
 	spOuts, err := restClient.userStore.GetAddressSpendableOutputs(query)
 	if err != nil && err != mgo.ErrNotFound {
-		restClient.log.Errorf("getkBTCAddressSpendableOutputs: GetAddressSpendableOutputs: %s\t", err.Error())
+		restClient.log.Errorf("getBTCAddressSpendableOutputs: GetAddressSpendableOutputs: %s\t", err.Error())
 	}
 	return spOuts
 }

@@ -657,9 +657,10 @@ func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 				// is not our user
 			}
 			walletindex, addressIndex := fetchWalletAndAddressIndexes(user.Wallets, address)
-			txStatus := store.TxStatusAppearedInMempoolIncoming
-			if blockHeight != -1 {
-				txStatus = store.TxStatusAppearedInBlockIncoming
+
+			txStatus := store.TxStatusAppearedInBlockIncoming
+			if blockHeight == -1 {
+				txStatus = store.TxStatusAppearedInMempoolIncoming
 			}
 
 			exRate, err := GetLatestExchangeRate()
@@ -680,6 +681,7 @@ func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 				TxStatus:          txStatus,
 				StockExchangeRate: exRate,
 			}
+			fmt.Println("spendableOutput status %s", spendableOutput.TxStatus)
 
 			query = bson.M{"userid": user.UserID, "txid": tx.Txid, "address": address}
 			err = spendableOutputs.Find(query).One(nil)
@@ -693,6 +695,7 @@ func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 			}
 			if err != nil && err != mgo.ErrNotFound {
 				log.Errorf("CreateSpendableOutputs:spendableOutputs.Find %s", err.Error())
+				continue
 			}
 
 			update := bson.M{
@@ -715,29 +718,55 @@ func DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 		if err != nil {
 			log.Errorf("DeleteSpendableOutputs:rawTxByTxid: %s", err.Error())
 		}
+
 		if previousTx == nil {
 			continue
 		}
-		for _, previousOutput := range previousTx.Vout {
-			if len(previousOutput.ScriptPubKey.Addresses) > 0 {
-				address := previousOutput.ScriptPubKey.Addresses[0]
-				query := bson.M{"wallets.addresses.address": address}
-				err := usersData.Find(query).One(&user)
-				if err != nil {
-					continue
-					// is not our user
-				}
 
-				// query = bson.M{"userid": user.UserID, "txid": previousTx.Txid, "address": address, "txoutid": int(input.Vout)}
-				query = bson.M{"userid": user.UserID, "txid": previousTx.Txid, "address": address}
-				err = spendableOutputs.Remove(query)
-				if err != nil {
-					log.Errorf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err.Error())
-				}
-				log.Debugf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err)
-
+		if len(previousTx.Vout[input.Vout].ScriptPubKey.Addresses) > 0 {
+			address := previousTx.Vout[input.Vout].ScriptPubKey.Addresses[0]
+			query := bson.M{"wallets.addresses.address": address}
+			err := usersData.Find(query).One(&user)
+			if err != nil {
+				continue
+				// is not our user
 			}
+			log.Errorf("\n\n !!!found user:!!    %v  \n\n", user.UserID)
+			query = bson.M{"userid": user.UserID, "txid": previousTx.Txid, "address": address}
+			log.Debugf("userid ", user.UserID, "txid ", previousTx.Txid, "address ", address)
+			err = spendableOutputs.Remove(query)
+			if err != nil {
+				log.Errorf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err.Error())
+				log.Errorf("\n\n !!!not removed:!!    %v  \n\n")
+			}
+			log.Debugf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err)
 		}
+		/*
+			for _, previousOutput := range previousTx.Vout {
+				if len(previousOutput.ScriptPubKey.Addresses) > 0 {
+					// log.Errorf("\n\n !!!previousOutput:!!   addresses %v  \n\n", previousOutput.ScriptPubKey.Addresses)
+					address := previousOutput.ScriptPubKey.Addresses[0]
+					query := bson.M{"wallets.addresses.address": address}
+					err := usersData.Find(query).One(&user)
+					if err != nil {
+						continue
+						// is not our user
+					}
+					log.Errorf("\n\n !!!found user:!!    %v  \n\n", user.UserID)
+
+					// query = bson.M{"userid": user.UserID, "txid": previousTx.Txid, "address": address, "txoutid": int(input.Vout)}
+					query = bson.M{"userid": user.UserID, "txid": previousTx.Txid, "address": address}
+					log.Debugf("userid ", user.UserID, "txid ", previousTx.Txid, "address ", address)
+					err = spendableOutputs.Remove(query)
+					if err != nil {
+						log.Errorf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err.Error())
+						log.Errorf("\n\n !!!not removed:!!    %v  \n\n")
+					}
+					log.Debugf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err)
+
+				}
+			}
+		*/
 	}
 }
 

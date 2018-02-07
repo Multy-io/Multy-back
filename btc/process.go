@@ -88,6 +88,7 @@ func RunProcess(btcNodeAddress string) error {
 		},
 		OnFilteredBlockDisconnected: func(height int32, header *wire.BlockHeader) {
 			go blockDisconnected(header)
+
 		},
 	}
 

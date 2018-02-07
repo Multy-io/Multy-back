@@ -55,6 +55,10 @@ type UserStore interface {
 	GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs)
 	GetAddressSpendableOutputs(query bson.M) ([]SpendableOutputs, error)
 	DeleteWallet(userid string, walletindex int) error
+	GetEthereumTransationHistory(query bson.M) ([]MultyETHTransaction, error)
+	AddEthereumTransaction(tx MultyETHTransaction) error
+	UpdateEthereumTransaction(sel, update bson.M) error
+	FindETHTransaction(sel bson.M) error
 }
 
 type MongoUserStore struct {
@@ -65,6 +69,7 @@ type MongoUserStore struct {
 	txsData           *mgo.Collection
 	spendableOutputs  *mgo.Collection
 	stockExchangeRate *mgo.Collection
+	ethTxHistory      *mgo.Collection
 }
 
 func InitUserStore(conf Conf) (UserStore, error) {
@@ -80,9 +85,32 @@ func InitUserStore(conf Conf) (UserStore, error) {
 	uStore.ratesData = uStore.session.DB(conf.DBFeeRates).C(TableFeeRates)
 	uStore.txsData = uStore.session.DB(conf.DBTx).C(TableBTC)
 	uStore.stockExchangeRate = uStore.session.DB(conf.DBStockExchangeRate).C(TableStockExchangeRate)
+	// TODO: make varribles in a config
 	uStore.spendableOutputs = uStore.session.DB(conf.DBTx).C("SpendableOutputs")
+	uStore.ethTxHistory = uStore.session.DB(conf.DBTx).C("ETH")
 
 	return uStore, nil
+}
+
+func (mStore *MongoUserStore) FindETHTransaction(sel bson.M) error {
+	err := mStore.ethTxHistory.Find(sel).One(nil)
+	return err
+}
+
+func (mStore *MongoUserStore) UpdateEthereumTransaction(sel, update bson.M) error {
+	err := mStore.ethTxHistory.Update(sel, update)
+	return err
+}
+
+func (mStore *MongoUserStore) AddEthereumTransaction(tx MultyETHTransaction) error {
+	err := mStore.ethTxHistory.Insert(tx)
+	return err
+}
+
+func (mStore *MongoUserStore) GetEthereumTransationHistory(query bson.M) ([]MultyETHTransaction, error) {
+	allTxs := []MultyETHTransaction{}
+	err := mStore.ethTxHistory.Find(query).All(&allTxs)
+	return allTxs, err
 }
 
 func (mStore *MongoUserStore) DeleteWallet(userid string, walletindex int) error {
