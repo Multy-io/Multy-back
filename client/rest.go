@@ -127,6 +127,7 @@ func SetRestHandlers(
 		v1.GET("/wallets/transactions/:currencyid/:walletindex", restClient.getWalletTransactionsHistory()) //todo add currency id	√
 		v1.POST("/wallet/name", restClient.changeWalletName())                                              //todo add currency id √
 		v1.GET("/exchange/changelly/list", restClient.changellyListCurrencies())
+		v1.GET("/drop", restClient.drop())
 	}
 	return restClient, nil
 }
@@ -306,8 +307,24 @@ func addAddressToWallet(address, token string, currencyID, walletIndex, addressI
 		return err
 	}
 
+	switch currencyID {
+	case currencies.Bitcoin:
+		go resyncBTCAddress(address, c.Request.RemoteAddr, restClient)
+		restClient.log.Debugf("currencies.Biocoin: resyncBTCAddress: %s\t[addr=%s]", address, c.Request.RemoteAddr)
+	case currencies.Ether:
+		// TODO implement re-sync method
+	default:
+
+	}
+
 	return nil
 
+}
+
+func (restClient *RestClient) drop() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		restClient.userStore.DropTest()
+	}
 }
 
 func (restClient *RestClient) addWallet() gin.HandlerFunc {
@@ -639,7 +656,7 @@ func resyncBTCAddress(hash, RemoteAdd string, restClient *RestClient) {
 			})
 		}
 	}
-
+	restClient.log.Errorf("\n\n allResync: %s , len(): %d\n\n", allResync, len(allResync))
 	reverseResyncTx(allResync)
 
 	for _, reTx := range allResync {
@@ -688,15 +705,6 @@ func (restClient *RestClient) addAddress() gin.HandlerFunc {
 				"code":    http.StatusText(http.StatusBadRequest),
 				"message": err.Error(),
 			})
-		}
-
-		switch sw.CurrencyID {
-		case currencies.Biocoin:
-			go resyncBTCAddress(sw.Address, c.Request.RemoteAddr, restClient)
-		case currencies.Ether:
-			// TODO implement re-sync method
-		default:
-
 		}
 
 		c.JSON(http.StatusCreated, gin.H{

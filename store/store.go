@@ -59,6 +59,7 @@ type UserStore interface {
 	AddEthereumTransaction(tx MultyETHTransaction) error
 	UpdateEthereumTransaction(sel, update bson.M) error
 	FindETHTransaction(sel bson.M) error
+	DropTest()
 }
 
 type MongoUserStore struct {
@@ -90,6 +91,12 @@ func InitUserStore(conf Conf) (UserStore, error) {
 	uStore.ethTxHistory = uStore.session.DB(conf.DBTx).C("ETH")
 
 	return uStore, nil
+}
+
+func (mStore *MongoUserStore) DropTest() {
+	mStore.usersData.DropCollection()
+	mStore.txsData.DropCollection()
+	mStore.spendableOutputs.DropCollection()
 }
 
 func (mStore *MongoUserStore) FindETHTransaction(sel bson.M) error {

@@ -213,5 +213,5 @@ type MultyETHTransaction struct {
 	Status     int     `json:"status"`
 	UserID     string  `json:"userid"`
 	BlockTime  int64   `json:"blocktime"`
-	TxPoolTime int64   `json:"blocktime"`
+	TxPoolTime int64   `json:"tpooltime"`
 }
