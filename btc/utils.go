@@ -131,7 +131,13 @@ func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRes
 			setUserID(&transaction)
 			saveMultyTransaction(transaction)
 			updateWalletAndAddressDate(transaction)
-			sendNotifyToClients(transaction)
+			go func() {
+				select {
+				case <-time.After(time.Second):
+					go sendNotifyToClients(transaction)
+				}
+			}()
+
 		}
 	}
 }
