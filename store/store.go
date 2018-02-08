@@ -60,6 +60,7 @@ type UserStore interface {
 	UpdateEthereumTransaction(sel, update bson.M) error
 	FindETHTransaction(sel bson.M) error
 	DropTest()
+	FindAllUserETHTransactions(sel bson.M) ([]MultyETHTransaction, error)
 }
 
 type MongoUserStore struct {
@@ -99,6 +100,11 @@ func (mStore *MongoUserStore) DropTest() {
 	mStore.spendableOutputs.DropCollection()
 }
 
+func (mStore *MongoUserStore) FindAllUserETHTransactions(sel bson.M) ([]MultyETHTransaction, error) {
+	allTxs := []MultyETHTransaction{}
+	err := mStore.ethTxHistory.Find(sel).All(&allTxs)
+	return allTxs, err
+}
 func (mStore *MongoUserStore) FindETHTransaction(sel bson.M) error {
 	err := mStore.ethTxHistory.Find(sel).One(nil)
 	return err

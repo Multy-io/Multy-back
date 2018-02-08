@@ -1080,11 +1080,33 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 
 			}
 		case currencies.Ether:
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrChainIsNotImplemented,
-			})
-			return
+			code = http.StatusOK
+			message = http.StatusText(http.StatusOK)
+			FindAllUserETHTransactions
+			for _, wallet := range user.Wallets {
+				if wallet.WalletIndex == walletIndex { // specify wallet index
+
+					for _, address := range wallet.Adresses {
+						balance := restClient.eth.GetAddressBalance(address.Address)
+						av = append(av, ETHAddressVerbose{
+							LastActionTime: address.LastActionTime,
+							Address:        address.Address,
+							AddressIndex:   address.AddressIndex,
+							Amount:         balance.Int64,
+						})
+					}
+					wv = append(wv, WalletVerbose{
+						WalletIndex:    wallet.WalletIndex,
+						CurrencyID:     wallet.CurrencyID,
+						WalletName:     wallet.WalletName,
+						LastActionTime: wallet.LastActionTime,
+						DateOfCreation: wallet.DateOfCreation,
+						VerboseAddress: av,
+					})
+					av = []AddressVerbose{}
+				}
+
+			}
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
@@ -1115,6 +1137,13 @@ type AddressVerbose struct {
 	AddressIndex   int                      `json:"addressindex"`
 	Amount         int                      `json:"amount"`
 	SpendableOuts  []store.SpendableOutputs `json:"spendableoutputs"`
+}
+
+type ETHAddressVerbose struct {
+	LastActionTime int64  `json:"lastActionTime"`
+	Address        string `json:"address"`
+	AddressIndex   int    `json:"addressindex"`
+	Amount         int64  `json:"amount"`
 }
 
 type StockExchangeRate struct {
