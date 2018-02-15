@@ -69,6 +69,8 @@ type RestClient struct {
 	eth *ethereum.Client
 
 	log slf.StructuredLogger
+
+	donationAddresses map[string]string
 }
 
 type BTCApiConf struct {
@@ -83,6 +85,7 @@ func SetRestHandlers(
 	r *gin.Engine,
 	clientRPC *rpcclient.Client,
 	btcNodeAddress string,
+	donationAddresses map[string]string,
 ) (*RestClient, error) {
 	restClient := &RestClient{
 		userStore: userDB,
@@ -101,8 +104,9 @@ func SetRestHandlers(
 			Coin:  btcConfMain.Coin,
 			Chain: btcConfMain.Chain,
 		},
-		eth: ethClient,
-		log: slf.WithContext("rest-client"),
+		eth:               ethClient,
+		log:               slf.WithContext("rest-client"),
+		donationAddresses: donationAddresses,
 	}
 
 	initMiddlewareJWT(restClient)
@@ -462,10 +466,7 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 				"soft": 18,
 				"hard": 1,
 			},
-			"donate": map[string]string{
-				"BTC": "mzNZBhim9XGy66FkdzrehHwdWNgbiTYXCQ",
-				"ETH": "0x54f46318d8f83c28b719ccf01ab4628e1e8f65fa",
-			},
+			"donate": restClient.donationAddresses,
 		}
 		c.JSON(http.StatusOK, resp)
 	}
@@ -668,7 +669,7 @@ func resyncBTCAddress(hash, RemoteAdd string, restClient *RestClient) {
 		if err != nil {
 			restClient.log.Errorf("resyncAddress: rpcClient.GetRawTransactionVerbose = %s\t[addr=%s]", err, RemoteAdd)
 		}
-		btc.ProcessTransaction(int64(reTx.blockHeight), rawTx)
+		btc.ProcessTransaction(int64(reTx.blockHeight), rawTx, true)
 	}
 }
 func reverseResyncTx(ss []resyncTx) {
@@ -1057,8 +1058,16 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			for _, wallet := range user.Wallets {
 				if wallet.WalletIndex == walletIndex { // specify wallet index
 
+					var pending bool
 					for _, address := range wallet.Adresses {
 						spOuts := getBTCAddressSpendableOutputs(address.Address, restClient)
+
+						for _, spOut := range spOuts {
+							if spOut.TxStatus == store.TxStatusAppearedInMempoolIncoming {
+								pending = true
+							}
+						}
+
 						av = append(av, AddressVerbose{
 							LastActionTime: address.LastActionTime,
 							Address:        address.Address,
@@ -1074,39 +1083,41 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 						LastActionTime: wallet.LastActionTime,
 						DateOfCreation: wallet.DateOfCreation,
 						VerboseAddress: av,
+						Pending:        pending,
 					})
 					av = []AddressVerbose{}
 				}
 
 			}
 		case currencies.Ether:
-			code = http.StatusOK
-			message = http.StatusText(http.StatusOK)
-			FindAllUserETHTransactions
-			for _, wallet := range user.Wallets {
-				if wallet.WalletIndex == walletIndex { // specify wallet index
+			/*
+				code = http.StatusOK
+				message = http.StatusText(http.StatusOK)
+				for _, wallet := range user.Wallets {
+					if wallet.WalletIndex == walletIndex { // specify wallet index
 
-					for _, address := range wallet.Adresses {
-						balance := restClient.eth.GetAddressBalance(address.Address)
-						av = append(av, ETHAddressVerbose{
-							LastActionTime: address.LastActionTime,
-							Address:        address.Address,
-							AddressIndex:   address.AddressIndex,
-							Amount:         balance.Int64,
+						for _, address := range wallet.Adresses {
+							balance := restClient.eth.GetAddressBalance(address.Address)
+							av = append(av, ETHAddressVerbose{
+								LastActionTime: address.LastActionTime,
+								Address:        address.Address,
+								AddressIndex:   address.AddressIndex,
+								Amount:         balance.Int64,
+							})
+						}
+						wv = append(wv, WalletVerbose{
+							WalletIndex:    wallet.WalletIndex,
+							CurrencyID:     wallet.CurrencyID,
+							WalletName:     wallet.WalletName,
+							LastActionTime: wallet.LastActionTime,
+							DateOfCreation: wallet.DateOfCreation,
+							VerboseAddress: av,
 						})
+						av = []AddressVerbose{}
 					}
-					wv = append(wv, WalletVerbose{
-						WalletIndex:    wallet.WalletIndex,
-						CurrencyID:     wallet.CurrencyID,
-						WalletName:     wallet.WalletName,
-						LastActionTime: wallet.LastActionTime,
-						DateOfCreation: wallet.DateOfCreation,
-						VerboseAddress: av,
-					})
-					av = []AddressVerbose{}
-				}
 
-			}
+				}
+			*/
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
@@ -1130,6 +1141,7 @@ type WalletVerbose struct {
 	LastActionTime int64            `json:"lastactiontime"`
 	DateOfCreation int64            `json:"dateofcreation"`
 	VerboseAddress []AddressVerbose `json:"addresses"`
+	Pending        bool             `json:"pending"`
 }
 type AddressVerbose struct {
 	LastActionTime int64                    `json:"lastActionTime"`
@@ -1220,15 +1232,21 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 		okWallets := fetchUndeletedWallets(user.Wallets)
 
 		for _, wallet := range okWallets {
+			var pending bool
 			for _, address := range wallet.Adresses {
-				spout := getBTCAddressSpendableOutputs(address.Address, restClient)
-				fmt.Println(spout)
+				spOuts := getBTCAddressSpendableOutputs(address.Address, restClient)
+				for _, spOut := range spOuts {
+					if spOut.TxStatus == store.TxStatusAppearedInMempoolIncoming {
+						pending = true
+					}
+				}
+
 				av = append(av, AddressVerbose{
 					LastActionTime: address.LastActionTime,
 					Address:        address.Address,
 					AddressIndex:   address.AddressIndex,
 					Amount:         int(checkBTCAddressbalance(address.Address, restClient)),
-					SpendableOuts:  spout,
+					SpendableOuts:  spOuts,
 				})
 			}
 			wv = append(wv, WalletVerbose{
@@ -1238,6 +1256,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 				LastActionTime: wallet.LastActionTime,
 				DateOfCreation: wallet.DateOfCreation,
 				VerboseAddress: av,
+				Pending:        pending,
 			})
 			av = []AddressVerbose{}
 
@@ -1300,9 +1319,13 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 			return
 		}
 
-		// txHistory := []TxHistory{}
 		switch currencyId {
 		case currencies.Bitcoin:
+
+			blockHeight, err := btc.GetBlockHeight()
+			if err != nil {
+				restClient.log.Errorf("getWalletVerbose: btc.GetBlockHeight: %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+			}
 			query := bson.M{"userid": user.UserID}
 			userTxs := []store.MultyTX{}
 			err = restClient.userStore.GetAllWalletTransactions(query, &userTxs)
@@ -1332,6 +1355,10 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				if isTheSameWallet {
 					walletTxs = append(walletTxs, tx)
 				}
+			}
+
+			for i := 0; i < len(walletTxs); i++ {
+				walletTxs[i].Confirmations = int(blockHeight-walletTxs[i].BlockHeight) + 1
 			}
 
 		case currencies.Ether:
@@ -1418,7 +1445,6 @@ func (restClient *RestClient) changellyListCurrencies() gin.HandlerFunc {
 			"code":    resp.StatusCode,
 			"message": string(body),
 		})
-
 	}
 }
 

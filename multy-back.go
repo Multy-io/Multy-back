@@ -105,7 +105,9 @@ func (multy *Multy) initRoutes(conf *Configuration) error {
 		conf.BTCAPIMain,
 		router,
 		multy.btcClient,
-		conf.BTCNodeAddress)
+		conf.BTCNodeAddress,
+		conf.DonationAddresses,
+	)
 	if err != nil {
 		return err
 	}

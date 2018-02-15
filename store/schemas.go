@@ -123,16 +123,13 @@ type AddressForWallet struct {
 
 // the way how user transations store in db
 type MultyTX struct {
-	UserId      string   `json:"userid"`
-	TxID        string   `json:"txid"`
-	TxHash      string   `json:"txhash"`
-	TxOutScript string   `json:"txoutscript"`
-	TxAddress   []string `json:"addresses"` //this is major addresses of the transaction (if send - inputs addresses of our user, if get - outputs addresses of our user)
-	TxStatus    int      `json:"txstatus"`
-	TxOutAmount int64    `json:"txoutamount"`
-	//TxOutIndexes      []int                 `json:"txoutindexes"` //This is outputs indexes of the transaction
-	//TxInAmount        int64                 `json:"txinamount"`
-	//TxInIndexes       []int                 `json:"txinindexes"` //This is inputs indexes of the transaction
+	UserId            string                `json:"userid"`
+	TxID              string                `json:"txid"`
+	TxHash            string                `json:"txhash"`
+	TxOutScript       string                `json:"txoutscript"`
+	TxAddress         []string              `json:"addresses"` //this is major addresses of the transaction (if send - inputs addresses of our user, if get - outputs addresses of our user)
+	TxStatus          int                   `json:"txstatus"`
+	TxOutAmount       int64                 `json:"txoutamount"`
 	BlockTime         int64                 `json:"blocktime"`
 	BlockHeight       int64                 `json:"blockheight"`
 	Confirmations     int                   `json:"confirmations"`
