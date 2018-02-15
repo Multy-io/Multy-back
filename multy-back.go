@@ -51,7 +51,7 @@ func Init(conf *Configuration) (*Multy, error) {
 
 	userStore, err := store.InitUserStore(conf.Database)
 	if err != nil {
-		return nil, fmt.Errorf("DB initialization: %s", err.Error())
+		return nil, fmt.Errorf("DB initialization: %s on port %s", err.Error(), conf.Database.Address)
 	}
 	multy.userStore = userStore
 
@@ -105,7 +105,9 @@ func (multy *Multy) initRoutes(conf *Configuration) error {
 		conf.BTCAPIMain,
 		router,
 		multy.btcClient,
-		conf.BTCNodeAddress)
+		conf.BTCNodeAddress,
+		conf.DonationAddresses,
+	)
 	if err != nil {
 		return err
 	}

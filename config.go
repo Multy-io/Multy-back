@@ -13,15 +13,16 @@ import (
 
 // Configuration is a struct with all service options
 type Configuration struct {
-	Name           string
-	Database       store.Conf
-	SocketioAddr   string
-	RestAddress    string
-	BTCAPIMain     client.BTCApiConf
-	BTCAPITest     client.BTCApiConf
-	Firebase       client.FirebaseConf
-	Etherium       ethereum.Conf
-	BTCSertificate string
-	NSQAddress     string
-	BTCNodeAddress string
+	Name              string
+	Database          store.Conf
+	SocketioAddr      string
+	RestAddress       string
+	BTCAPIMain        client.BTCApiConf
+	BTCAPITest        client.BTCApiConf
+	Firebase          client.FirebaseConf
+	Etherium          ethereum.Conf
+	BTCSertificate    string
+	NSQAddress        string
+	BTCNodeAddress    string
+	DonationAddresses map[string]string
 }

@@ -1,14 +1,14 @@
 FROM golang:1.9.2
 
-RUN mkdir -p go/src/github.com/Appscrunch/Multy-back
-WORKDIR /go/src/github.com/Appscrunch/Multy-back
 
-COPY . /go/src/github.com/Appscrunch/Multy-back
+RUN go get github.com/Appscrunch/Multy-back && \
+    cd $GOPATH/src/github.com/Appscrunch/Multy-back && \
+    git pull && \
+    make all-with-deps && \
+    make build
 
-RUN touch cmd/rpc.cert && \
-    touch cmd/multy.config
+WORKDIR /go/src/github.com/Appscrunch/Multy-back/cmd
 
-# TODO: add ssl creds
-#COPY ssl ssl
+RUN echo "VERSION 11"
 
-CMD ["make", "all"]
+ENTRYPOINT $GOPATH/src/github.com/Appscrunch/Multy-back/cmd/multy

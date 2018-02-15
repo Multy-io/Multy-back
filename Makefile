@@ -35,3 +35,9 @@ todo:
 
 dist:
 	cd cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
+
+test:
+	cd cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o test .
+
+stage:
+	cd cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o stage .

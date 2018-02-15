@@ -1,4 +1,6 @@
 cmd/cmd
+cmd/test
+cmd/stage
 cmd/multy
 cmd/multy.config
 cmd/btc.cert

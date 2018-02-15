@@ -51,7 +51,7 @@ func fetchWalletAndAddressIndexes(wallets []store.Wallet, address string) (int, 
 	return walletIndex, addressIndex
 }
 
-func setTransactionInfo(multyTx *store.MultyTX, txVerbose *btcjson.TxRawResult) error {
+func setTransactionInfo(multyTx *store.MultyTX, txVerbose *btcjson.TxRawResult, blockHeight int64, isReSync bool) error {
 	inputs := []store.AddresAmount{}
 	outputs := []store.AddresAmount{}
 	var inputSum float64
@@ -83,6 +83,13 @@ func setTransactionInfo(multyTx *store.MultyTX, txVerbose *btcjson.TxRawResult) 
 	}
 	fee := int64((inputSum - outputSum) * SatoshiInBitcoint)
 
+	if blockHeight == -1 || isReSync {
+		multyTx.MempoolTime = txVerbose.Time
+	}
+
+	if blockHeight != -1 {
+		multyTx.BlockTime = txVerbose.Blocktime
+	}
 	multyTx.TxInputs = inputs
 	multyTx.TxOutputs = outputs
 	multyTx.TxFee = fee
@@ -95,31 +102,33 @@ func setTransactionInfo(multyTx *store.MultyTX, txVerbose *btcjson.TxRawResult) 
 Main process BTC transaction method
 
 can be called from:
-- Mempool
-- New block
-- Resync
+	- Mempool
+	- New block
+	- Re-sync
 
 */
 
-// HACK is a wrapper for processTransaction. in future it will b in separate file
-func ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult) {
-	processTransaction(blockChainBlockHeight, txVerbose)
+// HACK is a wrapper for processTransaction. in future it will be in separate file
+func ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult, isReSync bool) {
+	processTransaction(blockChainBlockHeight, txVerbose, isReSync)
 }
 func GetRawTransactionVerbose(txHash *chainhash.Hash) (*btcjson.TxRawResult, error) {
-	// return rawTx, err
 	return rpcClient.GetRawTransactionVerbose(txHash)
 }
+func GetBlockHeight() (int64, error) {
+	return rpcClient.GetBlockCount()
+}
 
-func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult) {
+func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult, isReSync bool) {
 	var multyTx *store.MultyTX = parseRawTransaction(blockChainBlockHeight, txVerbose)
 	CreateSpendableOutputs(txVerbose, blockChainBlockHeight)
 	DeleteSpendableOutputs(txVerbose, blockChainBlockHeight)
 	if multyTx != nil {
 		multyTx.BlockHeight = blockChainBlockHeight
 
-		setExchangeRates(multyTx)
+		setExchangeRates(multyTx, isReSync, txVerbose.Time)
 
-		setTransactionInfo(multyTx, txVerbose)
+		setTransactionInfo(multyTx, txVerbose, blockChainBlockHeight, isReSync)
 		log.Debugf("processTransaction:setTransactionInfo %v", multyTx)
 
 		transactions := splitTransaction(*multyTx, blockChainBlockHeight)
@@ -131,13 +140,14 @@ func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRes
 			setUserID(&transaction)
 			saveMultyTransaction(transaction)
 			updateWalletAndAddressDate(transaction)
-			go func() {
-				select {
-				case <-time.After(time.Second):
-					go sendNotifyToClients(transaction)
-				}
-			}()
-
+			if !isReSync {
+				go func() {
+					select {
+					case <-time.After(time.Second):
+						go sendNotifyToClients(transaction)
+					}
+				}()
+			}
 		}
 	}
 }
@@ -161,7 +171,7 @@ _________________________
 Inputs:
 * blockChainBlockHeight int64 - could be:
 -1 in case of mempool call
->1 in case of block transaction
+-1 in case of block transaction
 max chain height in case of resync
 
 *txVerbose - raw BTC transaction
@@ -184,10 +194,6 @@ func parseRawTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRe
 	}
 
 	if multyTx.TxID != "" {
-		// TODO fix tx out script
-		// maybe fix
-		// multyTx.TxOutScript = txVerbose.Hex
-
 		return &multyTx
 	} else {
 		return nil
@@ -255,7 +261,6 @@ func splitTransaction(multyTx store.MultyTX, blockHeight int64) []store.MultyTX 
 								log.Errorf("splitTransaction error allocate memory")
 							}
 							log.Errorf("splitTransaction ! no ! error allocate memory")
-
 						}
 					}
 				}
@@ -641,14 +646,23 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 	}
 }
 
-func setExchangeRates(tx *store.MultyTX) {
-	//TODO our rates should depend from the Time Of The Transaction not the time when transaction was parsed
-	rates, err := GetLatestExchangeRate()
-	if err != nil {
-		log.Errorf("processTransaction:ExchangeRates: %s", err.Error())
+func setExchangeRates(tx *store.MultyTX, isReSync bool, TxTime int64) {
+	var err error
+	if isReSync {
+		rates, err := GetReSyncExchangeRate(TxTime)
+		if err != nil {
+			log.Errorf("processTransaction:ExchangeRates: %s", err.Error())
+		}
+		tx.StockExchangeRate = rates
+		return
 	}
-	//TODO set correct exchange rates when error occurred
-	tx.StockExchangeRate = rates
+	if !isReSync || err != nil {
+		rates, err := GetLatestExchangeRate()
+		if err != nil {
+			log.Errorf("processTransaction:ExchangeRates: %s", err.Error())
+		}
+		tx.StockExchangeRate = rates
+	}
 }
 
 func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
@@ -769,4 +783,17 @@ func GetLatestExchangeRate() ([]store.ExchangeRatesRecord, error) {
 		return nil, err
 	}
 	return []store.ExchangeRatesRecord{stocksPoloniex, stocksGdax}, nil
+}
+
+func GetReSyncExchangeRate(time int64) ([]store.ExchangeRatesRecord, error) {
+	selCCCAGG := bson.M{
+		"stockexchange": "CCCAGG",
+		"timestamp":     bson.M{"$lt": time},
+	}
+	stocksCCCAGG := store.ExchangeRatesRecord{}
+	err := exRate.Find(selCCCAGG).Sort("-timestamp").One(&stocksCCCAGG)
+	if err != nil {
+		return nil, err
+	}
+	return []store.ExchangeRatesRecord{stocksCCCAGG}, nil
 }
