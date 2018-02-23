@@ -627,6 +627,55 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 func resyncBTCAddress(hash, RemoteAdd string, restClient *RestClient) {
 	allResync := []resyncTx{}
 	requestTimes := 0
+	addrInfo, err := restClient.apiBTCMain.GetAddrFull(hash, map[string]string{"limit": "50"})
+	if err != nil {
+		restClient.log.Errorf("resyncAddress: restClient.apiBTCMain.GetAddrFull : %s \t[addr=%s]", err.Error(), RemoteAdd)
+	}
+
+	fmt.Println(addrInfo.TXs)
+
+	if addrInfo.FinalNumTX > 50 {
+		requestTimes = int(float64(addrInfo.FinalNumTX) / 50.0)
+	}
+
+	for _, tx := range addrInfo.TXs {
+		allResync = append(allResync, resyncTx{
+			hash:        tx.Hash,
+			blockHeight: tx.BlockHeight,
+		})
+	}
+
+	for i := 0; i < requestTimes; i++ {
+		addrInfo, err := restClient.apiBTCMain.GetAddrFull(hash, map[string]string{"limit": "50", "before": strconv.Itoa(allResync[len(allResync)-1].blockHeight)})
+		if err != nil {
+			restClient.log.Errorf("resyncAddress: restClient.apiBTCMain.GetAddrFull: %s \t[addr=%s]", err.Error(), RemoteAdd)
+		}
+		for _, tx := range addrInfo.TXs {
+			allResync = append(allResync, resyncTx{
+				hash:        tx.Hash,
+				blockHeight: tx.BlockHeight,
+			})
+		}
+	}
+	restClient.log.Errorf("\n\n allResync: %s , len(): %d\n\n", allResync, len(allResync))
+	reverseResyncTx(allResync)
+
+	for _, reTx := range allResync {
+		txHash, err := chainhash.NewHashFromStr(reTx.hash)
+		if err != nil {
+			restClient.log.Errorf("resyncAddress: chainhash.NewHashFromStr = %s\t[addr=%s]", err, RemoteAdd)
+		}
+		rawTx, err := btc.GetRawTransactionVerbose(txHash)
+		if err != nil {
+			restClient.log.Errorf("resyncAddress: rpcClient.GetRawTransactionVerbose = %s\t[addr=%s]", err, RemoteAdd)
+		}
+		btc.ProcessTransaction(int64(reTx.blockHeight), rawTx, true)
+	}
+}
+
+func resyncBTCTestnetAddress(hash, RemoteAdd string, restClient *RestClient) {
+	allResync := []resyncTx{}
+	requestTimes := 0
 	addrInfo, err := restClient.apiBTCTest.GetAddrFull(hash, map[string]string{"limit": "50"})
 	if err != nil {
 		restClient.log.Errorf("resyncAddress: restClient.apiBTCTest.GetAddrFull : %s \t[addr=%s]", err.Error(), RemoteAdd)
@@ -742,13 +791,23 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 					"message": msgErrRatesError,
 				})
 			}
+			value := len(rates) / 4
+
+			for i := 0; i < len(speeds); i++ {
+				speeds[i] = value * i
+			}
+			fmt.Println(speeds)
+			// for i := 0; i < len(speeds); i++ {
+			// 	arr := rates[speeds[i]:speeds[i+1]]
+			// 	fmt.Println("len ", len(arr))
+			// }
 
 			sp = EstimationSpeeds{
-				VerySlow: rates[speeds[0]].Category,
-				Slow:     rates[speeds[1]].Category,
-				Medium:   rates[speeds[2]].Category,
-				Fast:     rates[speeds[3]].Category,
-				VeryFast: rates[speeds[4]].Category,
+				VerySlow: avg(rates[0:speeds[1]]),
+				Slow:     avg(rates[speeds[1]:speeds[2]]),
+				Medium:   avg(rates[speeds[2]:speeds[3]]),
+				Fast:     avg(rates[speeds[3]:speeds[4]]),
+				VeryFast: avg(rates[speeds[4]-1 : len(rates)-1]),
 			}
 			c.JSON(http.StatusOK, gin.H{
 				"speeds":  sp,
@@ -762,6 +821,17 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 		}
 
 	}
+}
+
+func avg(arr []store.RatesRecord) int {
+	total := 0
+	for _, value := range arr {
+		total += value.Category
+	}
+	if total == 0 {
+		return 0
+	}
+	return total / len(arr)
 }
 
 func (restClient *RestClient) getSpendableOutputs() gin.HandlerFunc {
