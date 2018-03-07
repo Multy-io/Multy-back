@@ -10,8 +10,6 @@ import (
 	_ "github.com/KristinaEtc/slflog"
 
 	multy "github.com/Appscrunch/Multy-back"
-	"github.com/Appscrunch/Multy-back/client"
-	"github.com/Appscrunch/Multy-back/eth"
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 )
@@ -34,25 +32,15 @@ var globalOpt = multy.Configuration{
 		DBTx:                "DBTx-test",
 		DBStockExchangeRate: "dev-DBStockExchangeRate",
 	},
-	RestAddress:  "localhost:7778",
-	SocketioAddr: "localhost:7780",
-	BTCAPITest: client.BTCApiConf{
-		Token: "btc-test-token",
-		Coin:  "btc",
-		Chain: "test3",
-	},
-	BTCAPIMain: client.BTCApiConf{
-		Token: "btc-main-token",
-		Coin:  "btc",
-		Chain: "main",
-	},
+	RestAddress:    "localhost:7778",
+	SocketioAddr:   "localhost:7780",
 	NSQAddress:     "nsq:4150",
 	BTCNodeAddress: "localhost:18334",
-	Etherium: ethereum.Conf{
-		Address: "88.198.47.112",
-		RpcPort: ":18545",
-		WsPort:  ":8545",
-	},
+	// Etherium: ethereum.Conf{
+	// 	Address: "88.198.47.112",
+	// 	RpcPort: ":18545",
+	// 	WsPort:  ":8545",
+	// },
 }
 
 func main() {

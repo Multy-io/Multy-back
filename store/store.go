@@ -53,14 +53,14 @@ type UserStore interface {
 	InsertExchangeRate(ExchangeRates, string) error
 	GetExchangeRatesDay() ([]RatesAPIBitstamp, error)
 	GetAllWalletTransactions(query bson.M, walletTxs *[]MultyTX) error
-	GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs)
+	// GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs)
 	GetAddressSpendableOutputs(address string, currencyID, networkID int) ([]SpendableOutputs, error)
 	DeleteWallet(userid string, walletindex, currencyID, networkID int) error
 	GetEthereumTransationHistory(query bson.M) ([]MultyETHTransaction, error)
 	AddEthereumTransaction(tx MultyETHTransaction) error
 	UpdateEthereumTransaction(sel, update bson.M) error
 	FindETHTransaction(sel bson.M) error
-	DropTest()
+	// DropTest()
 	FindAllUserETHTransactions(sel bson.M) ([]MultyETHTransaction, error)
 	FindUserDataChain(CurrencyID, NetworkID int) (map[string]string, error)
 }
@@ -122,11 +122,11 @@ func (mStore *MongoUserStore) FindUserDataChain(CurrencyID, NetworkID int) (map[
 	return usersData, nil
 }
 
-func (mStore *MongoUserStore) DropTest() {
-	mStore.usersData.DropCollection()
-	mStore.txsData.DropCollection()
-	mStore.spendableOutputs.DropCollection()
-}
+// func (mStore *MongoUserStore) DropTest() {
+// 	mStore.usersData.DropCollection()
+// 	mStore.txsData.DropCollection()
+// 	mStore.spendableOutputs.DropCollection()
+// }
 
 func (mStore *MongoUserStore) FindAllUserETHTransactions(sel bson.M) ([]MultyETHTransaction, error) {
 	allTxs := []MultyETHTransaction{}
@@ -163,11 +163,12 @@ func (mStore *MongoUserStore) DeleteWallet(userid string, walletindex, currencyI
 	}
 	return mStore.usersData.Update(sel, update)
 }
-func (mStore *MongoUserStore) GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs) {
-	spOuts := []SpendableOutputs{}
-	err := mStore.spendableOutputs.Find(query).All(&spOuts)
-	return err, spOuts
-}
+
+// func (mStore *MongoUserStore) GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs) {
+// 	spOuts := []SpendableOutputs{}
+// 	err := mStore.spendableOutputs.Find(query).All(&spOuts)
+// 	return err, spOuts
+// }
 func (mStore *MongoUserStore) GetAddressSpendableOutputs(address string, currencyID, networkID int) ([]SpendableOutputs, error) {
 	spOuts := []SpendableOutputs{}
 	var err error
