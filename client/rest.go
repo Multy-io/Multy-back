@@ -1142,6 +1142,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 
 type WalletVerbose struct {
 	CurrencyID     int              `json:"currencyid"`
+	NetworkID int					`json:"networkid"`
 	WalletIndex    int              `json:"walletindex"`
 	WalletName     string           `json:"walletname"`
 	LastActionTime int64            `json:"lastactiontime"`
