@@ -13,7 +13,7 @@ import (
 	"github.com/Appscrunch/Multy-back/client"
 	"github.com/Appscrunch/Multy-back/eth"
 	"github.com/Appscrunch/Multy-back/store"
-	"github.com/Appscrunch/deps/slf"
+	"github.com/KristinaEtc/slf"
 )
 
 var (
@@ -69,7 +69,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Server initialization: %s\n", err.Error())
 	}
-
 	if err = mu.Run(); err != nil {
 		log.Fatalf("Server running: %s\n", err.Error())
 	}

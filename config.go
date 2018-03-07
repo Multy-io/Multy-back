@@ -7,7 +7,6 @@ package multyback
 
 import (
 	"github.com/Appscrunch/Multy-back/client"
-	"github.com/Appscrunch/Multy-back/eth"
 	"github.com/Appscrunch/Multy-back/store"
 )
 
@@ -17,12 +16,17 @@ type Configuration struct {
 	Database          store.Conf
 	SocketioAddr      string
 	RestAddress       string
-	BTCAPIMain        client.BTCApiConf
-	BTCAPITest        client.BTCApiConf
 	Firebase          client.FirebaseConf
-	Etherium          ethereum.Conf
-	BTCSertificate    string
 	NSQAddress        string
 	BTCNodeAddress    string
 	DonationAddresses map[string]string
+
+	SupportedNodes []CoinType
+}
+
+type CoinType struct {
+	СurrencyID int
+	NetworkID  int
+	SocketPort int
+	SocketURL  string
 }

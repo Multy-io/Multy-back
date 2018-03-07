@@ -9,6 +9,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Appscrunch/Multy-back/currencies"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -53,25 +54,29 @@ type UserStore interface {
 	GetExchangeRatesDay() ([]RatesAPIBitstamp, error)
 	GetAllWalletTransactions(query bson.M, walletTxs *[]MultyTX) error
 	GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs)
-	GetAddressSpendableOutputs(query bson.M) ([]SpendableOutputs, error)
-	DeleteWallet(userid string, walletindex int) error
+	GetAddressSpendableOutputs(address string, currencyID, networkID int) ([]SpendableOutputs, error)
+	DeleteWallet(userid string, walletindex, currencyID, networkID int) error
 	GetEthereumTransationHistory(query bson.M) ([]MultyETHTransaction, error)
 	AddEthereumTransaction(tx MultyETHTransaction) error
 	UpdateEthereumTransaction(sel, update bson.M) error
 	FindETHTransaction(sel bson.M) error
 	DropTest()
 	FindAllUserETHTransactions(sel bson.M) ([]MultyETHTransaction, error)
+	FindUserDataChain(CurrencyID, NetworkID int) (map[string]string, error)
 }
 
 type MongoUserStore struct {
-	config            *Conf
-	session           *mgo.Session
-	usersData         *mgo.Collection
-	ratesData         *mgo.Collection
-	txsData           *mgo.Collection
-	spendableOutputs  *mgo.Collection
-	stockExchangeRate *mgo.Collection
-	ethTxHistory      *mgo.Collection
+	config                  *Conf
+	session                 *mgo.Session
+	usersData               *mgo.Collection
+	ratesData               *mgo.Collection
+	txsData                 *mgo.Collection
+	BTCMainspendableOutputs *mgo.Collection
+	BTCTestspendableOutputs *mgo.Collection
+	BTCMain                 *mgo.Collection
+	BTCTest                 *mgo.Collection
+	stockExchangeRate       *mgo.Collection
+	ethTxHistory            *mgo.Collection
 }
 
 func InitUserStore(conf Conf) (UserStore, error) {
@@ -88,10 +93,33 @@ func InitUserStore(conf Conf) (UserStore, error) {
 	uStore.txsData = uStore.session.DB(conf.DBTx).C(TableBTC)
 	uStore.stockExchangeRate = uStore.session.DB(conf.DBStockExchangeRate).C(TableStockExchangeRate)
 	// TODO: make varribles in a config
-	uStore.spendableOutputs = uStore.session.DB(conf.DBTx).C("SpendableOutputs")
+	uStore.BTCMainspendableOutputs = uStore.session.DB("BTCMainNet").C("BTCMainspendableOutputs")
+	uStore.BTCTestspendableOutputs = uStore.session.DB("BTCTestNet").C("BTCTestspendableOutputs")
+	uStore.BTCMain = uStore.session.DB("BTCMainNet").C("BTCMain")
+	uStore.BTCTest = uStore.session.DB("BTCTestNet").C("BTCTest")
+
 	uStore.ethTxHistory = uStore.session.DB(conf.DBTx).C("ETH")
 
 	return uStore, nil
+}
+
+func (mStore *MongoUserStore) FindUserDataChain(CurrencyID, NetworkID int) (map[string]string, error) {
+	users := []User{}
+	usersData := map[string]string{} // addres -> userid
+	err := mStore.usersData.Find(nil).All(&users)
+	if err != nil {
+		return usersData, err
+	}
+	for _, user := range users {
+		for _, wallet := range user.Wallets {
+			if wallet.CurrencyID == CurrencyID && wallet.NetworkID == NetworkID {
+				for _, address := range wallet.Adresses {
+					usersData[address.Address] = user.UserID
+				}
+			}
+		}
+	}
+	return usersData, nil
 }
 
 func (mStore *MongoUserStore) DropTest() {
@@ -126,8 +154,8 @@ func (mStore *MongoUserStore) GetEthereumTransationHistory(query bson.M) ([]Mult
 	return allTxs, err
 }
 
-func (mStore *MongoUserStore) DeleteWallet(userid string, walletindex int) error {
-	sel := bson.M{"userID": userid, "wallets.walletIndex": walletindex}
+func (mStore *MongoUserStore) DeleteWallet(userid string, walletindex, currencyID, networkID int) error {
+	sel := bson.M{"userID": userid, "wallets.walletIndex": walletindex, "wallets.currencyID": currencyID, "wallets.networkID": networkID}
 	update := bson.M{
 		"$set": bson.M{
 			"wallets.$.status": WalletStatusDeleted,
@@ -140,9 +168,29 @@ func (mStore *MongoUserStore) GetAllSpendableOutputs(query bson.M) (error, []Spe
 	err := mStore.spendableOutputs.Find(query).All(&spOuts)
 	return err, spOuts
 }
-func (mStore *MongoUserStore) GetAddressSpendableOutputs(query bson.M) ([]SpendableOutputs, error) {
+func (mStore *MongoUserStore) GetAddressSpendableOutputs(address string, currencyID, networkID int) ([]SpendableOutputs, error) {
 	spOuts := []SpendableOutputs{}
-	err := mStore.spendableOutputs.Find(query).All(&spOuts)
+	var err error
+
+	query := bson.M{"address": address}
+
+	switch currencyID {
+	case currencies.Bitcoin:
+		if networkID == currencies.Main {
+			err = mStore.BTCMainspendableOutputs.Find(query).All(&spOuts)
+		}
+		if networkID == currencies.Test {
+			err = mStore.BTCTestspendableOutputs.Find(query).All(&spOuts)
+		}
+	case currencies.Litecoin:
+		if networkID == currencies.Main {
+
+		}
+		if networkID == currencies.Test {
+
+		}
+	}
+
 	return spOuts, err
 }
 

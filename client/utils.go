@@ -41,9 +41,10 @@ func createDevice(deviceid, ip, jwt, pushToken string, deviceType int) store.Dev
 	}
 }
 
-func createWallet(currencyID int, address string, addressIndex int, walletIndex int, walletName string) store.Wallet {
+func createWallet(currencyID, networkID int, address string, addressIndex int, walletIndex int, walletName string) store.Wallet {
 	return store.Wallet{
 		CurrencyID:     currencyID,
+		NetworkID:      networkID,
 		WalletIndex:    walletIndex,
 		WalletName:     walletName,
 		LastActionTime: time.Now().Unix(),

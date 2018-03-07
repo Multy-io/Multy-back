@@ -71,6 +71,8 @@ const (
 type Wallet struct {
 	// Currency of wallet.
 	CurrencyID int `bson:"currencyID"`
+	// Currency of wallet.
+	NetworkID int `bson:"networkID"`
 
 	//wallet identifier
 	WalletIndex int `bson:"walletIndex"`
