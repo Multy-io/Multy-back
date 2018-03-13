@@ -28,6 +28,7 @@ import (
 	"github.com/graarh/golang-socketio"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"math/rand"
 )
 
 const (
@@ -1063,7 +1064,8 @@ type RawTx struct { // remane RawClientTransaction
 
 func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var wv []WalletVerbose
+		var wv []interface{}
+		//var wv []WalletVerbose
 		token, err := getToken(c)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -1165,34 +1167,49 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 				}
 			}
 		case currencies.Ether:
-			/*
-				code = http.StatusOK
-				message = http.StatusText(http.StatusOK)
-				for _, wallet := range user.Wallets {
-					if wallet.WalletIndex == walletIndex { // specify wallet index
+			code = http.StatusOK
+			message = http.StatusText(http.StatusOK)
+			//TODO maybe change it!
+			var av []AddressVerbose
 
-						for _, address := range wallet.Adresses {
-							balance := restClient.eth.GetAddressBalance(address.Address)
-							av = append(av, ETHAddressVerbose{
-								LastActionTime: address.LastActionTime,
-								Address:        address.Address,
-								AddressIndex:   address.AddressIndex,
-								Amount:         balance.Int64,
-							})
-						}
-						wv = append(wv, WalletVerbose{
-							WalletIndex:    wallet.WalletIndex,
-							CurrencyID:     wallet.CurrencyID,
-							WalletName:     wallet.WalletName,
-							LastActionTime: wallet.LastActionTime,
-							DateOfCreation: wallet.DateOfCreation,
-							VerboseAddress: av,
-						})
-						av = []AddressVerbose{}
+			for _, walletETH := range user.WalletsETH {
+				if walletETH.WalletIndex == walletIndex { // specify wallet index
+
+					var pending bool
+
+					//TODO remove this hardcode!
+					pend := rand.Int31n(2)
+					if pend == 0{
+						pending = true
+					} else {
+						pending = false
 					}
 
+					for _, address := range walletETH.Adresses {
+
+						av = append(av, AddressVerbose{
+							LastActionTime: address.LastActionTime,
+							Address:        address.Address,
+							AddressIndex:   address.AddressIndex,
+							Amount:         walletETH.Balance,
+
+						})
+					}
+					wv = append(wv, WalletVerboseETH{
+						WalletIndex:    walletETH.WalletIndex,
+						CurrencyID:     walletETH.CurrencyID,
+						NetworkID:      walletETH.NetworkID,
+						WalletName:     walletETH.WalletName,
+						LastActionTime: walletETH.LastActionTime,
+						DateOfCreation: walletETH.DateOfCreation,
+						Nonce:			walletETH.Nonce,
+						Balance:		walletETH.Balance,
+						VerboseAddress: av,
+						Pending:        pending,
+					})
+					av = []AddressVerbose{}
 				}
-			*/
+			}
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
@@ -1219,11 +1236,25 @@ type WalletVerbose struct {
 	VerboseAddress []AddressVerbose `json:"addresses"`
 	Pending        bool             `json:"pending"`
 }
+
+type WalletVerboseETH struct {
+	CurrencyID     int              `json:"currencyid"`
+	NetworkID      int              `json:"networkid"`
+	WalletIndex    int              `json:"walletindex"`
+	WalletName     string           `json:"walletname"`
+	LastActionTime int64            `json:"lastactiontime"`
+	DateOfCreation int64            `json:"dateofcreation"`
+	Nonce			int64				`json:"nonce"`
+	Balance 		int64 			`json:"balance"`
+	VerboseAddress []AddressVerbose `json:"addresses"`
+	Pending        bool             `json:"pending"`
+}
+
 type AddressVerbose struct {
 	LastActionTime int64                    `json:"lastActionTime"`
 	Address        string                   `json:"address"`
 	AddressIndex   int                      `json:"addressindex"`
-	Amount         int                      `json:"amount"`
+	Amount         int64                      `json:"amount"`
 	SpendableOuts  []store.SpendableOutputs `json:"spendableoutputs"`
 }
 
