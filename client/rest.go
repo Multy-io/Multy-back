@@ -1273,29 +1273,52 @@ type StockExchangeRate struct {
 
 type TopIndex struct {
 	CurrencyID int `json:"currencyid"`
+	NetworkID  int `json:"networkID"`
 	TopIndex   int `json:"topindex"`
 }
 
-func findTopIndexes(wallets []store.Wallet) []TopIndex {
-	top := map[int]int{} // currency id -> topindex
+func findTopIndexes(walletsBTC []store.Wallet, walletsETH []store.WalletETH) []TopIndex {
+	top := map[TopIndex]int{} // currency id -> topindex
 	topIndex := []TopIndex{}
-	for _, wallet := range wallets {
-		top[wallet.CurrencyID]++
+	for _, wallet := range walletsBTC {
+		top[TopIndex{wallet.CurrencyID, wallet.NetworkID, 0}]++
 	}
-	for currencyid, topindex := range top {
+
+	for _, wallet := range walletsETH {
+		top[TopIndex{wallet.CurrencyID, wallet.NetworkID, 0}]++
+	}
+
+	for value, maxIndex := range top {
 		topIndex = append(topIndex, TopIndex{
-			CurrencyID: currencyid,
-			TopIndex:   topindex,
+			CurrencyID: value.CurrencyID,
+			NetworkID: value.NetworkID,
+			TopIndex:   maxIndex,
 		})
 	}
 	return topIndex
 }
 
-func fetchUndeletedWallets(wallets []store.Wallet) []store.Wallet {
-	okWallets := []store.Wallet{}
-	for _, wallet := range wallets {
-		if wallet.Status == store.WalletStatusOK {
-			okWallets = append(okWallets, wallet)
+func fetchUndeletedWallets(wallets []interface{}) []interface{} {
+//func fetchUndeletedWallets(wallets []store.Wallet) []store.Wallet {
+//	okWallets := []store.Wallet{}
+//	okWallets := []interface {}
+
+	okWallets := []interface {}{}
+
+	for _, walletRaw := range wallets {
+		walletBTC, ok := walletRaw.(store.Wallet)
+		if ok {
+			//this is BTC wallet
+			if walletBTC.Status == store.WalletStatusOK {
+				okWallets = append(okWallets, walletBTC)
+			}
+		}
+
+		walletETH, ok := walletRaw.(store.WalletETH)
+		if ok{
+			if walletETH.Status == store.WalletStatusOK {
+				okWallets = append(okWallets, walletETH)
+			}
 		}
 	}
 	return okWallets
@@ -1303,7 +1326,8 @@ func fetchUndeletedWallets(wallets []store.Wallet) []store.Wallet {
 
 func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var wv []WalletVerbose
+		var wv []interface{}
+		//var wv []WalletVerbose
 		token, err := getToken(c)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
