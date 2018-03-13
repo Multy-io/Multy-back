@@ -68,7 +68,7 @@ type RestClient struct {
 
 	log slf.StructuredLogger
 
-	donationAddresses map[string]string
+	donationAddresses []store.DonationInfo
 
 	WsBtcTestnetCli *gosocketio.Client
 	WsBtcMainnetCli *gosocketio.Client
@@ -81,7 +81,7 @@ type BTCApiConf struct {
 func SetRestHandlers(
 	userDB store.UserStore,
 	r *gin.Engine,
-	donationAddresses map[string]string,
+	donationAddresses []store.DonationInfo,
 	WsBtcTestnetCli *gosocketio.Client,
 	WsBtcMainnetCli *gosocketio.Client,
 ) (*RestClient, error) {

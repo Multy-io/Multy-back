@@ -32,6 +32,7 @@ var (
 
 var log = slf.WithContext("btc")
 
+// TODO: cofigurations for multiple database names
 func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string) error {
 	config := nsq.NewConfig()
 	p, err := nsq.NewProducer(nsqAddr, config)
@@ -83,6 +84,9 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	}
 	WsCliTest = testnetCli
 	log.Infof("InitHandlers: gosocketio.Dial Test: √")
+
+	SetWsHandlers(WsCliTest)
+	log.Infof("InitHandlers: SetWsHandlers Test: √")
 
 	//request all mempool
 	err = WsCliTest.Emit("getAllMempool", nil)
