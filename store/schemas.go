@@ -230,21 +230,21 @@ type WalletETH struct {
 }
 
 type TransactionETH struct {
-	UserID     string  `json:"userid"`
-	Hash       string  `json:"hash"`
-	From       string  `json:"from"`
-	To         string  `json:"to"`
+	UserID string `json:"userid"`
+	Hash   string `json:"hash"`
+	From   string `json:"from"`
+	To     string `json:"to"`
 	//Amount in wei
-	Amount		int64	`json:"amount"`
-	GasPrice	int64	`json:"gasprice"`
-	GasLimit	int64	`json:"gaslimit"`
-	Nonce		int		`json:"nonce"`
-	Status		int		`json:"status"`
-	BlockTime	int64	`json:"blocktime"`
-	PoolTime	int64	`json:"tpooltime"`
-	BlockHeight	int64	`json:"blockheight"`
-	Confirmations	int	`json:"confirmations"`
-	Fee			int64	`json:"txfee"`
+	Amount            int64                 `json:"amount"`
+	GasPrice          int64                 `json:"gasprice"`
+	GasLimit          int64                 `json:"gaslimit"`
+	Nonce             int                   `json:"nonce"`
+	Status            int                   `json:"status"`
+	BlockTime         int64                 `json:"blocktime"`
+	PoolTime          int64                 `json:"tpooltime"`
+	BlockHeight       int64                 `json:"blockheight"`
+	Confirmations     int                   `json:"confirmations"`
+	Fee               int64                 `json:"txfee"`
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 }
 
@@ -264,4 +264,11 @@ type DeleteSpendableOutput struct {
 	UserID  string
 	TxID    string
 	Address string
+}
+
+type DonationInfo struct {
+	OS              int
+	Feature         string
+	FeatureCode     int
+	DonationAddress string
 }

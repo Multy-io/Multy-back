@@ -90,13 +90,18 @@ func Init(conf *Configuration) (*Multy, error) {
 }
 
 func InitWsNodeConn(ct *store.CoinType, userStore store.UserStore) (*gosocketio.Client, error) {
+
+	// TODO: fix initial add
 	UsersData, err := userStore.FindUserDataChain(ct.СurrencyID, ct.NetworkID)
 	if err != nil {
 		return nil, fmt.Errorf("InitWsNodeConn: userStore.FindUserDataChain: curID :%d netID :%d err =%s", ct.СurrencyID, ct.NetworkID, err.Error())
 	}
-	if len(UsersData) == 0 {
-		return nil, fmt.Errorf("InitWsNodeConn: empty UserData curID :%d netID :%d err =%s", ct.СurrencyID, ct.NetworkID, err.Error())
-	}
+	fmt.Println(UsersData)
+
+	// if len(UsersData) == 0 {
+	// 	return nil, fmt.Errorf("InitWsNodeConn: empty UserData curID :%d netID :%d", ct.СurrencyID, ct.NetworkID)
+	// }
+
 	wsCli, err := gosocketio.Dial(
 		gosocketio.GetUrl(ct.SocketURL, ct.SocketPort, false),
 		transport.GetDefaultWebsocketTransport())
@@ -104,10 +109,11 @@ func InitWsNodeConn(ct *store.CoinType, userStore store.UserStore) (*gosocketio.
 		return nil, fmt.Errorf("InitWsNodeConn: gosocketio.Dial: SocketURL :%s SocketPort :%d err =%s", ct.SocketURL, ct.SocketPort, err.Error())
 	}
 
-	err = wsCli.Emit(EventInitialAdd, UsersData)
-	if err != nil {
-		return nil, fmt.Errorf("InitWsNodeConn: wsBtcTest.Emit :%s SocketPort :%d err =%s", ct.SocketURL, ct.SocketPort, err.Error())
-	}
+	// TODO: fix initial add
+	// err = wsCli.Emit(EventInitialAdd, UsersData)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("InitWsNodeConn: wsBtcTest.Emit :%s SocketPort :%d err =%s", ct.SocketURL, ct.SocketPort, err.Error())
+	// }
 
 	return wsCli, nil
 }

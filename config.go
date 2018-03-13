@@ -19,7 +19,7 @@ type Configuration struct {
 	Firebase          client.FirebaseConf
 	NSQAddress        string
 	BTCNodeAddress    string
-	DonationAddresses map[string]string
+	DonationAddresses []store.DonationInfo
 
 	SupportedNodes []store.CoinType
 }
