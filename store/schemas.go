@@ -229,7 +229,7 @@ type WalletETH struct {
 	Nonce int64 `bson:"nonce"`
 }
 
-type MultyETHTransaction struct {
+type TransactionETH struct {
 	UserID     string  `json:"userid"`
 	Hash       string  `json:"hash"`
 	From       string  `json:"from"`
