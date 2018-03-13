@@ -200,17 +200,50 @@ type SpendableOutputs struct {
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 }
 
+type WalletETH struct {
+	// Currency of wallet.
+	CurrencyID int `bson:"currencyID"`
+	// Currency of wallet.
+	NetworkID int `bson:"networkID"`
+
+	//wallet identifier
+	WalletIndex int `bson:"walletIndex"`
+
+	//wallet identifier
+	WalletName string `bson:"walletName"`
+
+	LastActionTime int64 `bson:"lastActionTime"`
+
+	DateOfCreation int64 `bson:"dateOfCreation"`
+
+	// All addresses assigned to this wallet.
+	Adresses []Address `bson:"addresses"`
+
+	// Wallet status
+	Status string `bson:"status"`
+
+	// Balance of the eth wallet in wei
+	Balance int64 `bson:"balance"`
+
+	// Nonce of the wallet - index of the last transaction
+	Nonce int64 `bson:"nonce"`
+}
+
 type MultyETHTransaction struct {
-	//TODO: add mempool time and block time
+	UserID     string  `json:"userid"`
 	Hash       string  `json:"hash"`
 	From       string  `json:"from"`
 	To         string  `json:"to"`
-	Amount     float64 `json:"amount"`
-	Gas        int     `json:"gas"`
-	GasPrice   int     `json:"gasprice"`
-	Nonce      int     `json:"nonce"`
-	Status     int     `json:"status"`
-	UserID     string  `json:"userid"`
-	BlockTime  int64   `json:"blocktime"`
-	TxPoolTime int64   `json:"tpooltime"`
+	//Amount in wei
+	Amount		int64	`json:"amount"`
+	GasPrice	int64	`json:"gasprice"`
+	GasLimit	int64	`json:"gaslimit"`
+	Nonce		int		`json:"nonce"`
+	Status		int		`json:"status"`
+	BlockTime	int64	`json:"blocktime"`
+	PoolTime	int64	`json:"tpooltime"`
+	BlockHeight	int64	`json:"blockheight"`
+	Confirmations	int	`json:"confirmations"`
+	Fee			int64	`json:"txfee"`
+	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 }
