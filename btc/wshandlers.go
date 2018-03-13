@@ -18,7 +18,7 @@ const (
 	Room                      = "node"
 )
 
-func setWsHandlers(cli *gosocketio.Client) {
+func SetWsHandlers(cli *gosocketio.Client) {
 
 	cli.On("newSpout", func(c *gosocketio.Channel, spOut store.SpendableOutputs) {
 		// TODO: handle new sp outs
@@ -43,6 +43,7 @@ func setWsHandlers(cli *gosocketio.Client) {
 
 	// Add tx and feerate to mempool
 	cli.On(EventMempool, func(c *gosocketio.Channel, recs []store.MempoolRecord) {
+		fmt.Println(recs)
 		InsertMempoolRecords(recs...)
 	})
 

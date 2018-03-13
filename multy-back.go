@@ -7,10 +7,10 @@ package multyback
 
 import (
 	"fmt"
-	"io/ioutil"
 
 	"github.com/Appscrunch/Multy-back/btc"
 	"github.com/Appscrunch/Multy-back/client"
+	"github.com/Appscrunch/Multy-back/currencies"
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	"github.com/gin-gonic/gin"
@@ -67,12 +67,14 @@ func Init(conf *Configuration) (*Multy, error) {
 	log.Infof("UserStore initialization done on %s", conf.Database)
 
 	// support bitcoin testnet
-	wsBtcTest, err := InitWsNodeConn(conf.SupportedNodes[0], multy.userStore)
+	btcTestConf, err := fethCoinType(conf.SupportedNodes, currencies.Bitcoin, currencies.Test)
+	wsBtcTest, err := InitWsNodeConn(btcTestConf, multy.userStore)
 	if err != nil {
 		return nil, fmt.Errorf("Init: InitWsNodeConn: %v on port %s", conf.SupportedNodes, err.Error())
 	}
 	multy.WsBtcTestnetCli = wsBtcTest
 	btc.InitHandlers(&conf.Database, conf.SupportedNodes, conf.NSQAddress)
+
 	// support bitcoin mainnet
 	// wsBtcMain, err := InitWsNodeConn(conf.SupportedNodes[1], multy.userStore)
 	// if err != nil {
@@ -87,7 +89,7 @@ func Init(conf *Configuration) (*Multy, error) {
 	return multy, nil
 }
 
-func InitWsNodeConn(ct store.CoinType, userStore store.UserStore) (*gosocketio.Client, error) {
+func InitWsNodeConn(ct *store.CoinType, userStore store.UserStore) (*gosocketio.Client, error) {
 	UsersData, err := userStore.FindUserDataChain(ct.СurrencyID, ct.NetworkID)
 	if err != nil {
 		return nil, fmt.Errorf("InitWsNodeConn: userStore.FindUserDataChain: curID :%d netID :%d err =%s", ct.СurrencyID, ct.NetworkID, err.Error())
@@ -152,15 +154,11 @@ func (multy *Multy) Run() error {
 	return nil
 }
 
-func getCertificate(certFile string) string {
-	cert, err := ioutil.ReadFile(certFile)
-	if err != nil {
-		log.Errorf("get certificate: %s", err.Error())
-		return ""
+func fethCoinType(coinTypes []store.CoinType, currencyID, networkID int) (*store.CoinType, error) {
+	for _, ct := range coinTypes {
+		if ct.СurrencyID == currencyID && ct.NetworkID == networkID {
+			return &ct, nil
+		}
 	}
-	if len(cert) > 1 {
-		return string(cert[:len(cert)-1])
-	}
-	log.Errorf("get certificate: empty certificate")
-	return ""
+	return nil, fmt.Errorf("fethCoinType: no such coin in config")
 }
