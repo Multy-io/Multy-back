@@ -25,6 +25,7 @@ const (
 	TableFeeRates          = "Rates" // and send those two fields there
 	TableBTC               = "BTC"
 	TableStockExchangeRate = "TableStockExchangeRate"
+	TableEthTransactions	= "TableEthTransactions"
 )
 
 // Conf is a struct for database configuration
@@ -50,16 +51,18 @@ type UserStore interface {
 	FindUserAddresses(query bson.M, sel bson.M, ws *WalletsSelect) error
 	InsertExchangeRate(ExchangeRates, string) error
 	GetExchangeRatesDay() ([]RatesAPIBitstamp, error)
+
+	//TODo update this method by eth
 	GetAllWalletTransactions(query bson.M, walletTxs *[]MultyTX) error
 	// GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs)
 	GetAddressSpendableOutputs(address string, currencyID, networkID int) ([]SpendableOutputs, error)
 	DeleteWallet(userid string, walletindex, currencyID, networkID int) error
-	GetEthereumTransationHistory(query bson.M) ([]MultyETHTransaction, error)
-	AddEthereumTransaction(tx MultyETHTransaction) error
+	GetEthereumTransationHistory(query bson.M) ([]TransactionETH, error)
+	AddEthereumTransaction(tx TransactionETH) error
 	UpdateEthereumTransaction(sel, update bson.M) error
 	FindETHTransaction(sel bson.M) error
 	// DropTest()
-	FindAllUserETHTransactions(sel bson.M) ([]MultyETHTransaction, error)
+	FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error)
 	FindUserDataChain(CurrencyID, NetworkID int) (map[string]string, error)
 }
 
@@ -75,6 +78,7 @@ type MongoUserStore struct {
 	BTCTest                 *mgo.Collection
 	stockExchangeRate       *mgo.Collection
 	ethTxHistory            *mgo.Collection
+	ETHTest					*mgo.Collection
 }
 
 func InitUserStore(conf Conf) (UserStore, error) {
@@ -95,7 +99,7 @@ func InitUserStore(conf Conf) (UserStore, error) {
 	uStore.BTCTestspendableOutputs = uStore.session.DB("BTCTestNet").C("BTCTestspendableOutputs")
 	uStore.BTCMain = uStore.session.DB("BTCMainNet").C("BTCMain")
 	uStore.BTCTest = uStore.session.DB("BTCTestNet").C("BTCTest")
-
+	uStore.ETHTest = uStore.session.DB("ETHTestNet").C("ETHTest")
 	uStore.ethTxHistory = uStore.session.DB(conf.DBTx).C("ETH")
 
 	return uStore, nil
@@ -126,8 +130,8 @@ func (mStore *MongoUserStore) FindUserDataChain(CurrencyID, NetworkID int) (map[
 // 	mStore.spendableOutputs.DropCollection()
 // }
 
-func (mStore *MongoUserStore) FindAllUserETHTransactions(sel bson.M) ([]MultyETHTransaction, error) {
-	allTxs := []MultyETHTransaction{}
+func (mStore *MongoUserStore) FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error) {
+	allTxs := []TransactionETH{}
 	err := mStore.ethTxHistory.Find(sel).All(&allTxs)
 	return allTxs, err
 }
@@ -141,13 +145,13 @@ func (mStore *MongoUserStore) UpdateEthereumTransaction(sel, update bson.M) erro
 	return err
 }
 
-func (mStore *MongoUserStore) AddEthereumTransaction(tx MultyETHTransaction) error {
+func (mStore *MongoUserStore) AddEthereumTransaction(tx TransactionETH) error {
 	err := mStore.ethTxHistory.Insert(tx)
 	return err
 }
 
-func (mStore *MongoUserStore) GetEthereumTransationHistory(query bson.M) ([]MultyETHTransaction, error) {
-	allTxs := []MultyETHTransaction{}
+func (mStore *MongoUserStore) GetEthereumTransationHistory(query bson.M) ([]TransactionETH, error) {
+	allTxs := []TransactionETH{}
 	err := mStore.ethTxHistory.Find(query).All(&allTxs)
 	return allTxs, err
 }
