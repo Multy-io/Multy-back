@@ -1149,7 +1149,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 							LastActionTime: address.LastActionTime,
 							Address:        address.Address,
 							AddressIndex:   address.AddressIndex,
-							Amount:         int(checkBTCAddressbalance(address.Address, currencyId, subnet, restClient)),
+							Amount:         int64(checkBTCAddressbalance(address.Address, currencyId, subnet, restClient)),
 							SpendableOuts:  spOuts,
 						})
 					}
@@ -1298,30 +1298,26 @@ func findTopIndexes(walletsBTC []store.Wallet, walletsETH []store.WalletETH) []T
 	return topIndex
 }
 
-func fetchUndeletedWallets(wallets []interface{}) []interface{} {
+func fetchUndeletedWallets(walletsBTC []store.Wallet, walletsETH []store.WalletETH) ([]store.Wallet, []store.WalletETH) {
 //func fetchUndeletedWallets(wallets []store.Wallet) []store.Wallet {
-//	okWallets := []store.Wallet{}
-//	okWallets := []interface {}
+	okWalletsBTC := []store.Wallet{}
+	okWalletsETH := []store.WalletETH{}
 
-	okWallets := []interface {}{}
 
-	for _, walletRaw := range wallets {
-		walletBTC, ok := walletRaw.(store.Wallet)
-		if ok {
-			//this is BTC wallet
-			if walletBTC.Status == store.WalletStatusOK {
-				okWallets = append(okWallets, walletBTC)
-			}
-		}
 
-		walletETH, ok := walletRaw.(store.WalletETH)
-		if ok{
-			if walletETH.Status == store.WalletStatusOK {
-				okWallets = append(okWallets, walletETH)
-			}
+	for _, wallet := range walletsBTC {
+		if wallet.Status == store.WalletStatusOK {
+			okWalletsBTC = append(okWalletsBTC, wallet)
 		}
 	}
-	return okWallets
+
+	for _, wallet := range walletsETH {
+		if wallet.Status == store.WalletStatusOK {
+			okWalletsETH = append(okWalletsETH, wallet)
+		}
+	}
+
+	return okWalletsBTC, okWalletsETH
 }
 
 func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
@@ -1353,39 +1349,46 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 			return
 		}
 
-		topIndexes := findTopIndexes(user.Wallets)
+		topIndexes := findTopIndexes(user.Wallets, user.WalletsETH)
 
 		code = http.StatusOK
 		message = http.StatusText(http.StatusOK)
 
 		var av []AddressVerbose
 
-		okWallets := fetchUndeletedWallets(user.Wallets)
+		okWalletsBTC, okWalletsETH := fetchUndeletedWallets(user.Wallets, user.WalletsETH)
 
-		for _, wallet := range okWallets {
+		//
+		//walletBTC, ok := walletRaw.(store.Wallet)
+		//if ok {
+		//	//this is BTC wallet
+		//	if walletBTC.Status == store.WalletStatusOK {
+		//		okWallets = append(okWallets, walletBTC)
+		//	}
+		//}
+
+
+
+		for _, wallet := range okWalletsBTC {
 			var pending bool
 
-			switch wallet.CurrencyID {
-			case currencies.Bitcoin:
+			for _, address := range wallet.Adresses {
 
-				for _, address := range wallet.Adresses {
-
-					spOuts := getBTCAddressSpendableOutputs(address.Address, wallet.CurrencyID, wallet.NetworkID, restClient)
-					for _, spOut := range spOuts {
-						if spOut.TxStatus == store.TxStatusAppearedInMempoolIncoming {
-							pending = true
-						}
+				spOuts := getBTCAddressSpendableOutputs(address.Address, wallet.CurrencyID, wallet.NetworkID, restClient)
+				for _, spOut := range spOuts {
+					if spOut.TxStatus == store.TxStatusAppearedInMempoolIncoming {
+						pending = true
 					}
-
-					av = append(av, AddressVerbose{
-						LastActionTime: address.LastActionTime,
-						Address:        address.Address,
-						AddressIndex:   address.AddressIndex,
-						Amount:         int(checkBTCAddressbalance(address.Address, wallet.CurrencyID, wallet.NetworkID, restClient)),
-						SpendableOuts:  spOuts,
-					})
-
 				}
+
+				av = append(av, AddressVerbose{
+					LastActionTime: address.LastActionTime,
+					Address:        address.Address,
+					AddressIndex:   address.AddressIndex,
+					Amount:         int64(checkBTCAddressbalance(address.Address, wallet.CurrencyID, wallet.NetworkID, restClient)),
+					SpendableOuts:  spOuts,
+				})
+
 			}
 
 			wv = append(wv, WalletVerbose{
@@ -1401,6 +1404,45 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 			av = []AddressVerbose{}
 
 		}
+		
+
+		for _, walletETH := range okWalletsETH {
+			var pending bool
+
+			//TODO remove this hardcode!
+			pend := rand.Int31n(2)
+			if pend == 0{
+				pending = true
+			} else {
+				pending = false
+			}
+
+			for _, address := range walletETH.Adresses {
+
+				av = append(av, AddressVerbose{
+					LastActionTime: address.LastActionTime,
+					Address:        address.Address,
+					AddressIndex:   address.AddressIndex,
+					Amount:         walletETH.Balance,
+
+				})
+			}
+			wv = append(wv, WalletVerboseETH{
+				WalletIndex:    walletETH.WalletIndex,
+				CurrencyID:     walletETH.CurrencyID,
+				NetworkID:      walletETH.NetworkID,
+				WalletName:     walletETH.WalletName,
+				LastActionTime: walletETH.LastActionTime,
+				DateOfCreation: walletETH.DateOfCreation,
+				Nonce:			walletETH.Nonce,
+				Balance:		walletETH.Balance,
+				VerboseAddress: av,
+				Pending:        pending,
+			})
+			av = []AddressVerbose{}
+		}
+
+
 
 		c.JSON(code, gin.H{
 			"code":       code,
