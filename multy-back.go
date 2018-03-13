@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/Appscrunch/Multy-back/btc"
 	"github.com/Appscrunch/Multy-back/client"
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
@@ -71,7 +72,7 @@ func Init(conf *Configuration) (*Multy, error) {
 		return nil, fmt.Errorf("Init: InitWsNodeConn: %v on port %s", conf.SupportedNodes, err.Error())
 	}
 	multy.WsBtcTestnetCli = wsBtcTest
-
+	btc.InitHandlers(&conf.Database, conf.SupportedNodes, conf.NSQAddress)
 	// support bitcoin mainnet
 	// wsBtcMain, err := InitWsNodeConn(conf.SupportedNodes[1], multy.userStore)
 	// if err != nil {
@@ -86,7 +87,7 @@ func Init(conf *Configuration) (*Multy, error) {
 	return multy, nil
 }
 
-func InitWsNodeConn(ct CoinType, userStore store.UserStore) (*gosocketio.Client, error) {
+func InitWsNodeConn(ct store.CoinType, userStore store.UserStore) (*gosocketio.Client, error) {
 	UsersData, err := userStore.FindUserDataChain(ct.СurrencyID, ct.NetworkID)
 	if err != nil {
 		return nil, fmt.Errorf("InitWsNodeConn: userStore.FindUserDataChain: curID :%d netID :%d err =%s", ct.СurrencyID, ct.NetworkID, err.Error())
@@ -105,6 +106,7 @@ func InitWsNodeConn(ct CoinType, userStore store.UserStore) (*gosocketio.Client,
 	if err != nil {
 		return nil, fmt.Errorf("InitWsNodeConn: wsBtcTest.Emit :%s SocketPort :%d err =%s", ct.SocketURL, ct.SocketPort, err.Error())
 	}
+
 	return wsCli, nil
 }
 

@@ -21,12 +21,5 @@ type Configuration struct {
 	BTCNodeAddress    string
 	DonationAddresses map[string]string
 
-	SupportedNodes []CoinType
-}
-
-type CoinType struct {
-	СurrencyID int
-	NetworkID  int
-	SocketPort int
-	SocketURL  string
+	SupportedNodes []store.CoinType
 }

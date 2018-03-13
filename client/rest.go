@@ -13,12 +13,12 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/Appscrunch/Multy-back/btc"
 	"github.com/Appscrunch/Multy-back/currencies"
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
@@ -872,40 +872,40 @@ func (restClient *RestClient) sendRawHDTransaction() gin.HandlerFunc {
 		query := bson.M{"devices.JWT": token}
 		if err := restClient.userStore.FindUser(query, &user); err != nil {
 			restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrUserNotFound,
-			})
+
 			return
 		}
 
 		switch rawTx.CurrencyID {
 		case currencies.Bitcoin:
 			if rawTx.NetworkID == currencies.Main {
-				err = restClient.WsBtcMainnetCli.Emit("sendRaw", map[string]string{
-					"rawtx":  rawTx.Transaction,
-					"userid": user.UserID,
+				resp, err := sendRawAck(restClient.WsBtcMainnetCli, rawTx.Transaction)
+				if err != nil {
+					restClient.log.Errorf("switch rawTx.CurrencyID: currencies.Bitcoin:main sendRawAck: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+				}
+				code := http.StatusOK
+				if errHandler(resp) {
+					code = http.StatusInternalServerError
+				}
+				c.JSON(code, gin.H{
+					"code":    code,
+					"message": resp,
 				})
 			}
 			if rawTx.NetworkID == currencies.Test {
-				err = restClient.WsBtcTestnetCli.Emit("sendRaw", map[string]string{
-					"rawtx":  rawTx.Transaction,
-					"userid": user.UserID,
+				resp, err := sendRawAck(restClient.WsBtcTestnetCli, rawTx.Transaction)
+				if err != nil {
+					restClient.log.Errorf("switch rawTx.CurrencyID: currencies.Bitcoin:test sendRawAck: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+				}
+				code := http.StatusOK
+				if errHandler(resp) {
+					code = http.StatusInternalServerError
+				}
+				c.JSON(code, gin.H{
+					"code":    code,
+					"message": resp,
 				})
 			}
-			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{
-					"code":    http.StatusBadRequest,
-					"message": err.Error(),
-				})
-			} else {
-				c.JSON(http.StatusOK, gin.H{
-					"code":    http.StatusOK,
-					"message": http.StatusText(http.StatusOK),
-				})
-			}
-
-			// TODO: make ack
 
 		case currencies.Ether:
 			// hash, err := restClient.eth.SendRawTransaction(rawTx.Transaction)
@@ -931,6 +931,22 @@ func (restClient *RestClient) sendRawHDTransaction() gin.HandlerFunc {
 		}
 	}
 }
+
+func sendRawAck(c *gosocketio.Client, tx string) (string, error) {
+	result, err := c.Ack("sendRaw", tx, time.Second*5)
+	if err != nil {
+		log.Printf("Error:", err)
+		return "", err
+	} else {
+		return result, err
+	}
+}
+
+func errHandler(resp string) bool {
+	return strings.Contains(resp, "err:")
+}
+
+/*
 func (restClient *RestClient) sendRawTransaction(btcNodeAddress string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -947,16 +963,6 @@ func (restClient *RestClient) sendRawTransaction(btcNodeAddress string) gin.Hand
 
 		switch currencyID {
 		case currencies.Bitcoin:
-			restClient.log.Infof("btc.Cert=%s\n", btc.Cert)
-
-			connCfg := &rpcclient.ConnConfig{
-				Host:         btcNodeAddress,
-				User:         "multy",
-				Pass:         "multy",
-				HTTPPostMode: true,  // Bitcoin core only supports HTTP POST mode
-				DisableTLS:   false, // Bitcoin core does not provide TLS by default
-				Certificates: []byte(btc.Cert),
-			}
 			// Notice the notification parameter is nil since notifications are
 			// not supported in HTTP POST mode.
 			client, err := rpcclient.New(connCfg, nil)
@@ -992,6 +998,7 @@ func (restClient *RestClient) sendRawTransaction(btcNodeAddress string) gin.Hand
 		}
 	}
 }
+*/
 
 type RawTx struct { // remane RawClientTransaction
 	Transaction string `json:"transaction"` //HexTransaction
@@ -1090,6 +1097,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					wv = append(wv, WalletVerbose{
 						WalletIndex:    wallet.WalletIndex,
 						CurrencyID:     wallet.CurrencyID,
+						NetworkID:      wallet.NetworkID,
 						WalletName:     wallet.WalletName,
 						LastActionTime: wallet.LastActionTime,
 						DateOfCreation: wallet.DateOfCreation,
@@ -1245,32 +1253,33 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 		for _, wallet := range okWallets {
 			var pending bool
 
-			// TODO: make all wallets spendable outpputs for multiple cur wallets
-			/*
+			switch wallet.CurrencyID {
+			case currencies.Bitcoin:
+
 				for _, address := range wallet.Adresses {
 
-
-
-						spOuts := getBTCAddressSpendableOutputs(address.Address, restClient)
-						for _, spOut := range spOuts {
-							if spOut.TxStatus == store.TxStatusAppearedInMempoolIncoming {
-								pending = true
-							}
+					spOuts := getBTCAddressSpendableOutputs(address.Address, wallet.CurrencyID, wallet.NetworkID, restClient)
+					for _, spOut := range spOuts {
+						if spOut.TxStatus == store.TxStatusAppearedInMempoolIncoming {
+							pending = true
 						}
+					}
 
-						av = append(av, AddressVerbose{
-							LastActionTime: address.LastActionTime,
-							Address:        address.Address,
-							AddressIndex:   address.AddressIndex,
-							Amount:         int(checkBTCAddressbalance(address.Address, restClient)),
-							SpendableOuts:  spOuts,
-						})
+					av = append(av, AddressVerbose{
+						LastActionTime: address.LastActionTime,
+						Address:        address.Address,
+						AddressIndex:   address.AddressIndex,
+						Amount:         int(checkBTCAddressbalance(address.Address, wallet.CurrencyID, wallet.NetworkID, restClient)),
+						SpendableOuts:  spOuts,
+					})
 
 				}
-			*/
+			}
+
 			wv = append(wv, WalletVerbose{
 				WalletIndex:    wallet.WalletIndex,
 				CurrencyID:     wallet.CurrencyID,
+				NetworkID:      wallet.NetworkID,
 				WalletName:     wallet.WalletName,
 				LastActionTime: wallet.LastActionTime,
 				DateOfCreation: wallet.DateOfCreation,
@@ -1341,10 +1350,13 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 		switch currencyId {
 		case currencies.Bitcoin:
 
-			blockHeight, err := btc.GetBlockHeight()
-			if err != nil {
-				restClient.log.Errorf("getWalletVerbose: btc.GetBlockHeight: %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			}
+			//TODO: get block height
+			// blockHeight, err := btc.GetBlockHeight()
+			// if err != nil {
+			// 	restClient.log.Errorf("getWalletVerbose: btc.GetBlockHeight: %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+			// }
+			blockHeight := int64(0)
+
 			query := bson.M{"userid": user.UserID}
 			userTxs := []store.MultyTX{}
 			err = restClient.userStore.GetAllWalletTransactions(query, &userTxs)

@@ -5,14 +5,11 @@ See LICENSE for details
 */
 package btc
 
-func newRecord(category int, hashTX string) Record {
-	return Record{
+import "github.com/Appscrunch/Multy-back/store"
+
+func newRecord(category int, hashTX string) store.MempoolRecord {
+	return store.MempoolRecord{
 		Category: category,
 		HashTX:   hashTX,
 	}
-}
-
-type Record struct {
-	Category int    `json:"category"`
-	HashTX   string `json:"hashTX"`
 }

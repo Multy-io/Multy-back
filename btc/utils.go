@@ -12,9 +12,16 @@ import (
 
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/btcsuite/btcd/btcjson"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+)
+
+var (
+	usersData        *mgo.Collection
+	mempoolRates     *mgo.Collection
+	txsData          *mgo.Collection
+	exRate           *mgo.Collection
+	spendableOutputs *mgo.Collection
 )
 
 func newAddresAmount(address string, amount int64) store.AddresAmount {
@@ -22,18 +29,6 @@ func newAddresAmount(address string, amount int64) store.AddresAmount {
 		Address: address,
 		Amount:  amount,
 	}
-}
-
-func rawTxByTxid(txid string) (*btcjson.TxRawResult, error) {
-	hash, err := chainhash.NewHashFromStr(txid)
-	if err != nil {
-		return nil, err
-	}
-	previousTxVerbose, err := rpcClient.GetRawTransactionVerbose(hash)
-	if err != nil {
-		return nil, err
-	}
-	return previousTxVerbose, nil
 }
 
 func fetchWalletAndAddressIndexes(wallets []store.Wallet, address string) (int, int) {
@@ -51,52 +46,6 @@ func fetchWalletAndAddressIndexes(wallets []store.Wallet, address string) (int, 
 	return walletIndex, addressIndex
 }
 
-func setTransactionInfo(multyTx *store.MultyTX, txVerbose *btcjson.TxRawResult, blockHeight int64, isReSync bool) error {
-	inputs := []store.AddresAmount{}
-	outputs := []store.AddresAmount{}
-	var inputSum float64
-	var outputSum float64
-
-	for _, out := range txVerbose.Vout {
-		for _, address := range out.ScriptPubKey.Addresses {
-			amount := int64(out.Value * SatoshiInBitcoint)
-			outputs = append(outputs, newAddresAmount(address, amount))
-		}
-		outputSum += out.Value
-	}
-	for _, input := range txVerbose.Vin {
-		hash, err := chainhash.NewHashFromStr(input.Txid)
-		if err != nil {
-			log.Errorf("txInfo:chainhash.NewHashFromStr: %s", err.Error())
-
-		}
-		previousTxVerbose, err := rpcClient.GetRawTransactionVerbose(hash)
-		if err != nil {
-			log.Errorf("txInfo:rpcClient.GetRawTransactionVerbose: %s", err.Error())
-		}
-
-		for _, address := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses {
-			amount := int64(previousTxVerbose.Vout[input.Vout].Value * SatoshiInBitcoint)
-			inputs = append(inputs, newAddresAmount(address, amount))
-		}
-		inputSum += previousTxVerbose.Vout[input.Vout].Value
-	}
-	fee := int64((inputSum - outputSum) * SatoshiInBitcoint)
-
-	if blockHeight == -1 || isReSync {
-		multyTx.MempoolTime = txVerbose.Time
-	}
-
-	if blockHeight != -1 {
-		multyTx.BlockTime = txVerbose.Blocktime
-	}
-	multyTx.TxInputs = inputs
-	multyTx.TxOutputs = outputs
-	multyTx.TxFee = fee
-
-	return nil
-}
-
 /*
 
 Main process BTC transaction method
@@ -112,13 +61,6 @@ can be called from:
 func ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult, isReSync bool) {
 	processTransaction(blockChainBlockHeight, txVerbose, isReSync)
 }
-func GetRawTransactionVerbose(txHash *chainhash.Hash) (*btcjson.TxRawResult, error) {
-	return rpcClient.GetRawTransactionVerbose(txHash)
-}
-func GetBlockHeight() (int64, error) {
-	return rpcClient.GetBlockCount()
-}
-
 func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult, isReSync bool) {
 	var multyTx *store.MultyTX = parseRawTransaction(blockChainBlockHeight, txVerbose)
 	CreateSpendableOutputs(txVerbose, blockChainBlockHeight)
@@ -128,7 +70,6 @@ func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRes
 
 		setExchangeRates(multyTx, isReSync, txVerbose.Time)
 
-		setTransactionInfo(multyTx, txVerbose, blockChainBlockHeight, isReSync)
 		log.Debugf("processTransaction:setTransactionInfo %v", multyTx)
 
 		transactions := splitTransaction(*multyTx, blockChainBlockHeight)
@@ -208,10 +149,8 @@ func splitTransaction(multyTx store.MultyTX, blockHeight int64) []store.MultyTX 
 	// transactions := make([]store.MultyTX, 1)
 	transactions := []store.MultyTX{}
 
-	currentBlockHeight, err := rpcClient.GetBlockCount()
-	if err != nil {
-		log.Errorf("splitTransaction:getBlockCount: %s", err.Error())
-	}
+	// currentBlockHeight, err := rpcClient.GetBlockCount()
+	currentBlockHeight := int64(0)
 
 	blockDiff := currentBlockHeight - blockHeight
 
@@ -421,47 +360,49 @@ func sendNotifyToClients(tx store.MultyTX) {
 
 func parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *store.MultyTX) error {
 	//NEW LOGIC
-	user := store.User{}
+	// user := store.User{}
 	//Ranging by inputs
-	for _, input := range txVerbose.Vin {
+	/*
+		for _, input := range txVerbose.Vin {
 
 		//getting previous verbose transaction from BTC Node for checking addresses
-		previousTxVerbose, err := rawTxByTxid(input.Txid)
-		if err != nil {
-			log.Errorf("parseInput:rawTxByTxid: %s", err.Error())
-			continue
-		}
+		// previousTxVerbose, err := rawTxByTxid(input.Txid)
+		// if err != nil {
+		// 	log.Errorf("parseInput:rawTxByTxid: %s", err.Error())
+		// 	continue
+		// }
 
-		for _, txInAddress := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses {
-			query := bson.M{"wallets.addresses.address": txInAddress}
 
-			err := usersData.Find(query).One(&user)
-			if err != nil {
-				continue
-				// is not our user
+					for _, txInAddress := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses {
+						query := bson.M{"wallets.addresses.address": txInAddress}
+
+						err := usersData.Find(query).One(&user)
+						if err != nil {
+							continue
+							// is not our user
+						}
+						fmt.Println("[ITS OUR USER] ", user.UserID)
+
+						walletIndex, addressIndex := fetchWalletAndAddressIndexes(user.Wallets, txInAddress)
+
+						txInAmount := int64(SatoshiInBitcoint * previousTxVerbose.Vout[input.Vout].Value)
+
+						currentWallet := store.WalletForTx{UserId: user.UserID, WalletIndex: walletIndex}
+
+						if multyTx.WalletsInput == nil {
+							multyTx.WalletsInput = []store.WalletForTx{}
+						}
+
+						currentWallet.Address = store.AddressForWallet{Address: txInAddress, AddressIndex: addressIndex, Amount: txInAmount}
+						multyTx.WalletsInput = append(multyTx.WalletsInput, currentWallet)
+
+						multyTx.TxID = txVerbose.Txid
+						multyTx.TxHash = txVerbose.Hash
+
+					}
+
 			}
-			fmt.Println("[ITS OUR USER] ", user.UserID)
-
-			walletIndex, addressIndex := fetchWalletAndAddressIndexes(user.Wallets, txInAddress)
-
-			txInAmount := int64(SatoshiInBitcoint * previousTxVerbose.Vout[input.Vout].Value)
-
-			currentWallet := store.WalletForTx{UserId: user.UserID, WalletIndex: walletIndex}
-
-			if multyTx.WalletsInput == nil {
-				multyTx.WalletsInput = []store.WalletForTx{}
-			}
-
-			currentWallet.Address = store.AddressForWallet{Address: txInAddress, AddressIndex: addressIndex, Amount: txInAmount}
-			multyTx.WalletsInput = append(multyTx.WalletsInput, currentWallet)
-
-			multyTx.TxID = txVerbose.Txid
-			multyTx.TxHash = txVerbose.Hash
-
-		}
-
-	}
-
+	*/
 	return nil
 }
 
@@ -732,36 +673,38 @@ func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 }
 
 func DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
-	user := store.User{}
-	for _, input := range tx.Vin {
-		previousTx, err := rawTxByTxid(input.Txid)
-		if err != nil {
-			log.Errorf("DeleteSpendableOutputs:rawTxByTxid: %s", err.Error())
-		}
-
-		if previousTx == nil {
-			continue
-		}
-
-		if len(previousTx.Vout[input.Vout].ScriptPubKey.Addresses) > 0 {
-			address := previousTx.Vout[input.Vout].ScriptPubKey.Addresses[0]
-			query := bson.M{"wallets.addresses.address": address}
-			err := usersData.Find(query).One(&user)
+	/*
+		user := store.User{}
+		for _, input := range tx.Vin {
+			previousTx, err := rawTxByTxid(input.Txid)
 			if err != nil {
+				log.Errorf("DeleteSpendableOutputs:rawTxByTxid: %s", err.Error())
+			}
+
+			if previousTx == nil {
 				continue
-				// is not our user
 			}
-			log.Errorf("\n\n !!!found user:!!    %v  \n\n", user.UserID)
-			query = bson.M{"userid": user.UserID, "txid": previousTx.Txid, "address": address}
-			log.Debugf("userid ", user.UserID, "txid ", previousTx.Txid, "address ", address)
-			err = spendableOutputs.Remove(query)
-			if err != nil {
-				log.Errorf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err.Error())
-				log.Errorf("\n\n !!!not removed:!!    %v  \n\n")
+
+			if len(previousTx.Vout[input.Vout].ScriptPubKey.Addresses) > 0 {
+				address := previousTx.Vout[input.Vout].ScriptPubKey.Addresses[0]
+				query := bson.M{"wallets.addresses.address": address}
+				err := usersData.Find(query).One(&user)
+				if err != nil {
+					continue
+					// is not our user
+				}
+				log.Errorf("\n\n !!!found user:!!    %v  \n\n", user.UserID)
+				query = bson.M{"userid": user.UserID, "txid": previousTx.Txid, "address": address}
+				log.Debugf("userid ", user.UserID, "txid ", previousTx.Txid, "address ", address)
+				err = spendableOutputs.Remove(query)
+				if err != nil {
+					log.Errorf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err.Error())
+					log.Errorf("\n\n !!!not removed:!!    %v  \n\n")
+				}
+				log.Debugf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err)
 			}
-			log.Debugf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err)
 		}
-	}
+	*/
 }
 
 func GetLatestExchangeRate() ([]store.ExchangeRatesRecord, error) {
@@ -796,4 +739,14 @@ func GetReSyncExchangeRate(time int64) ([]store.ExchangeRatesRecord, error) {
 		return nil, err
 	}
 	return []store.ExchangeRatesRecord{stocksCCCAGG}, nil
+}
+
+func InsertMempoolRecords(recs ...store.MempoolRecord) {
+	for _, rec := range recs {
+		err := mempoolRates.Insert(rec)
+		if err != nil {
+			log.Errorf("getAllMempool: mempoolRates.Insert: %s", err.Error())
+			continue
+		}
+	}
 }

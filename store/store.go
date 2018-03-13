@@ -29,9 +29,7 @@ const (
 
 // Conf is a struct for database configuration
 type Conf struct {
-	Address string
-
-	// TODO: move to one database
+	Address             string
 	DBUsers             string
 	DBFeeRates          string
 	DBTx                string

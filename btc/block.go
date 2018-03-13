@@ -5,13 +5,6 @@ See LICENSE for details
 */
 package btc
 
-import (
-	"gopkg.in/mgo.v2/bson"
-
-	"github.com/Appscrunch/Multy-back/store"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-)
-
 const ( // currency id  nsq
 	TxStatusAppearedInMempoolIncoming = 1
 	TxStatusAppearedInBlockIncoming   = 2
@@ -34,8 +27,18 @@ const (
 	SixPlusBlockConfirmation = 7
 )
 
+/*
 func blockTransactions(hash *chainhash.Hash) {
-	log.Debugf("New block connected %s", hash.String())
+
+	// query := bson.M{"hashtx": blockTxVerbose.Txid}
+	// err = mempoolRates.Remove(query)
+	// if err != nil {
+	// 	log.Errorf("parseNewBlock:mempoolRates.Remove: %s", err.Error())
+	// } else {
+	// 	log.Debugf("Tx removed: %s", blockTxVerbose.Txid)
+	// }
+
+	// log.Debugf("New block connected %s", hash.String())
 
 	// block Height
 	blockVerbose, err := rpcClient.GetBlockVerbose(hash)
@@ -63,7 +66,9 @@ func blockTransactions(hash *chainhash.Hash) {
 		processTransaction(blockHeight, blockTxVerbose, false)
 	}
 }
+*/
 
+/*
 func blockConfirmations(hash *chainhash.Hash) {
 	blockVerbose, err := rpcClient.GetBlockVerbose(hash)
 	if err != nil {
@@ -110,3 +115,4 @@ func blockConfirmations(hash *chainhash.Hash) {
 	}
 
 }
+*/

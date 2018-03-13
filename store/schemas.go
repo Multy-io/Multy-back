@@ -214,3 +214,21 @@ type MultyETHTransaction struct {
 	BlockTime  int64   `json:"blocktime"`
 	TxPoolTime int64   `json:"tpooltime"`
 }
+
+type CoinType struct {
+	СurrencyID int
+	NetworkID  int
+	SocketPort int
+	SocketURL  string
+}
+
+type MempoolRecord struct {
+	Category int    `json:"category"`
+	HashTX   string `json:"hashTX"`
+}
+
+type DeleteSpendableOutput struct {
+	UserID  string
+	TxID    string
+	Address string
+}
