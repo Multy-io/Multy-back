@@ -587,25 +587,6 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 	}
 }
 
-func setExchangeRates(tx *store.MultyTX, isReSync bool, TxTime int64) {
-	var err error
-	if isReSync {
-		rates, err := GetReSyncExchangeRate(TxTime)
-		if err != nil {
-			log.Errorf("processTransaction:ExchangeRates: %s", err.Error())
-		}
-		tx.StockExchangeRate = rates
-		return
-	}
-	if !isReSync || err != nil {
-		rates, err := GetLatestExchangeRate()
-		if err != nil {
-			log.Errorf("processTransaction:ExchangeRates: %s", err.Error())
-		}
-		tx.StockExchangeRate = rates
-	}
-}
-
 func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 	user := store.User{}
 	for _, output := range tx.Vout {
@@ -707,6 +688,19 @@ func DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
 	*/
 }
 
+func GetReSyncExchangeRate(time int64) ([]store.ExchangeRatesRecord, error) {
+	selCCCAGG := bson.M{
+		"stockexchange": "CCCAGG",
+		"timestamp":     bson.M{"$lt": time},
+	}
+	stocksCCCAGG := store.ExchangeRatesRecord{}
+	err := exRate.Find(selCCCAGG).Sort("-timestamp").One(&stocksCCCAGG)
+	if err != nil {
+		return nil, err
+	}
+	return []store.ExchangeRatesRecord{stocksCCCAGG}, nil
+}
+
 func GetLatestExchangeRate() ([]store.ExchangeRatesRecord, error) {
 	selGdax := bson.M{
 		"stockexchange": "Gdax",
@@ -728,17 +722,23 @@ func GetLatestExchangeRate() ([]store.ExchangeRatesRecord, error) {
 	return []store.ExchangeRatesRecord{stocksPoloniex, stocksGdax}, nil
 }
 
-func GetReSyncExchangeRate(time int64) ([]store.ExchangeRatesRecord, error) {
-	selCCCAGG := bson.M{
-		"stockexchange": "CCCAGG",
-		"timestamp":     bson.M{"$lt": time},
+func setExchangeRates(tx *store.MultyTX, isReSync bool, TxTime int64) {
+	var err error
+	if isReSync {
+		rates, err := GetReSyncExchangeRate(TxTime)
+		if err != nil {
+			log.Errorf("processTransaction:ExchangeRates: %s", err.Error())
+		}
+		tx.StockExchangeRate = rates
+		return
 	}
-	stocksCCCAGG := store.ExchangeRatesRecord{}
-	err := exRate.Find(selCCCAGG).Sort("-timestamp").One(&stocksCCCAGG)
-	if err != nil {
-		return nil, err
+	if !isReSync || err != nil {
+		rates, err := GetLatestExchangeRate()
+		if err != nil {
+			log.Errorf("processTransaction:ExchangeRates: %s", err.Error())
+		}
+		tx.StockExchangeRate = rates
 	}
-	return []store.ExchangeRatesRecord{stocksCCCAGG}, nil
 }
 
 func InsertMempoolRecords(recs ...store.MempoolRecord) {

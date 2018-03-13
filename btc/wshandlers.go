@@ -38,6 +38,7 @@ func SetWsHandlers(cli *gosocketio.Client) {
 
 	cli.On("newIncomingTx", func(c *gosocketio.Channel, inTx store.MultyTX) {
 		// TODO: handle tx history in
+
 		fmt.Println(
 			inTx.BlockHeight, "BlockHeight\n",
 			inTx.BlockTime, "BlockTime\n",

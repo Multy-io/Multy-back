@@ -6,6 +6,8 @@ See LICENSE for details
 package main
 
 import (
+	"fmt"
+
 	"github.com/KristinaEtc/config"
 	_ "github.com/KristinaEtc/slflog"
 
@@ -60,4 +62,7 @@ func main() {
 	if err = mu.Run(); err != nil {
 		log.Fatalf("Server running: %s\n", err.Error())
 	}
+	fmt.Println("kek")
+	block := make(chan bool)
+	<-block
 }

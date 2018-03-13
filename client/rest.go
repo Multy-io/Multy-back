@@ -374,7 +374,7 @@ func AddWatchAndResync(currencyID, subnet int, userid, address string, restClien
 			}
 			restClient.log.Debugf("btc main WatchAndResync: address added: %s\t", address)
 
-			err = ResyncAddressWs(address, restClient)
+			err = ResyncAddressWs(address, restClient, currencyID, subnet)
 			if err != nil {
 				restClient.log.Errorf("AddWatchAndResync: currencies.Test: WsBtcMainnetCli.Emit:resync %s\t", err.Error())
 				return err
@@ -388,7 +388,7 @@ func AddWatchAndResync(currencyID, subnet int, userid, address string, restClien
 			}
 			restClient.log.Debugf("btc main WatchAndResync: address added: %s\t", address)
 
-			err = ResyncAddressWs(address, restClient)
+			err = ResyncAddressWs(address, restClient, currencyID, subnet)
 			if err != nil {
 				restClient.log.Errorf("AddWatchAndResync: currencies.Test: WsBtcMainnetCli.Emit:resync %s\t", err.Error())
 				return err
@@ -408,8 +408,20 @@ func NewAddressWs(address string, restClient *RestClient) error {
 	return restClient.WsBtcMainnetCli.Emit("newAddress", address)
 }
 
-func ResyncAddressWs(address string, restClient *RestClient) error {
-	return restClient.WsBtcMainnetCli.Emit("resync", address)
+func ResyncAddressWs(address string, restClient *RestClient, currencyID, networkID int) error {
+	var err error
+	switch currencyID {
+	case currencies.Bitcoin:
+		if networkID == currencies.Main {
+			err = restClient.WsBtcMainnetCli.Emit("resync", address)
+		}
+		if networkID == currencies.Test {
+			err = restClient.WsBtcTestnetCli.Emit("resync", address)
+		}
+	case currencies.Ether:
+
+	}
+	return err
 }
 
 func (restClient *RestClient) drop() gin.HandlerFunc {
