@@ -208,28 +208,62 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 		err = errors.New(msgErrUserNotFound)
 		return err
 	}
-	for _, wallet := range user.Wallets {
-		if wallet.CurrencyID == wp.CurrencyID && wallet.NetworkID == wp.NetworkID && wallet.WalletIndex == wp.WalletIndex {
+	for _, walletBTC := range user.Wallets {
+		if walletBTC.CurrencyID == wp.CurrencyID && walletBTC.NetworkID == wp.NetworkID && walletBTC.WalletIndex == wp.WalletIndex {
 			err = errors.New(msgErrWalletIndex)
 			return err
 		}
 	}
-	wallet := createWallet(wp.CurrencyID, wp.NetworkID, wp.Address, wp.AddressIndex, wp.WalletIndex, wp.WalletName)
-	sel := bson.M{"devices.JWT": token}
-	update := bson.M{"$push": bson.M{"wallets": wallet}}
-	err = restClient.userStore.Update(sel, update)
-	if err != nil {
-		restClient.log.Errorf("addWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-		err := errors.New(msgErrServerError)
-		return err
+
+	for _, walletETH := range user.WalletsETH {
+		if walletETH.CurrencyID == wp.CurrencyID && walletETH.NetworkID == wp.NetworkID && walletETH.WalletIndex == wp.WalletIndex {
+			err = errors.New(msgErrWalletIndex)
+			return err
+		}
 	}
 
-	err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, user.UserID, wp.Address, restClient)
-	if err != nil {
-		restClient.log.Errorf("createCustomWallet: AddWatchAndResync: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-		err := errors.New(msgErrServerError)
-		return err
+
+	sel := bson.M{"devices.JWT": token}
+
+
+	switch wp.CurrencyID {
+	case currencies.Bitcoin:
+		walletBTC := createWallet(wp.CurrencyID, wp.NetworkID, wp.Address, wp.AddressIndex, wp.WalletIndex, wp.WalletName)
+		update := bson.M{"$push": bson.M{"wallets": walletBTC}}
+
+		err = restClient.userStore.Update(sel, update)
+		if err != nil {
+			restClient.log.Errorf("addWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+			err := errors.New(msgErrServerError)
+			return err
+		}
+
+		err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, user.UserID, wp.Address, restClient)
+		if err != nil {
+			restClient.log.Errorf("createCustomWallet: AddWatchAndResync: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+			err := errors.New(msgErrServerError)
+			return err
+		}
+	case currencies.Ether:
+		walletETH := createWallet(wp.CurrencyID, wp.NetworkID, wp.Address, wp.AddressIndex, wp.WalletIndex, wp.WalletName)
+		update := bson.M{"$push": bson.M{"walletsEth": walletETH}}
+
+		err = restClient.userStore.Update(sel, update)
+		if err != nil {
+			restClient.log.Errorf("addWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+			err := errors.New(msgErrServerError)
+			return err
+		}
+
+		err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, user.UserID, wp.Address, restClient)
+		if err != nil {
+			restClient.log.Errorf("createCustomWallet: AddWatchAndResync: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+			err := errors.New(msgErrServerError)
+			return err
+		}
+
 	}
+	
 	return nil
 }
 
@@ -243,22 +277,44 @@ func changeName(cn ChangeName, token string, restClient *RestClient, c *gin.Cont
 		return err
 	}
 
-	for _, wallet := range user.Wallets {
-		if wallet.CurrencyID == cn.CurrencyID && wallet.WalletIndex == cn.WalletIndex {
-			sel := bson.M{"userID": user.UserID, "wallets.walletIndex": cn.WalletIndex}
-			update := bson.M{
-				"$set": bson.M{
-					"wallets.$.walletName": cn.WalletName,
-				},
+	switch cn.CurrencyID {
+	case currencies.Bitcoin:
+		for _, wallet := range user.Wallets {
+			if wallet.CurrencyID == cn.CurrencyID && wallet.WalletIndex == cn.WalletIndex && wallet.NetworkID == cn.NetworkID{
+				sel := bson.M{"userID": user.UserID, "wallets.walletIndex": cn.WalletIndex, "wallets.networkID": cn.NetworkID}
+				update := bson.M{
+					"$set": bson.M{
+						"wallets.$.walletName": cn.WalletName,
+					},
+				}
+				err := restClient.userStore.Update(sel, update)
+				if err != nil {
+					err := errors.New(msgErrServerError)
+					return err
+				}
+				return nil
 			}
-			err := restClient.userStore.Update(sel, update)
-			if err != nil {
-				err := errors.New(msgErrServerError)
-				return err
+		}
+	case currencies.Ether:
+		for _, walletETH := range user.WalletsETH {
+			if walletETH.CurrencyID == cn.CurrencyID && walletETH.WalletIndex == cn.WalletIndex && walletETH.NetworkID == cn.NetworkID{
+				sel := bson.M{"userID": user.UserID, "walletsEth.walletIndex": cn.WalletIndex, "walletsEth.networkID": cn.NetworkID}
+				update := bson.M{
+					"$set": bson.M{
+						"walletsEth.$.walletName": cn.WalletName,
+					},
+				}
+				err := restClient.userStore.Update(sel, update)
+				if err != nil {
+					err := errors.New(msgErrServerError)
+					return err
+				}
+				return nil
 			}
-			return nil
 		}
 	}
+
+
 
 	err := errors.New(msgErrNoWallet)
 	return err
@@ -414,6 +470,7 @@ type ChangeName struct {
 	WalletName  string `json:"walletname"`
 	CurrencyID  int    `json:"currencyID"`
 	WalletIndex int    `json:"walletIndex"`
+	NetworkID	int		`json:"networkId"`
 }
 
 func (restClient *RestClient) changeWalletName() gin.HandlerFunc {

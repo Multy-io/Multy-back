@@ -29,6 +29,7 @@ type User struct {
 	UserID  string   `bson:"userID"`  // User uqnique identifier
 	Devices []Device `bson:"devices"` // All user devices
 	Wallets []Wallet `bson:"wallets"` // All user addresses in all chains
+	WalletsETH []WalletETH `bson:"walletsEth"` // All user addresses in all chains
 }
 
 type BTCTransaction struct {
