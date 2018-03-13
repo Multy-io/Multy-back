@@ -23,12 +23,13 @@ import (
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 
+	"math/rand"
+
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
 	"github.com/graarh/golang-socketio"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"math/rand"
 )
 
 const (
@@ -205,10 +206,11 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 
 	err := restClient.userStore.FindUser(query, &user)
 	if err != nil {
-		restClient.log.Errorf("deleteWallet: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+		restClient.log.Errorf("createCustomWallet: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 		err = errors.New(msgErrUserNotFound)
 		return err
 	}
+
 	for _, walletBTC := range user.Wallets {
 		if walletBTC.CurrencyID == wp.CurrencyID && walletBTC.NetworkID == wp.NetworkID && walletBTC.WalletIndex == wp.WalletIndex {
 			err = errors.New(msgErrWalletIndex)
@@ -223,9 +225,7 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 		}
 	}
 
-
 	sel := bson.M{"devices.JWT": token}
-
 
 	switch wp.CurrencyID {
 	case currencies.Bitcoin:
@@ -264,7 +264,7 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 		}
 
 	}
-	
+
 	return nil
 }
 
@@ -281,7 +281,7 @@ func changeName(cn ChangeName, token string, restClient *RestClient, c *gin.Cont
 	switch cn.CurrencyID {
 	case currencies.Bitcoin:
 		for _, wallet := range user.Wallets {
-			if wallet.CurrencyID == cn.CurrencyID && wallet.WalletIndex == cn.WalletIndex && wallet.NetworkID == cn.NetworkID{
+			if wallet.CurrencyID == cn.CurrencyID && wallet.WalletIndex == cn.WalletIndex && wallet.NetworkID == cn.NetworkID {
 				sel := bson.M{"userID": user.UserID, "wallets.walletIndex": cn.WalletIndex, "wallets.networkID": cn.NetworkID}
 				update := bson.M{
 					"$set": bson.M{
@@ -298,7 +298,7 @@ func changeName(cn ChangeName, token string, restClient *RestClient, c *gin.Cont
 		}
 	case currencies.Ether:
 		for _, walletETH := range user.WalletsETH {
-			if walletETH.CurrencyID == cn.CurrencyID && walletETH.WalletIndex == cn.WalletIndex && walletETH.NetworkID == cn.NetworkID{
+			if walletETH.CurrencyID == cn.CurrencyID && walletETH.WalletIndex == cn.WalletIndex && walletETH.NetworkID == cn.NetworkID {
 				sel := bson.M{"userID": user.UserID, "walletsEth.walletIndex": cn.WalletIndex, "walletsEth.networkID": cn.NetworkID}
 				update := bson.M{
 					"$set": bson.M{
@@ -314,8 +314,6 @@ func changeName(cn ChangeName, token string, restClient *RestClient, c *gin.Cont
 			}
 		}
 	}
-
-
 
 	err := errors.New(msgErrNoWallet)
 	return err
@@ -471,7 +469,7 @@ type ChangeName struct {
 	WalletName  string `json:"walletname"`
 	CurrencyID  int    `json:"currencyID"`
 	WalletIndex int    `json:"walletIndex"`
-	NetworkID	int		`json:"networkId"`
+	NetworkID   int    `json:"networkId"`
 }
 
 func (restClient *RestClient) changeWalletName() gin.HandlerFunc {
@@ -1179,7 +1177,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 
 					//TODO remove this hardcode!
 					pend := rand.Int31n(2)
-					if pend == 0{
+					if pend == 0 {
 						pending = true
 					} else {
 						pending = false
@@ -1192,7 +1190,6 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 							Address:        address.Address,
 							AddressIndex:   address.AddressIndex,
 							Amount:         walletETH.Balance,
-
 						})
 					}
 					wv = append(wv, WalletVerboseETH{
@@ -1202,8 +1199,8 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 						WalletName:     walletETH.WalletName,
 						LastActionTime: walletETH.LastActionTime,
 						DateOfCreation: walletETH.DateOfCreation,
-						Nonce:			walletETH.Nonce,
-						Balance:		walletETH.Balance,
+						Nonce:          walletETH.Nonce,
+						Balance:        walletETH.Balance,
 						VerboseAddress: av,
 						Pending:        pending,
 					})
@@ -1244,8 +1241,8 @@ type WalletVerboseETH struct {
 	WalletName     string           `json:"walletname"`
 	LastActionTime int64            `json:"lastactiontime"`
 	DateOfCreation int64            `json:"dateofcreation"`
-	Nonce			int64				`json:"nonce"`
-	Balance 		int64 			`json:"balance"`
+	Nonce          int64            `json:"nonce"`
+	Balance        int64            `json:"balance"`
 	VerboseAddress []AddressVerbose `json:"addresses"`
 	Pending        bool             `json:"pending"`
 }
@@ -1254,7 +1251,7 @@ type AddressVerbose struct {
 	LastActionTime int64                    `json:"lastActionTime"`
 	Address        string                   `json:"address"`
 	AddressIndex   int                      `json:"addressindex"`
-	Amount         int64                      `json:"amount"`
+	Amount         int64                    `json:"amount"`
 	SpendableOuts  []store.SpendableOutputs `json:"spendableoutputs"`
 }
 
@@ -1291,7 +1288,7 @@ func findTopIndexes(walletsBTC []store.Wallet, walletsETH []store.WalletETH) []T
 	for value, maxIndex := range top {
 		topIndex = append(topIndex, TopIndex{
 			CurrencyID: value.CurrencyID,
-			NetworkID: value.NetworkID,
+			NetworkID:  value.NetworkID,
 			TopIndex:   maxIndex,
 		})
 	}
@@ -1299,11 +1296,9 @@ func findTopIndexes(walletsBTC []store.Wallet, walletsETH []store.WalletETH) []T
 }
 
 func fetchUndeletedWallets(walletsBTC []store.Wallet, walletsETH []store.WalletETH) ([]store.Wallet, []store.WalletETH) {
-//func fetchUndeletedWallets(wallets []store.Wallet) []store.Wallet {
+	//func fetchUndeletedWallets(wallets []store.Wallet) []store.Wallet {
 	okWalletsBTC := []store.Wallet{}
 	okWalletsETH := []store.WalletETH{}
-
-
 
 	for _, wallet := range walletsBTC {
 		if wallet.Status == store.WalletStatusOK {
@@ -1367,8 +1362,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 		//	}
 		//}
 
-
-
 		for _, wallet := range okWalletsBTC {
 			var pending bool
 
@@ -1404,14 +1397,13 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 			av = []AddressVerbose{}
 
 		}
-		
 
 		for _, walletETH := range okWalletsETH {
 			var pending bool
 
 			//TODO remove this hardcode!
 			pend := rand.Int31n(2)
-			if pend == 0{
+			if pend == 0 {
 				pending = true
 			} else {
 				pending = false
@@ -1424,7 +1416,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					Address:        address.Address,
 					AddressIndex:   address.AddressIndex,
 					Amount:         walletETH.Balance,
-
 				})
 			}
 			wv = append(wv, WalletVerboseETH{
@@ -1434,15 +1425,13 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 				WalletName:     walletETH.WalletName,
 				LastActionTime: walletETH.LastActionTime,
 				DateOfCreation: walletETH.DateOfCreation,
-				Nonce:			walletETH.Nonce,
-				Balance:		walletETH.Balance,
+				Nonce:          walletETH.Nonce,
+				Balance:        walletETH.Balance,
 				VerboseAddress: av,
 				Pending:        pending,
 			})
 			av = []AddressVerbose{}
 		}
-
-
 
 		c.JSON(code, gin.H{
 			"code":       code,

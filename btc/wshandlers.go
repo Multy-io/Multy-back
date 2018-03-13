@@ -38,7 +38,25 @@ func SetWsHandlers(cli *gosocketio.Client) {
 
 	cli.On("newIncomingTx", func(c *gosocketio.Channel, inTx store.MultyTX) {
 		// TODO: handle tx history in
-		fmt.Println(inTx, " \nnewIncomingTx\n")
+		fmt.Println(
+			inTx.BlockHeight, "BlockHeight\n",
+			inTx.BlockTime, "BlockTime\n",
+			inTx.Confirmations, "Confirmations\n",
+			inTx.MempoolTime, "MempoolTime\n",
+			inTx.StockExchangeRate, "StockExchangeRate\n",
+			inTx.TxAddress, "TxAddress\n",
+			inTx.TxFee, "TxFee\n",
+			inTx.TxHash, "TxHash\n",
+			inTx.TxID, "TxID\n",
+			inTx.TxInputs, "TxInputs\n",
+			inTx.TxOutputs, "TxOutputs\n",
+			inTx.TxOutAmount, "TxOutAmount\n",
+			inTx.TxOutScript, "TxOutScript\n",
+			inTx.TxStatus, "TxStatus\n",
+			inTx.UserId, "UserId\n",
+			inTx.WalletsInput, "WalletsInput\n",
+			inTx.WalletsOutput, "WalletsOutput\n",
+		)
 	})
 
 	// Add tx and feerate to mempool
