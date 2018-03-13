@@ -248,3 +248,21 @@ type TransactionETH struct {
 	Fee			int64	`json:"txfee"`
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 }
+
+type CoinType struct {
+	СurrencyID int
+	NetworkID  int
+	SocketPort int
+	SocketURL  string
+}
+
+type MempoolRecord struct {
+	Category int    `json:"category"`
+	HashTX   string `json:"hashTX"`
+}
+
+type DeleteSpendableOutput struct {
+	UserID  string
+	TxID    string
+	Address string
+}
