@@ -36,7 +36,7 @@ func SetWsHandlers(cli *gosocketio.Client) {
 
 	cli.On("deleteSpout", func(c *gosocketio.Channel, delSpOut store.DeleteSpendableOutput) {
 		// TODO: handle delete sp outs
-		fmt.Println(delSpOut, " \ndeleteSpout\n")
+		fmt.Println(delSpOut, " \ndeleteSpout\n"
 	})
 
 	// Tx history
