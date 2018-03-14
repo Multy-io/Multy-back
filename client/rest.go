@@ -48,6 +48,7 @@ const (
 	msgErrNoSpendableOutputs    = "no spendable outputs"
 	msgErrRatesError            = "internal server error rates"
 	msgErrDecodeWalletIndexErr  = "wrong wallet index"
+	msgErrDecodeNetworkIDErr  = "wrong network id"
 	msgErrNoSpendableOuts       = "no spendable outputs"
 	msgErrDecodeCurIndexErr     = "wrong currency index"
 	msgErrDecodeSubnetErr       = "wrong subnet index"
@@ -1097,14 +1098,39 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			return
 		}
 
+		networkId, err := strconv.Atoi(c.Param("networkid"))
+		restClient.log.Debugf("getWalletVerbose [%d] \t[networkID=%s]", networkId, c.Request.RemoteAddr)
+		if err != nil {
+			restClient.log.Errorf("getWalletVerbose: non int networkid:[%d] %s \t[addr=%s]", networkId, err.Error(), c.Request.RemoteAddr)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrDecodeNetworkIDErr,
+				"wallet":  wv,
+			})
+			return
+		}
+
 		var (
 			code    int
 			message string
 		)
 		user := store.User{}
-		query := bson.M{"devices.JWT": token, "wallets.walletIndex": walletIndex}
+		//query := bson.M{"devices.JWT": token, "wallets.walletIndex": walletIndex}
+		queryBTC := bson.M{"devices.JWT": token, "wallets.walletIndex": walletIndex}
 
-		if err := restClient.userStore.FindUser(query, &user); err != nil {
+		if err := restClient.userStore.FindUser(queryBTC, &user); err != nil {
+			restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+			c.JSON(code, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrUserNotFound,
+				"wallet":  wv,
+			})
+			return
+		}
+
+		queryETH := bson.M{"devices.JWT": token, "walletsEth.walletIndex": walletIndex}
+
+		if err := restClient.userStore.FindUser(queryETH, &user); err != nil {
 			restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 			c.JSON(code, gin.H{
 				"code":    http.StatusBadRequest,
@@ -1125,16 +1151,16 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			return
 		}
 
-		subnet, err := strconv.Atoi(c.Param("subnet"))
-		restClient.log.Debugf("getWalletVerbose [%d] \t[subnet=%s]", walletIndex, c.Request.RemoteAddr)
-		if err != nil {
-			restClient.log.Errorf("getWalletVerbose: non int subnet index:[%d] %s \t[addr=%s]", walletIndex, err.Error(), c.Request.RemoteAddr)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrDecodeSubnetErr,
-			})
-			return
-		}
+		//subnet, err := strconv.Atoi(c.Param("subnet"))
+		//restClient.log.Debugf("getWalletVerbose [%d] \t[subnet=%s]", walletIndex, c.Request.RemoteAddr)
+		//if err != nil {
+		//	restClient.log.Errorf("getWalletVerbose: non int subnet index:[%d] %s \t[addr=%s]", walletIndex, err.Error(), c.Request.RemoteAddr)
+		//	c.JSON(http.StatusBadRequest, gin.H{
+		//		"code":    http.StatusBadRequest,
+		//		"message": msgErrDecodeSubnetErr,
+		//	})
+		//	return
+		//}
 
 		switch currencyId {
 		case currencies.Bitcoin:
@@ -1147,7 +1173,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 
 					var pending bool
 					for _, address := range wallet.Adresses {
-						spOuts := getBTCAddressSpendableOutputs(address.Address, currencyId, subnet, restClient)
+						spOuts := getBTCAddressSpendableOutputs(address.Address, currencyId, networkId, restClient)
 
 						for _, spOut := range spOuts {
 							if spOut.TxStatus == store.TxStatusAppearedInMempoolIncoming {
@@ -1159,7 +1185,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 							LastActionTime: address.LastActionTime,
 							Address:        address.Address,
 							AddressIndex:   address.AddressIndex,
-							Amount:         int64(checkBTCAddressbalance(address.Address, currencyId, subnet, restClient)),
+							Amount:         int64(checkBTCAddressbalance(address.Address, currencyId, networkId, restClient)),
 							SpendableOuts:  spOuts,
 						})
 					}
@@ -1282,7 +1308,7 @@ type StockExchangeRate struct {
 
 type TopIndex struct {
 	CurrencyID int `json:"currencyid"`
-	NetworkID  int `json:"networkID"`
+	NetworkID  int `json:"networkid"`
 	TopIndex   int `json:"topindex"`
 }
 
