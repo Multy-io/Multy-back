@@ -50,10 +50,19 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	log.Infof("InitHandlers: mgo.Dial: √")
 
 	usersData = db.DB(dbConf.DBUsers).C(store.TableUsers) // all db tables
-	mempoolRates = db.DB(dbConf.DBFeeRates).C(store.TableFeeRates)
-	txsData = db.DB(dbConf.DBTx).C(store.TableBTC)
 	exRate = db.DB("DBStockExchangeRate").C("TableStockExchangeRate")
-	spendableOutputs = db.DB(dbConf.DBTx).C("SpendableOutputs")
+
+	//TODO: set table names from conf
+
+	// main
+	mempoolRates = db.DB(dbConf.DBFeeRates).C(store.TableFeeRates)
+	txsData = db.DB(dbConf.DBTx).C("BTCMainTxData")
+	spendableOutputs = db.DB(dbConf.DBTx).C("BTCMainspendableOutputs")
+
+	// test
+	mempoolRatesTest = db.DB(dbConf.DBFeeRates).C("Rates-Test")
+	txsDataTest = db.DB(dbConf.DBTx).C("BTCTestTxData")
+	spendableOutputsTest = db.DB(dbConf.DBTx).C("BTCTestspendableOutputs")
 
 	/*
 		url , port , err := fethCoinType(coinTypes,currencies.Bitcoin, currencies.Main)
@@ -85,7 +94,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	WsCliTest = testnetCli
 	log.Infof("InitHandlers: gosocketio.Dial Test: √")
 
-	SetWsHandlers(WsCliTest)
+	SetWsHandlers(WsCliTest, currencies.Test)
 	log.Infof("InitHandlers: SetWsHandlers Test: √")
 
 	//request all mempool

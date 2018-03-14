@@ -104,14 +104,14 @@ func SetRestHandlers(
 		v1.POST("/wallet", restClient.addWallet())
 		v1.DELETE("/wallet/:currencyid/:subnet/:walletindex", restClient.deleteWallet())         // add subnet
 		v1.POST("/address", restClient.addAddress())                                             // add subnet
-		v1.GET("/transaction/feerate/:currencyid", restClient.getFeeRate())                      // add subnet
+		v1.GET("/transaction/feerate/:currencyid/:subnet", restClient.getFeeRate())              // add subnet
 		v1.GET("/outputs/spendable/:currencyid/:subnet/:addr", restClient.getSpendableOutputs()) // add subnet
 		// v1.POST("/transaction/send/:currencyid", restClient.sendRawTransaction(btcNodeAddress)) 			// depricated
-		v1.POST("/transaction/send", restClient.sendRawHDTransaction())                                     // add subnet
-		v1.GET("/wallet/:walletindex/verbose/:currencyid/:subnet", restClient.getWalletVerbose())           // add subnet
-		v1.GET("/wallets/verbose", restClient.getAllWalletsVerbose())                                       // add subnet
-		v1.GET("/wallets/transactions/:currencyid/:walletindex", restClient.getWalletTransactionsHistory()) // add subnet
-		v1.POST("/wallet/name", restClient.changeWalletName())                                              // add subnet
+		v1.POST("/transaction/send", restClient.sendRawHDTransaction())                                             // add subnet
+		v1.GET("/wallet/:walletindex/verbose/:currencyid/:subnet", restClient.getWalletVerbose())                   // add subnet
+		v1.GET("/wallets/verbose", restClient.getAllWalletsVerbose())                                               // add subnet
+		v1.GET("/wallets/transactions/:currencyid/:subnet/:walletindex", restClient.getWalletTransactionsHistory()) // add subnet
+		v1.POST("/wallet/name", restClient.changeWalletName())                                                      // add subnet
 		v1.GET("/exchange/changelly/list", restClient.changellyListCurrencies())
 		v1.GET("/drop", restClient.drop())
 	}
@@ -608,7 +608,7 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 		subnet, err := strconv.Atoi(c.Param("subnet"))
 		restClient.log.Debugf("getWalletVerbose [%d] \t[subnet=%s]", walletIndex, c.Request.RemoteAddr)
 		if err != nil {
-			restClient.log.Errorf("getWalletVerbose: non int wallet index:[%d] %s \t[addr=%s]", walletIndex, err.Error(), c.Request.RemoteAddr)
+			restClient.log.Errorf("getWalletVerbose: non int subnet index:[%d] %s \t[addr=%s]", walletIndex, err.Error(), c.Request.RemoteAddr)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
 				"message": msgErrDecodeSubnetErr,
@@ -757,7 +757,7 @@ func (restClient *RestClient) addAddress() gin.HandlerFunc {
 func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var sp EstimationSpeeds
-		currencyId, err := strconv.Atoi(c.Param("currencyid"))
+		currencyID, err := strconv.Atoi(c.Param("currencyid"))
 		if err != nil {
 			restClient.log.Errorf("getWalletVerbose: non int currency id: %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -768,13 +768,24 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 			return
 		}
 
-		switch currencyId {
+		subnet, err := strconv.Atoi(c.Param("subnet"))
+		restClient.log.Debugf("getWalletVerbose [%d] \t[subnet=%s]", subnet, c.Request.RemoteAddr)
+		if err != nil {
+			restClient.log.Errorf("getWalletVerbose: non int subnet index:[%d] %s \t[addr=%s]", subnet, err.Error(), c.Request.RemoteAddr)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrDecodeSubnetErr,
+			})
+			return
+		}
+
+		switch currencyID {
 		case currencies.Bitcoin:
 			var rates []store.RatesRecord
 			speeds := []int{
 				1, 2, 3, 4, 5,
 			}
-			if err := restClient.userStore.GetAllRates("category", &rates); err != nil {
+			if err := restClient.userStore.GetAllRates(currencyID, subnet, "category", &rates); err != nil {
 				c.JSON(http.StatusOK, gin.H{
 					"speeds":  sp,
 					"code":    http.StatusInternalServerError,
@@ -1502,9 +1513,19 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 			return
 		}
 
+		subnet, err := strconv.Atoi(c.Param("subnet"))
+		restClient.log.Debugf("getWalletVerbose [%d] \t[subnet=%s]", walletIndex, c.Request.RemoteAddr)
+		if err != nil {
+			restClient.log.Errorf("getWalletVerbose: non int subnet index:[%d] %s \t[addr=%s]", walletIndex, err.Error(), c.Request.RemoteAddr)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrDecodeSubnetErr,
+			})
+			return
+		}
+
 		switch currencyId {
 		case currencies.Bitcoin:
-
 			//TODO: get block height
 			// blockHeight, err := btc.GetBlockHeight()
 			// if err != nil {
@@ -1512,9 +1533,8 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 			// }
 			blockHeight := int64(0)
 
-			query := bson.M{"userid": user.UserID}
 			userTxs := []store.MultyTX{}
-			err = restClient.userStore.GetAllWalletTransactions(query, &userTxs)
+			err = restClient.userStore.GetAllWalletTransactions(user.UserID, currencyId, subnet, &userTxs)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"code":    http.StatusBadRequest,

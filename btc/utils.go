@@ -17,11 +17,16 @@ import (
 )
 
 var (
-	usersData        *mgo.Collection
+	exRate    *mgo.Collection
+	usersData *mgo.Collection
+
 	mempoolRates     *mgo.Collection
 	txsData          *mgo.Collection
-	exRate           *mgo.Collection
 	spendableOutputs *mgo.Collection
+
+	mempoolRatesTest     *mgo.Collection
+	txsDataTest          *mgo.Collection
+	spendableOutputsTest *mgo.Collection
 )
 
 func newAddresAmount(address string, amount int64) store.AddresAmount {
