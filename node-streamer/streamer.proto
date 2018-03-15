@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+service NodeCommuunications {
+    rpc LotsOfReplies (CliRequest) returns (stream SrvReply) {
+    }
+
+    rpc EventInitialAdd (UsersData) returns (ReplyInfo){
+    }
+
+    rpc EventGetAllMempool (Empty) returns (ReplyInfo){
+    }
+
+    rpc EventResyncAddress (AddressToResync) returns (ReplyInfo){
+    }
+
+    rpc EventSendRawTx (RawTx) returns (ReplyInfo){
+    }
+
+    rpc EventAddNewAddress (WatchAddress) returns (ReplyInfo){
+    }
+
+    rpc EventDeleteMempool (AddressToDelete) returns (ReplyInfo){
+    }
+
+    rpc EventDeleteSpendableOut (Empty) returns (stream ReqDeleteSpOut){
+    }
+
+    rpc EventAddSpendableOut (Empty) returns (stream AddSpOut){
+    }
+
+    rpc NewTx (Empty) returns (stream BTCTransaction){
+    }
+
+
+}
+
+message BTCTransaction {
+    string userID = 1;                        
+	string txID = 2;                       
+	string txHash = 3;                      
+	string txOutScript = 4;  
+    repeated string txAddress = 5;   
+	int32 txStatus = 6;        
+	int64 txOutAmount = 7;          
+	int64 blockTime = 8;         
+	int64 blockHeight = 9;      
+    int32 confirmations = 10;         
+	int64 txFee = 11;        
+	int64 mempoolTime = 12;        
+
+    message AddresAmount {
+        string Address = 1;
+        int64 Amount = 2;
+    }   
+	repeated AddresAmount txInputs = 13;
+    repeated AddresAmount TxOutputs = 14;
+}
+
+message AddSpOut {
+    string txID = 1;
+	int32 txOutID = 2;
+	int64 txOutAmount = 3;
+    string txOutScript = 4;
+    string address = 5;
+    string userID = 6;
+    int32 txStatus = 7;
+}
+
+message ReqDeleteSpOut {
+    string userID = 1;
+	string txID = 2;
+	string address = 3;
+}
+
+message AddressToDelete {
+   string address = 1;
+}
+
+message WatchAddress {
+   string address = 1;
+}
+
+message Empty {
+
+}
+
+message RawTx {
+   string transaction = 1;
+}
+
+message AddressToResync {
+   string address = 1;
+}
+
+
+message UsersData {
+    map<string, string> map = 1;
+}
+
+message ReplyInfo {
+    string message = 1;
+}
+
+message CliRequest {
+    string request = 1;
+}
+
+message SrvReply {
+    string reply = 1;
+}

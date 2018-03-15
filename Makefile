@@ -20,7 +20,7 @@ deps:
 	govendor sync
 
 build:
-	cd cmd && go build $(LD_OPTS) -o $(NAME) . && cd -
+	cd node-streamer/ && protoc --go_out=plugins=grpc:. *.proto && cd ../cmd/ && go build $(LD_OPTS) -o $(NAME) . && cd -
 
 # Show to-do items per file.
 todo:
@@ -34,7 +34,7 @@ todo:
 .PHONY: todo
 
 dist:
-	cd cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
+	cd node-streamer/ protoc --go_out=plugins=grpc:. *.proto && cd ../cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
 
 test:
 	cd cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o test .
