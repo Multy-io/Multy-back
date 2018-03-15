@@ -2,6 +2,7 @@ package btc
 
 import (
 	"fmt"
+	"runtime/debug"
 
 	"gopkg.in/mgo.v2"
 
@@ -24,11 +25,12 @@ const (
 func SetWsHandlers(cli *gosocketio.Client, networkID int) {
 
 	cli.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
-		fmt.Printf("\n\n\n\n Ws Connected to Service Node\n\n\n\n\n")
+		log.Errorf("\n\n\n\n Ws Connected to Service Node\n\n\n\n\n")
 	})
 
 	cli.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
-		fmt.Printf("\n\n\n\n Ws Disconnected from Service Node\n\n\n\n\n")
+		debug.PrintStack()
+		log.Errorf("\n\n\n\n Ws Disconnected from Service Node\n\n\n\n\n")
 	})
 
 	cli.On("newSpout", func(c *gosocketio.Channel, spOut store.SpendableOutputs) {

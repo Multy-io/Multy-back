@@ -32,12 +32,13 @@ var (
 
 var log = slf.WithContext("btc")
 
-// TODO: cofigurations for multiple database names
-func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string) error {
+//InitHandlers init nsq mongo and ws connection to node
+// return main client , test client , err
+func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string) (*gosocketio.Client, *gosocketio.Client, error) {
 	config := nsq.NewConfig()
 	p, err := nsq.NewProducer(nsqAddr, config)
 	if err != nil {
-		return fmt.Errorf("nsq producer: %s", err.Error())
+		return WsCliMain, WsCliTest, fmt.Errorf("nsq producer: %s", err.Error())
 	}
 	nsqProducer = p
 	log.Infof("InitHandlers: nsq.NewProducer: √")
@@ -45,7 +46,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	db, err := mgo.Dial(dbConf.Address)
 	if err != nil {
 		log.Errorf("RunProcess: can't connect to DB: %s", err.Error())
-		return fmt.Errorf("mgo.Dial: %s", err.Error())
+		return WsCliMain, WsCliTest, fmt.Errorf("mgo.Dial: %s", err.Error())
 	}
 	log.Infof("InitHandlers: mgo.Dial: √")
 
@@ -64,36 +65,48 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	txsDataTest = db.DB(dbConf.DBTx).C("BTCTestTxData")
 	spendableOutputsTest = db.DB(dbConf.DBTx).C("BTCTestspendableOutputs")
 
+	// TODO: uncomment to support mainnet
 	/*
-		url , port , err := fethCoinType(coinTypes,currencies.Bitcoin, currencies.Main)
+		// setup mainnet
+		url, port, err := fethCoinType(coinTypes, currencies.Bitcoin, currencies.Main)
 		if err != nil {
-			return nil , err
+			return WsCliMain, WsCliTest,fmt.Errorf("fethCoinType: %s", err.Error())
 		}
 		mainnetCli, err := gosocketio.Dial(
 			gosocketio.GetUrl(url, port, false),
 			transport.GetDefaultWebsocketTransport())
 		if err != nil {
-			return nil, fmt.Errorf("gosocketio.Dial: %s", err.Error())
+			return WsCliMain, WsCliTest,fmt.Errorf("gosocketio.Dial: %s", err.Error())
 		}
 		WsCliMain = mainnetCli
 		log.Infof("InitHandlers: gosocketio.Dial Main: √")
-
-		TODO: uncomment when need to connect to mainnet
+		go SetWsHandlers(WsCliMain, currencies.Main)
+		log.Infof("InitHandlers: SetWsHandlers Main: √")
 	*/
 
+	// setup testnet
 	url, port, err := fethCoinType(coinTypes, currencies.Bitcoin, currencies.Test)
 	if err != nil {
-		return fmt.Errorf("fethCoinType: %s", err.Error())
+		return WsCliMain, WsCliTest, fmt.Errorf("fethCoinType: %s", err.Error())
 	}
+
+	t := transport.GetDefaultWebsocketTransport()
+	// t.PingInterval = time.Second * 5
+	// t.PingTimeout = time.Second * 5
+	// t.ReceiveTimeout = time.Second * 5
+	// t.SendTimeout = time.Second * 5
+	t.BufferSize = 1000000000
+
+	fmt.Println(transport.GetDefaultWebsocketTransport().ReceiveTimeout)
 	testnetCli, err := gosocketio.Dial(
 		gosocketio.GetUrl(url, port, false),
-		transport.GetDefaultWebsocketTransport())
+		t)
 	if err != nil {
-		return fmt.Errorf("gosocketio.Dial: %s", err.Error())
+		return WsCliMain, WsCliTest, fmt.Errorf("gosocketio.Dial: %s", err.Error())
 	}
+
 	WsCliTest = testnetCli
 	log.Infof("InitHandlers: gosocketio.Dial Test: √")
-
 	SetWsHandlers(WsCliTest, currencies.Test)
 	log.Infof("InitHandlers: SetWsHandlers Test: √")
 
@@ -103,7 +116,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 		fmt.Println(err.Error())
 	}
 
-	return nil
+	return WsCliMain, WsCliTest, nil
 }
 
 func fethCoinType(coinTypes []store.CoinType, currencyID, networkID int) (string, int, error) {
