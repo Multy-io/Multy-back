@@ -95,7 +95,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	// t.PingTimeout = time.Second * 5
 	// t.ReceiveTimeout = time.Second * 5
 	// t.SendTimeout = time.Second * 5
-	t.BufferSize = 1000000000
+	// t.BufferSize = 1000000000
 
 	fmt.Println(transport.GetDefaultWebsocketTransport().ReceiveTimeout)
 	testnetCli, err := gosocketio.Dial(

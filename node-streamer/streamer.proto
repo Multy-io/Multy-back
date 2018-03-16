@@ -1,13 +1,17 @@
 syntax = "proto3";
 
 service NodeCommuunications {
-    rpc LotsOfReplies (CliRequest) returns (stream SrvReply) {
-    }
 
     rpc EventInitialAdd (UsersData) returns (ReplyInfo){
     }
+        
+    rpc EventAddNewAddress (WatchAddress) returns (ReplyInfo){
+    }
 
-    rpc EventGetAllMempool (Empty) returns (ReplyInfo){
+    rpc EventGetAllMempool (Empty) returns (stream MempoolRecord){
+    }
+
+    rpc EventAddMempoolRecord (Empty) returns (stream MempoolRecord){
     }
 
     rpc EventResyncAddress (AddressToResync) returns (ReplyInfo){
@@ -16,10 +20,7 @@ service NodeCommuunications {
     rpc EventSendRawTx (RawTx) returns (ReplyInfo){
     }
 
-    rpc EventAddNewAddress (WatchAddress) returns (ReplyInfo){
-    }
-
-    rpc EventDeleteMempool (AddressToDelete) returns (ReplyInfo){
+    rpc EventDeleteMempool (Empty) returns (stream MempoolToDelete){
     }
 
     rpc EventDeleteSpendableOut (Empty) returns (stream ReqDeleteSpOut){
@@ -49,9 +50,10 @@ message BTCTransaction {
 	int64 mempoolTime = 12;        
 
     message AddresAmount {
-        string Address = 1;
-        int64 Amount = 2;
+        string address = 1;
+        int64 amount = 2;
     }   
+
 	repeated AddresAmount txInputs = 13;
     repeated AddresAmount TxOutputs = 14;
 }
@@ -72,13 +74,20 @@ message ReqDeleteSpOut {
 	string address = 3;
 }
 
-message AddressToDelete {
-   string address = 1;
+message MempoolToDelete {
+   string hash = 1;
 }
 
 message WatchAddress {
    string address = 1;
+   string userID = 2;
 }
+
+ message MempoolRecord {
+   int32 category = 1;    
+   string hashTX = 2;
+}
+
 
 message Empty {
 
@@ -99,12 +108,4 @@ message UsersData {
 
 message ReplyInfo {
     string message = 1;
-}
-
-message CliRequest {
-    string request = 1;
-}
-
-message SrvReply {
-    string reply = 1;
 }
