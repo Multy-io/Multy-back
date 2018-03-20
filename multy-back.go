@@ -72,26 +72,12 @@ func Init(conf *Configuration) (*Multy, error) {
 	}
 
 	multy.BTC = btcCli
-	// stream, err := multy.BTC.CliTest.EventGetAllMempool(context.Background(), &pb.Empty{})
-	// if err != nil {
-	// 	log.Errorf("Error getting replies: %v", err)
-	// }
-	// for {
-	// 	mp, err := stream.Recv()
-	// 	if err == io.EOF {
-	// 		break
-	// 	}
-	// 	if err != nil {
-	// 		log.Fatalf("streaming error: %v", err)
-	// 	}
-	// 	log.Infof("mempool data: %v - %v", mp.HashTX, mp.Category)
-	// }
 
-	log.Infof(" BTC Init initialization done √")
+	log.Infof(" BTC initialization done √")
 
 	err = SetUserData(multy.BTC, multy.userStore, conf.SupportedNodes)
 
-	log.Infof("WsBtcTestnetCli SetUserData Test initialization done √")
+	log.Infof("BTC Users data  initialization done √")
 
 	if err = multy.initHttpRoutes(conf); err != nil {
 		return nil, fmt.Errorf("Router initialization: %s", err.Error())
@@ -101,7 +87,6 @@ func Init(conf *Configuration) (*Multy, error) {
 
 // SetUserData make initial userdata to node service
 func SetUserData(btcCli *btc.BTCConn, userStore store.UserStore, ct []store.CoinType) error {
-
 	for _, conCred := range ct {
 		switch conCred.СurrencyID {
 		case currencies.Bitcoin:
@@ -112,15 +97,26 @@ func SetUserData(btcCli *btc.BTCConn, userStore store.UserStore, ct []store.Coin
 			if len(usersData) == 0 {
 				log.Infof("Empty userdata")
 			}
+			log.Errorf("\n\n\n usersData cur%d subnet%d \n %v \n\n", conCred.СurrencyID, conCred.NetworkID, usersData)
 
-			ud := &pb.UsersData{
-				Map: usersData,
+			switch conCred.NetworkID {
+			case currencies.Main:
+				resp, err := btcCli.CliMain.EventInitialAdd(context.Background(), &pb.UsersData{
+					Map: usersData,
+				})
+				if err != nil {
+					return fmt.Errorf("SetUserData:  btcCli.CliMain.EventInitialAdd: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+				}
+				log.Debugf("btcCli.CliMain.EventInitialAdd: resp: %s", resp.Message)
+			case currencies.Test:
+				resp, err := btcCli.CliTest.EventInitialAdd(context.Background(), &pb.UsersData{
+					Map: usersData,
+				})
+				if err != nil {
+					return fmt.Errorf("SetUserData: btcCli.CliTest.EventInitialAdd: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+				}
+				log.Debugf("btcCli.CliMain.EventInitialAdd: resp: %s", resp.Message)
 			}
-			reply, err := btcCli.CliTest.EventInitialAdd(context.Background(), ud)
-			if err != nil {
-				return fmt.Errorf("SetUserData: btcCli.CliTest.EventInitialAdd: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
-			}
-			log.Infof("SetUserData : %s", reply.Message)
 
 		case currencies.Ether:
 			//soon

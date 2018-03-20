@@ -27,9 +27,11 @@ const (
 // Dirty hack - this will be wrapped to a struct
 
 type BTCConn struct {
-	NsqProducer *nsq.Producer // a producer for sending data to clients
-	CliTest     pb.NodeCommuunicationsClient
-	CliMain     pb.NodeCommuunicationsClient
+	NsqProducer      *nsq.Producer // a producer for sending data to clients
+	CliTest          pb.NodeCommuunicationsClient
+	CliMain          pb.NodeCommuunicationsClient
+	WatchAddressTest chan pb.WatchAddress
+	WatchAddressMain chan pb.WatchAddress
 }
 
 var log = slf.WithContext("btc")
@@ -39,6 +41,14 @@ var log = slf.WithContext("btc")
 func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string) (*BTCConn, error) {
 	//declare pacakge struct
 	cli := &BTCConn{}
+
+	// waM := make(chan pb.WatchAddress)
+	// waT := make(chan pb.WatchAddress)
+	// cli.WatchAddressMain = &waM
+	// cli.WatchAddressTest = &waT
+
+	cli.WatchAddressMain = make(chan pb.WatchAddress)
+	cli.WatchAddressTest = make(chan pb.WatchAddress)
 
 	config := nsq.NewConfig()
 	p, err := nsq.NewProducer(nsqAddr, config)
@@ -82,7 +92,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
 	//TODO: uncomment
-	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.Main)
+	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.Main, cli.WatchAddressMain)
 
 	cli.CliMain = cliMain
 	log.Infof("InitHandlers: initGrpcClient: Main: √")
@@ -97,7 +107,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
 	//TODO: uncomment
-	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.Test)
+	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.Test, cli.WatchAddressTest)
 
 	cli.CliTest = cliTest
 	log.Infof("InitHandlers: initGrpcClient: Test: √")

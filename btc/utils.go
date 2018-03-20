@@ -83,7 +83,7 @@ func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRes
 
 			finalizeTransaction(&transaction, txVerbose)
 			setUserID(&transaction)
-			saveMultyTransaction(transaction)
+			SaveMultyTransaction(transaction)
 			updateWalletAndAddressDate(transaction)
 			// if !isReSync {
 			// 	go func() {
@@ -249,7 +249,7 @@ func newEntity(multyTx store.MultyTX) store.MultyTX {
 	return newTx
 }
 
-func saveMultyTransaction(tx store.MultyTX) {
+func SaveMultyTransaction(tx store.MultyTX) {
 	// This is splited transaction! That means that transaction's WalletsInputs and WalletsOutput have the same WalletIndex!
 	//Here we have outgoing transaction for exact wallet!
 	multyTX := store.MultyTX{}

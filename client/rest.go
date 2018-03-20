@@ -85,12 +85,13 @@ func SetRestHandlers(
 	userDB store.UserStore,
 	r *gin.Engine,
 	donationAddresses []store.DonationInfo,
-	BTC *btc.BTCConn,
+	btc *btc.BTCConn,
 ) (*RestClient, error) {
 	restClient := &RestClient{
 		userStore:         userDB,
 		log:               slf.WithContext("rest-client"),
 		donationAddresses: donationAddresses,
+		BTC:               btc,
 	}
 	initMiddlewareJWT(restClient)
 
@@ -241,12 +242,12 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 		}
 
 		//TODO: uncomment
-		// err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, user.UserID, wp.Address, restClient)
-		// if err != nil {
-		// 	restClient.log.Errorf("createCustomWallet: AddWatchAndResync: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-		// 	err := errors.New(msgErrServerError)
-		// 	return err
-		// }
+		err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, user.UserID, wp.Address, restClient)
+		if err != nil {
+			restClient.log.Errorf("createCustomWallet: AddWatchAndResync: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+			err := errors.New(msgErrServerError)
+			return err
+		}
 	case currencies.Ether:
 		walletETH := createWallet(wp.CurrencyID, wp.NetworkID, wp.Address, wp.AddressIndex, wp.WalletIndex, wp.WalletName)
 		update := bson.M{"$push": bson.M{"walletsEth": walletETH}}
@@ -372,22 +373,6 @@ func AddWatchAndResync(currencyID, networkid int, userid, address string, restCl
 		return err
 	}
 
-	switch currencyID {
-	case currencies.Bitcoin:
-		restClient.log.Debugf("btc main WatchAndResync: address added: %s\t", address)
-
-		err = ResyncAddress(address, restClient, currencyID, networkid)
-		if err != nil {
-			restClient.log.Errorf("AddWatchAndResync: currencies.Test: WsBtcMainnetCli.Emit:resync %s\t", err.Error())
-			return err
-		}
-
-	case currencies.Ether:
-		// TODO: implement re-sync method ... and much more
-		return nil
-	default:
-		return nil
-	}
 	return nil
 }
 
@@ -395,52 +380,22 @@ func NewAddressNode(address, userid string, currencyID, networkID int, restClien
 	switch currencyID {
 	case currencies.Bitcoin:
 		if networkID == currencies.Main {
-			wa := pb.WatchAddress{
+			restClient.BTC.WatchAddressMain <- pb.WatchAddress{
 				Address: address,
 				UserID:  userid,
 			}
-			rp, err := restClient.BTC.CliMain.EventAddNewAddress(context.Background(), &wa)
-			if err != nil {
-				restClient.log.Errorf("NewAddressNode: restClient.BTC.CliMain.EventAddNewAddress %s\n", err.Error())
-				return err
-			}
-			restClient.log.Debugf("EventAddNewAddress Reply %s", rp.Message)
 		}
 
 		if networkID == currencies.Test {
-			wa := pb.WatchAddress{
+			restClient.BTC.WatchAddressTest <- pb.WatchAddress{
 				Address: address,
 				UserID:  userid,
 			}
-			rp, err := restClient.BTC.CliTest.EventAddNewAddress(context.Background(), &wa)
-			if err != nil {
-				restClient.log.Errorf("NewAddressNode: restClient.BTC.CliMain.EventAddNewAddress %s\n", err.Error())
-				return err
-			}
-			restClient.log.Debugf("EventAddNewAddress Reply %s", rp.Message)
-		}
-	}
-	return nil
-}
-
-func ResyncAddress(address string, restClient *RestClient, currencyID, networkID int) error {
-	var err error
-	switch currencyID {
-	case currencies.Bitcoin:
-		if networkID == currencies.Main {
-			restClient.BTC.CliMain.EventResyncAddress(context.Background(), &pb.AddressToResync{
-				Address: address,
-			})
-		}
-		if networkID == currencies.Test {
-			restClient.BTC.CliTest.EventResyncAddress(context.Background(), &pb.AddressToResync{
-				Address: address,
-			})
 		}
 	case currencies.Ether:
-
+		//soon
 	}
-	return err
+	return nil
 }
 
 func (restClient *RestClient) drop() gin.HandlerFunc {
@@ -451,7 +406,6 @@ func (restClient *RestClient) drop() gin.HandlerFunc {
 
 func (restClient *RestClient) addWallet() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
 		token, err := getToken(c)
 		if err != nil {
 			restClient.log.Errorf("addWallet: getToken: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
@@ -974,7 +928,7 @@ func (restClient *RestClient) sendRawHDTransaction() gin.HandlerFunc {
 
 			return
 		}
-
+		code := http.StatusOK
 		switch rawTx.CurrencyID {
 		case currencies.Bitcoin:
 			if rawTx.NetworkID == currencies.Main {
@@ -984,31 +938,39 @@ func (restClient *RestClient) sendRawHDTransaction() gin.HandlerFunc {
 				})
 				if err != nil {
 					restClient.log.Errorf("sendRawHDTransaction: restClient.BTC.CliMain.EventSendRawTx: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-				}
-				code := http.StatusOK
-				if errHandler(resp.Message) {
-					code = http.StatusInternalServerError
+					code = http.StatusBadRequest
+					c.JSON(code, gin.H{
+						"code":    code,
+						"message": err.Error(),
+					})
+					return
 				}
 				c.JSON(code, gin.H{
 					"code":    code,
-					"message": resp,
+					"message": resp.Message,
 				})
+				return
+
 			}
 			if rawTx.NetworkID == currencies.Test {
+
 				resp, err := restClient.BTC.CliTest.EventSendRawTx(context.Background(), &pb.RawTx{
 					Transaction: rawTx.Transaction,
 				})
 				if err != nil {
 					restClient.log.Errorf("sendRawHDTransaction: restClient.BTC.CliMain.EventSendRawTx: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-				}
-				code := http.StatusOK
-				if errHandler(resp.Message) {
-					code = http.StatusInternalServerError
+					code = http.StatusBadRequest
+					c.JSON(code, gin.H{
+						"code":    code,
+						"message": err.Error(),
+					})
+					return
 				}
 				c.JSON(code, gin.H{
 					"code":    code,
-					"message": resp,
+					"message": resp.Message,
 				})
+				return
 			}
 
 		case currencies.Ether:
@@ -1566,12 +1528,32 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 
 		switch currencyId {
 		case currencies.Bitcoin:
-			//TODO: get block height
-			// blockHeight, err := btc.GetBlockHeight()
-			// if err != nil {
-			// 	restClient.log.Errorf("getWalletVerbose: btc.GetBlockHeight: %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			// }
-			blockHeight := int64(0)
+
+			var blockHeight int64
+			switch networkid {
+			case currencies.Test:
+				resp, err := restClient.BTC.CliTest.EventGetBlockHeight(context.Background(), &pb.Empty{})
+				if err != nil {
+					restClient.log.Errorf("getWalletTransactionsHistory: restClient.BTC.CliTest.EventGetBlockHeight %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					c.JSON(http.StatusInternalServerError, gin.H{
+						"code":    http.StatusInternalServerError,
+						"message": http.StatusText(http.StatusInternalServerError),
+					})
+					return
+				}
+				blockHeight = resp.Height
+			case currencies.Main:
+				resp, err := restClient.BTC.CliMain.EventGetBlockHeight(context.Background(), &pb.Empty{})
+				if err != nil {
+					restClient.log.Errorf("getWalletTransactionsHistory: restClient.BTC.CliTest.EventGetBlockHeight %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					c.JSON(http.StatusInternalServerError, gin.H{
+						"code":    http.StatusInternalServerError,
+						"message": http.StatusText(http.StatusInternalServerError),
+					})
+					return
+				}
+				blockHeight = resp.Height
+			}
 
 			userTxs := []store.MultyTX{}
 			err = restClient.userStore.GetAllWalletTransactions(user.UserID, currencyId, networkid, &userTxs)

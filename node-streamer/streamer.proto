@@ -8,6 +8,9 @@ service NodeCommuunications {
     rpc EventAddNewAddress (WatchAddress) returns (ReplyInfo){
     }
 
+    rpc EventGetBlockHeight (Empty) returns (BlockHeight){
+    }
+
     rpc EventGetAllMempool (Empty) returns (stream MempoolRecord){
     }
 
@@ -66,6 +69,10 @@ message AddSpOut {
     string address = 5;
     string userID = 6;
     int32 txStatus = 7;
+}
+
+message BlockHeight{
+    int64 height = 1 ;
 }
 
 message ReqDeleteSpOut {

@@ -24,10 +24,8 @@ import (
 // func (mw *GinJWTMiddleware) LoginHandler(c *gin.Context) {
 func (restClient *RestClient) LoginHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
 		// Initial middleware default setting.
 		restClient.middlewareJWT.MiddlewareInit()
-
 		var loginVals Login
 
 		if c.ShouldBindWith(&loginVals, binding.JSON) != nil {

@@ -22,17 +22,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-const (
-	EventAddNewAddress        = "newAddress"
-	EventResyncAddress        = "resync"
-	EventSendRawTx            = "sendRaw"
-	EventGetAllMempool        = "getAllMempool"
-	EventMempool              = "mempool"
-	EventDeleteMempoolOnBlock = "deleteMempool"
-	Room                      = "node"
-)
-
-func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int) {
+func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress) {
 
 	// initial fill mempool respectively network id
 	go func() {
@@ -248,16 +238,6 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())
 		}
 
-		txData := &mgo.Collection{}
-		switch networtkID {
-		case currencies.Main:
-			txData = txsData
-		case currencies.Test:
-			txData = txsDataTest
-		default:
-			log.Errorf("setGRPCHandlers: wrong networkID:")
-		}
-
 		for {
 			gTx, err := stream.Recv()
 			if err == io.EOF {
@@ -279,7 +259,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				if err == mgo.ErrNotFound {
 					continue
 				} else if err != nil && err != mgo.ErrNotFound {
-					log.Errorf("SetWsHandlers: cli.On newIncomingTx: %s", err)
+					log.Errorf("initGrpcClient: cli.On newIncomingTx: %s", err)
 				}
 
 				for _, wallet := range user.Wallets {
@@ -298,7 +278,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				if err == mgo.ErrNotFound {
 					continue
 				} else if err != nil && err != mgo.ErrNotFound {
-					log.Errorf("SetWsHandlers: cli.On newIncomingTx: %s", err)
+					log.Errorf("initGrpcClient: cli.On newIncomingTx: %s", err)
 				}
 
 				for _, wallet := range user.Wallets {
@@ -311,12 +291,37 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				}
 			}
 
-			err = txData.Insert(tx)
+			// err = txData.Insert(tx)
+			err = saveMultyTransaction(tx, networtkID)
 			if err != nil {
-				log.Errorf("SetWsHandlers: txsData.Insert: %s", err)
+				log.Errorf("initGrpcClient: saveMultyTransaction: %s", err)
 			}
 			sendNotifyToClients(tx, nsqProducer)
 
+		}
+	}()
+
+	// watch for channel and push to node
+	go func() {
+		for {
+			select {
+			case addr := <-wa:
+				a := addr
+				rp, err := cli.EventAddNewAddress(context.Background(), &a)
+				if err != nil {
+					log.Errorf("NewAddressNode: cli.EventAddNewAddress %s\n", err.Error())
+				}
+				log.Debugf("EventAddNewAddress Reply %s", rp.Message)
+
+				rp, err = cli.EventResyncAddress(context.Background(), &pb.AddressToResync{
+					Address: addr.Address,
+				})
+				if err != nil {
+					log.Errorf("EventResyncAddress: cli.EventResyncAddress %s\n", err.Error())
+				}
+				log.Debugf("EventResyncAddress Reply %s", rp.Message)
+
+			}
 		}
 	}()
 
@@ -412,6 +417,85 @@ func generatedSpOutsToStore(gSpOut *pb.AddSpOut) store.SpendableOutputs {
 		UserID:      gSpOut.UserID,
 		TxStatus:    int(gSpOut.TxStatus),
 	}
+}
+
+func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
+
+	txsdata := &mgo.Collection{}
+	switch networtkID {
+	case currencies.Main:
+		txsdata = txsData
+	case currencies.Test:
+		txsdata = txsDataTest
+	default:
+		log.Errorf("setGRPCHandlers: wrong networkID:")
+	}
+
+	// This is splited transaction! That means that transaction's WalletsInputs and WalletsOutput have the same WalletIndex!
+	//Here we have outgoing transaction for exact wallet!
+	multyTX := store.MultyTX{}
+	if tx.WalletsInput != nil && len(tx.WalletsInput) > 0 {
+		// sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
+		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
+		err := txsdata.Find(sel).One(&multyTX)
+		if err == mgo.ErrNotFound {
+			// initial insertion
+			err := txsdata.Insert(tx)
+			if err != nil {
+				return err
+			}
+
+		}
+		if err != nil && err != mgo.ErrNotFound {
+			// database error
+			return err
+		}
+
+		update := bson.M{
+			"$set": bson.M{
+				"txstatus":      tx.TxStatus,
+				"blockheight":   tx.BlockHeight,
+				"confirmations": tx.Confirmations,
+				"blocktime":     tx.BlockTime,
+			},
+		}
+		err = txsdata.Update(sel, update)
+		if err != nil {
+			return err
+		}
+		return nil
+	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0 {
+		// sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
+		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
+		err := txsdata.Find(sel).One(&multyTX)
+		if err == mgo.ErrNotFound {
+			// initial insertion
+			err := txsdata.Insert(tx)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		if err != nil && err != mgo.ErrNotFound {
+			// database error
+			return err
+		}
+
+		update := bson.M{
+			"$set": bson.M{
+				"txstatus":      tx.TxStatus,
+				"blockheight":   tx.BlockHeight,
+				"confirmations": tx.Confirmations,
+				"blocktime":     tx.BlockTime,
+			},
+		}
+		err = txsdata.Update(sel, update)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return nil
 }
 
 func SetWsHandlers(cli *gosocketio.Client, networkID int) {
@@ -620,19 +704,19 @@ func SetWsHandlers(cli *gosocketio.Client, networkID int) {
 	})
 
 	// Add tx and feerate to mempool
-	cli.On(EventMempool, func(c *gosocketio.Channel, recs []store.MempoolRecord) {
-		fmt.Println(recs)
-		InsertMempoolRecords(recs...)
-	})
+	// cli.On(EventMempool, func(c *gosocketio.Channel, recs []store.MempoolRecord) {
+	// 	fmt.Println(recs)
+	// 	InsertMempoolRecords(recs...)
+	// })
 
-	// Mempool delete on block
-	cli.On(EventDeleteMempoolOnBlock, func(c *gosocketio.Channel, hash string) {
-		query := bson.M{"hashtx": hash}
-		err := mempoolRates.Remove(query)
-		if err != nil {
-			log.Errorf("parseNewBlock:mempoolRates.Remove: %s", err.Error())
-		} else {
-			log.Debugf("Tx removed: %s", hash)
-		}
-	})
+	// // Mempool delete on block
+	// cli.On(EventDeleteMempoolOnBlock, func(c *gosocketio.Channel, hash string) {
+	// 	query := bson.M{"hashtx": hash}
+	// 	err := mempoolRates.Remove(query)
+	// 	if err != nil {
+	// 		log.Errorf("parseNewBlock:mempoolRates.Remove: %s", err.Error())
+	// 	} else {
+	// 		log.Debugf("Tx removed: %s", hash)
+	// 	}
+	// })
 }
