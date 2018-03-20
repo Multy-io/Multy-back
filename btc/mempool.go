@@ -12,5 +12,4 @@ import (
 func mempoolTransaction(inTx *btcjson.TxRawResult) {
 	log.Debugf("[MEMPOOL TX]")
 	processTransaction(-1, inTx, false)
-
 }

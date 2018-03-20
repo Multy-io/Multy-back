@@ -1,5 +1,5 @@
 /*
-Copyright 2017 Idealnaya rabota LLC
+Copyright 2018 Idealnaya rabota LLC
 Licensed under Multy.io license.
 See LICENSE for details
 */
@@ -26,9 +26,9 @@ const (
 
 // User represents a single app user
 type User struct {
-	UserID  string   `bson:"userID"`  // User uqnique identifier
-	Devices []Device `bson:"devices"` // All user devices
-	Wallets []Wallet `bson:"wallets"` // All user addresses in all chains
+	UserID     string      `bson:"userID"`     // User uqnique identifier
+	Devices    []Device    `bson:"devices"`    // All user devices
+	Wallets    []Wallet    `bson:"wallets"`    // All user addresses in all chains
 	WalletsETH []WalletETH `bson:"walletsEth"` // All user addresses in all chains
 }
 
@@ -252,8 +252,7 @@ type TransactionETH struct {
 type CoinType struct {
 	СurrencyID int
 	NetworkID  int
-	SocketPort int
-	SocketURL  string
+	GRPCUrl    string
 }
 
 type MempoolRecord struct {

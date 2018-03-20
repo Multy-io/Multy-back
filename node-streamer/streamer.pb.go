@@ -448,9 +448,9 @@ type NodeCommuunicationsClient interface {
 	EventAddNewAddress(ctx context.Context, in *WatchAddress, opts ...grpc.CallOption) (*ReplyInfo, error)
 	EventGetAllMempool(ctx context.Context, in *Empty, opts ...grpc.CallOption) (NodeCommuunications_EventGetAllMempoolClient, error)
 	EventAddMempoolRecord(ctx context.Context, in *Empty, opts ...grpc.CallOption) (NodeCommuunications_EventAddMempoolRecordClient, error)
+	EventDeleteMempool(ctx context.Context, in *Empty, opts ...grpc.CallOption) (NodeCommuunications_EventDeleteMempoolClient, error)
 	EventResyncAddress(ctx context.Context, in *AddressToResync, opts ...grpc.CallOption) (*ReplyInfo, error)
 	EventSendRawTx(ctx context.Context, in *RawTx, opts ...grpc.CallOption) (*ReplyInfo, error)
-	EventDeleteMempool(ctx context.Context, in *Empty, opts ...grpc.CallOption) (NodeCommuunications_EventDeleteMempoolClient, error)
 	EventDeleteSpendableOut(ctx context.Context, in *Empty, opts ...grpc.CallOption) (NodeCommuunications_EventDeleteSpendableOutClient, error)
 	EventAddSpendableOut(ctx context.Context, in *Empty, opts ...grpc.CallOption) (NodeCommuunications_EventAddSpendableOutClient, error)
 	NewTx(ctx context.Context, in *Empty, opts ...grpc.CallOption) (NodeCommuunications_NewTxClient, error)
@@ -546,24 +546,6 @@ func (x *nodeCommuunicationsEventAddMempoolRecordClient) Recv() (*MempoolRecord,
 	return m, nil
 }
 
-func (c *nodeCommuunicationsClient) EventResyncAddress(ctx context.Context, in *AddressToResync, opts ...grpc.CallOption) (*ReplyInfo, error) {
-	out := new(ReplyInfo)
-	err := grpc.Invoke(ctx, "/NodeCommuunications/EventResyncAddress", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *nodeCommuunicationsClient) EventSendRawTx(ctx context.Context, in *RawTx, opts ...grpc.CallOption) (*ReplyInfo, error) {
-	out := new(ReplyInfo)
-	err := grpc.Invoke(ctx, "/NodeCommuunications/EventSendRawTx", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *nodeCommuunicationsClient) EventDeleteMempool(ctx context.Context, in *Empty, opts ...grpc.CallOption) (NodeCommuunications_EventDeleteMempoolClient, error) {
 	stream, err := grpc.NewClientStream(ctx, &_NodeCommuunications_serviceDesc.Streams[2], c.cc, "/NodeCommuunications/EventDeleteMempool", opts...)
 	if err != nil {
@@ -594,6 +576,24 @@ func (x *nodeCommuunicationsEventDeleteMempoolClient) Recv() (*MempoolToDelete, 
 		return nil, err
 	}
 	return m, nil
+}
+
+func (c *nodeCommuunicationsClient) EventResyncAddress(ctx context.Context, in *AddressToResync, opts ...grpc.CallOption) (*ReplyInfo, error) {
+	out := new(ReplyInfo)
+	err := grpc.Invoke(ctx, "/NodeCommuunications/EventResyncAddress", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nodeCommuunicationsClient) EventSendRawTx(ctx context.Context, in *RawTx, opts ...grpc.CallOption) (*ReplyInfo, error) {
+	out := new(ReplyInfo)
+	err := grpc.Invoke(ctx, "/NodeCommuunications/EventSendRawTx", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *nodeCommuunicationsClient) EventDeleteSpendableOut(ctx context.Context, in *Empty, opts ...grpc.CallOption) (NodeCommuunications_EventDeleteSpendableOutClient, error) {
@@ -699,9 +699,9 @@ type NodeCommuunicationsServer interface {
 	EventAddNewAddress(context.Context, *WatchAddress) (*ReplyInfo, error)
 	EventGetAllMempool(*Empty, NodeCommuunications_EventGetAllMempoolServer) error
 	EventAddMempoolRecord(*Empty, NodeCommuunications_EventAddMempoolRecordServer) error
+	EventDeleteMempool(*Empty, NodeCommuunications_EventDeleteMempoolServer) error
 	EventResyncAddress(context.Context, *AddressToResync) (*ReplyInfo, error)
 	EventSendRawTx(context.Context, *RawTx) (*ReplyInfo, error)
-	EventDeleteMempool(*Empty, NodeCommuunications_EventDeleteMempoolServer) error
 	EventDeleteSpendableOut(*Empty, NodeCommuunications_EventDeleteSpendableOutServer) error
 	EventAddSpendableOut(*Empty, NodeCommuunications_EventAddSpendableOutServer) error
 	NewTx(*Empty, NodeCommuunications_NewTxServer) error
@@ -789,6 +789,27 @@ func (x *nodeCommuunicationsEventAddMempoolRecordServer) Send(m *MempoolRecord) 
 	return x.ServerStream.SendMsg(m)
 }
 
+func _NodeCommuunications_EventDeleteMempool_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(Empty)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(NodeCommuunicationsServer).EventDeleteMempool(m, &nodeCommuunicationsEventDeleteMempoolServer{stream})
+}
+
+type NodeCommuunications_EventDeleteMempoolServer interface {
+	Send(*MempoolToDelete) error
+	grpc.ServerStream
+}
+
+type nodeCommuunicationsEventDeleteMempoolServer struct {
+	grpc.ServerStream
+}
+
+func (x *nodeCommuunicationsEventDeleteMempoolServer) Send(m *MempoolToDelete) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 func _NodeCommuunications_EventResyncAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddressToResync)
 	if err := dec(in); err != nil {
@@ -823,27 +844,6 @@ func _NodeCommuunications_EventSendRawTx_Handler(srv interface{}, ctx context.Co
 		return srv.(NodeCommuunicationsServer).EventSendRawTx(ctx, req.(*RawTx))
 	}
 	return interceptor(ctx, in, info, handler)
-}
-
-func _NodeCommuunications_EventDeleteMempool_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(Empty)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(NodeCommuunicationsServer).EventDeleteMempool(m, &nodeCommuunicationsEventDeleteMempoolServer{stream})
-}
-
-type NodeCommuunications_EventDeleteMempoolServer interface {
-	Send(*MempoolToDelete) error
-	grpc.ServerStream
-}
-
-type nodeCommuunicationsEventDeleteMempoolServer struct {
-	grpc.ServerStream
-}
-
-func (x *nodeCommuunicationsEventDeleteMempoolServer) Send(m *MempoolToDelete) error {
-	return x.ServerStream.SendMsg(m)
 }
 
 func _NodeCommuunications_EventDeleteSpendableOut_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -968,7 +968,7 @@ var _NodeCommuunications_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("streamer.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 774 bytes of a gzipped FileDescriptorProto
+	// 775 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x55, 0x5d, 0x4f, 0xdb, 0x48,
 	0x14, 0xc5, 0x31, 0x4e, 0xe2, 0x0b, 0x49, 0xd0, 0xc0, 0xee, 0x5a, 0x11, 0x0f, 0x91, 0x05, 0xab,
 	0xac, 0xd0, 0x5a, 0x2c, 0xac, 0x10, 0xe2, 0x89, 0x2c, 0x61, 0x97, 0x3c, 0x00, 0x92, 0x93, 0x6d,
@@ -1010,12 +1010,12 @@ var fileDescriptor0 = []byte{
 	0x70, 0xe0, 0xfb, 0x08, 0x96, 0x1c, 0xbb, 0xe0, 0x2c, 0xc0, 0xed, 0x35, 0xf4, 0x17, 0x20, 0x51,
 	0x3c, 0xf0, 0xfd, 0x1b, 0xf2, 0x5c, 0xa8, 0xd8, 0x72, 0xca, 0xa2, 0xae, 0xb4, 0x1c, 0xaa, 0x96,
 	0xff, 0x08, 0x1b, 0x84, 0xa1, 0xd2, 0x0e, 0xd5, 0x1d, 0x21, 0x40, 0xb7, 0xed, 0x54, 0xd4, 0xb4,
-	0xd7, 0x0e, 0x35, 0x74, 0x0c, 0xbf, 0x14, 0x87, 0x54, 0xa5, 0x7e, 0xad, 0xe9, 0x6f, 0x75, 0x8c,
-	0x94, 0xa6, 0x60, 0xb6, 0xe5, 0xac, 0x68, 0xb6, 0x42, 0xee, 0x77, 0x68, 0x8b, 0xae, 0x31, 0x89,
-	0x7d, 0x69, 0x84, 0xba, 0x23, 0x7e, 0x57, 0xea, 0x8e, 0x14, 0xba, 0xb4, 0xf6, 0xea, 0x10, 0x5b,
-	0xce, 0x8a, 0xf7, 0x05, 0xa3, 0x13, 0xf8, 0xad, 0xd4, 0x33, 0x4e, 0x48, 0xec, 0xe3, 0xbb, 0x90,
-	0xf0, 0x37, 0x57, 0x34, 0x76, 0x9c, 0xea, 0x63, 0x14, 0x7d, 0x7f, 0xc2, 0x4e, 0x31, 0xfe, 0x57,
-	0x9b, 0x4c, 0xa7, 0xf8, 0x1a, 0x89, 0xf2, 0x3d, 0x30, 0x6e, 0x88, 0x64, 0x5e, 0x80, 0x56, 0x3f,
-	0x8d, 0xbc, 0xea, 0xae, 0x2e, 0xfe, 0xf6, 0x8e, 0xbf, 0x04, 0x00, 0x00, 0xff, 0xff, 0x67, 0xb7,
-	0x58, 0x43, 0x08, 0x07, 0x00, 0x00,
+	0xd7, 0x0e, 0x35, 0x74, 0x0c, 0xbf, 0x14, 0x87, 0x54, 0xa5, 0x7e, 0xad, 0xe9, 0x48, 0x1d, 0x23,
+	0xcd, 0xb7, 0x7a, 0xcc, 0x96, 0xb3, 0xe2, 0x4e, 0xd1, 0xf3, 0xb7, 0xea, 0x91, 0x72, 0x16, 0xd3,
+	0x6c, 0x39, 0x2b, 0x3a, 0xaf, 0x0c, 0xf4, 0x3b, 0xb4, 0x45, 0xd7, 0x98, 0xc4, 0xbe, 0x34, 0x4f,
+	0xdd, 0x11, 0xbf, 0x2b, 0x75, 0x27, 0xf0, 0x5b, 0x89, 0xd1, 0x38, 0x21, 0xb1, 0x8f, 0xef, 0x42,
+	0xc2, 0xdf, 0x5c, 0x41, 0xab, 0xe3, 0x54, 0x1f, 0xa3, 0x60, 0xf5, 0x27, 0xec, 0x14, 0xe3, 0x7f,
+	0xb5, 0xc9, 0x74, 0x8a, 0xaf, 0x91, 0x28, 0xdf, 0x03, 0xe3, 0x86, 0x48, 0x16, 0x05, 0x68, 0xf5,
+	0xd3, 0xc8, 0xab, 0xee, 0xea, 0xe2, 0x6f, 0xef, 0xf8, 0x4b, 0x00, 0x00, 0x00, 0xff, 0xff, 0xf7,
+	0xa6, 0x63, 0x59, 0x08, 0x07, 0x00, 0x00,
 }

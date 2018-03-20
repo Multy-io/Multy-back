@@ -1,12 +1,11 @@
 /*
-Copyright 2017 Idealnaya rabota LLC
+Copyright 2018 Idealnaya rabota LLC
 Licensed under Multy.io license.
 See LICENSE for details
 */
 package btc
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -86,14 +85,14 @@ func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRes
 			setUserID(&transaction)
 			saveMultyTransaction(transaction)
 			updateWalletAndAddressDate(transaction)
-			if !isReSync {
-				go func() {
-					select {
-					case <-time.After(time.Second):
-						go sendNotifyToClients(transaction)
-					}
-				}()
-			}
+			// if !isReSync {
+			// 	go func() {
+			// 		select {
+			// 		case <-time.After(time.Second):
+			// 			go sendNotifyToClients(transaction)
+			// 		}
+			// 	}()
+			// }
 		}
 	}
 }
@@ -319,49 +318,49 @@ func saveMultyTransaction(tx store.MultyTX) {
 	}
 }
 
-func sendNotify(txMsq *BtcTransactionWithUserID) {
-	newTxJSON, err := json.Marshal(txMsq)
-	if err != nil {
-		log.Errorf("sendNotifyToClients: [%+v] %s\n", txMsq, err.Error())
-		return
-	}
+// func sendNotify(txMsq *BtcTransactionWithUserID) {
+// 	newTxJSON, err := json.Marshal(txMsq)
+// 	if err != nil {
+// 		log.Errorf("sendNotifyToClients: [%+v] %s\n", txMsq, err.Error())
+// 		return
+// 	}
 
-	err = nsqProducer.Publish(TopicTransaction, newTxJSON)
-	if err != nil {
-		log.Errorf("nsq publish new transaction: [%+v] %s\n", txMsq, err.Error())
-		return
-	}
-	return
-}
+// 	err = nsqProducer.Publish(TopicTransaction, newTxJSON)
+// 	if err != nil {
+// 		log.Errorf("nsq publish new transaction: [%+v] %s\n", txMsq, err.Error())
+// 		return
+// 	}
+// 	return
+// }
 
-func sendNotifyToClients(tx store.MultyTX) {
+// func sendNotifyToClients(tx store.MultyTX) {
 
-	for _, walletOutput := range tx.WalletsOutput {
-		txMsq := BtcTransactionWithUserID{
-			UserID: walletOutput.UserId,
-			NotificationMsg: &BtcTransaction{
-				TransactionType: tx.TxStatus,
-				Amount:          tx.TxOutAmount,
-				TxID:            tx.TxID,
-				Address:         walletOutput.Address.Address,
-			},
-		}
-		sendNotify(&txMsq)
-	}
+// 	for _, walletOutput := range tx.WalletsOutput {
+// 		txMsq := BtcTransactionWithUserID{
+// 			UserID: walletOutput.UserId,
+// 			NotificationMsg: &BtcTransaction{
+// 				TransactionType: tx.TxStatus,
+// 				Amount:          tx.TxOutAmount,
+// 				TxID:            tx.TxID,
+// 				Address:         walletOutput.Address.Address,
+// 			},
+// 		}
+// 		sendNotify(&txMsq)
+// 	}
 
-	for _, walletInput := range tx.WalletsInput {
-		txMsq := BtcTransactionWithUserID{
-			UserID: walletInput.UserId,
-			NotificationMsg: &BtcTransaction{
-				TransactionType: tx.TxStatus,
-				Amount:          tx.TxOutAmount,
-				TxID:            tx.TxID,
-				Address:         walletInput.Address.Address,
-			},
-		}
-		sendNotify(&txMsq)
-	}
-}
+// 	for _, walletInput := range tx.WalletsInput {
+// 		txMsq := BtcTransactionWithUserID{
+// 			UserID: walletInput.UserId,
+// 			NotificationMsg: &BtcTransaction{
+// 				TransactionType: tx.TxStatus,
+// 				Amount:          tx.TxOutAmount,
+// 				TxID:            tx.TxID,
+// 				Address:         walletInput.Address.Address,
+// 			},
+// 		}
+// 		sendNotify(&txMsq)
+// 	}
+// }
 
 func parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *store.MultyTX) error {
 	//NEW LOGIC

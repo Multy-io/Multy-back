@@ -1,5 +1,5 @@
 /*
-Copyright 2017 Idealnaya rabota LLC
+Copyright 2018 Idealnaya rabota LLC
 Licensed under Multy.io license.
 See LICENSE for details
 */
@@ -10,11 +10,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Appscrunch/Multy-back/currencies"
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/Appscrunch/Multy-back/currencies"
 )
 
 func decodeBody(c *gin.Context, to interface{}) error {
@@ -42,9 +42,8 @@ func createDevice(deviceid, ip, jwt, pushToken string, deviceType int) store.Dev
 	}
 }
 
-
 func createWallet(currencyID, networkID int, address string, addressIndex int, walletIndex int, walletName string) interface{} {
-	if currencyID == currencies.Biocoin{
+	if currencyID == currencies.Biocoin {
 
 	}
 
@@ -68,28 +67,26 @@ func createWallet(currencyID, networkID int, address string, addressIndex int, w
 		}
 	case currencies.Ether:
 		return store.WalletETH{
-			CurrencyID:	currencyID,
-			NetworkID:	networkID,
-			WalletIndex:	walletIndex,
-			WalletName:		walletName,
-			LastActionTime:	time.Now().Unix(),
+			CurrencyID:     currencyID,
+			NetworkID:      networkID,
+			WalletIndex:    walletIndex,
+			WalletName:     walletName,
+			LastActionTime: time.Now().Unix(),
 			DateOfCreation: time.Now().Unix(),
-			Status:			store.WalletStatusOK,
-			Adresses:		[]store.Address{
+			Status:         store.WalletStatusOK,
+			Adresses: []store.Address{
 				store.Address{
-					Address:	address,
-					AddressIndex:	addressIndex,
+					Address:        address,
+					AddressIndex:   addressIndex,
 					LastActionTime: time.Now().Unix(),
 				},
 			},
-			Nonce:			1,
-			Balance:		0,
-
+			Nonce:   1,
+			Balance: 0,
 		}
 	default:
 		return nil
 	}
-
 
 }
 

@@ -14,13 +14,13 @@ service NodeCommuunications {
     rpc EventAddMempoolRecord (Empty) returns (stream MempoolRecord){
     }
 
+    rpc EventDeleteMempool (Empty) returns (stream MempoolToDelete){
+    }
+
     rpc EventResyncAddress (AddressToResync) returns (ReplyInfo){
     }
 
     rpc EventSendRawTx (RawTx) returns (ReplyInfo){
-    }
-
-    rpc EventDeleteMempool (Empty) returns (stream MempoolToDelete){
     }
 
     rpc EventDeleteSpendableOut (Empty) returns (stream ReqDeleteSpOut){

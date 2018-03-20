@@ -1,13 +1,15 @@
 /*
-Copyright 2017 Idealnaya rabota LLC
+Copyright 2018 Idealnaya rabota LLC
 Licensed under Multy.io license.
 See LICENSE for details
 */
 package multyback
 
 import (
+	"context"
 	"fmt"
-	"time"
+
+	pb "github.com/Appscrunch/Multy-back/node-streamer"
 
 	"github.com/Appscrunch/Multy-back/btc"
 	"github.com/Appscrunch/Multy-back/client"
@@ -15,7 +17,6 @@ import (
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	"github.com/gin-gonic/gin"
-	"github.com/graarh/golang-socketio"
 )
 
 var (
@@ -48,8 +49,7 @@ type Multy struct {
 	restClient     *client.RestClient
 	firebaseClient *client.FirebaseClient
 
-	WsBtcTestnetCli *gosocketio.Client
-	WsBtcMainnetCli *gosocketio.Client
+	BTC *btc.BTCConn
 }
 
 // Init initializes Multy instance
@@ -66,65 +66,78 @@ func Init(conf *Configuration) (*Multy, error) {
 	multy.userStore = userStore
 	log.Infof("UserStore initialization done on %s √", conf.Database)
 
-	mainBtcCli, testBtcCli, err := btc.InitHandlers(&conf.Database, conf.SupportedNodes, conf.NSQAddress)
+	btcCli, err := btc.InitHandlers(&conf.Database, conf.SupportedNodes, conf.NSQAddress)
 	if err != nil {
 		return nil, fmt.Errorf("Init: btc.InitHandlers: %s", err.Error())
 	}
 
-	multy.WsBtcTestnetCli = testBtcCli
-	multy.WsBtcMainnetCli = mainBtcCli
-	log.Infof("WsBtcTestnetCli WsBtcMainnetCli initialization done √")
+	multy.BTC = btcCli
+	// stream, err := multy.BTC.CliTest.EventGetAllMempool(context.Background(), &pb.Empty{})
+	// if err != nil {
+	// 	log.Errorf("Error getting replies: %v", err)
+	// }
+	// for {
+	// 	mp, err := stream.Recv()
+	// 	if err == io.EOF {
+	// 		break
+	// 	}
+	// 	if err != nil {
+	// 		log.Fatalf("streaming error: %v", err)
+	// 	}
+	// 	log.Infof("mempool data: %v - %v", mp.HashTX, mp.Category)
+	// }
 
-	go func() {
-		for {
-			time.Sleep(2 * time.Second)
-			log.Infof("Is alife = %b \n", testBtcCli.IsAlive())
-			testBtcCli.Emit("kek", "kek")
-		}
-	}()
+	log.Infof(" BTC Init initialization done √")
 
-	// initial add user data to node client test
-	btcTestConf, err := fethCoinType(conf.SupportedNodes, currencies.Bitcoin, currencies.Test)
-	if err != nil {
-		return nil, fmt.Errorf("Init: InitWsNodeConn:  Test %v on port %s", conf.SupportedNodes, err.Error())
-	}
-	SetUserData(multy.WsBtcTestnetCli, btcTestConf, multy.userStore)
+	err = SetUserData(multy.BTC, multy.userStore, conf.SupportedNodes)
+
 	log.Infof("WsBtcTestnetCli SetUserData Test initialization done √")
 
-	// initial add user data to node client
-	btcMainConf, err := fethCoinType(conf.SupportedNodes, currencies.Bitcoin, currencies.Main)
-	if err != nil {
-		return nil, fmt.Errorf("Init: InitWsNodeConn:  Main %v on port %s", conf.SupportedNodes, err.Error())
-	}
-	SetUserData(multy.WsBtcTestnetCli, btcMainConf, multy.userStore)
-	log.Infof("WsBtcTestnetCli SetUserData Main initialization done √")
-
-	if err = multy.initRoutes(conf); err != nil {
+	if err = multy.initHttpRoutes(conf); err != nil {
 		return nil, fmt.Errorf("Router initialization: %s", err.Error())
 	}
-
 	return multy, nil
 }
 
 // SetUserData make initial userdata to node service
-func SetUserData(wsCli *gosocketio.Client, ct *store.CoinType, userStore store.UserStore) error {
+func SetUserData(btcCli *btc.BTCConn, userStore store.UserStore, ct []store.CoinType) error {
 
-	// TODO: fix initial add
-	UsersData, err := userStore.FindUserDataChain(ct.СurrencyID, ct.NetworkID)
-	if err != nil {
-		return fmt.Errorf("InitWsNodeConn: userStore.FindUserDataChain: curID :%d netID :%d err =%s", ct.СurrencyID, ct.NetworkID, err.Error())
+	for _, conCred := range ct {
+		switch conCred.СurrencyID {
+		case currencies.Bitcoin:
+			usersData, err := userStore.FindUserDataChain(conCred.СurrencyID, conCred.NetworkID)
+			if err != nil {
+				return fmt.Errorf("SetUserData: userStore.FindUserDataChain: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			}
+			if len(usersData) == 0 {
+				log.Infof("Empty userdata")
+			}
+
+			ud := &pb.UsersData{
+				Map: usersData,
+			}
+			reply, err := btcCli.CliTest.EventInitialAdd(context.Background(), ud)
+			if err != nil {
+				return fmt.Errorf("SetUserData: btcCli.CliTest.EventInitialAdd: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			}
+			log.Infof("SetUserData : %s", reply.Message)
+
+		case currencies.Ether:
+			//soon
+		}
 	}
-	fmt.Println(UsersData)
 
-	// if len(UsersData) == 0 {
-	// 	return nil, fmt.Errorf("InitWsNodeConn: empty UserData curID :%d netID :%d", ct.СurrencyID, ct.NetworkID)
-	// }
+	if btcCli.CliTest != nil {
+		log.Infof("SetUserData: users data initialization done Test √")
+	} else {
+		log.Infof("SetUserData: users data initialization Test FAILED")
+	}
 
-	// TODO: fix initial add
-	// err = wsCli.Emit(EventInitialAdd, UsersData)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("InitWsNodeConn: wsBtcTest.Emit :%s SocketPort :%d err =%s", ct.SocketURL, ct.SocketPort, err.Error())
-	// }
+	if btcCli.CliMain == nil {
+		log.Infof("SetUserData users data initialization done Main √")
+	} else {
+		log.Infof("SetUserData: users data initialization Main FAILED")
+	}
 
 	return nil
 }
@@ -133,7 +146,7 @@ func SetUserData(wsCli *gosocketio.Client, ct *store.CoinType, userStore store.U
 // - http
 // - socketio
 // - firebase
-func (multy *Multy) initRoutes(conf *Configuration) error {
+func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 	router := gin.Default()
 	multy.route = router
 
@@ -151,8 +164,7 @@ func (multy *Multy) initRoutes(conf *Configuration) error {
 		multy.userStore,
 		router,
 		conf.DonationAddresses,
-		multy.WsBtcTestnetCli,
-		multy.WsBtcMainnetCli,
+		multy.BTC,
 	)
 	if err != nil {
 		return err
