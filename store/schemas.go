@@ -267,8 +267,6 @@ type DeleteSpendableOutput struct {
 }
 
 type DonationInfo struct {
-	OS              int
-	Feature         string
 	FeatureCode     int
 	DonationAddress string
 }

@@ -1,34 +1,30 @@
 {
-    "Name": "my-test-back",
+    "Name": "Multy-Stage",
     "Database": {
-        "Address": "mongodb:27017",
-        "TableUsers": "UserCollection-conf",
-        "DBUsers": "userDB-conf",
-        "DBFeeRates": "BTCMempool-conf",
-        "DBTx": "DBTx-conf",
-        "DBStockExchangeRate": "DBStockExchangeRate-conf"
+        "Address": "localhost:27016",
+        "TableUsers": "UserCollection",
+        "DBUsers": "userDB",
+        "DBFeeRates": "BTCMempool",
+        "DBTx": "DBTx",
+        "DBStockExchangeRate": "DBStockExchangeRate",
+
+        "TableMempoolRatesBTCMain": "TableMempoolRatesBTCMain",
+        "TableTxsDataBTCMain": "TableTxsDataBTCMain",
+        "TableSpendableOutputsBTCMain": "TableSpendableOutputsBTCMain",
+
+        "TableMempoolRatesBTCTest": "TableMempoolRatesBTCTest",
+        "TableTxsDataBTCTest": "TableTxsDataBTCTest",
+        "TableSpendableOutputsBTCTest": "TableSpendableOutputsBTCTest"
     },
-    "NSQAddress": "nsq:4150",
-    "BTCNodeAddress": "localhost:18334",
-    "RestAddress": "localhost:7778",
-    "SocketioAddr": "localhost:7780",
-    "BTCAPITest": {
-        "Token": "test-token",
-        "Coin": "btc",
-        "Chain": "test3"
-    },
-    "BTCAPIMain": {
-        "Token": "main-token",
-        "Coin": "btc",
-        "Chain": "main"
-    },
+    "NSQAddress": "0.0.0.0:6150",
+    "RestAddress": "0.0.0.0:6778",
+    "SocketioAddr": "0.0.0.0:6780",
     "Firebase": {
-        "ServerKey": "firebase-key"
+        "ServerKey": "AIzaSyALral-6nY0Hynzs8MBMbzOcZpN24erthI"
     },
     "BTCSertificate": "rpc.cert",
     "Logs": {
-        "Handlers": [
-            {
+        "Handlers": [{
                 "Type": "stderr",
                 "Level": "DEBUG"
             },
@@ -50,5 +46,257 @@
         ],
         "CallerInfo": false,
         "Logpath": "logs"
-    }
+    },
+    "DonationAddresses": [{
+            "FeatureCode": 10000,
+            "DonationDonationAddress": "1FPv9f8EGRDNod7mSvJnUFonUioA3Pw5ng"
+        },
+        {
+            "FeatureCode": 10100,
+            "DonationAddress": "1EyoGcD8sWzHikPPiJmzGiHyUyTHZzHtGU"
+        },
+        {
+            "FeatureCode": 10101,
+            "DonationAddress": "1Eo3U9PVSr3XyFhaH5sm1hWNpMmk1bCKQR"
+        },
+        {
+            "FeatureCode": 10102,
+            "DonationAddress": "1LtLD3W2uqABssS1SZxeYi75xvpZpYFZ1B"
+        },
+        {
+            "FeatureCode": 10103,
+            "DonationAddress": "14REwuBJQTTEF8PNCF2vmKtanoK7u1NbHr"
+        },
+        {
+            "FeatureCode": 10104,
+            "DonationAddress": "1DVmNPZgSUmdsBd5cmYUMgvmFH7rmDzyRY"
+        },
+        {
+            "FeatureCode": 10105,
+            "DonationAddress": "17wvEWAqnY5qmitVzTR9DiV8jPz3GK8GD1"
+        },
+        {
+            "FeatureCode": 10106,
+            "DonationAddress": "12bfndjvvj6FeXPN29Q16zvFxYZRR9zxQ4"
+        },
+        {
+            "FeatureCode": 10107,
+            "DonationAddress": "1Fp9JeCdcrz9ankvbktXiiQNtb55ZcBN3t"
+        },
+        {
+            "FeatureCode": 10108,
+            "DonationAddress": "1MtBFKke5JUJHYhxEt1NLzNtyiJTPvM5oX"
+        },
+        {
+            "FeatureCode": 10109,
+            "DonationAddress": "18LUgSbx5ugbAUCJoHwoymtMgvwjh6qr9Y"
+        },
+        {
+            "FeatureCode": 10110,
+            "DonationAddress": "1Ctw3VrQUvSiSRQrrRMpaAEuoBiwZP6HnU"
+        },
+        {
+            "FeatureCode": 10111,
+            "DonationAddress": "14BaepJbbLb6Dwe2Xk8A2QTmon3txgcbZf"
+        },
+        {
+            "FeatureCode": 10200,
+            "DonationAddress": "1NsjWawSRS7vgTjkYgRDMfsmSkjbmbDsrg"
+        },
+        {
+            "FeatureCode": 10201,
+            "DonationAddress": "1ChaYAgqzBMiwFKHk52CJf7TKxHGKcScDy"
+        },
+        {
+            "FeatureCode": 10202,
+            "DonationAddress": "1KqPGUb8eT2uP1UAwRvNuk2b4UgxXa3Sc9"
+        },
+        {
+            "FeatureCode": 10203,
+            "DonationAddress": "1Gjk2tkBi42o9TAen9VEWWNoDkYf5L9qgC"
+        },
+        {
+            "FeatureCode": 10300,
+            "DonationAddress": "1PXWUeabhszE71ND4fTFA6s4CqihKf4QVd"
+        },
+        {
+            "FeatureCode": 10301,
+            "DonationAddress": "17Tnp8H6m3mqWExQD3gAX9HSYwvuMSLoWG"
+        },
+        {
+            "FeatureCode": 10302,
+            "DonationAddress": "1PzdBkuL9RjnLhSgAh4So5ZkpSjti6jjs9"
+        },
+        {
+            "FeatureCode": 10400,
+            "DonationAddress": "16Ys7ARTJNaw1DqikX5ufjJbo7kdG3jUXj"
+        },
+        {
+            "FeatureCode": 10401,
+            "DonationAddress": "16qEnyvofjqnRupPd8kARzsNbavauVHoSj"
+        },
+        {
+            "FeatureCode": 10402,
+            "DonationAddress": "198RLNrbvomzEe54T5zvfqibpM8BWMJqvh"
+        },
+        {
+            "FeatureCode": 10403,
+            "DonationAddress": "1D3nrQ1PoBjpCAvGqzBEQguYDTeuYi53yu"
+        },
+        {
+            "FeatureCode": 10404,
+            "DonationAddress": "19ui7qnsfk8x64b6sArBUs7Zag4fwdBZjR"
+        },
+        {
+            "FeatureCode": 10405,
+            "DonationAddress": "1MgNGDvasvnoyHLMLE5fivNKEzkNB7mxBp"
+        },
+        {
+            "FeatureCode": 10406,
+            "DonationAddress": "15oBGfmAUeUAhYrKpZuax5wXaFM5f5ziET"
+        },
+        {
+            "FeatureCode": 10407,
+            "DonationAddress": "1AqYfNpPP3QysShKkYWEFMJQ8oMhi5p7J2"
+        },
+        {
+            "FeatureCode": 10408,
+            "DonationAddress": "1Eqse35Q9E3a8e8meibBFUTp426ymTuusR"
+        },
+        {
+            "FeatureCode": 10409,
+            "DonationAddress": "164DrBqBmw4Xsj2Cbs2AQWiGGBoKDCvQF4"
+        },
+        {
+            "FeatureCode": 20000,
+            "DonationAddress": "1GQsE1gBf3bjVACVve5R3aFgxiTAVgZReU"
+        },
+        {
+            "FeatureCode": 20100,
+            "DonationAddress": "1PwXHW2tKKBu6VfdmTmaFVbfpkHphVHVNu"
+        },
+        {
+            "FeatureCode": 20101,
+            "DonationAddress": "12iWkYPbwVXovtMUxhbXU6NBm4FcLV2Pbc"
+        },
+        {
+            "FeatureCode": 20102,
+            "DonationAddress": "1A5USPtadqSzZ7gydT8MzP6SxvdjBkRPzk"
+        },
+        {
+            "FeatureCode": 20103,
+            "DonationAddress": "125RMxikYSVZLM9b3fjN1PYQtav62yFd4H"
+        },
+        {
+            "FeatureCode": 20104,
+            "DonationAddress": "1PYCkHG3f5s8iMuHVDerRZZhuZUPuYf1jC"
+        },
+        {
+            "FeatureCode": 20105,
+            "DonationAddress": "1MwoexrY3TBej3JsGhudCEQ97mn8WKen7o"
+        },
+        {
+            "FeatureCode": 20106,
+            "DonationAddress": "1B2jT1bwzUP7pHfXNVFVGGZxsTidbo6kdT"
+        },
+        {
+            "FeatureCode": 20107,
+            "DonationAddress": "15PEDxaAUzoMKpbSeHHF5HWHcyN4wsptKs"
+        },
+        {
+            "FeatureCode": 20108,
+            "DonationAddress": "1BgRcp6tb6YUCsSNVDFvzZNU7pZmiuiqL9"
+        },
+        {
+            "FeatureCode": 20109,
+            "DonationAddress": "1FZ9eeWwcHcioJnixdr6Q7SroUcaCQVAN8"
+        },
+        {
+            "FeatureCode": 20110,
+            "DonationAddress": "1RSrQTwobtrYweK5r6Pkvy4BFgL1Mz7c8"
+        },
+        {
+            "FeatureCode": 20111,
+            "DonationAddress": "1FnYG1V8Nh2E3vjdSnXgbadzMDa1JKLHx5"
+        },
+        {
+            "FeatureCode": 20200,
+            "DonationAddress": "1AuZJdi1BU5BUFzEAd5SLbEYCaRvrsUZc6"
+        },
+        {
+            "FeatureCode": 20201,
+            "DonationAddress": "13ixZSo48m3vvGvw594ePRpRsBetDuWvAi"
+        },
+        {
+            "FeatureCode": 20202,
+            "DonationAddress": "13pBbAVozYJmdzTbKx66YMyx9Q8pLaxDFS"
+        },
+        {
+            "FeatureCode": 20203,
+            "DonationAddress": "1EmG7HV1d9fqnXC9d2omN1zXrcSnNDjS4z"
+        },
+        {
+            "FeatureCode": 20300,
+            "DonationAddress": "18n2RGk6JMH4hrGBaJmwoVVKqr2ZfdMJcK"
+        },
+        {
+            "FeatureCode": 20301,
+            "DonationAddress": "19i9o6HJkr7bRepnJc7eNPEPAv7KR9xaSb"
+        },
+        {
+            "FeatureCode": 20302,
+            "DonationAddress": "15t1LfPrZnv6cVtgPEJS8vr1sG1Sum5UQt"
+        },
+        {
+            "FeatureCode": 20400,
+            "DonationAddress": "1FjtcprdPSo2BVyUtPKqYmVKFH7aPNmMEE"
+        },
+        {
+            "FeatureCode": 20401,
+            "DonationAddress": "17Xkm8wxGoz8pWqWHC88qLXdFfB2qBuYJR"
+        },
+        {
+            "FeatureCode": 20402,
+            "DonationAddress": "1338kXwBoUMEQk6PZa9ThCbxjDE3DFKr5V"
+        },
+        {
+            "FeatureCode": 20403,
+            "DonationAddress": "12Nz3sAUzX6RUddcCujyoY9HtNz7GijMR9"
+        },
+        {
+            "FeatureCode": 20404,
+            "DonationAddress": "14WP9s82WBRZSf9bXy9Q9wenhcfFfPDjWr"
+        },
+        {
+            "FeatureCode": 20405,
+            "DonationAddress": "1BqmhJacEYvtpWBpq5HYeDTTETbKDL9ocx"
+        },
+        {
+            "FeatureCode": 20406,
+            "DonationAddress": "1B5FFAqtKPy9TyyFZwGQWAt6wmvGQ3qMNA"
+        },
+        {
+            "FeatureCode": 20407,
+            "DonationAddress": "1wxFYCSsxWHt82hByKfDsu7QH3KHwxqJX"
+        },
+        {
+            "FeatureCode": 20408,
+            "DonationAddress": "1KL6BneRs16Rt2V3iYwip2MgvS8UfCV8z5"
+        },
+        {
+            "FeatureCode": 20409,
+            "DonationAddress": "1KbRaapwNnTJMZcpbTQfb7xJnymKFJDyC1"
+        }
+    ],
+    "SupportedNodes": [{
+            "СurrencyID": 0,
+            "NetworkID": 1,
+            "GRPCUrl": "localhost:6000"
+        },
+        {
+            "СurrencyID": 0,
+            "NetworkID": 0,
+            "GRPCUrl": "localhost:7000"
+        }
+    ]
 }

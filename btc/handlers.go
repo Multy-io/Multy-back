@@ -317,7 +317,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				if err != nil {
 					log.Errorf("EventResyncAddress: cli.EventResyncAddress %s\n", err.Error())
 				}
-				log.Debugf("EventResyncAddress Reply %s", rp.Message)
+				log.Debugf("EventResyncAddress Reply %s", rp)
 
 			}
 		}

@@ -6,6 +6,7 @@ See LICENSE for details
 package btc
 
 import (
+	"errors"
 	"time"
 
 	"github.com/Appscrunch/Multy-back/store"
@@ -27,7 +28,7 @@ var (
 )
 
 // TODO: update date
-func updateWalletAndAddressDate(tx store.MultyTX) {
+func updateWalletAndAddressDate(tx store.MultyTX) error {
 
 	for _, walletOutput := range tx.WalletsOutput {
 
@@ -40,12 +41,12 @@ func updateWalletAndAddressDate(tx store.MultyTX) {
 		}
 		err := usersData.Update(sel, update)
 		if err != nil {
-			log.Errorf("updateWalletAndAddressDate:usersData.Update: %s", err.Error())
+			return errors.New("updateWalletAndAddressDate:usersData.Update: " + err.Error())
 		}
 
 		// update wallets last action time
 		// Set status to OK if some money transfered to this address
-		sel = bson.M{"userID": walletOutput.UserId, "wallets.walletIndex": walletOutput.WalletIndex}
+		sel = bson.M{"userID": walletOutput.UserId, "wallets.walletIndex": walletOutput.WalletIndex, "wallets.addresses.address": walletOutput.Address.Address}
 		update = bson.M{
 			"$set": bson.M{
 				"wallets.$.status":         store.WalletStatusOK,
@@ -54,7 +55,7 @@ func updateWalletAndAddressDate(tx store.MultyTX) {
 		}
 		err = usersData.Update(sel, update)
 		if err != nil {
-			log.Errorf("updateWalletAndAddressDate:usersData.Update: %s", err.Error())
+			return errors.New("updateWalletAndAddressDate:usersData.Update: " + err.Error())
 		}
 
 	}
@@ -69,11 +70,11 @@ func updateWalletAndAddressDate(tx store.MultyTX) {
 		}
 		err := usersData.Update(sel, update)
 		if err != nil {
-			log.Errorf("updateWalletAndAddressDate:usersData.Update: %s", err.Error())
+			return errors.New("updateWalletAndAddressDate:usersData.Update: " + err.Error())
 		}
 
 		// update wallets last action time
-		sel = bson.M{"userID": walletInput.UserId, "wallets.walletIndex": walletInput.WalletIndex}
+		sel = bson.M{"userID": walletInput.UserId, "wallets.walletIndex": walletInput.WalletIndex, "wallets.addresses.address": walletInput.Address.Address}
 		update = bson.M{
 			"$set": bson.M{
 				"wallets.$.lastActionTime": time.Now().Unix(),
@@ -81,9 +82,11 @@ func updateWalletAndAddressDate(tx store.MultyTX) {
 		}
 		err = usersData.Update(sel, update)
 		if err != nil {
-			log.Errorf("updateWalletAndAddressDate:usersData.Update: %s", err.Error())
+			return errors.New("updateWalletAndAddressDate:usersData.Update: " + err.Error())
 		}
 	}
+
+	return nil
 }
 
 func GetReSyncExchangeRate(time int64) ([]store.ExchangeRatesRecord, error) {

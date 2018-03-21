@@ -1378,15 +1378,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 		okWalletsBTC, okWalletsETH := fetchUndeletedWallets(user.Wallets, user.WalletsETH)
 
-		//
-		//walletBTC, ok := walletRaw.(store.Wallet)
-		//if ok {
-		//	//this is BTC wallet
-		//	if walletBTC.Status == store.WalletStatusOK {
-		//		okWallets = append(okWallets, walletBTC)
-		//	}
-		//}
-
 		for _, wallet := range okWalletsBTC {
 			var pending bool
 

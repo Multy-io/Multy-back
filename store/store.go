@@ -35,6 +35,16 @@ type Conf struct {
 	DBFeeRates          string
 	DBTx                string
 	DBStockExchangeRate string
+
+	// BTC main
+	TableMempoolRatesBTCMain     string
+	TableTxsDataBTCMain          string
+	TableSpendableOutputsBTCMain string
+
+	// BTC test
+	TableMempoolRatesBTCTest     string
+	TableTxsDataBTCTest          string
+	TableSpendableOutputsBTCTest string
 }
 
 type UserStore interface {
@@ -62,6 +72,8 @@ type UserStore interface {
 	UpdateEthereumTransaction(sel, update bson.M) error
 	FindETHTransaction(sel bson.M) error
 	// DropTest()
+	DeleteMempool()
+
 	FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error)
 	FindUserDataChain(CurrencyID, NetworkID int) (map[string]string, error)
 }
@@ -71,13 +83,14 @@ type MongoUserStore struct {
 	session   *mgo.Session
 	usersData *mgo.Collection
 
-	BTCMainRatesData *mgo.Collection
-	BTCTestRatesData *mgo.Collection
-
-	BTCMainTxsData *mgo.Collection
-	BTCTestTxsData *mgo.Collection
-
+	// btc main
+	BTCMainRatesData        *mgo.Collection
+	BTCMainTxsData          *mgo.Collection
 	BTCMainSpendableOutputs *mgo.Collection
+
+	// btc test
+	BTCTestRatesData        *mgo.Collection
+	BTCTestTxsData          *mgo.Collection
 	BTCTestSpendableOutputs *mgo.Collection
 
 	stockExchangeRate *mgo.Collection
@@ -98,16 +111,15 @@ func InitUserStore(conf Conf) (UserStore, error) {
 	uStore.usersData = uStore.session.DB(conf.DBUsers).C(TableUsers)
 	uStore.stockExchangeRate = uStore.session.DB(conf.DBStockExchangeRate).C(TableStockExchangeRate) // TODO: add ethereum StockExchangeRates
 
-	// TODO: make varribles in a config
 	// BTC main
-	uStore.BTCMainRatesData = uStore.session.DB(conf.DBFeeRates).C("BTCMainFeeRate")
-	uStore.BTCMainTxsData = uStore.session.DB(conf.DBTx).C("BTCMainTxData")
-	uStore.BTCMainSpendableOutputs = uStore.session.DB(conf.DBTx).C("BTCMainspendableOutputs")
+	uStore.BTCMainRatesData = uStore.session.DB(conf.DBFeeRates).C(conf.TableMempoolRatesBTCMain)
+	uStore.BTCMainTxsData = uStore.session.DB(conf.DBTx).C(conf.TableTxsDataBTCMain)
+	uStore.BTCMainSpendableOutputs = uStore.session.DB(conf.DBTx).C(conf.TableSpendableOutputsBTCMain)
 
 	// BTC test
-	uStore.BTCTestRatesData = uStore.session.DB(conf.DBFeeRates).C("BTCTestFeeRate")
-	uStore.BTCTestTxsData = uStore.session.DB(conf.DBTx).C("BTCTestTxData")
-	uStore.BTCTestSpendableOutputs = uStore.session.DB(conf.DBTx).C("BTCTestspendableOutputs")
+	uStore.BTCTestRatesData = uStore.session.DB(conf.DBFeeRates).C(conf.TableMempoolRatesBTCTest)
+	uStore.BTCTestTxsData = uStore.session.DB(conf.DBTx).C(conf.TableTxsDataBTCTest)
+	uStore.BTCTestSpendableOutputs = uStore.session.DB(conf.DBTx).C(conf.TableSpendableOutputsBTCTest)
 
 	// ETH mock
 	uStore.ethTxHistory = uStore.session.DB(conf.DBTx).C("ETH")
@@ -134,11 +146,10 @@ func (mStore *MongoUserStore) FindUserDataChain(CurrencyID, NetworkID int) (map[
 	return usersData, nil
 }
 
-// func (mStore *MongoUserStore) DropTest() {
-// 	mStore.usersData.DropCollection()
-// 	mStore.txsData.DropCollection()
-// 	mStore.spendableOutputs.DropCollection()
-// }
+func (mStore *MongoUserStore) DeleteMempool() {
+	mStore.BTCMainRatesData.DropCollection()
+	mStore.BTCTestRatesData.DropCollection()
+}
 
 func (mStore *MongoUserStore) FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error) {
 	allTxs := []TransactionETH{}
@@ -238,7 +249,6 @@ func (mStore *MongoUserStore) Insert(user User) error {
 func (mStore *MongoUserStore) GetAllRates(currencyID, networkID int, sortBy string, rates *[]RatesRecord) error {
 	switch currencyID {
 	case currencies.Bitcoin:
-		//TODO: fix test table
 		if networkID == currencies.Main {
 			return mStore.BTCMainRatesData.Find(nil).Sort(sortBy).All(rates)
 		}
@@ -299,7 +309,6 @@ func (mStore *MongoUserStore) GetExchangeRatesDay() ([]RatesAPIBitstamp, error) 
 func (mStore *MongoUserStore) GetAllWalletTransactions(userid string, currencyID, networkID int, walletTxs *[]MultyTX) error {
 	switch currencyID {
 	case currencies.Bitcoin:
-		//TODO: fix test table
 		query := bson.M{"userid": userid}
 		if networkID == currencies.Main {
 			return mStore.BTCMainTxsData.Find(query).All(walletTxs)

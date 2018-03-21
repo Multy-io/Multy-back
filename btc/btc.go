@@ -60,19 +60,19 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	log.Infof("InitHandlers: mgo.Dial: √")
 
 	usersData = db.DB(dbConf.DBUsers).C(store.TableUsers) // all db tables
-	exRate = db.DB("DBStockExchangeRate").C("TableStockExchangeRate")
+	exRate = db.DB(dbConf.DBStockExchangeRate).C("TableStockExchangeRate")
 
 	//TODO: set table names from conf
 
 	// main
-	mempoolRates = db.DB(dbConf.DBFeeRates).C(store.TableFeeRates)
-	txsData = db.DB(dbConf.DBTx).C("BTCMainTxData")
-	spendableOutputs = db.DB(dbConf.DBTx).C("BTCMainspendableOutputs")
+	mempoolRates = db.DB(dbConf.DBFeeRates).C(dbConf.TableMempoolRatesBTCMain)
+	txsData = db.DB(dbConf.DBTx).C(dbConf.TableTxsDataBTCMain)
+	spendableOutputs = db.DB(dbConf.DBTx).C(dbConf.TableSpendableOutputsBTCMain)
 
 	// test
-	mempoolRatesTest = db.DB(dbConf.DBFeeRates).C("Rates-Test")
-	txsDataTest = db.DB(dbConf.DBTx).C("BTCTestTxData")
-	spendableOutputsTest = db.DB(dbConf.DBTx).C("BTCTestspendableOutputs")
+	mempoolRatesTest = db.DB(dbConf.DBFeeRates).C(dbConf.TableMempoolRatesBTCTest)
+	txsDataTest = db.DB(dbConf.DBTx).C(dbConf.TableTxsDataBTCTest)
+	spendableOutputsTest = db.DB(dbConf.DBTx).C(dbConf.TableSpendableOutputsBTCTest)
 
 	// setup main net
 	urlMain, err := fethCoinType(coinTypes, currencies.Bitcoin, currencies.Main)
