@@ -34,7 +34,7 @@ todo:
 .PHONY: todo
 
 dist:
-	cd node-streamer/ protoc --go_out=plugins=grpc:. *.proto && cd ../cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
+	cd node-streamer/ && protoc --go_out=plugins=grpc:. *.proto &&cd ../cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
 
 test:
 	cd cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o test .
