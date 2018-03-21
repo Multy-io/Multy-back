@@ -23,9 +23,7 @@ const (
 	TopicTransaction = "btcTransactionUpdate"
 )
 
-//TODO: make a package struct
-// Dirty hack - this will be wrapped to a struct
-
+// BTCConn is a main struct of package
 type BTCConn struct {
 	NsqProducer      *nsq.Producer // a producer for sending data to clients
 	CliTest          pb.NodeCommuunicationsClient
@@ -41,11 +39,6 @@ var log = slf.WithContext("btc")
 func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string) (*BTCConn, error) {
 	//declare pacakge struct
 	cli := &BTCConn{}
-
-	// waM := make(chan pb.WatchAddress)
-	// waT := make(chan pb.WatchAddress)
-	// cli.WatchAddressMain = &waM
-	// cli.WatchAddressTest = &waT
 
 	cli.WatchAddressMain = make(chan pb.WatchAddress)
 	cli.WatchAddressTest = make(chan pb.WatchAddress)
@@ -91,7 +84,6 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
-	//TODO: uncomment
 	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.Main, cli.WatchAddressMain)
 
 	cli.CliMain = cliMain
@@ -106,7 +98,6 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
-	//TODO: uncomment
 	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.Test, cli.WatchAddressTest)
 
 	cli.CliTest = cliTest
@@ -138,6 +129,7 @@ func fethCoinType(coinTypes []store.CoinType, currencyID, networkID int) (string
 	return "", fmt.Errorf("fethCoinType: no such coin in config")
 }
 
+// BtcTransaction stuct for ws notifications
 type BtcTransaction struct {
 	TransactionType int    `json:"transactionType"`
 	Amount          int64  `json:"amount"`
@@ -145,6 +137,7 @@ type BtcTransaction struct {
 	Address         string `json:"address"`
 }
 
+// BtcTransactionWithUserID sub-stuct for ws notifications
 type BtcTransactionWithUserID struct {
 	NotificationMsg *BtcTransaction
 	UserID          string
