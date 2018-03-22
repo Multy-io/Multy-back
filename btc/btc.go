@@ -12,7 +12,7 @@ import (
 	mgo "gopkg.in/mgo.v2"
 
 	"github.com/Appscrunch/Multy-back/currencies"
-	pb "github.com/Appscrunch/Multy-back/node-streamer"
+	pb "github.com/Appscrunch/Multy-back/node-streamer/btc"
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	nsq "github.com/bitly/go-nsq"

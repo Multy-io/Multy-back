@@ -6,10 +6,14 @@ See LICENSE for details
 package btc
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
 
+	"github.com/Appscrunch/Multy-back/currencies"
+	btcpb "github.com/Appscrunch/Multy-back/node-streamer/btc"
 	"github.com/Appscrunch/Multy-back/store"
+	nsq "github.com/bitly/go-nsq"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -27,7 +31,6 @@ var (
 	spendableOutputsTest *mgo.Collection
 )
 
-// TODO: update date
 func updateWalletAndAddressDate(tx store.MultyTX) error {
 
 	for _, walletOutput := range tx.WalletsOutput {
@@ -150,4 +153,203 @@ func InsertMempoolRecords(recs ...store.MempoolRecord) {
 			continue
 		}
 	}
+}
+
+func sendNotifyToClients(tx store.MultyTX, nsqProducer *nsq.Producer) {
+
+	for _, walletOutput := range tx.WalletsOutput {
+		txMsq := BtcTransactionWithUserID{
+			UserID: walletOutput.UserId,
+			NotificationMsg: &BtcTransaction{
+				TransactionType: tx.TxStatus,
+				Amount:          tx.TxOutAmount,
+				TxID:            tx.TxID,
+				Address:         walletOutput.Address.Address,
+			},
+		}
+		sendNotify(&txMsq, nsqProducer)
+	}
+
+	for _, walletInput := range tx.WalletsInput {
+		txMsq := BtcTransactionWithUserID{
+			UserID: walletInput.UserId,
+			NotificationMsg: &BtcTransaction{
+				TransactionType: tx.TxStatus,
+				Amount:          tx.TxOutAmount,
+				TxID:            tx.TxID,
+				Address:         walletInput.Address.Address,
+			},
+		}
+		sendNotify(&txMsq, nsqProducer)
+	}
+}
+
+func sendNotify(txMsq *BtcTransactionWithUserID, nsqProducer *nsq.Producer) {
+	newTxJSON, err := json.Marshal(txMsq)
+	if err != nil {
+		log.Errorf("sendNotifyToClients: [%+v] %s\n", txMsq, err.Error())
+		return
+	}
+
+	err = nsqProducer.Publish(TopicTransaction, newTxJSON)
+	if err != nil {
+		log.Errorf("nsq publish new transaction: [%+v] %s\n", txMsq, err.Error())
+		return
+	}
+
+	return
+}
+
+func generatedTxDataToStore(gSpOut *btcpb.BTCTransaction) store.MultyTX {
+	outs := []store.AddresAmount{}
+	for _, output := range gSpOut.TxOutputs {
+		outs = append(outs, store.AddresAmount{
+			Address: output.Address,
+			Amount:  output.Amount,
+		})
+	}
+
+	ins := []store.AddresAmount{}
+	for _, inputs := range gSpOut.TxInputs {
+		ins = append(ins, store.AddresAmount{
+			Address: inputs.Address,
+			Amount:  inputs.Amount,
+		})
+	}
+
+	// gSpOut.WalletsInput
+	// gSpOut.WalletsOutput
+
+	wInputs := []store.WalletForTx{}
+	for _, walletOutputs := range gSpOut.WalletsOutput {
+		wInputs = append(wInputs, store.WalletForTx{
+			UserId: walletOutputs.Userid,
+			Address: store.AddressForWallet{
+				Address: walletOutputs.Address,
+			},
+		})
+	}
+
+	wOutputs := []store.WalletForTx{}
+	for _, walletInputs := range gSpOut.WalletsInput {
+		wOutputs = append(wOutputs, store.WalletForTx{
+			UserId: walletInputs.Userid,
+			Address: store.AddressForWallet{
+				Address: walletInputs.Address,
+			},
+		})
+	}
+
+	return store.MultyTX{
+		UserId:        gSpOut.UserID,
+		TxID:          gSpOut.TxID,
+		TxHash:        gSpOut.TxHash,
+		TxOutScript:   gSpOut.TxOutScript,
+		TxAddress:     gSpOut.TxAddress,
+		TxStatus:      int(gSpOut.TxStatus),
+		TxOutAmount:   gSpOut.TxOutAmount,
+		BlockTime:     gSpOut.BlockTime,
+		BlockHeight:   gSpOut.BlockHeight,
+		Confirmations: int(gSpOut.Confirmations),
+		TxFee:         gSpOut.TxFee,
+		MempoolTime:   gSpOut.MempoolTime,
+		TxInputs:      ins,
+		TxOutputs:     outs,
+		WalletsInput:  wInputs,
+		WalletsOutput: wOutputs,
+	}
+}
+
+func generatedSpOutsToStore(gSpOut *btcpb.AddSpOut) store.SpendableOutputs {
+	return store.SpendableOutputs{
+		TxID:        gSpOut.TxID,
+		TxOutID:     int(gSpOut.TxOutID),
+		TxOutAmount: gSpOut.TxOutAmount,
+		TxOutScript: gSpOut.TxOutScript,
+		Address:     gSpOut.Address,
+		UserID:      gSpOut.UserID,
+		TxStatus:    int(gSpOut.TxStatus),
+	}
+}
+
+func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
+
+	txsdata := &mgo.Collection{}
+	switch networtkID {
+	case currencies.Main:
+		txsdata = txsData
+	case currencies.Test:
+		txsdata = txsDataTest
+	default:
+		log.Errorf("saveMultyTransaction: wrong networkID:")
+	}
+
+	// This is splited transaction! That means that transaction's WalletsInputs and WalletsOutput have the same WalletIndex!
+	//Here we have outgoing transaction for exact wallet!
+	// /*
+	multyTX := store.MultyTX{}
+	if tx.WalletsInput != nil && len(tx.WalletsInput) > 0 {
+		log.Errorf(" 1 . --------")
+		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
+		err := txsdata.Find(sel).One(&multyTX)
+		if err == mgo.ErrNotFound {
+			// initial insertion
+			err := txsdata.Insert(tx)
+			if err != nil {
+				log.Errorf("saveMultyTransaction: txsdata.Insert: %s", err.Error())
+			}
+
+		}
+		if err != nil && err != mgo.ErrNotFound {
+			// database error
+			log.Errorf("saveMultyTransaction: txsdata.Find: %s", err.Error())
+		}
+
+		update := bson.M{
+			"$set": bson.M{
+				"txstatus":      tx.TxStatus,
+				"blockheight":   tx.BlockHeight,
+				"confirmations": tx.Confirmations,
+				"blocktime":     tx.BlockTime,
+			},
+		}
+		err = txsdata.Update(sel, update)
+		if err != nil {
+			log.Errorf("saveMultyTransaction: txsdata.Update: %s", err.Error())
+		}
+		return nil
+	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0 {
+		log.Errorf(" 2 . --------")
+		// sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
+		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
+		err := txsdata.Find(sel).One(&multyTX)
+		if err == mgo.ErrNotFound {
+			// initial insertion
+			err := txsdata.Insert(tx)
+			if err != nil {
+				log.Errorf("saveMultyTransaction: txsdata.Insert: %s", err.Error())
+			}
+			return nil
+		}
+		if err != nil && err != mgo.ErrNotFound {
+			// database error
+			return err
+		}
+
+		update := bson.M{
+			"$set": bson.M{
+				"txstatus":      tx.TxStatus,
+				"blockheight":   tx.BlockHeight,
+				"confirmations": tx.Confirmations,
+				"blocktime":     tx.BlockTime,
+			},
+		}
+		err = txsdata.Update(sel, update)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return nil
+	// */
 }

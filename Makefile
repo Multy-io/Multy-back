@@ -20,7 +20,7 @@ deps:
 	govendor sync
 
 build:
-	cd node-streamer/ && protoc --go_out=plugins=grpc:. *.proto && cd ../cmd/ && go build $(LD_OPTS) -o $(NAME) . && cd -
+	cd node-streamer/btc/ && protoc --go_out=plugins=grpc:. *.proto && cd ../../cmd/ && go build $(LD_OPTS) -o $(NAME) . && cd -
 
 # Show to-do items per file.
 todo:

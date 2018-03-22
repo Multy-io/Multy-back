@@ -7,14 +7,13 @@ package btc
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 
 	"gopkg.in/mgo.v2"
 
 	"github.com/Appscrunch/Multy-back/currencies"
-	pb "github.com/Appscrunch/Multy-back/node-streamer"
+	pb "github.com/Appscrunch/Multy-back/node-streamer/btc"
 	"github.com/Appscrunch/Multy-back/store"
 	nsq "github.com/bitly/go-nsq"
 	"gopkg.in/mgo.v2/bson"
@@ -246,11 +245,14 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				log.Errorf("initGrpcClient: cli.EventDeleteMempool:stream.Recv: %s", err.Error())
 			}
 
-			fmt.Printf("[DEBUG] Our tx %v addr %v \n", gTx.UserID, gTx.TxAddress)
 			tx := generatedTxDataToStore(gTx)
+			fmt.Println("-------out", gTx.WalletsOutput)
+			fmt.Println("-------in", gTx.WalletsInput)
 
 			user := store.User{}
 			setExchangeRates(&tx, true, tx.MempoolTime)
+
+			// set wallet index and address index in input
 			for _, in := range tx.WalletsInput {
 				sel := bson.M{"wallets.addresses.address": in.Address.Address}
 				err := usersData.Find(sel).One(&user)
@@ -270,6 +272,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				}
 			}
 
+			// set wallet index and address index in output
 			for _, out := range tx.WalletsOutput {
 				sel := bson.M{"wallets.addresses.address": out.Address.Address}
 				err := usersData.Find(sel).One(&user)
@@ -289,11 +292,13 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				}
 			}
 
+			log.Infof("[DEBUG] Our tx %v \n", tx)
 			// err = txData.Insert(tx)
 			err = saveMultyTransaction(tx, networtkID)
 			if err != nil {
 				log.Errorf("initGrpcClient: saveMultyTransaction: %s", err)
 			}
+			updateWalletAndAddressDate(tx)
 			sendNotifyToClients(tx, nsqProducer)
 
 		}
@@ -309,7 +314,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				if err != nil {
 					log.Errorf("NewAddressNode: cli.EventAddNewAddress %s\n", err.Error())
 				}
-				log.Debugf("EventAddNewAddress Reply %s", rp.Message)
+				log.Debugf("EventAddNewAddress Reply %s", rp)
 
 				rp, err = cli.EventResyncAddress(context.Background(), &pb.AddressToResync{
 					Address: addr.Address,
@@ -323,175 +328,4 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 		}
 	}()
 
-}
-
-func sendNotifyToClients(tx store.MultyTX, nsqProducer *nsq.Producer) {
-
-	for _, walletOutput := range tx.WalletsOutput {
-		txMsq := BtcTransactionWithUserID{
-			UserID: walletOutput.UserId,
-			NotificationMsg: &BtcTransaction{
-				TransactionType: tx.TxStatus,
-				Amount:          tx.TxOutAmount,
-				TxID:            tx.TxID,
-				Address:         walletOutput.Address.Address,
-			},
-		}
-		sendNotify(&txMsq, nsqProducer)
-	}
-
-	for _, walletInput := range tx.WalletsInput {
-		txMsq := BtcTransactionWithUserID{
-			UserID: walletInput.UserId,
-			NotificationMsg: &BtcTransaction{
-				TransactionType: tx.TxStatus,
-				Amount:          tx.TxOutAmount,
-				TxID:            tx.TxID,
-				Address:         walletInput.Address.Address,
-			},
-		}
-		sendNotify(&txMsq, nsqProducer)
-	}
-}
-
-func sendNotify(txMsq *BtcTransactionWithUserID, nsqProducer *nsq.Producer) {
-	newTxJSON, err := json.Marshal(txMsq)
-	if err != nil {
-		log.Errorf("sendNotifyToClients: [%+v] %s\n", txMsq, err.Error())
-		return
-	}
-
-	err = nsqProducer.Publish(TopicTransaction, newTxJSON)
-	if err != nil {
-		log.Errorf("nsq publish new transaction: [%+v] %s\n", txMsq, err.Error())
-		return
-	}
-
-	return
-}
-
-func generatedTxDataToStore(gSpOut *pb.BTCTransaction) store.MultyTX {
-	outs := []store.AddresAmount{}
-	for _, output := range gSpOut.TxOutputs {
-		outs = append(outs, store.AddresAmount{
-			Address: output.Address,
-			Amount:  output.Amount,
-		})
-	}
-
-	ins := []store.AddresAmount{}
-	for _, inputs := range gSpOut.TxInputs {
-		ins = append(ins, store.AddresAmount{
-			Address: inputs.Address,
-			Amount:  inputs.Amount,
-		})
-	}
-
-	return store.MultyTX{
-		UserId:        gSpOut.UserID,
-		TxID:          gSpOut.TxID,
-		TxHash:        gSpOut.TxHash,
-		TxOutScript:   gSpOut.TxOutScript,
-		TxAddress:     gSpOut.TxAddress,
-		TxStatus:      int(gSpOut.TxStatus),
-		TxOutAmount:   gSpOut.TxOutAmount,
-		BlockTime:     gSpOut.BlockTime,
-		BlockHeight:   gSpOut.BlockHeight,
-		Confirmations: int(gSpOut.Confirmations),
-		TxFee:         gSpOut.TxFee,
-		MempoolTime:   gSpOut.MempoolTime,
-		TxInputs:      ins,
-		TxOutputs:     outs,
-	}
-}
-
-func generatedSpOutsToStore(gSpOut *pb.AddSpOut) store.SpendableOutputs {
-	return store.SpendableOutputs{
-		TxID:        gSpOut.TxID,
-		TxOutID:     int(gSpOut.TxOutID),
-		TxOutAmount: gSpOut.TxOutAmount,
-		TxOutScript: gSpOut.TxOutScript,
-		Address:     gSpOut.Address,
-		UserID:      gSpOut.UserID,
-		TxStatus:    int(gSpOut.TxStatus),
-	}
-}
-
-func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
-
-	txsdata := &mgo.Collection{}
-	switch networtkID {
-	case currencies.Main:
-		txsdata = txsData
-	case currencies.Test:
-		txsdata = txsDataTest
-	default:
-		log.Errorf("setGRPCHandlers: wrong networkID:")
-	}
-
-	// This is splited transaction! That means that transaction's WalletsInputs and WalletsOutput have the same WalletIndex!
-	//Here we have outgoing transaction for exact wallet!
-	multyTX := store.MultyTX{}
-	if tx.WalletsInput != nil && len(tx.WalletsInput) > 0 {
-		// sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
-		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
-		err := txsdata.Find(sel).One(&multyTX)
-		if err == mgo.ErrNotFound {
-			// initial insertion
-			err := txsdata.Insert(tx)
-			if err != nil {
-				return err
-			}
-
-		}
-		if err != nil && err != mgo.ErrNotFound {
-			// database error
-			return err
-		}
-
-		update := bson.M{
-			"$set": bson.M{
-				"txstatus":      tx.TxStatus,
-				"blockheight":   tx.BlockHeight,
-				"confirmations": tx.Confirmations,
-				"blocktime":     tx.BlockTime,
-			},
-		}
-		err = txsdata.Update(sel, update)
-		if err != nil {
-			return err
-		}
-		return nil
-	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0 {
-		// sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
-		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
-		err := txsdata.Find(sel).One(&multyTX)
-		if err == mgo.ErrNotFound {
-			// initial insertion
-			err := txsdata.Insert(tx)
-			if err != nil {
-				return err
-			}
-			return nil
-		}
-		if err != nil && err != mgo.ErrNotFound {
-			// database error
-			return err
-		}
-
-		update := bson.M{
-			"$set": bson.M{
-				"txstatus":      tx.TxStatus,
-				"blockheight":   tx.BlockHeight,
-				"confirmations": tx.Confirmations,
-				"blocktime":     tx.BlockTime,
-			},
-		}
-		err = txsdata.Update(sel, update)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-	return nil
 }

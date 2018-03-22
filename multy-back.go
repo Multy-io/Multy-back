@@ -9,11 +9,10 @@ import (
 	"context"
 	"fmt"
 
-	pb "github.com/Appscrunch/Multy-back/node-streamer"
-
 	"github.com/Appscrunch/Multy-back/btc"
 	"github.com/Appscrunch/Multy-back/client"
 	"github.com/Appscrunch/Multy-back/currencies"
+	btcpb "github.com/Appscrunch/Multy-back/node-streamer/btc"
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	"github.com/gin-gonic/gin"
@@ -66,7 +65,7 @@ func Init(conf *Configuration) (*Multy, error) {
 	multy.userStore = userStore
 	log.Infof("UserStore initialization done on %s √", conf.Database)
 
-	multy.userStore.DeleteMempool()
+	// multy.userStore.DeleteMempool()
 	log.Infof("Mempool Data delete √")
 
 	btcCli, err := btc.InitHandlers(&conf.Database, conf.SupportedNodes, conf.NSQAddress)
@@ -104,7 +103,7 @@ func SetUserData(btcCli *btc.BTCConn, userStore store.UserStore, ct []store.Coin
 
 			switch conCred.NetworkID {
 			case currencies.Main:
-				resp, err := btcCli.CliMain.EventInitialAdd(context.Background(), &pb.UsersData{
+				resp, err := btcCli.CliMain.EventInitialAdd(context.Background(), &btcpb.UsersData{
 					Map: usersData,
 				})
 				if err != nil {
@@ -112,7 +111,7 @@ func SetUserData(btcCli *btc.BTCConn, userStore store.UserStore, ct []store.Coin
 				}
 				log.Debugf("btcCli.CliMain.EventInitialAdd: resp: %s", resp.Message)
 			case currencies.Test:
-				resp, err := btcCli.CliTest.EventInitialAdd(context.Background(), &pb.UsersData{
+				resp, err := btcCli.CliTest.EventInitialAdd(context.Background(), &btcpb.UsersData{
 					Map: usersData,
 				})
 				if err != nil {

@@ -22,10 +22,7 @@ var (
 // Default table names
 const (
 	TableUsers             = "UserCollection"
-	TableFeeRates          = "Rates" // and send those two fields there
-	TableBTC               = "BTC"
 	TableStockExchangeRate = "TableStockExchangeRate"
-	TableEthTransactions   = "TableEthTransactions"
 )
 
 // Conf is a struct for database configuration
