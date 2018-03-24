@@ -169,6 +169,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			}
 			spOut := generatedSpOutsToStore(gSpOut)
 
+			// set wallet index and addres index
 			for _, wallet := range user.Wallets {
 				for _, address := range wallet.Adresses {
 					if address.Address == spOut.Address {
@@ -177,11 +178,31 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 					}
 				}
 			}
-
 			//TODO: add exRates
-			err = spOutputs.Insert(spOut)
+
+			query := bson.M{"userid": spOut.UserID, "txid": spOut.TxID, "address": spOut.Address}
+			err = spOutputs.Find(query).One(nil)
+			if err == mgo.ErrNotFound {
+				//insertion
+				err := spOutputs.Insert(spOut)
+				if err != nil {
+					log.Errorf("Create spOutputs:txsData.Insert: %s", err.Error())
+				}
+				continue
+			}
+			if err != nil && err != mgo.ErrNotFound {
+				log.Errorf("Create spOutputs:spOutputs.Find %s", err.Error())
+				continue
+			}
+
+			update := bson.M{
+				"$set": bson.M{
+					"txstatus": spOut.TxStatus,
+				},
+			}
+			err = spOutputs.Update(query, update)
 			if err != nil {
-				log.Errorf("SetWsHandlers: spendableOutputs.Insert: %s", err)
+				log.Errorf("CreateSpendableOutputs:spendableOutputs.Update: %s", err.Error())
 			}
 
 		}
@@ -215,16 +236,13 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				log.Errorf("initGrpcClient: cli.EventDeleteMempool:stream.Recv: %s", err.Error())
 			}
 
-			sel := bson.M{"txid": del.TxID, "userid": del.UserID, "address": del.Address}
-			err = spOutputs.Find(sel).One(nil)
-			if err == mgo.ErrNotFound {
-				log.Errorf("SetWsHandlers: cli.On deleteSpout: spOutsCollection.Find: %s", err)
-			} else {
-				err = spOutputs.Remove(sel)
-				if err != nil {
-					log.Errorf("SetWsHandlers: cli.On deleteSpout: spOutsCollection.Remove: %s", err)
-				}
+			query := bson.M{"userid": del.UserID, "txid": del.TxID, "address": del.Address}
+			err = spOutputs.Remove(query)
+			if err != nil {
+				log.Errorf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err.Error())
 			}
+			log.Debugf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err)
+
 		}
 	}()
 
@@ -251,7 +269,9 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 			user := store.User{}
 			setExchangeRates(&tx, true, tx.MempoolTime)
+			setUserID(&tx)
 
+			//TODO: wrap to func
 			// set wallet index and address index in input
 			for _, in := range tx.WalletsInput {
 				sel := bson.M{"wallets.addresses.address": in.Address.Address}

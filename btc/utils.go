@@ -225,7 +225,9 @@ func generatedTxDataToStore(gSpOut *btcpb.BTCTransaction) store.MultyTX {
 		wInputs = append(wInputs, store.WalletForTx{
 			UserId: walletOutputs.Userid,
 			Address: store.AddressForWallet{
-				Address: walletOutputs.Address,
+				Address:         walletOutputs.Address,
+				Amount:          walletOutputs.Amount,
+				AddressOutIndex: int(walletOutputs.TxOutIndex),
 			},
 		})
 	}
@@ -235,7 +237,9 @@ func generatedTxDataToStore(gSpOut *btcpb.BTCTransaction) store.MultyTX {
 		wOutputs = append(wOutputs, store.WalletForTx{
 			UserId: walletInputs.Userid,
 			Address: store.AddressForWallet{
-				Address: walletInputs.Address,
+				Address:         walletInputs.Address,
+				Amount:          walletInputs.Amount,
+				AddressOutIndex: int(walletInputs.TxOutIndex),
 			},
 		})
 	}
@@ -281,28 +285,27 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 	case currencies.Test:
 		txsdata = txsDataTest
 	default:
-		log.Errorf("saveMultyTransaction: wrong networkID:")
+		return errors.New("saveMultyTransaction: wrong networkID")
 	}
-
 	// This is splited transaction! That means that transaction's WalletsInputs and WalletsOutput have the same WalletIndex!
 	//Here we have outgoing transaction for exact wallet!
-	// /*
 	multyTX := store.MultyTX{}
 	if tx.WalletsInput != nil && len(tx.WalletsInput) > 0 {
-		log.Errorf(" 1 . --------")
+		// sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
 		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
 		err := txsdata.Find(sel).One(&multyTX)
 		if err == mgo.ErrNotFound {
 			// initial insertion
 			err := txsdata.Insert(tx)
 			if err != nil {
-				log.Errorf("saveMultyTransaction: txsdata.Insert: %s", err.Error())
+				log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
 			}
-
+			return nil
 		}
 		if err != nil && err != mgo.ErrNotFound {
 			// database error
-			log.Errorf("saveMultyTransaction: txsdata.Find: %s", err.Error())
+
+			return errors.New("saveMultyTransaction:txsdata.Find " + err.Error())
 		}
 
 		update := bson.M{
@@ -315,11 +318,10 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 		}
 		err = txsdata.Update(sel, update)
 		if err != nil {
-			log.Errorf("saveMultyTransaction: txsdata.Update: %s", err.Error())
+			log.Errorf("saveMultyTransaction:txsdata.Update %s", err.Error())
 		}
 		return nil
 	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0 {
-		log.Errorf(" 2 . --------")
 		// sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
 		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
 		err := txsdata.Find(sel).One(&multyTX)
@@ -327,13 +329,13 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 			// initial insertion
 			err := txsdata.Insert(tx)
 			if err != nil {
-				log.Errorf("saveMultyTransaction: txsdata.Insert: %s", err.Error())
+				log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
 			}
 			return nil
 		}
 		if err != nil && err != mgo.ErrNotFound {
 			// database error
-			return err
+			return errors.New("saveMultyTransaction:txsdata.Find: " + err.Error())
 		}
 
 		update := bson.M{
@@ -346,10 +348,21 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 		}
 		err = txsdata.Update(sel, update)
 		if err != nil {
-			return err
+			log.Errorf("saveMultyTransaction:txsData.Update %s", err.Error())
 		}
 		return nil
 	}
 	return nil
-	// */
+}
+
+func setUserID(tx *store.MultyTX) {
+	user := store.User{}
+	for _, address := range tx.TxAddress {
+		query := bson.M{"wallets.addresses.address": address}
+		err := usersData.Find(query).One(&user)
+		if err != nil {
+			log.Errorf("setUserID: usersData.Find: %s", err.Error())
+		}
+		tx.UserId = user.UserID
+	}
 }

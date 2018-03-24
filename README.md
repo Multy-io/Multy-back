@@ -9,11 +9,12 @@ In all cases you would like to set configuration parameters in `multy.config` fi
 ### From source
 
 For building Multy-back, in Multy-back directory run:
+
 ```
 make all-with-deps
 ```
 
-After that in `cmd` directory  binary file with name `multy` should appear. 
+After that in `cmd` directory binary file with name `multy` should appear.
 
 To run a server:
 
@@ -27,9 +28,9 @@ Notice, that program uses NSQ, MongoDB and BTC RPC API. You should install and r
 
 In docker-compose file (`multy-back` service) set volumes: `multy.config` and `rpc.cert` (for btc node).
 
-If you want to use btc node from docker container, uncomment btcd-testnet part o fdocker-compose file and set its address in `BTCNodeAddress` field in `cmd/multy.config`. 
+If you want to use btc node from docker container, uncomment btcd-testnet part o fdocker-compose file and set its address in `BTCNodeAddress` field in `cmd/multy.config`.
 
-To run a server: 
+To run a server:
 
 ```
 docker-compose up

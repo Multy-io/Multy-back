@@ -49,7 +49,7 @@
     },
     "DonationAddresses": [{
             "FeatureCode": 10000,
-            "DonationDonationAddress": "1FPv9f8EGRDNod7mSvJnUFonUioA3Pw5ng"
+            "DonationAddress": "1FPv9f8EGRDNod7mSvJnUFonUioA3Pw5ng"
         },
         {
             "FeatureCode": 10100,

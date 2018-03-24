@@ -64,6 +64,8 @@ message BTCTransaction {
     message WalletForTx {
         string userid = 1;
         string address = 2;
+        int32 txOutIndex = 3;
+        int64 amount = 4;
     }   
 
     repeated WalletForTx WalletsInput = 15;

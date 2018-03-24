@@ -1427,18 +1427,6 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 			return
 		}
 
-		user := store.User{}
-		sel := bson.M{"devices.JWT": token}
-		err = restClient.userStore.FindUser(sel, &user)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrUserNotFound,
-				"history": walletTxs,
-			})
-			return
-		}
-
 		currencyId, err := strconv.Atoi(c.Param("currencyid"))
 		restClient.log.Debugf("getWalletVerbose [%d] \t[currencyId=%s]", currencyId, c.Request.RemoteAddr)
 		if err != nil {
@@ -1457,6 +1445,18 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
 				"message": msgErrDecodenetworkidErr,
+			})
+			return
+		}
+
+		user := store.User{}
+		sel := bson.M{"devices.JWT": token}
+		err = restClient.userStore.FindUser(sel, &user)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrUserNotFound,
+				"history": walletTxs,
 			})
 			return
 		}
@@ -1489,7 +1489,6 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				}
 				blockHeight = resp.Height
 			}
-
 			userTxs := []store.MultyTX{}
 			err = restClient.userStore.GetAllWalletTransactions(user.UserID, currencyId, networkid, &userTxs)
 			if err != nil {
@@ -1501,24 +1500,64 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				return
 			}
 
-			for _, tx := range userTxs {
-				//New Logic
-				var isTheSameWallet = false
-				for _, input := range tx.WalletsInput {
-					if walletIndex == input.WalletIndex {
-						isTheSameWallet = true
+			walletAddresses := []string{}
+			for _, wallet := range user.Wallets {
+				if wallet.WalletIndex == walletIndex {
+					for _, addresses := range wallet.Adresses {
+						walletAddresses = append(walletAddresses, addresses.Address)
 					}
 				}
-				for _, output := range tx.WalletsOutput {
-					if walletIndex == output.WalletIndex {
-						isTheSameWallet = true
+			}
+			restClient.log.Infof("---------len wallet addresses= %d", len(walletAddresses))
+
+			// TODO: fix this logic same wallet to samewallet tx
+
+			for _, address := range walletAddresses {
+				for _, tx := range userTxs {
+					for _, addr := range tx.TxAddress {
+						if addr == address {
+							restClient.log.Infof("---------address= %s, txid= %s", address, tx.TxID)
+							// var isTheSameWallet = false
+							// for _, input := range tx.WalletsInput {
+							// 	if walletIndex == input.WalletIndex {
+							// 		isTheSameWallet = true
+							// 	}
+							// }
+							// for _, output := range tx.WalletsOutput {
+							// 	if walletIndex == output.WalletIndex {
+							// 		isTheSameWallet = true
+							// 	}
+							// }
+
+							// if isTheSameWallet {
+							walletTxs = append(walletTxs, tx)
+							// }
+						}
+					}
+				}
+			}
+
+			/*
+				for _, tx := range userTxs {
+					//New Logic
+					var isTheSameWallet = false
+					for _, input := range tx.WalletsInput {
+						if walletIndex == input.WalletIndex {
+							isTheSameWallet = true
+						}
+					}
+					for _, output := range tx.WalletsOutput {
+						if walletIndex == output.WalletIndex {
+							isTheSameWallet = true
+						}
+					}
+
+					if isTheSameWallet {
+						walletTxs = append(walletTxs, tx)
 					}
 				}
 
-				if isTheSameWallet {
-					walletTxs = append(walletTxs, tx)
-				}
-			}
+			*/
 
 			for i := 0; i < len(walletTxs); i++ {
 				walletTxs[i].Confirmations = int(blockHeight-walletTxs[i].BlockHeight) + 1
