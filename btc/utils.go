@@ -366,3 +366,46 @@ func setUserID(tx *store.MultyTX) {
 		tx.UserId = user.UserID
 	}
 }
+
+func setTxInfo(tx *store.MultyTX) {
+	user := store.User{}
+	// set wallet index and address index in input
+	for _, in := range tx.WalletsInput {
+		sel := bson.M{"wallets.addresses.address": in.Address.Address}
+		err := usersData.Find(sel).One(&user)
+		if err == mgo.ErrNotFound {
+			continue
+		} else if err != nil && err != mgo.ErrNotFound {
+			log.Errorf("initGrpcClient: cli.On newIncomingTx: %s", err)
+		}
+
+		for _, wallet := range user.Wallets {
+			for i := 0; i < len(wallet.Adresses); i++ {
+				if wallet.Adresses[i].Address == in.Address.Address {
+					in.WalletIndex = wallet.WalletIndex
+					in.Address.AddressIndex = wallet.Adresses[i].AddressIndex
+				}
+			}
+		}
+	}
+
+	// set wallet index and address index in output
+	for _, out := range tx.WalletsOutput {
+		sel := bson.M{"wallets.addresses.address": out.Address.Address}
+		err := usersData.Find(sel).One(&user)
+		if err == mgo.ErrNotFound {
+			continue
+		} else if err != nil && err != mgo.ErrNotFound {
+			log.Errorf("initGrpcClient: cli.On newIncomingTx: %s", err)
+		}
+
+		for _, wallet := range user.Wallets {
+			for i := 0; i < len(wallet.Adresses); i++ {
+				if wallet.Adresses[i].Address == out.Address.Address {
+					out.WalletIndex = wallet.WalletIndex
+					out.Address.AddressIndex = wallet.Adresses[i].AddressIndex
+				}
+			}
+		}
+	}
+}

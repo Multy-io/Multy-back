@@ -19,8 +19,7 @@ import (
 )
 
 var (
-	pwdCurr = "multy-back"
-	log     = slf.WithContext(pwdCurr)
+	log = slf.WithContext("multy-back")
 )
 
 const (

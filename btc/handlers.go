@@ -178,7 +178,12 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 					}
 				}
 			}
-			//TODO: add exRates
+
+			exRates, err := GetLatestExchangeRate()
+			if err != nil {
+				log.Errorf("initGrpcClient: GetLatestExchangeRate: %s", err.Error())
+			}
+			spOut.StockExchangeRate = exRates
 
 			query := bson.M{"userid": spOut.UserID, "txid": spOut.TxID, "address": spOut.Address}
 			err = spOutputs.Find(query).One(nil)
@@ -267,53 +272,11 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			fmt.Println("-------out", gTx.WalletsOutput)
 			fmt.Println("-------in", gTx.WalletsInput)
 
-			user := store.User{}
-			setExchangeRates(&tx, true, tx.MempoolTime)
+			setExchangeRates(&tx, gTx.Resync, tx.MempoolTime)
 			setUserID(&tx)
-
-			//TODO: wrap to func
-			// set wallet index and address index in input
-			for _, in := range tx.WalletsInput {
-				sel := bson.M{"wallets.addresses.address": in.Address.Address}
-				err := usersData.Find(sel).One(&user)
-				if err == mgo.ErrNotFound {
-					continue
-				} else if err != nil && err != mgo.ErrNotFound {
-					log.Errorf("initGrpcClient: cli.On newIncomingTx: %s", err)
-				}
-
-				for _, wallet := range user.Wallets {
-					for i := 0; i < len(wallet.Adresses); i++ {
-						if wallet.Adresses[i].Address == in.Address.Address {
-							in.WalletIndex = wallet.WalletIndex
-							in.Address.AddressIndex = wallet.Adresses[i].AddressIndex
-						}
-					}
-				}
-			}
-
-			// set wallet index and address index in output
-			for _, out := range tx.WalletsOutput {
-				sel := bson.M{"wallets.addresses.address": out.Address.Address}
-				err := usersData.Find(sel).One(&user)
-				if err == mgo.ErrNotFound {
-					continue
-				} else if err != nil && err != mgo.ErrNotFound {
-					log.Errorf("initGrpcClient: cli.On newIncomingTx: %s", err)
-				}
-
-				for _, wallet := range user.Wallets {
-					for i := 0; i < len(wallet.Adresses); i++ {
-						if wallet.Adresses[i].Address == out.Address.Address {
-							out.WalletIndex = wallet.WalletIndex
-							out.Address.AddressIndex = wallet.Adresses[i].AddressIndex
-						}
-					}
-				}
-			}
+			setTxInfo(&tx)
 
 			log.Infof("[DEBUG] Our tx %v \n", tx)
-			// err = txData.Insert(tx)
 			err = saveMultyTransaction(tx, networtkID)
 			if err != nil {
 				log.Errorf("initGrpcClient: saveMultyTransaction: %s", err)

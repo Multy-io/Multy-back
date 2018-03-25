@@ -239,7 +239,6 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 			return err
 		}
 
-		//TODO: uncomment
 		err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, user.UserID, wp.Address, restClient)
 		if err != nil {
 			restClient.log.Errorf("createCustomWallet: AddWatchAndResync: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
@@ -356,8 +355,6 @@ func addAddressToWallet(address, token string, currencyID, networkid, walletInde
 	}
 
 	AddWatchAndResync(currencyID, networkid, user.UserID, address, restClient)
-	// TODO: implement re-sync
-	// TODO: add to watch address
 
 	return nil
 

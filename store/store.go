@@ -106,7 +106,7 @@ func InitUserStore(conf Conf) (UserStore, error) {
 
 	uStore.session = session
 	uStore.usersData = uStore.session.DB(conf.DBUsers).C(TableUsers)
-	uStore.stockExchangeRate = uStore.session.DB(conf.DBStockExchangeRate).C(TableStockExchangeRate) // TODO: add ethereum StockExchangeRates
+	uStore.stockExchangeRate = uStore.session.DB(conf.DBStockExchangeRate).C(TableStockExchangeRate)
 
 	// BTC main
 	uStore.BTCMainRatesData = uStore.session.DB(conf.DBFeeRates).C(conf.TableMempoolRatesBTCMain)
