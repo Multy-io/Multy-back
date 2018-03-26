@@ -243,8 +243,6 @@ type TransactionETH struct {
 	BlockTime         int64                 `json:"blocktime"`
 	PoolTime          int64                 `json:"tpooltime"`
 	BlockHeight       int64                 `json:"blockheight"`
-	Confirmations     int                   `json:"confirmations"`
-	Fee               int64                 `json:"txfee"`
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 }
 

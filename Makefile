@@ -19,7 +19,7 @@ setup:
 deps:
 	govendor sync
 
-build:
+build:  proto
 	cd node-streamer/btc/ && protoc --go_out=plugins=grpc:. *.proto && cd ../../cmd/ && go build $(LD_OPTS) -o $(NAME) . && cd -
 
 race:
@@ -37,10 +37,13 @@ todo:
 .PHONY: todo
 
 dist:
-	cd node-streamer/btc/ && protoc --go_out=plugins=grpc:. *.proto &&cd ../../cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
+	cd node-streamer/eth && protoc --go_out=plugins=grpc:. *.proto &&cd ../../cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
 
 test:
 	cd cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o test .
 
 stage:
 	cd cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o stage .
+
+proto:
+	cd node-streamer/btc && protoc --go_out=plugins=grpc:. *.proto && cd .. && cd eth/ && protoc --go_out=plugins=grpc:. *.proto
