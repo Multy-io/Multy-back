@@ -62,8 +62,6 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	usersData = db.DB(dbConf.DBUsers).C(store.TableUsers) // all db tables
 	exRate = db.DB(dbConf.DBStockExchangeRate).C("TableStockExchangeRate")
 
-	//TODO: set table names from conf
-
 	// main
 	mempoolRates = db.DB(dbConf.DBFeeRates).C(dbConf.TableMempoolRatesBTCMain)
 	txsData = db.DB(dbConf.DBTx).C(dbConf.TableTxsDataBTCMain)

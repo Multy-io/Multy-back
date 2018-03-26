@@ -231,11 +231,10 @@ type WalletETH struct {
 }
 
 type TransactionETH struct {
-	UserID string `json:"userid"`
-	Hash   string `json:"hash"`
-	From   string `json:"from"`
-	To     string `json:"to"`
-	//Amount in wei
+	UserID            string                `json:"userid"`
+	Hash              string                `json:"hash"`
+	From              string                `json:"from"`
+	To                string                `json:"to"`
 	Amount            int64                 `json:"amount"`
 	GasPrice          int64                 `json:"gasprice"`
 	GasLimit          int64                 `json:"gaslimit"`
