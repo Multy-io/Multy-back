@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"gopkg.in/mgo.v2"
 
@@ -241,11 +242,19 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				log.Errorf("initGrpcClient: cli.EventDeleteMempool:stream.Recv: %s", err.Error())
 			}
 
-			query := bson.M{"userid": del.UserID, "txid": del.TxID, "address": del.Address}
-			err = spOutputs.Remove(query)
-			if err != nil {
-				log.Errorf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err.Error())
+			for {
+				time.Sleep(time.Millisecond * 500)
+				query := bson.M{"userid": del.UserID, "txid": del.TxID, "address": del.Address}
+				err = spOutputs.Remove(query)
+				if err != nil {
+					log.Errorf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err.Error())
+				}
+
+				if err == nil {
+					break
+				}
 			}
+
 			log.Debugf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err)
 
 		}
