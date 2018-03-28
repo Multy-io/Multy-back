@@ -11,7 +11,7 @@ all:  build run
 all-with-deps: setup deps docker
 
 docker:  
-	cd ../../cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
+	cd cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
 
 run:
 	cd cmd && ./$(NAME) && ../
