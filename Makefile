@@ -8,7 +8,10 @@ LD_OPTS = -ldflags="-X main.branch=${BRANCH} -X main.commit=${COMMIT} -X main.bu
 
 all:  build run
 
-all-with-deps: setup deps build
+all-with-deps: setup deps docker
+
+docker:  
+	cd ../../cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
 
 run:
 	cd cmd && ./$(NAME) && ../

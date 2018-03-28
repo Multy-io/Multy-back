@@ -96,10 +96,10 @@ func (eChart *exchangeChart) run() error {
 	tickerSaveToDB := time.NewTicker(saveToDBInterval)
 
 	go eChart.gdaxConn.listen()
-	go eChart.poloniexConn.listen()
+	// go eChart.poloniexConn.listen()
 
 	eChart.gdaxConn.subscribe()
-	eChart.poloniexConn.subscribe()
+	// eChart.poloniexConn.subscribe()
 
 	for {
 		select {
