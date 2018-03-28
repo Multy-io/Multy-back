@@ -1,8 +1,6 @@
 package btc
 
 import (
-	"fmt"
-
 	pb "github.com/Appscrunch/Multy-back/node-streamer/btc"
 	"github.com/btcsuite/btcd/btcjson"
 )
@@ -10,7 +8,7 @@ import (
 // ProcessTransaction from mempool
 func mempoolTransaction(inTx *btcjson.TxRawResult, usersData *map[string]string) {
 	log.Debugf("[MEMPOOL TX]")
-	fmt.Println(*usersData)
+	// fmt.Println(*usersData)
 	// Brodcast new mempool transaction to mempool event
 
 	rec := rawTxToMempoolRec(inTx)
