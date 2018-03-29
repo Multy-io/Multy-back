@@ -7,7 +7,7 @@ import (
 
 // ProcessTransaction from mempool
 func mempoolTransaction(inTx *btcjson.TxRawResult, usersData *map[string]string) {
-	log.Debugf("[MEMPOOL TX]")
+	// log.Debugf("[MEMPOOL TX]")
 	// fmt.Println(*usersData)
 	// Brodcast new mempool transaction to mempool event
 

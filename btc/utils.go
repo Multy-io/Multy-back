@@ -140,10 +140,10 @@ func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRes
 		multyTx.BlockHeight = blockChainBlockHeight
 
 		setTransactionInfo(multyTx, txVerbose, blockChainBlockHeight, isReSync)
-		log.Debugf("processTransaction:setTransactionInfo %v", multyTx)
+		// log.Debugf("processTransaction:setTransactionInfo %v", multyTx)
 
 		transactions := splitTransaction(*multyTx, blockChainBlockHeight)
-		log.Debugf("processTransaction:splitTransaction %v", transactions)
+		// log.Debugf("processTransaction:splitTransaction %v", transactions)
 
 		for _, transaction := range transactions {
 			finalizeTransaction(&transaction, txVerbose)
@@ -310,6 +310,13 @@ func saveMultyTransaction(tx store.MultyTX, resync bool) {
 		outcomingTx := storeTxToGenerated(tx)
 		// send to outcomingTx to chan
 		TransactionsCh <- outcomingTx
+		if resync {
+			log.Infof("re-sync tx = %v", outcomingTx)
+		}
+
+		if !resync {
+			log.Infof("new tx = %v", outcomingTx)
+		}
 
 		return
 	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0 {
@@ -326,6 +333,13 @@ func saveMultyTransaction(tx store.MultyTX, resync bool) {
 		incomingTx.Resync = resync
 		// send to incomingTx to chan
 		TransactionsCh <- incomingTx
+		if resync {
+			log.Infof("re-sync tx = %v", incomingTx)
+		}
+
+		if !resync {
+			log.Infof("new tx = %v", incomingTx)
+		}
 
 		return
 	}
@@ -583,7 +597,7 @@ func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64, usersDat
 			//send to channel of creation of spendable output
 			AddSpOut <- spOut
 
-			fmt.Println("[DEBUG] newSpout")
+			fmt.Printf("[DEBUG] newSpout %v\n", spOut.String())
 
 		}
 	}
@@ -628,7 +642,7 @@ func DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64, usersDat
 			del := delSpOutToGenerated(reqDelete)
 			DelSpOut <- del
 
-			fmt.Println("[DEBUG] deleteSpout")
+			fmt.Printf("[DEBUG] deleteSpout %v \n", del.String())
 
 		}
 	}

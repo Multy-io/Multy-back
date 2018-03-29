@@ -59,7 +59,7 @@ func RunProcess(btcNodeAddress string, usersData *map[string]string) error {
 			go blockTransactions(hash, usersData)
 		},
 		OnTxAcceptedVerbose: func(txDetails *btcjson.TxRawResult) {
-			log.Debugf("OnTxAcceptedVerbose: new transaction id = %v", txDetails.Txid)
+			// log.Debugf("OnTxAcceptedVerbose: new transaction id = %v", txDetails.Txid)
 			go mempoolTransaction(txDetails, usersData)
 		},
 		OnFilteredBlockDisconnected: func(height int32, header *wire.BlockHeader) {

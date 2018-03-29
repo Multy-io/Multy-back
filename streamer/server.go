@@ -190,6 +190,7 @@ func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommuunications_NewTxServer) e
 	for {
 		select {
 		case tx := <-btc.TransactionsCh:
+			fmt.Printf("NewTx %v", tx.String())
 			stream.Send(&tx)
 		}
 	}
