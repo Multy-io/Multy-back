@@ -7,7 +7,6 @@ package btc
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"time"
 
@@ -180,7 +179,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				}
 			}
 
-			log.Infof("----- EventAddSpendableOut : %v", gSpOut.String())
+			log.Infof("Add spendable output : %v", gSpOut.String())
 
 			exRates, err := GetLatestExchangeRate()
 			if err != nil {
@@ -282,18 +281,18 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			}
 
 			if err != nil {
-				log.Errorf("initGrpcClient: cli.EventDeleteMempool:stream.Recv: %s", err.Error())
+				log.Errorf("initGrpcClient: cli.NewTx:stream.Recv: %s", err.Error())
 			}
 
+			log.Debugf("")
+
 			tx := generatedTxDataToStore(gTx)
-			fmt.Println("-------out", gTx.WalletsOutput)
-			fmt.Println("-------in", gTx.WalletsInput)
 
 			setExchangeRates(&tx, gTx.Resync, tx.MempoolTime)
 			setUserID(&tx)
 			setTxInfo(&tx)
 
-			log.Infof("[DEBUG] Our tx %v \n", tx)
+			log.Infof("New tx history %v \n", tx)
 			err = saveMultyTransaction(tx, networtkID)
 			if err != nil {
 				log.Errorf("initGrpcClient: saveMultyTransaction: %s", err)
