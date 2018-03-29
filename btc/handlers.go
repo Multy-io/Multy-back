@@ -180,6 +180,8 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				}
 			}
 
+			log.Infof("----- EventAddSpendableOut : %v", gSpOut.String())
+
 			exRates, err := GetLatestExchangeRate()
 			if err != nil {
 				log.Errorf("initGrpcClient: GetLatestExchangeRate: %s", err.Error())
@@ -242,17 +244,23 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				log.Errorf("initGrpcClient: cli.EventDeleteMempool:stream.Recv: %s", err.Error())
 			}
 
+			i := 0
 			for {
-				time.Sleep(time.Millisecond * 500)
 				query := bson.M{"userid": del.UserID, "txid": del.TxID, "address": del.Address}
+				log.Infof("-------- query delete %v\n", query)
 				err = spOutputs.Remove(query)
 				if err != nil {
 					log.Errorf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err.Error())
-				}
-
-				if err == nil {
+				} else {
+					log.Infof("delete success √: %v", query)
 					break
 				}
+				i++
+				if i == 5 {
+					break
+				}
+				time.Sleep(time.Second * 3)
+
 			}
 
 			log.Debugf("DeleteSpendableOutputs:spendableOutputs.Remove: %s", err)
