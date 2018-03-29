@@ -110,11 +110,9 @@ func initGrpcClient(url string, mpRates *mgo.Collection) (pb.NodeCommuunications
 		log.Errorf("initGrpcClient: grpc.Dial: %s", err.Error())
 		return nil, err
 	}
-	// defer conn.Close()
 
 	// Create a new  client
 	client := pb.NewNodeCommuunicationsClient(conn)
-
 	return client, nil
 }
 

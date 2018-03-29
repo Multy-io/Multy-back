@@ -8,7 +8,7 @@ LD_OPTS = -ldflags="-X main.branch=${BRANCH} -X main.commit=${COMMIT} -X main.bu
 
 all:  build run
 
-all-with-deps: setup deps build
+all-with-deps: setup deps docker
 
 all-docker:  setup deps
 	cd cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
@@ -42,10 +42,13 @@ todo:
 .PHONY: todo
 
 dist:
-	cd node-streamer/btc/ && protoc --go_out=plugins=grpc:. *.proto &&cd ../../cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
+	cd node-streamer/eth && protoc --go_out=plugins=grpc:. *.proto &&cd ../../cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
 
 test:
 	cd cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o test .
 
 stage:
 	cd cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o stage .
+
+proto:
+	cd node-streamer/btc && protoc --go_out=plugins=grpc:. *.proto && cd .. && cd eth/ && protoc --go_out=plugins=grpc:. *.proto
