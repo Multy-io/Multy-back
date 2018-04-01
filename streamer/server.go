@@ -53,7 +53,7 @@ func (s *Server) EventAddNewAddress(c context.Context, wa *pb.WatchAddress) (*pb
 	// 	return nil, errors.New("Address already binded")
 	// }
 	newMap[wa.Address] = wa.UserID
-	s.UsersData = &newMap
+	*s.UsersData = newMap
 
 	return &pb.ReplyInfo{
 		Message: "ok",
@@ -172,6 +172,9 @@ func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommuunications_E
 					i++
 					log.Errorf("Delete mempool record resend attempt(%d) err = %s", i, err.Error())
 					time.Sleep(time.Second * 2)
+					if i == 3 {
+						break
+					}
 				} else {
 					log.Debugf("Delete mempool record resend success on %d attempt", i)
 					break
@@ -195,6 +198,9 @@ func (s *Server) EventAddMempoolRecord(_ *pb.Empty, stream pb.NodeCommuunication
 					i++
 					log.Errorf("Add mempool record resend attempt(%d) err = %s", i, err.Error())
 					time.Sleep(time.Second * 2)
+					if i == 3 {
+						break
+					}
 				} else {
 					log.Debugf("Add mempool record resend success on %d attempt", i)
 					break
@@ -219,6 +225,9 @@ func (s *Server) EventDeleteSpendableOut(_ *pb.Empty, stream pb.NodeCommuunicati
 					i++
 					log.Errorf("Delete spendable out resend attempt(%d) err = %s", i, err.Error())
 					time.Sleep(time.Second * 2)
+					if i == 3 {
+						break
+					}
 				} else {
 					log.Debugf("NewTx history resend success on %d attempt", i)
 					break
@@ -244,6 +253,9 @@ func (s *Server) EventAddSpendableOut(_ *pb.Empty, stream pb.NodeCommuunications
 					i++
 					log.Errorf("Add spendable out resend attempt(%d) err = %s", i, err.Error())
 					time.Sleep(time.Second * 2)
+					if i == 3 {
+						break
+					}
 				} else {
 					log.Debugf("Add spendable out resend success on %d attempt", i)
 					break
@@ -271,6 +283,9 @@ func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommuunications_NewTxServer) e
 					i++
 					log.Errorf("NewTx history resend attempt(%d) err = %s", i, err.Error())
 					time.Sleep(time.Second * 2)
+					if i == 3 {
+						break
+					}
 				} else {
 					log.Debugf("NewTx history resend success on %d attempt", i)
 					break

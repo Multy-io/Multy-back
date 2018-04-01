@@ -130,12 +130,14 @@ func (c *Client) ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcj
 	// var multyTx store.MultyTX = parseRawTransaction(blockChainBlockHeight, txVerbose, usersData)
 	multyTx, related := c.ParseRawTransaction(blockChainBlockHeight, txVerbose)
 	if related {
+		log.Debugf("ProcessTransaction...")
 		c.CreateSpendableOutputs(txVerbose, blockChainBlockHeight)
 		c.DeleteSpendableOutputs(txVerbose, blockChainBlockHeight)
 	}
 
 	if multyTx != nil {
 		multyTx.BlockHeight = blockChainBlockHeight
+		log.Debugf("ProcessTransaction... on blockHeight %d", blockChainBlockHeight)
 
 		c.setTransactionInfo(multyTx, txVerbose, blockChainBlockHeight, isReSync)
 
