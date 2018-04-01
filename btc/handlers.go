@@ -284,15 +284,91 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				log.Errorf("initGrpcClient: cli.NewTx:stream.Recv: %s", err.Error())
 			}
 
-			log.Debugf("")
-
 			tx := generatedTxDataToStore(gTx)
 
 			setExchangeRates(&tx, gTx.Resync, tx.MempoolTime)
 			setUserID(&tx)
-			setTxInfo(&tx)
+			// setTxInfo(&tx)
+			user := store.User{}
+			// set wallet index and address index in input
+			for i := 0; i < len(tx.WalletsInput); i++ {
+				sel := bson.M{"wallets.addresses.address": tx.WalletsInput[i].Address.Address}
+				err := usersData.Find(sel).One(&user)
+				if err == mgo.ErrNotFound {
+					continue
+				} else if err != nil && err != mgo.ErrNotFound {
+					log.Errorf("initGrpcClient: cli.On newIncomingTx: %s", err)
+				}
 
-			log.Infof("New tx history %v \n", tx)
+				for _, wallet := range user.Wallets {
+					for _, addr := range wallet.Adresses {
+						if addr.Address == tx.WalletsInput[i].Address.Address {
+							tx.WalletsInput[i].WalletIndex = wallet.WalletIndex
+							tx.WalletsInput[i].Address.AddressIndex = addr.AddressIndex
+						}
+					}
+				}
+			}
+
+			for i := 0; i < len(tx.WalletsOutput); i++ {
+				sel := bson.M{"wallets.addresses.address": tx.WalletsOutput[i].Address.Address}
+				err := usersData.Find(sel).One(&user)
+				if err == mgo.ErrNotFound {
+					continue
+				} else if err != nil && err != mgo.ErrNotFound {
+					log.Errorf("initGrpcClient: cli.On newIncomingTx: %s", err)
+				}
+
+				for _, wallet := range user.Wallets {
+					for _, addr := range wallet.Adresses {
+						if addr.Address == tx.WalletsOutput[i].Address.Address {
+							tx.WalletsOutput[i].WalletIndex = wallet.WalletIndex
+							tx.WalletsOutput[i].Address.AddressIndex = addr.AddressIndex
+						}
+					}
+				}
+			}
+
+			// for _, in := range tx.WalletsInput {
+			// 	sel := bson.M{"wallets.addresses.address": in.Address.Address}
+			// 	err := usersData.Find(sel).One(&user)
+			// 	if err == mgo.ErrNotFound {
+			// 		continue
+			// 	} else if err != nil && err != mgo.ErrNotFound {
+			// 		log.Errorf("initGrpcClient: cli.On newIncomingTx: %s", err)
+			// 	}
+
+			// 	for _, wallet := range user.Wallets {
+			// 		for i := 0; i < len(wallet.Adresses); i++ {
+			// 			if wallet.Adresses[i].Address == in.Address.Address {
+			// 				in.WalletIndex = wallet.WalletIndex
+			// 				in.Address.AddressIndex = wallet.Adresses[i].AddressIndex
+			// 			}
+			// 		}
+			// 	}
+			// }
+
+			// // set wallet index and address index in output
+			// for _, out := range tx.WalletsOutput {
+			// 	sel := bson.M{"wallets.addresses.address": out.Address.Address}
+			// 	err := usersData.Find(sel).One(&user)
+			// 	if err == mgo.ErrNotFound {
+			// 		continue
+			// 	} else if err != nil && err != mgo.ErrNotFound {
+			// 		log.Errorf("initGrpcClient: cli.On newIncomingTx: %s", err)
+			// 	}
+
+			// 	for _, wallet := range user.Wallets {
+			// 		for i := 0; i < len(wallet.Adresses); i++ {
+			// 			if wallet.Adresses[i].Address == out.Address.Address {
+			// 				out.WalletIndex = wallet.WalletIndex
+			// 				out.Address.AddressIndex = wallet.Adresses[i].AddressIndex
+			// 			}
+			// 		}
+			// 	}
+			// }
+
+			log.Infof("New tx history in- %v out-%v\n", tx.WalletsInput, tx.WalletsOutput)
 			err = saveMultyTransaction(tx, networtkID)
 			if err != nil {
 				log.Errorf("initGrpcClient: saveMultyTransaction: %s", err)

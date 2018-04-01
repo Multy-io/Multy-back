@@ -49,7 +49,7 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 	}
 	nsqConsumer.AddHandler(nsq.HandlerFunc(func(message *nsq.Message) error {
 		msgRaw := message.Body
-		fClient.log.Debugf("firebase new transaction notify: %+v", string(msgRaw))
+		// fClient.log.Debugf("firebase new transaction notify: %+v", string(msgRaw))
 
 		msg := btc.BtcTransactionWithUserID{}
 		err := json.Unmarshal(msgRaw, &msg)
@@ -64,7 +64,7 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 			"amount":  strconv.FormatInt(msg.NotificationMsg.Amount, 10),
 			"address": msg.NotificationMsg.Address,
 		}
-		fClient.log.Debugf("data=%+v", data)
+		// fClient.log.Debugf("data=%+v", data)
 
 		// TODO: add version /v1
 		fClient.client.NewFcmMsgTo("/topics/"+btc.TopicTransaction+"-"+msg.UserID, data) //

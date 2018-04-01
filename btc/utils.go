@@ -278,12 +278,12 @@ func generatedSpOutsToStore(gSpOut *btcpb.AddSpOut) store.SpendableOutputs {
 
 func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 
-	txsdata := &mgo.Collection{}
+	txStore := &mgo.Collection{}
 	switch networtkID {
 	case currencies.Main:
-		txsdata = txsData
+		txStore = txsData
 	case currencies.Test:
-		txsdata = txsDataTest
+		txStore = txsDataTest
 	default:
 		return errors.New("saveMultyTransaction: wrong networkID")
 	}
@@ -292,20 +292,16 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 	multyTX := store.MultyTX{}
 	if tx.WalletsInput != nil && len(tx.WalletsInput) > 0 {
 		// sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
-		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
-		err := txsdata.Find(sel).One(&multyTX)
+		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex, "txaddress": tx.WalletsInput[0].Address}
+		err := txStore.Find(sel).One(&multyTX)
 		if err == mgo.ErrNotFound {
 			// initial insertion
-			err := txsdata.Insert(tx)
-			if err != nil {
-				log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
-			}
-			return nil
+			err := txStore.Insert(tx)
+			return err
 		}
 		if err != nil && err != mgo.ErrNotFound {
 			// database error
-
-			return errors.New("saveMultyTransaction:txsdata.Find " + err.Error())
+			return err
 		}
 
 		update := bson.M{
@@ -316,26 +312,20 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 				"blocktime":     tx.BlockTime,
 			},
 		}
-		err = txsdata.Update(sel, update)
-		if err != nil {
-			log.Errorf("saveMultyTransaction:txsdata.Update %s", err.Error())
-		}
-		return nil
+		err = txStore.Update(sel, update)
+		return err
 	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0 {
 		// sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
-		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
-		err := txsdata.Find(sel).One(&multyTX)
+		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex, "txaddress": tx.WalletsOutput[0].Address}
+		err := txStore.Find(sel).One(&multyTX)
 		if err == mgo.ErrNotFound {
 			// initial insertion
-			err := txsdata.Insert(tx)
-			if err != nil {
-				log.Errorf("parseInput.Update add new tx to user: %s", err.Error())
-			}
-			return nil
+			err := txStore.Insert(tx)
+			return err
 		}
 		if err != nil && err != mgo.ErrNotFound {
 			// database error
-			return errors.New("saveMultyTransaction:txsdata.Find: " + err.Error())
+			return err
 		}
 
 		update := bson.M{
@@ -346,11 +336,11 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 				"blocktime":     tx.BlockTime,
 			},
 		}
-		err = txsdata.Update(sel, update)
+		err = txStore.Update(sel, update)
 		if err != nil {
 			log.Errorf("saveMultyTransaction:txsData.Update %s", err.Error())
 		}
-		return nil
+		return err
 	}
 	return nil
 }

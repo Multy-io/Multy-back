@@ -66,7 +66,7 @@ func SetSocketIOHandlers(r *gin.RouterGroup, address, nsqAddr string, ratesDB st
 	pool.chart = chart
 
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
-		pool.log.Debugf("connected: %s", c.Id())
+		// pool.log.Debugf("connected: %s", c.Id())
 
 		// moved to next release
 		//ratesDay := pool.chart.getExchangeDay()
