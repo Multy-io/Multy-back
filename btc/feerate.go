@@ -1,14 +1,16 @@
 package btc
 
-import "github.com/Appscrunch/Multy-back/store"
+import (
+	"github.com/Appscrunch/Multy-back/store"
+)
 
 const (
 	btcToSatoshi = 100000000
 )
 
-func GetAllMempool() ([]store.MempoolRecord, error) {
+func (c *Client) GetAllMempool() ([]store.MempoolRecord, error) {
 	allMempool := []store.MempoolRecord{}
-	mempool, err := RpcClient.GetRawMempoolVerbose()
+	mempool, err := c.RpcClient.GetRawMempoolVerbose()
 	if err != nil {
 		return allMempool, err
 	}

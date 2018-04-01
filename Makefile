@@ -11,7 +11,7 @@ all:  build run
 all-with-deps: setup deps build
 
 run:
-	cd cmd && ./$(NAME) && ../
+	cd cmd rm -rf client && cd .. && make build && cd cmd && ./client 
 
 setup:
 	go get -u github.com/kardianos/govendor
@@ -21,6 +21,9 @@ deps:
 
 build:
 	cd cmd && go build $(LD_OPTS) -o $(NAME) . && cd -
+
+race:
+	cd cmd && go build -race $(LD_OPTS) -o $(NAME) . && cd -
 
 # Show to-do items per file.
 todo:
