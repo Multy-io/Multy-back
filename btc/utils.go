@@ -13,6 +13,7 @@ import (
 	"github.com/Appscrunch/Multy-back/currencies"
 	btcpb "github.com/Appscrunch/Multy-back/node-streamer/btc"
 	"github.com/Appscrunch/Multy-back/store"
+	_ "github.com/KristinaEtc/slflog"
 	nsq "github.com/bitly/go-nsq"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -276,6 +277,110 @@ func generatedSpOutsToStore(gSpOut *btcpb.AddSpOut) store.SpendableOutputs {
 	}
 }
 
+// func splitTx(tx store.MultyTX) []store.MultyTX {
+// 	//kinda split
+// txs := []store.MultyTX{}
+// for _, wi := range tx.WalletsInput {
+// 	subTx := tx
+// 	subTx.TxAddress = []string{wi.Address.Address}
+// 	var addressInAmount int64
+// 	for _, in := range subTx.TxInputs {
+// 		if in.Address == wi.Address.Address {
+// 			addressInAmount += in.Amount
+// 		}
+// 	}
+// 	subTx.TxOutAmount = addressInAmount
+
+// if tx.Confirmations > 6 {
+// 	subTx.TxStatus = store.TxStatusInBlockConfirmedOutcoming
+// } else if tx.Confirmations < 6 && tx.Confirmations > 0 {
+// 	subTx.TxStatus = store.TxStatusAppearedInBlockOutcoming
+// } else {
+// 	subTx.TxStatus = store.TxStatusAppearedInMempoolOutcoming
+// }
+// txs := append(txs, subTx)
+// }
+
+// for _, wo := range tx.WalletsOutput {
+// 	subTx := tx
+// 	subTx.TxAddress = []string{wo.Address.Address}
+// 	var addressOutAmount int64
+// 	for _, out := range subTx.TxOutputs {
+// 		if out.Address == wo.Address.Address {
+// 			addressOutAmount += out.Amount
+// 		}
+// 	}
+// 	subTx.TxOutAmount = addressOutAmount
+
+// 	if tx.Confirmations > 6 {
+// 		subTx.TxStatus = store.TxStatusInBlockConfirmedIncoming
+// 	} else if tx.Confirmations < 6 && tx.Confirmations > 0 {
+// 		subTx.TxStatus = store.TxStatusAppearedInBlockIncoming
+// 	} else {
+// 		subTx.TxStatus = store.TxStatusAppearedInMempoolOutcoming
+// 	}
+// 	txs := append(txs, subTx)
+// }
+
+// 	return unique(txs)
+// }
+
+// func splitTx(tx store.MultyTX) []store.MultyTX {
+// 	txs := []store.MultyTX{}
+// 	// spl := map[string]store.MultyTX{}
+
+// 	for _, wi := range tx.WalletsInput {
+// 		subTx := tx
+// 		subTx.TxAddress = []string{wi.Address.Address}
+// 		var addressInAmount int64
+
+// 		for _, in := range tx.TxInputs {
+// 			if in.Address == wi.Address.Address {
+// 				addressInAmount += in.Amount
+// 				fmt.Println("---------------------------------", addressInAmount)
+// 			}
+// 		}
+
+// 		subTx.TxOutAmount = addressInAmount
+
+// 		if tx.Confirmations > 6 {
+// 			subTx.TxStatus = store.TxStatusInBlockConfirmedOutcoming
+// 		} else if tx.Confirmations < 6 && tx.Confirmations > 0 {
+// 			subTx.TxStatus = store.TxStatusAppearedInBlockOutcoming
+// 		} else {
+// 			subTx.TxStatus = store.TxStatusAppearedInMempoolOutcoming
+// 		}
+// 		txs = append(txs, subTx)
+// 		break
+// 	}
+
+// 	for _, wo := range tx.WalletsOutput {
+// 		subTx := tx
+// 		subTx.TxAddress = []string{wo.Address.Address}
+// 		var addressOutAmount int64
+// 		for _, out := range tx.TxOutputs {
+// 			if out.Address == wo.Address.Address {
+// 				addressOutAmount += out.Amount
+// 				fmt.Println("---------------------------------", addressOutAmount)
+// 			}
+// 		}
+// 		subTx.TxOutAmount = addressOutAmount
+
+// 		if tx.Confirmations > 6 {
+// 			subTx.TxStatus = store.TxStatusInBlockConfirmedIncoming
+// 		} else if tx.Confirmations < 6 && tx.Confirmations > 0 {
+// 			subTx.TxStatus = store.TxStatusAppearedInBlockIncoming
+// 		} else {
+// 			subTx.TxStatus = store.TxStatusAppearedInMempoolOutcoming
+// 		}
+// 		txs = append(txs, subTx)
+// 		break
+
+// 	}
+
+// 	return txs
+// }
+
 func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 
 	txStore := &mgo.Collection{}
@@ -287,6 +392,7 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 	default:
 		return errors.New("saveMultyTransaction: wrong networkID")
 	}
+
 	// This is splited transaction! That means that transaction's WalletsInputs and WalletsOutput have the same WalletIndex!
 	//Here we have outgoing transaction for exact wallet!
 	multyTX := store.MultyTX{}

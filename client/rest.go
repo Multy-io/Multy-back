@@ -1486,6 +1486,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				}
 				blockHeight = resp.Height
 			}
+
 			userTxs := []store.MultyTX{}
 			err = restClient.userStore.GetAllWalletTransactions(user.UserID, currencyId, networkid, &userTxs)
 			if err != nil {
@@ -1511,26 +1512,48 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 
 			for _, address := range walletAddresses {
 				for _, tx := range userTxs {
-					for _, addr := range tx.TxAddress {
-						if addr == address {
+					if len(tx.TxAddress) > 0 {
+						if tx.TxAddress[0] == address {
 							restClient.log.Infof("---------address= %s, txid= %s", address, tx.TxID)
-							// var isTheSameWallet = false
-							// for _, input := range tx.WalletsInput {
-							// 	if walletIndex == input.WalletIndex {
-							// 		isTheSameWallet = true
-							// 	}
-							// }
-							// for _, output := range tx.WalletsOutput {
-							// 	if walletIndex == output.WalletIndex {
-							// 		isTheSameWallet = true
-							// 	}
-							// }
+							var isTheSameWallet = false
+							for _, input := range tx.WalletsInput {
+								if walletIndex == input.WalletIndex {
+									isTheSameWallet = true
+								}
+							}
 
-							// if isTheSameWallet {
-							walletTxs = append(walletTxs, tx)
-							// }
+							for _, output := range tx.WalletsOutput {
+								if walletIndex == output.WalletIndex {
+									isTheSameWallet = true
+								}
+							}
+
+							if isTheSameWallet {
+								walletTxs = append(walletTxs, tx)
+							}
 						}
 					}
+					// for _, addr := range tx.TxAddress {
+					// 	if addr == address {
+					// 		restClient.log.Infof("---------address= %s, txid= %s", address, tx.TxID)
+					// 		var isTheSameWallet = false
+					// 		for _, input := range tx.WalletsInput {
+					// 			if walletIndex == input.WalletIndex {
+					// 				isTheSameWallet = true
+					// 			}
+					// 		}
+
+					// 		for _, output := range tx.WalletsOutput {
+					// 			if walletIndex == output.WalletIndex {
+					// 				isTheSameWallet = true
+					// 			}
+					// 		}
+
+					// 		if isTheSameWallet {
+					// 			walletTxs = append(walletTxs, tx)
+					// 		}
+					// 	}
+					// }
 				}
 			}
 
