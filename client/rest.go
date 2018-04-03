@@ -789,7 +789,18 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 				slowestPosition := int(memPoolSize/100*90)
 
 				slowestValue = rates[slowestPosition].Category
+
+				if slowestValue < 2 {
+					slowestValue =2
+				}
+
 				slowValue = rates[slowPosition].Category
+
+
+				if slowValue < 2 {
+					slowValue = 2
+				}
+				
 				mediumValue = rates[mediumPosition].Category
 				fastValue = rates[fastPosition].Category
 				fastestValue = rates[fastestPosition].Category
