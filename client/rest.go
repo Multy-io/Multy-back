@@ -12,7 +12,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -31,6 +30,7 @@ import (
 	"github.com/gin-gonic/gin"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"github.com/ethereum/go-ethereum/log"
 )
 
 const (
@@ -745,9 +745,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 		switch currencyID {
 		case currencies.Bitcoin:
 			var rates []store.MempoolRecord
-			speeds := []int{
-				1, 2, 3, 4, 5,
-			}
+
 			if err := restClient.userStore.GetAllRates(currencyID, networkid, "category", &rates); err != nil {
 				c.JSON(http.StatusOK, gin.H{
 					"speeds":  sp,
@@ -755,24 +753,63 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 					"message": msgErrRatesError,
 				})
 			}
-			value := len(rates) / 4
 
-			for i := 0; i < len(speeds); i++ {
-				speeds[i] = value * i
+			var slowestValue, slowValue, mediumValue, fastValue, fastestValue int
+
+			memPoolSize := len(rates)
+
+			if memPoolSize <=2000 && memPoolSize > 0 {
+				//low rates logic
+
+				fastestPosition := int(memPoolSize/100*5)
+				fastPosition := int(memPoolSize/100*30)
+				mediumPosition := int (memPoolSize/100*50)
+				slowPosition := int (memPoolSize/100*80)
+				//slowestPosition := int(memPoolSize)
+
+				slowestValue = 2
+				slowValue = rates[slowPosition].Category
+				mediumValue = rates[mediumPosition].Category
+				fastValue = rates[fastPosition].Category
+				fastestValue = rates[fastestPosition].Category
+
+			} else if memPoolSize == 0{
+				//mempool is empty O_o
+				slowestValue = 2
+				slowValue = 2
+				mediumValue = 3
+				fastValue = 5
+				fastestValue = 10
+			} else {
+				//high rates logic
+				fastestPosition := 100
+				fastPosition := 500
+				mediumPosition := 2000
+				slowPosition := int (memPoolSize/100*70)
+				slowestPosition := int(memPoolSize/100*90)
+
+				slowestValue = rates[slowestPosition].Category
+				slowValue = rates[slowPosition].Category
+				mediumValue = rates[mediumPosition].Category
+				fastValue = rates[fastPosition].Category
+				fastestValue = rates[fastestPosition].Category
+
+
 			}
-			fmt.Println(speeds)
-			// for i := 0; i < len(speeds); i++ {
-			// 	arr := rates[speeds[i]:speeds[i+1]]
-			// 	fmt.Println("len ", len(arr))
-			// }
+
+
+
 
 			sp = EstimationSpeeds{
-				VerySlow: avg(rates[0:speeds[1]]),
-				Slow:     avg(rates[speeds[1]:speeds[2]]),
-				Medium:   avg(rates[speeds[2]:speeds[3]]),
-				Fast:     avg(rates[speeds[3]:speeds[4]]),
-				VeryFast: avg(rates[speeds[4]-1 : len(rates)-1]),
+				VerySlow:	slowestValue,
+				Slow:		slowValue,
+				Medium:		mediumValue,
+				Fast:		fastValue,
+				VeryFast:	fastestValue,
 			}
+
+			restClient.log.Debugf("FeeRates for Bitcoin network id %d is %v : ", networkid, sp)
+
 			c.JSON(http.StatusOK, gin.H{
 				"speeds":  sp,
 				"code":    http.StatusOK,
