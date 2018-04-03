@@ -81,6 +81,8 @@ message AddSpOut {
     string address = 5;
     string userID = 6;
     int32 txStatus = 7;
+    int32 walletIndex = 8;
+	int32 addressIndex = 9;
 }
 
 message BlockHeight{
@@ -100,6 +102,8 @@ message MempoolToDelete {
 message WatchAddress {
    string address = 1;
    string userID = 2;
+   int32 WalletIndex = 3; 
+   int32 AddressIndex = 4;
 }
 
  message MempoolRecord {
@@ -122,8 +126,15 @@ message AddressToResync {
 
 
 message UsersData {
-    map<string, string> map = 1;
+    map<string, AddressExtended> map = 1;
 }
+
+message AddressExtended {
+    string UserID = 1;    
+	int32 WalletIndex = 2; 
+	int32 AddressIndex = 3;
+}
+
 
 message ReplyInfo {
     string message = 1;

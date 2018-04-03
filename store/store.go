@@ -51,7 +51,7 @@ type UserStore interface {
 	Close() error
 	FindUser(query bson.M, user *User) error
 	UpdateUser(sel bson.M, user *User) error
-	GetAllRates(currencyID, networkID int, sortBy string, rates *[]RatesRecord) error
+	GetAllRates(currencyID, networkID int, sortBy string, rates *[]MempoolRecord) error
 	// FindUserTxs(query bson.M, userTxs *TxRecord) error
 	// InsertTxStore(userTxs TxRecord) error
 	FindUserErr(query bson.M) error
@@ -72,7 +72,7 @@ type UserStore interface {
 	DeleteMempool()
 
 	FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error)
-	FindUserDataChain(CurrencyID, NetworkID int) (map[string]string, error)
+	FindUserDataChain(CurrencyID, NetworkID int) (map[string]AddressExtended, error)
 }
 
 type MongoUserStore struct {
@@ -124,9 +124,9 @@ func InitUserStore(conf Conf) (UserStore, error) {
 	return uStore, nil
 }
 
-func (mStore *MongoUserStore) FindUserDataChain(CurrencyID, NetworkID int) (map[string]string, error) {
+func (mStore *MongoUserStore) FindUserDataChain(CurrencyID, NetworkID int) (map[string]AddressExtended, error) {
 	users := []User{}
-	usersData := map[string]string{} // addres -> userid
+	usersData := map[string]AddressExtended{} // addres -> userid
 	err := mStore.usersData.Find(nil).All(&users)
 	if err != nil {
 		return usersData, err
@@ -135,7 +135,11 @@ func (mStore *MongoUserStore) FindUserDataChain(CurrencyID, NetworkID int) (map[
 		for _, wallet := range user.Wallets {
 			if wallet.CurrencyID == CurrencyID && wallet.NetworkID == NetworkID {
 				for _, address := range wallet.Adresses {
-					usersData[address.Address] = user.UserID
+					usersData[address.Address] = AddressExtended{
+						UserID:       user.UserID,
+						WalletIndex:  wallet.WalletIndex,
+						AddressIndex: address.AddressIndex,
+					}
 				}
 			}
 		}
@@ -243,7 +247,7 @@ func (mStore *MongoUserStore) Insert(user User) error {
 	return mStore.usersData.Insert(user)
 }
 
-func (mStore *MongoUserStore) GetAllRates(currencyID, networkID int, sortBy string, rates *[]RatesRecord) error {
+func (mStore *MongoUserStore) GetAllRates(currencyID, networkID int, sortBy string, rates *[]MempoolRecord) error {
 	switch currencyID {
 	case currencies.Bitcoin:
 		if networkID == currencies.Main {
@@ -274,28 +278,6 @@ func (mStore *MongoUserStore) InsertExchangeRate(eRate ExchangeRates, exchangeSt
 
 	return mStore.stockExchangeRate.Insert(eRateRecord)
 }
-
-// func (mStore *MongoUserStore) GetLatestExchangeRate() ([]ExchangeRatesRecord, error) {
-// 	selGdax := bson.M{
-// 		"stockexchange": "Gdax",
-// 	}
-// 	selPoloniex := bson.M{
-// 		"stockexchange": "Poloniex",
-// 	}
-// 	stocksGdax := ExchangeRatesRecord{}
-// 	err := mStore.stockExchangeRate.Find(selGdax).Sort("-timestamp").One(&stocksGdax)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	stocksPoloniex := ExchangeRatesRecord{}
-// 	err = mStore.stockExchangeRate.Find(selPoloniex).Sort("-timestamp").One(&stocksPoloniex)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return []ExchangeRatesRecord{stocksPoloniex, stocksGdax}, nil
-
-// }
 
 // GetExchangeRatesDay returns exchange rates for last day with time interval equal to hour
 func (mStore *MongoUserStore) GetExchangeRatesDay() ([]RatesAPIBitstamp, error) {

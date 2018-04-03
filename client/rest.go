@@ -23,7 +23,6 @@ import (
 	"github.com/Appscrunch/Multy-back/currencies"
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
-	//
 
 	"math/rand"
 
@@ -239,7 +238,7 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 			return err
 		}
 
-		err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, user.UserID, wp.Address, restClient)
+		err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, wp.WalletIndex, wp.AddressIndex, user.UserID, wp.Address, restClient)
 		if err != nil {
 			restClient.log.Errorf("createCustomWallet: AddWatchAndResync: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 			err := errors.New(msgErrServerError)
@@ -256,7 +255,7 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 			return err
 		}
 
-		err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, user.UserID, wp.Address, restClient)
+		err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, wp.WalletIndex, wp.AddressIndex, user.UserID, wp.Address, restClient)
 		if err != nil {
 			restClient.log.Errorf("createCustomWallet: AddWatchAndResync: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 			err := errors.New(msgErrServerError)
@@ -354,15 +353,15 @@ func addAddressToWallet(address, token string, currencyID, networkid, walletInde
 		return err
 	}
 
-	AddWatchAndResync(currencyID, networkid, user.UserID, address, restClient)
+	AddWatchAndResync(currencyID, networkid, walletIndex, addressIndex, user.UserID, address, restClient)
 
 	return nil
 
 }
 
-func AddWatchAndResync(currencyID, networkid int, userid, address string, restClient *RestClient) error {
+func AddWatchAndResync(currencyID, networkid, walletIndex, addressIndex int, userid, address string, restClient *RestClient) error {
 
-	err := NewAddressNode(address, userid, currencyID, networkid, restClient)
+	err := NewAddressNode(address, userid, currencyID, networkid, walletIndex, addressIndex, restClient)
 	if err != nil {
 		restClient.log.Errorf("AddWatchAndResync: NewAddressWs: currencies.Main: WsBtcMainnetCli.Emit:resync %s\t", err.Error())
 		return err
@@ -371,13 +370,15 @@ func AddWatchAndResync(currencyID, networkid int, userid, address string, restCl
 	return nil
 }
 
-func NewAddressNode(address, userid string, currencyID, networkID int, restClient *RestClient) error {
+func NewAddressNode(address, userid string, currencyID, networkID, walletIndex, addressIndex int, restClient *RestClient) error {
 	switch currencyID {
 	case currencies.Bitcoin:
 		if networkID == currencies.Main {
 			restClient.BTC.WatchAddressMain <- btcpb.WatchAddress{
-				Address: address,
-				UserID:  userid,
+				Address:      address,
+				UserID:       userid,
+				WalletIndex:  int32(walletIndex),
+				AddressIndex: int32(addressIndex),
 			}
 		}
 
@@ -743,7 +744,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 
 		switch currencyID {
 		case currencies.Bitcoin:
-			var rates []store.RatesRecord
+			var rates []store.MempoolRecord
 			speeds := []int{
 				1, 2, 3, 4, 5,
 			}
@@ -786,7 +787,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 	}
 }
 
-func avg(arr []store.RatesRecord) int {
+func avg(arr []store.MempoolRecord) int {
 	total := 0
 	for _, value := range arr {
 		total += value.Category

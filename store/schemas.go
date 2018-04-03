@@ -267,3 +267,9 @@ type DonationInfo struct {
 	FeatureCode     int
 	DonationAddress string
 }
+
+type AddressExtended struct {
+	UserID       string
+	WalletIndex  int
+	AddressIndex int
+}

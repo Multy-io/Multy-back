@@ -64,6 +64,7 @@ func Init(conf *Configuration) (*Multy, error) {
 	multy.userStore = userStore
 	log.Infof("UserStore initialization done on %s √", conf.Database)
 
+	//TODO: Mempool Data delete
 	// multy.userStore.DeleteMempool()
 	log.Infof("Mempool Data delete √")
 
@@ -102,17 +103,33 @@ func SetUserData(btcCli *btc.BTCConn, userStore store.UserStore, ct []store.Coin
 
 			switch conCred.NetworkID {
 			case currencies.Main:
-				resp, err := btcCli.CliMain.EventInitialAdd(context.Background(), &btcpb.UsersData{
-					Map: usersData,
-				})
+				genUd := btcpb.UsersData{
+					Map: map[string]*btcpb.AddressExtended{},
+				}
+				for address, ex := range usersData {
+					genUd.Map[address] = &btcpb.AddressExtended{
+						UserID:       ex.UserID,
+						WalletIndex:  int32(ex.WalletIndex),
+						AddressIndex: int32(ex.AddressIndex),
+					}
+				}
+				resp, err := btcCli.CliMain.EventInitialAdd(context.Background(), &genUd)
 				if err != nil {
 					return fmt.Errorf("SetUserData:  btcCli.CliMain.EventInitialAdd: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
 				}
 				log.Debugf("btcCli.CliMain.EventInitialAdd: resp: %s", resp.Message)
 			case currencies.Test:
-				resp, err := btcCli.CliTest.EventInitialAdd(context.Background(), &btcpb.UsersData{
-					Map: usersData,
-				})
+				genUd := btcpb.UsersData{
+					Map: map[string]*btcpb.AddressExtended{},
+				}
+				for address, ex := range usersData {
+					genUd.Map[address] = &btcpb.AddressExtended{
+						UserID:       ex.UserID,
+						WalletIndex:  int32(ex.WalletIndex),
+						AddressIndex: int32(ex.AddressIndex),
+					}
+				}
+				resp, err := btcCli.CliTest.EventInitialAdd(context.Background(), &genUd)
 				if err != nil {
 					return fmt.Errorf("SetUserData: btcCli.CliTest.EventInitialAdd: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
 				}

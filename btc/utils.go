@@ -146,16 +146,6 @@ func setExchangeRates(tx *store.MultyTX, isReSync bool, TxTime int64) {
 	}
 }
 
-func InsertMempoolRecords(recs ...store.MempoolRecord) {
-	for _, rec := range recs {
-		err := mempoolRates.Insert(rec)
-		if err != nil {
-			log.Errorf("getAllMempool: mempoolRates.Insert: %s", err.Error())
-			continue
-		}
-	}
-}
-
 func sendNotifyToClients(tx store.MultyTX, nsqProducer *nsq.Producer) {
 
 	for _, walletOutput := range tx.WalletsOutput {
@@ -267,119 +257,17 @@ func generatedTxDataToStore(gSpOut *btcpb.BTCTransaction) store.MultyTX {
 
 func generatedSpOutsToStore(gSpOut *btcpb.AddSpOut) store.SpendableOutputs {
 	return store.SpendableOutputs{
-		TxID:        gSpOut.TxID,
-		TxOutID:     int(gSpOut.TxOutID),
-		TxOutAmount: gSpOut.TxOutAmount,
-		TxOutScript: gSpOut.TxOutScript,
-		Address:     gSpOut.Address,
-		UserID:      gSpOut.UserID,
-		TxStatus:    int(gSpOut.TxStatus),
+		TxID:         gSpOut.TxID,
+		TxOutID:      int(gSpOut.TxOutID),
+		TxOutAmount:  gSpOut.TxOutAmount,
+		TxOutScript:  gSpOut.TxOutScript,
+		Address:      gSpOut.Address,
+		UserID:       gSpOut.UserID,
+		TxStatus:     int(gSpOut.TxStatus),
+		WalletIndex:  int(gSpOut.WalletIndex),
+		AddressIndex: int(gSpOut.AddressIndex),
 	}
 }
-
-// func splitTx(tx store.MultyTX) []store.MultyTX {
-// 	//kinda split
-// txs := []store.MultyTX{}
-// for _, wi := range tx.WalletsInput {
-// 	subTx := tx
-// 	subTx.TxAddress = []string{wi.Address.Address}
-// 	var addressInAmount int64
-// 	for _, in := range subTx.TxInputs {
-// 		if in.Address == wi.Address.Address {
-// 			addressInAmount += in.Amount
-// 		}
-// 	}
-// 	subTx.TxOutAmount = addressInAmount
-
-// if tx.Confirmations > 6 {
-// 	subTx.TxStatus = store.TxStatusInBlockConfirmedOutcoming
-// } else if tx.Confirmations < 6 && tx.Confirmations > 0 {
-// 	subTx.TxStatus = store.TxStatusAppearedInBlockOutcoming
-// } else {
-// 	subTx.TxStatus = store.TxStatusAppearedInMempoolOutcoming
-// }
-// txs := append(txs, subTx)
-// }
-
-// for _, wo := range tx.WalletsOutput {
-// 	subTx := tx
-// 	subTx.TxAddress = []string{wo.Address.Address}
-// 	var addressOutAmount int64
-// 	for _, out := range subTx.TxOutputs {
-// 		if out.Address == wo.Address.Address {
-// 			addressOutAmount += out.Amount
-// 		}
-// 	}
-// 	subTx.TxOutAmount = addressOutAmount
-
-// 	if tx.Confirmations > 6 {
-// 		subTx.TxStatus = store.TxStatusInBlockConfirmedIncoming
-// 	} else if tx.Confirmations < 6 && tx.Confirmations > 0 {
-// 		subTx.TxStatus = store.TxStatusAppearedInBlockIncoming
-// 	} else {
-// 		subTx.TxStatus = store.TxStatusAppearedInMempoolOutcoming
-// 	}
-// 	txs := append(txs, subTx)
-// }
-
-// 	return unique(txs)
-// }
-
-// func splitTx(tx store.MultyTX) []store.MultyTX {
-// 	txs := []store.MultyTX{}
-// 	// spl := map[string]store.MultyTX{}
-
-// 	for _, wi := range tx.WalletsInput {
-// 		subTx := tx
-// 		subTx.TxAddress = []string{wi.Address.Address}
-// 		var addressInAmount int64
-
-// 		for _, in := range tx.TxInputs {
-// 			if in.Address == wi.Address.Address {
-// 				addressInAmount += in.Amount
-// 				fmt.Println("---------------------------------", addressInAmount)
-// 			}
-// 		}
-
-// 		subTx.TxOutAmount = addressInAmount
-
-// 		if tx.Confirmations > 6 {
-// 			subTx.TxStatus = store.TxStatusInBlockConfirmedOutcoming
-// 		} else if tx.Confirmations < 6 && tx.Confirmations > 0 {
-// 			subTx.TxStatus = store.TxStatusAppearedInBlockOutcoming
-// 		} else {
-// 			subTx.TxStatus = store.TxStatusAppearedInMempoolOutcoming
-// 		}
-// 		txs = append(txs, subTx)
-// 		break
-// 	}
-
-// 	for _, wo := range tx.WalletsOutput {
-// 		subTx := tx
-// 		subTx.TxAddress = []string{wo.Address.Address}
-// 		var addressOutAmount int64
-// 		for _, out := range tx.TxOutputs {
-// 			if out.Address == wo.Address.Address {
-// 				addressOutAmount += out.Amount
-// 				fmt.Println("---------------------------------", addressOutAmount)
-// 			}
-// 		}
-// 		subTx.TxOutAmount = addressOutAmount
-
-// 		if tx.Confirmations > 6 {
-// 			subTx.TxStatus = store.TxStatusInBlockConfirmedIncoming
-// 		} else if tx.Confirmations < 6 && tx.Confirmations > 0 {
-// 			subTx.TxStatus = store.TxStatusAppearedInBlockIncoming
-// 		} else {
-// 			subTx.TxStatus = store.TxStatusAppearedInMempoolOutcoming
-// 		}
-// 		txs = append(txs, subTx)
-// 		break
-
-// 	}
-
-// 	return txs
-// }
 
 func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 
@@ -398,7 +286,7 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 	multyTX := store.MultyTX{}
 	if tx.WalletsInput != nil && len(tx.WalletsInput) > 0 {
 		// sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
-		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex, "txaddress": tx.WalletsInput[0].Address}
+		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
 		err := txStore.Find(sel).One(&multyTX)
 		if err == mgo.ErrNotFound {
 			// initial insertion
@@ -422,7 +310,7 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 		return err
 	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0 {
 		// sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
-		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex, "txaddress": tx.WalletsOutput[0].Address}
+		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
 		err := txStore.Find(sel).One(&multyTX)
 		if err == mgo.ErrNotFound {
 			// initial insertion

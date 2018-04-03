@@ -374,7 +374,6 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			if err != nil {
 				log.Errorf("initGrpcClient: saveMultyTransaction: %s", err)
 			}
-
 			updateWalletAndAddressDate(tx)
 			sendNotifyToClients(tx, nsqProducer)
 
