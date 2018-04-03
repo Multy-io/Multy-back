@@ -30,7 +30,6 @@ import (
 	"github.com/gin-gonic/gin"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"github.com/ethereum/go-ethereum/log"
 )
 
 const (
@@ -758,13 +757,13 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 
 			memPoolSize := len(rates)
 
-			if memPoolSize <=2000 && memPoolSize > 0 {
+			if memPoolSize <= 2000 && memPoolSize > 0 {
 				//low rates logic
 
-				fastestPosition := int(memPoolSize/100*5)
-				fastPosition := int(memPoolSize/100*30)
-				mediumPosition := int (memPoolSize/100*50)
-				slowPosition := int (memPoolSize/100*80)
+				fastestPosition := int(memPoolSize / 100 * 5)
+				fastPosition := int(memPoolSize / 100 * 30)
+				mediumPosition := int(memPoolSize / 100 * 50)
+				slowPosition := int(memPoolSize / 100 * 80)
 				//slowestPosition := int(memPoolSize)
 
 				slowestValue = 2
@@ -773,7 +772,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 				fastValue = rates[fastPosition].Category
 				fastestValue = rates[fastestPosition].Category
 
-			} else if memPoolSize == 0{
+			} else if memPoolSize == 0 {
 				//mempool is empty O_o
 				slowestValue = 2
 				slowValue = 2
@@ -785,8 +784,8 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 				fastestPosition := 100
 				fastPosition := 500
 				mediumPosition := 2000
-				slowPosition := int (memPoolSize/100*70)
-				slowestPosition := int(memPoolSize/100*90)
+				slowPosition := int(memPoolSize / 100 * 70)
+				slowestPosition := int(memPoolSize / 100 * 90)
 
 				slowestValue = rates[slowestPosition].Category
 				slowValue = rates[slowPosition].Category
@@ -794,18 +793,14 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 				fastValue = rates[fastPosition].Category
 				fastestValue = rates[fastestPosition].Category
 
-
 			}
 
-
-
-
 			sp = EstimationSpeeds{
-				VerySlow:	slowestValue,
-				Slow:		slowValue,
-				Medium:		mediumValue,
-				Fast:		fastValue,
-				VeryFast:	fastestValue,
+				VerySlow: slowestValue,
+				Slow:     slowValue,
+				Medium:   mediumValue,
+				Fast:     fastValue,
+				VeryFast: fastestValue,
 			}
 
 			restClient.log.Debugf("FeeRates for Bitcoin network id %d is %v : ", networkid, sp)

@@ -142,11 +142,14 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 		}
 
 		spOutputs := &mgo.Collection{}
+		spend := &mgo.Collection{}
 		switch networtkID {
 		case currencies.Main:
 			spOutputs = spendableOutputs
+			spend = spentOutputs
 		case currencies.Test:
 			spOutputs = spendableOutputsTest
+			spend = spentOutputsTest
 		default:
 			log.Errorf("setGRPCHandlers: wrong networkID:")
 		}
@@ -160,46 +163,51 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				log.Errorf("initGrpcClient: cli.EventAddSpendableOut:stream.Recv: %s", err.Error())
 			}
 
-			user := store.User{}
-			sel := bson.M{"wallets.addresses.address": gSpOut.Address}
-			err = usersData.Find(sel).One(&user)
-			if err != nil && err != mgo.ErrNotFound {
-				log.Errorf("SetWsHandlers: cli.On newIncomingTx: %s", err)
-				return
-			}
-			spOut := generatedSpOutsToStore(gSpOut)
+			query := bson.M{"userid": gSpOut.UserID, "txid": gSpOut.TxID, "address": gSpOut.Address}
+			err = spend.Find(query).One(nil)
 
-			log.Infof("Add spendable output : %v", gSpOut.String())
-
-			exRates, err := GetLatestExchangeRate()
-			if err != nil {
-				log.Errorf("initGrpcClient: GetLatestExchangeRate: %s", err.Error())
-			}
-			spOut.StockExchangeRate = exRates
-
-			query := bson.M{"userid": spOut.UserID, "txid": spOut.TxID, "address": spOut.Address}
-			err = spOutputs.Find(query).One(nil)
 			if err == mgo.ErrNotFound {
-				//insertion
-				err := spOutputs.Insert(spOut)
-				if err != nil {
-					log.Errorf("Create spOutputs:txsData.Insert: %s", err.Error())
+				user := store.User{}
+				sel := bson.M{"wallets.addresses.address": gSpOut.Address}
+				err = usersData.Find(sel).One(&user)
+				if err != nil && err != mgo.ErrNotFound {
+					log.Errorf("SetWsHandlers: cli.On newIncomingTx: %s", err)
+					return
 				}
-				continue
-			}
-			if err != nil && err != mgo.ErrNotFound {
-				log.Errorf("Create spOutputs:spOutputs.Find %s", err.Error())
-				continue
-			}
+				spOut := generatedSpOutsToStore(gSpOut)
 
-			update := bson.M{
-				"$set": bson.M{
-					"txstatus": spOut.TxStatus,
-				},
-			}
-			err = spOutputs.Update(query, update)
-			if err != nil {
-				log.Errorf("CreateSpendableOutputs:spendableOutputs.Update: %s", err.Error())
+				log.Infof("Add spendable output : %v", gSpOut.String())
+
+				exRates, err := GetLatestExchangeRate()
+				if err != nil {
+					log.Errorf("initGrpcClient: GetLatestExchangeRate: %s", err.Error())
+				}
+				spOut.StockExchangeRate = exRates
+
+				query := bson.M{"userid": spOut.UserID, "txid": spOut.TxID, "address": spOut.Address}
+				err = spOutputs.Find(query).One(nil)
+				if err == mgo.ErrNotFound {
+					//insertion
+					err := spOutputs.Insert(spOut)
+					if err != nil {
+						log.Errorf("Create spOutputs:txsData.Insert: %s", err.Error())
+					}
+					continue
+				}
+				if err != nil && err != mgo.ErrNotFound {
+					log.Errorf("Create spOutputs:spOutputs.Find %s", err.Error())
+					continue
+				}
+
+				update := bson.M{
+					"$set": bson.M{
+						"txstatus": spOut.TxStatus,
+					},
+				}
+				err = spOutputs.Update(query, update)
+				if err != nil {
+					log.Errorf("CreateSpendableOutputs:spendableOutputs.Update: %s", err.Error())
+				}
 			}
 
 		}
@@ -214,11 +222,14 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 		}
 
 		spOutputs := &mgo.Collection{}
+		spend := &mgo.Collection{}
 		switch networtkID {
 		case currencies.Main:
 			spOutputs = spendableOutputs
+			spend = spentOutputs
 		case currencies.Test:
 			spOutputs = spendableOutputsTest
+			spend = spentOutputsTest
 		default:
 			log.Errorf("setGRPCHandlers: wrong networkID:")
 		}
@@ -235,6 +246,12 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 			i := 0
 			for {
+				//insert to spend collection
+				err := spend.Insert(del)
+				if err != nil {
+					log.Errorf("DeleteSpendableOutputs:spend.Insert: %s", err)
+				}
+
 				query := bson.M{"userid": del.UserID, "txid": del.TxID, "address": del.Address}
 				log.Infof("-------- query delete %v\n", query)
 				err = spOutputs.Remove(query)
@@ -245,7 +262,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 					break
 				}
 				i++
-				if i == 5 {
+				if i == 10 {
 					break
 				}
 				time.Sleep(time.Second * 3)

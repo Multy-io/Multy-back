@@ -66,11 +66,13 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	mempoolRates = db.DB(dbConf.DBFeeRates).C(dbConf.TableMempoolRatesBTCMain)
 	txsData = db.DB(dbConf.DBTx).C(dbConf.TableTxsDataBTCMain)
 	spendableOutputs = db.DB(dbConf.DBTx).C(dbConf.TableSpendableOutputsBTCMain)
+	spentOutputs = db.DB(dbConf.DBTx).C(dbConf.TableSpentOutputsBTCMain)
 
 	// test
 	mempoolRatesTest = db.DB(dbConf.DBFeeRates).C(dbConf.TableMempoolRatesBTCTest)
 	txsDataTest = db.DB(dbConf.DBTx).C(dbConf.TableTxsDataBTCTest)
 	spendableOutputsTest = db.DB(dbConf.DBTx).C(dbConf.TableSpendableOutputsBTCTest)
+	spentOutputsTest = db.DB(dbConf.DBTx).C(dbConf.TableSpentOutputsBTCTest)
 
 	// setup main net
 	urlMain, err := fethCoinType(coinTypes, currencies.Bitcoin, currencies.Main)

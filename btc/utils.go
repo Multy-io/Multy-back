@@ -26,10 +26,12 @@ var (
 	mempoolRates     *mgo.Collection
 	txsData          *mgo.Collection
 	spendableOutputs *mgo.Collection
+	spentOutputs     *mgo.Collection
 
 	mempoolRatesTest     *mgo.Collection
 	txsDataTest          *mgo.Collection
 	spendableOutputsTest *mgo.Collection
+	spentOutputsTest     *mgo.Collection
 )
 
 func updateWalletAndAddressDate(tx store.MultyTX) error {
