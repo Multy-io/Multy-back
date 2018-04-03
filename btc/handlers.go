@@ -169,16 +169,6 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			}
 			spOut := generatedSpOutsToStore(gSpOut)
 
-			// set wallet index and addres index
-			for _, wallet := range user.Wallets {
-				for _, address := range wallet.Adresses {
-					if address.Address == spOut.Address {
-						spOut.AddressIndex = address.AddressIndex
-						spOut.WalletIndex = wallet.WalletIndex
-					}
-				}
-			}
-
 			log.Infof("Add spendable output : %v", gSpOut.String())
 
 			exRates, err := GetLatestExchangeRate()

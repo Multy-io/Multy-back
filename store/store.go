@@ -37,11 +37,13 @@ type Conf struct {
 	TableMempoolRatesBTCMain     string
 	TableTxsDataBTCMain          string
 	TableSpendableOutputsBTCMain string
+	TableSpentOutputsBTCMain     string
 
 	// BTC test
 	TableMempoolRatesBTCTest     string
 	TableTxsDataBTCTest          string
 	TableSpendableOutputsBTCTest string
+	TableSpentOutputsBTCTest     string
 }
 
 type UserStore interface {

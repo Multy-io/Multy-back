@@ -87,7 +87,7 @@ func (sConnPool *SocketIOConnectedPool) newConsumerBTCTransaction(nsqAddr string
 }
 
 func (sConnPool *SocketIOConnectedPool) sendTransactionNotify(newTransactionWithUserID btc.BtcTransactionWithUserID) {
-	sConnPool.log.Debug("sendTransactionNotify")
+	// sConnPool.log.Debug("sendTransactionNotify")
 	sConnPool.m.Lock()
 	defer sConnPool.m.Unlock()
 

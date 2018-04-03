@@ -144,6 +144,7 @@ type MultyTX struct {
 	WalletsInput      []WalletForTx         `json:"walletsinput"`  //here we storing all wallets and addresses that took part in Inputs of the transaction
 	WalletsOutput     []WalletForTx         `json:"walletsoutput"` //here we storing all wallets and addresses that took part in Outputs of the transaction
 }
+
 type AddresAmount struct {
 	Address string `json:"address"`
 	Amount  int64  `json:"amount"`
@@ -161,16 +162,6 @@ type ExchangeRatesRecord struct {
 	Timestamp     int64         `json:"timestamp"`
 	StockExchange string        `json:"stock_exchange"`
 }
-
-// type SpendableOutputs struct {
-// 	TxID              string                `json:"txid"`
-// 	TxOutID           int                   `json:"txoutid"`
-// 	TxOutAmount       int                   `json:"txoutamount"`
-// 	TxOutScript       string                `json:"txoutscript"`
-// 	AddressIndex      int                   `json:"addressindex"`
-// 	TxStatus          int                   `json:"txstatus"`
-// 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
-// }
 
 // ExchangeRates stores exchange rates
 type ExchangeRates struct {
