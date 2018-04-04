@@ -24,7 +24,7 @@ func (c *Client) blockTransactions(hash *chainhash.Hash) {
 		log.Errorf("parseNewBlock:rawBlock.TxHashes: %s", err.Error())
 	}
 
-	//Broadcast to client to delete mempool
+	// Broadcast to client to delete mempool
 	for _, hash := range allBlockTransactions {
 		c.DeleteMempool <- pb.MempoolToDelete{
 			Hash: hash.String(),

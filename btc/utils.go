@@ -25,10 +25,6 @@ const ( // currency id  nsq
 	TxStatusInBlockConfirmedOutcoming = 6
 
 	SatoshiInBitcoint = 100000000
-
-	// TxStatusInBlockConfirmed = 5
-
-	// TxStatusRejectedFromBlock = -1
 )
 
 var SatoshiToBitcoin = float64(100000000)
@@ -248,7 +244,6 @@ func (c *Client) splitTransaction(multyTx store.MultyTX, blockHeight int64) []st
 						}
 					}
 				}
-
 			}
 
 			if alreadyAdded {
@@ -397,10 +392,9 @@ func (c *Client) parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, 
 
 		for _, txInAddress := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses {
 			// check the ownership of the transaction to our users
-
 			c.UserDataM.Lock()
 			ud := *c.UsersData
-			userID, ok := ud[txInAddress]
+			addressEx, ok := ud[txInAddress]
 			c.UserDataM.Unlock()
 			if !ok {
 				continue
@@ -409,8 +403,10 @@ func (c *Client) parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, 
 			txInAmount := int64(SatoshiToBitcoin * previousTxVerbose.Vout[input.Vout].Value)
 
 			currentWallet := store.WalletForTx{
-				UserId: userID,
+				UserId:      addressEx.UserID,
+				WalletIndex: addressEx.WalletIndex,
 				Address: store.AddressForWallet{
+					AddressIndex:    addressEx.AddressIndex,
 					Address:         txInAddress,
 					Amount:          txInAmount,
 					AddressOutIndex: int(input.Vout),
@@ -437,15 +433,17 @@ func (c *Client) parseOutputs(txVerbose *btcjson.TxRawResult, blockHeight int64,
 
 			c.UserDataM.Lock()
 			ud := *c.UsersData
-			userID, ok := ud[txOutAddress]
+			addressEx, ok := ud[txOutAddress]
 			c.UserDataM.Unlock()
 			if !ok {
 				continue
 			}
 
 			currentWallet := store.WalletForTx{
-				UserId: userID,
+				UserId:      addressEx.UserID,
+				WalletIndex: addressEx.WalletIndex,
 				Address: store.AddressForWallet{
+					AddressIndex:    addressEx.AddressIndex,
 					Address:         txOutAddress,
 					Amount:          int64(SatoshiToBitcoin * output.Value),
 					AddressOutIndex: int(output.N),
@@ -515,7 +513,6 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 		for i := 0; i < len(tx.WalletsOutput); i++ {
 			//Here we descreasing amount of the current transaction
 			tx.TxOutAmount -= tx.WalletsOutput[i].Address.Amount
-
 			for _, output := range txVerbose.Vout {
 				for _, outAddr := range output.ScriptPubKey.Addresses {
 					if tx.WalletsOutput[i].Address.Address == outAddr {
@@ -524,7 +521,6 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 					}
 				}
 			}
-
 		}
 	} else {
 		for i := 0; i < len(tx.WalletsOutput); i++ {
@@ -552,7 +548,7 @@ func (c *Client) CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 
 			c.UserDataM.Lock()
 			ud := *c.UsersData
-			userID, ok := ud[address]
+			addressEx, ok := ud[address]
 			c.UserDataM.Unlock()
 
 			if !ok {
@@ -566,13 +562,15 @@ func (c *Client) CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 
 			amount := int64(output.Value * SatoshiToBitcoin)
 			spendableOutput := store.SpendableOutputs{
-				TxID:        tx.Txid,
-				TxOutID:     int(output.N),
-				TxOutAmount: amount,
-				TxOutScript: output.ScriptPubKey.Hex,
-				Address:     address,
-				UserID:      userID,
-				TxStatus:    txStatus,
+				TxID:         tx.Txid,
+				TxOutID:      int(output.N),
+				TxOutAmount:  amount,
+				TxOutScript:  output.ScriptPubKey.Hex,
+				Address:      address,
+				UserID:       addressEx.UserID,
+				TxStatus:     txStatus,
+				WalletIndex:  addressEx.WalletIndex,
+				AddressIndex: addressEx.AddressIndex,
 			}
 
 			spOut := spOutToGenerated(spendableOutput)
@@ -584,13 +582,15 @@ func (c *Client) CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 }
 func spOutToGenerated(spOut store.SpendableOutputs) pb.AddSpOut {
 	return pb.AddSpOut{
-		TxID:        spOut.TxID,
-		TxOutID:     int32(spOut.TxOutID),
-		TxOutAmount: spOut.TxOutAmount,
-		TxOutScript: spOut.TxOutScript,
-		Address:     spOut.Address,
-		UserID:      spOut.UserID,
-		TxStatus:    int32(spOut.TxStatus),
+		TxID:         spOut.TxID,
+		TxOutID:      int32(spOut.TxOutID),
+		TxOutAmount:  spOut.TxOutAmount,
+		TxOutScript:  spOut.TxOutScript,
+		Address:      spOut.Address,
+		UserID:       spOut.UserID,
+		TxStatus:     int32(spOut.TxStatus),
+		WalletIndex:  int32(spOut.WalletIndex),
+		AddressIndex: int32(spOut.AddressIndex),
 	}
 }
 
@@ -611,14 +611,14 @@ func (c *Client) DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 
 			c.UserDataM.Lock()
 			ud := *c.UsersData
-			userID, ok := ud[address]
+			addressEx, ok := ud[address]
 			c.UserDataM.Unlock()
 
 			if !ok {
 				continue
 			}
 			reqDelete := store.DeleteSpendableOutput{
-				UserID:  userID,
+				UserID:  addressEx.UserID,
 				TxID:    previousTx.Txid,
 				Address: address,
 			}

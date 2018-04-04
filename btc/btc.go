@@ -10,6 +10,7 @@ import (
 	"time"
 
 	pb "github.com/Appscrunch/Multy-back/node-streamer/btc"
+	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"
 	"github.com/btcsuite/btcd/btcjson"
@@ -25,7 +26,7 @@ type Client struct {
 	DelSpOut       chan pb.ReqDeleteSpOut
 	DeleteMempool  chan pb.MempoolToDelete
 	AddToMempool   chan pb.MempoolRecord
-	UsersData      *map[string]string
+	UsersData      *map[string]store.AddressExtended
 	rpcConf        *rpcclient.ConnConfig
 	UserDataM      *sync.Mutex
 	RpcClientM     *sync.Mutex
@@ -33,7 +34,7 @@ type Client struct {
 
 var log = slf.WithContext("btc")
 
-func NewClient(certFromConf []byte, btcNodeAddress string, usersData *map[string]string, udm, rpcm *sync.Mutex) (*Client, error) {
+func NewClient(certFromConf []byte, btcNodeAddress string, usersData *map[string]store.AddressExtended, udm, rpcm *sync.Mutex) (*Client, error) {
 
 	cli := &Client{
 		TransactionsCh: make(chan pb.BTCTransaction),
@@ -70,7 +71,7 @@ func (c *Client) RunProcess(btcNodeAddress string) error {
 			go c.blockTransactions(hash)
 		},
 		OnTxAcceptedVerbose: func(txDetails *btcjson.TxRawResult) {
-			log.Debugf("OnTxAcceptedVerbose: new transaction id = %v \n ud = %v lock = %v", txDetails.Txid, c.UsersData, c.UserDataM)
+			// log.Debugf("OnTxAcceptedVerbose: new transaction id = %v \n ud = %v lock = %v", txDetails.Txid, c.UsersData, c.UserDataM)
 			go c.mempoolTransaction(txDetails)
 		},
 		OnFilteredBlockDisconnected: func(height int32, header *wire.BlockHeader) {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/Appscrunch/Multy-BTC-node-service/btc"
 	pb "github.com/Appscrunch/Multy-back/node-streamer/btc"
+	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"
 	"github.com/blockcypher/gobcy"
@@ -19,7 +20,7 @@ var log = slf.WithContext("streamer")
 
 // Server implements streamer interface and is a gRPC server
 type Server struct {
-	UsersData *map[string]string
+	UsersData *map[string]store.AddressExtended
 	BtcAPI    *gobcy.API
 	BtcCli    *btc.Client
 	M         *sync.Mutex
@@ -29,8 +30,17 @@ type Server struct {
 func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.ReplyInfo, error) {
 	log.Debugf("EventInitialAdd - %v", ud.Map)
 
+	udMap := map[string]store.AddressExtended{}
+
+	for addr, ex := range ud.GetMap() {
+		udMap[addr] = store.AddressExtended{
+			UserID:       ex.GetUserID(),
+			WalletIndex:  int(ex.GetWalletIndex()),
+			AddressIndex: int(ex.GetAddressIndex()),
+		}
+	}
 	s.BtcCli.UserDataM.Lock()
-	*s.UsersData = ud.Map
+	*s.UsersData = udMap
 	s.BtcCli.UserDataM.Unlock()
 
 	return &pb.ReplyInfo{
@@ -44,15 +54,20 @@ func (s *Server) EventAddNewAddress(c context.Context, wa *pb.WatchAddress) (*pb
 	defer s.BtcCli.UserDataM.Unlock()
 	newMap := *s.UsersData
 	if newMap == nil {
-		newMap = map[string]string{}
+		newMap = map[string]store.AddressExtended{}
 	}
 	fmt.Println("map----", newMap)
+
 	//TODO: binded address fix
 	// _, ok := newMap[wa.Address]
 	// if ok {
 	// 	return nil, errors.New("Address already binded")
 	// }
-	newMap[wa.Address] = wa.UserID
+	newMap[wa.Address] = store.AddressExtended{
+		UserID:       wa.UserID,
+		WalletIndex:  int(wa.WalletIndex),
+		AddressIndex: int(wa.AddressIndex),
+	}
 	*s.UsersData = newMap
 
 	return &pb.ReplyInfo{
@@ -94,7 +109,7 @@ func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResy
 	requestTimes := 0
 	addrInfo, err := s.BtcAPI.GetAddrFull(address.Address, map[string]string{"limit": "50"})
 	if err != nil {
-		return nil, fmt.Errorf("[ERR] EventResyncAddress: s.BtcAPI.GetAddrFull : %s", err.Error())
+		return nil, fmt.Errorf("EventResyncAddress: s.BtcAPI.GetAddrFull : %s", err.Error())
 	}
 
 	log.Debugf("EventResyncAddress:s.BtcAPI.GetAddrFull")
