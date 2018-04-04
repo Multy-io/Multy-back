@@ -14,7 +14,7 @@ all-docker:  setup deps
 	cd cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
 
 run:
-	cd cmd && ./$(NAME) && ../
+	cd /Users/jekabolt/code/go/src/github.com/Appscrunch/Multy-back/cmd && rm -rf multy && cd .. && make build  && cd cmd && ./$(NAME) && ../
 
 setup:
 	go get -u github.com/kardianos/govendor

@@ -745,7 +745,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 		case currencies.Bitcoin:
 			var rates []store.MempoolRecord
 
-			if err := restClient.userStore.GetAllRates(currencyID, networkid, "-$category", &rates); err != nil {
+			if err := restClient.userStore.GetAllRates(currencyID, networkid, "-category", &rates); err != nil {
 				c.JSON(http.StatusOK, gin.H{
 					"speeds":  sp,
 					"code":    http.StatusInternalServerError,
@@ -768,6 +768,11 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 
 				slowestValue = 2
 				slowValue = rates[slowPosition].Category
+
+				if slowValue < 2 {
+					slowValue = 2
+				}
+
 				mediumValue = rates[mediumPosition].Category
 				fastValue = rates[fastPosition].Category
 				fastestValue = rates[fastestPosition].Category
@@ -790,16 +795,15 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 				slowestValue = rates[slowestPosition].Category
 
 				if slowestValue < 2 {
-					slowestValue =2
+					slowestValue = 2
 				}
 
 				slowValue = rates[slowPosition].Category
 
-
 				if slowValue < 2 {
 					slowValue = 2
 				}
-				
+
 				mediumValue = rates[mediumPosition].Category
 				fastValue = rates[fastPosition].Category
 				fastestValue = rates[fastestPosition].Category

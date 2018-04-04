@@ -210,9 +210,6 @@ func generatedTxDataToStore(gSpOut *btcpb.BTCTransaction) store.MultyTX {
 		})
 	}
 
-	// gSpOut.WalletsInput
-	// gSpOut.WalletsOutput
-
 	wInputs := []store.WalletForTx{}
 	for _, walletOutputs := range gSpOut.WalletsOutput {
 		wInputs = append(wInputs, store.WalletForTx{
@@ -274,11 +271,14 @@ func generatedSpOutsToStore(gSpOut *btcpb.AddSpOut) store.SpendableOutputs {
 func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 
 	txStore := &mgo.Collection{}
+	// spend := &mgo.Collection{}
 	switch networtkID {
 	case currencies.Main:
 		txStore = txsData
+		// spend = spentOutputs
 	case currencies.Test:
 		txStore = txsDataTest
+		// spend = spentOutputsTest
 	default:
 		return errors.New("saveMultyTransaction: wrong networkID")
 	}
@@ -300,13 +300,27 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 			return err
 		}
 
-		update := bson.M{
-			"$set": bson.M{
-				"txstatus":      tx.TxStatus,
-				"blockheight":   tx.BlockHeight,
-				"confirmations": tx.Confirmations,
-				"blocktime":     tx.BlockTime,
-			},
+		storedTx := isIncoming(multyTX.TxStatus)
+		newTx := isIncoming(tx.TxStatus)
+		update := bson.M{}
+
+		if !storedTx && !newTx {
+			update = bson.M{
+				"$set": bson.M{
+					"txstatus":      tx.TxStatus,
+					"blockheight":   tx.BlockHeight,
+					"confirmations": tx.Confirmations,
+					"blocktime":     tx.BlockTime,
+				},
+			}
+		} else {
+			update = bson.M{
+				"$set": bson.M{
+					"blockheight":   tx.BlockHeight,
+					"confirmations": tx.Confirmations,
+					"blocktime":     tx.BlockTime,
+				},
+			}
 		}
 		err = txStore.Update(sel, update)
 		return err
@@ -324,14 +338,29 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 			return err
 		}
 
-		update := bson.M{
-			"$set": bson.M{
-				"txstatus":      tx.TxStatus,
-				"blockheight":   tx.BlockHeight,
-				"confirmations": tx.Confirmations,
-				"blocktime":     tx.BlockTime,
-			},
+		storedTx := isIncoming(multyTX.TxStatus)
+		newTx := isIncoming(tx.TxStatus)
+		update := bson.M{}
+
+		if storedTx && newTx {
+			update = bson.M{
+				"$set": bson.M{
+					"txstatus":      tx.TxStatus,
+					"blockheight":   tx.BlockHeight,
+					"confirmations": tx.Confirmations,
+					"blocktime":     tx.BlockTime,
+				},
+			}
+		} else {
+			update = bson.M{
+				"$set": bson.M{
+					"blockheight":   tx.BlockHeight,
+					"confirmations": tx.Confirmations,
+					"blocktime":     tx.BlockTime,
+				},
+			}
 		}
+
 		err = txStore.Update(sel, update)
 		if err != nil {
 			log.Errorf("saveMultyTransaction:txsData.Update %s", err.Error())
@@ -339,6 +368,13 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 		return err
 	}
 	return nil
+}
+
+func isIncoming(status int) bool {
+	if status == store.TxStatusAppearedInMempoolIncoming || status == store.TxStatusAppearedInBlockIncoming || status == store.TxStatusInBlockConfirmedIncoming {
+		return true
+	}
+	return false
 }
 
 func setUserID(tx *store.MultyTX) {
