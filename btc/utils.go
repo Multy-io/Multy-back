@@ -123,7 +123,6 @@ can be called from:
 // }
 
 func (c *Client) ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult, isReSync bool) {
-	// var multyTx store.MultyTX = parseRawTransaction(blockChainBlockHeight, txVerbose, usersData)
 	multyTx, related := c.ParseRawTransaction(blockChainBlockHeight, txVerbose)
 	if related {
 		log.Debugf("ProcessTransaction...")
@@ -296,6 +295,7 @@ func saveMultyTransaction(tx store.MultyTX, resync bool, TransactionsCh chan pb.
 				break
 			}
 		}
+
 		outcomingTx := storeTxToGenerated(tx)
 		// send to outcomingTx to chan
 		TransactionsCh <- outcomingTx
@@ -323,7 +323,6 @@ func saveMultyTransaction(tx store.MultyTX, resync bool, TransactionsCh chan pb.
 func storeTxToGenerated(tx store.MultyTX) pb.BTCTransaction {
 	outs := []*pb.BTCTransaction_AddresAmount{}
 	for _, output := range tx.TxOutputs {
-
 		outs = append(outs, &pb.BTCTransaction_AddresAmount{
 			Address: output.Address,
 			Amount:  output.Amount,
@@ -473,7 +472,6 @@ func setTransactionStatus(tx *store.MultyTX, blockDiff int64, currentBlockHeight
 			tx.MempoolTime = transactionTime
 			tx.BlockTime = -1
 		}
-
 	} else if blockDiff >= 0 && blockDiff < 6 {
 		//This call was made from block or resync
 		//Transaction have no enough confirmations

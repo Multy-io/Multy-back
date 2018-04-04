@@ -99,7 +99,6 @@ func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_E
 			HashTX:   rec.HashTX,
 		})
 	}
-
 	return nil
 }
 

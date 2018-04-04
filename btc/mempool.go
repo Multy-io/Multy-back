@@ -7,7 +7,6 @@ import (
 
 // ProcessTransaction from mempool
 func (c *Client) mempoolTransaction(inTx *btcjson.TxRawResult) {
-
 	// Brodcast new mempool transaction to mempool event
 	rec := c.rawTxToMempoolRec(inTx)
 	c.AddToMempool <- pb.MempoolRecord{
