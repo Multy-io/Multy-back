@@ -25,11 +25,6 @@ func (c *Client) GetAllMempool() ([]store.MempoolRecord, error) {
 
 		//It's some kind of Round function to prefent 0 FeeRates while casting from float to int
 		intFee := int(math.Floor(floatFee+0.5))
-
-		if intFee <=0 {
-			log.Errorf("\n\n\n\n\n\n FUUUUUCK!!!!!!!!!!!!!\n\n\n\n\n\n\n")
-		}
-
 		allMempool = append(allMempool, newMempoolRecord(intFee, hash))
 	}
 	return allMempool, err
