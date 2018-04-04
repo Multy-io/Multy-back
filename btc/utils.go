@@ -12,6 +12,7 @@ import (
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"math"
 )
 
 const ( // currency id  nsq
@@ -668,6 +669,16 @@ func (c *Client) rawTxToMempoolRec(inTx *btcjson.TxRawResult) store.MempoolRecor
 		outputSum += output.Value
 	}
 	fee := inputSum - outputSum
-	rec := newMempoolRecord(int(fee/float64(inTx.Size)*100000000), inTx.Hash)
+
+
+	floatFee := fee/float64(inTx.Size)*100000000
+
+	//It's some kind of Round function to prefent 0 FeeRates while casting from float to int
+	intFee := int(math.Floor(floatFee+0.5))
+
+
+	rec := newMempoolRecord(intFee, inTx.Hash)
+
+
 	return rec
 }
