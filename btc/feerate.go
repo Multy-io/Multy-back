@@ -1,8 +1,9 @@
 package btc
 
 import (
-	"github.com/Appscrunch/Multy-back/store"
 	"math"
+
+	"github.com/Appscrunch/Multy-back/store"
 )
 
 const (
@@ -17,20 +18,16 @@ func (c *Client) GetAllMempool() ([]store.MempoolRecord, error) {
 	}
 	log.Errorf("MEMPOOL SIZE == %v", len(mempool))
 
-
-
 	for hash, txInfo := range mempool {
 
-		floatFee := txInfo.Fee/float64(txInfo.Size)*btcToSatoshi
+		floatFee := txInfo.Fee / float64(txInfo.Size) * btcToSatoshi
 
 		//It's some kind of Round function to prefent 0 FeeRates while casting from float to int
-		intFee := int(math.Floor(floatFee+0.5))
-		if intFee > 0{
+		intFee := int(math.Floor(floatFee + 0.5))
+		// Node has transatctions withch not exist
+		if intFee > 0 {
 			allMempool = append(allMempool, newMempoolRecord(intFee, hash))
-		} else {
-			log.Errorf("GetTxFromMempool with 0 feeRate\n %v", txInfo)
 		}
-
 	}
 	return allMempool, err
 
