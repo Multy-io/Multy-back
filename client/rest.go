@@ -328,8 +328,10 @@ func addAddressToWallet(address, token string, currencyID, networkid, walletInde
 		return err
 	}
 
-	for _, wallet := range user.Wallets {
+	var position int
+	for i, wallet := range user.Wallets {
 		if wallet.NetworkID == networkid && wallet.CurrencyID == currencyID && wallet.WalletIndex == walletIndex {
+			position = i
 			for _, walletAddress := range wallet.Adresses {
 				if walletAddress.AddressIndex == addressIndex {
 					err := errors.New(msgErrAddressIndex)
@@ -344,8 +346,8 @@ func addAddressToWallet(address, token string, currencyID, networkid, walletInde
 		AddressIndex:   addressIndex,
 		LastActionTime: time.Now().Unix(),
 	}
-	sel := bson.M{"devices.JWT": token, "wallets.walletIndex": walletIndex}
-	update := bson.M{"$push": bson.M{"wallets.$.addresses": addr}}
+	sel := bson.M{"devices.JWT": token, "wallets.currencyID": currencyID, "wallets.networkID": networkid, "wallets.walletIndex": walletIndex}
+	update := bson.M{"$push": bson.M{"wallets." + strconv.Itoa(position) + ".addresses": addr}}
 	if err := restClient.userStore.Update(sel, update); err != nil {
 		restClient.log.Errorf("addAddressToWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 		err := errors.New(msgErrServerError)
@@ -708,6 +710,7 @@ func (restClient *RestClient) addAddress() gin.HandlerFunc {
 				"code":    http.StatusText(http.StatusBadRequest),
 				"message": err.Error(),
 			})
+			return
 		}
 
 		c.JSON(http.StatusCreated, gin.H{
