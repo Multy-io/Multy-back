@@ -7,6 +7,8 @@ package store
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/Appscrunch/Multy-back/currencies"
@@ -181,13 +183,28 @@ func (mStore *MongoUserStore) GetEthereumTransationHistory(query bson.M) ([]Tran
 }
 
 func (mStore *MongoUserStore) DeleteWallet(userid string, walletindex, currencyID, networkID int) error {
-	sel := bson.M{"userID": userid, "wallets.walletIndex": walletindex, "wallets.currencyID": currencyID, "wallets.networkID": networkID}
-	update := bson.M{
-		"$set": bson.M{
-			"wallets.$.status": WalletStatusDeleted,
-		},
+	user := User{}
+	sel := bson.M{"userID": userid, "wallets.networkID": networkID, "wallets.currencyID": currencyID, "wallets.walletIndex": walletindex}
+	err := mStore.usersData.Find(bson.M{"userID": userid}).One(&user)
+	var position int
+	if err == nil {
+		for i, wallet := range user.Wallets {
+			if wallet.NetworkID == networkID && wallet.WalletIndex == walletindex && wallet.CurrencyID == currencyID {
+				position = i
+				fmt.Println("\n position \n", position)
+				break
+			}
+		}
+		update := bson.M{
+			"$set": bson.M{
+				"wallets." + strconv.Itoa(position) + ".status": WalletStatusDeleted,
+			},
+		}
+		return mStore.usersData.Update(sel, update)
 	}
-	return mStore.usersData.Update(sel, update)
+
+	return err
+
 }
 
 // func (mStore *MongoUserStore) GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs) {

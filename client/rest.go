@@ -620,6 +620,7 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 				}
 			}
 
+			restClient.log.Errorf("userid - %s walletindex %v curid %d netid %d", user.UserID, walletIndex, currencyId, networkid)
 			err := restClient.userStore.DeleteWallet(user.UserID, walletIndex, currencyId, networkid)
 			if err != nil {
 				restClient.log.Errorf("deleteWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)

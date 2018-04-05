@@ -300,27 +300,16 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 			return err
 		}
 
-		storedTx := isIncoming(multyTX.TxStatus)
-		newTx := isIncoming(tx.TxStatus)
-		update := bson.M{}
+		// query := bson.M{"txid":tx.TxID,"userid":tx.WalletsInput[0].UserId}
+		// err := spend.Find().One(nil)
 
-		if !storedTx && !newTx {
-			update = bson.M{
-				"$set": bson.M{
-					"txstatus":      tx.TxStatus,
-					"blockheight":   tx.BlockHeight,
-					"confirmations": tx.Confirmations,
-					"blocktime":     tx.BlockTime,
-				},
-			}
-		} else {
-			update = bson.M{
-				"$set": bson.M{
-					"blockheight":   tx.BlockHeight,
-					"confirmations": tx.Confirmations,
-					"blocktime":     tx.BlockTime,
-				},
-			}
+		update := bson.M{
+			"$set": bson.M{
+				"txstatus":      tx.TxStatus,
+				"blockheight":   tx.BlockHeight,
+				"confirmations": tx.Confirmations,
+				"blocktime":     tx.BlockTime,
+			},
 		}
 		err = txStore.Update(sel, update)
 		return err
@@ -338,29 +327,14 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 			return err
 		}
 
-		storedTx := isIncoming(multyTX.TxStatus)
-		newTx := isIncoming(tx.TxStatus)
-		update := bson.M{}
-
-		if storedTx && newTx {
-			update = bson.M{
-				"$set": bson.M{
-					"txstatus":      tx.TxStatus,
-					"blockheight":   tx.BlockHeight,
-					"confirmations": tx.Confirmations,
-					"blocktime":     tx.BlockTime,
-				},
-			}
-		} else {
-			update = bson.M{
-				"$set": bson.M{
-					"blockheight":   tx.BlockHeight,
-					"confirmations": tx.Confirmations,
-					"blocktime":     tx.BlockTime,
-				},
-			}
+		update := bson.M{
+			"$set": bson.M{
+				"txstatus":      tx.TxStatus,
+				"blockheight":   tx.BlockHeight,
+				"confirmations": tx.Confirmations,
+				"blocktime":     tx.BlockTime,
+			},
 		}
-
 		err = txStore.Update(sel, update)
 		if err != nil {
 			log.Errorf("saveMultyTransaction:txsData.Update %s", err.Error())
@@ -368,13 +342,6 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int) error {
 		return err
 	}
 	return nil
-}
-
-func isIncoming(status int) bool {
-	if status == store.TxStatusAppearedInMempoolIncoming || status == store.TxStatusAppearedInBlockIncoming || status == store.TxStatusInBlockConfirmedIncoming {
-		return true
-	}
-	return false
 }
 
 func setUserID(tx *store.MultyTX) {
