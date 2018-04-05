@@ -385,8 +385,10 @@ func NewAddressNode(address, userid string, currencyID, networkID, walletIndex, 
 
 		if networkID == currencies.Test {
 			restClient.BTC.WatchAddressTest <- btcpb.WatchAddress{
-				Address: address,
-				UserID:  userid,
+				Address:      address,
+				UserID:       userid,
+				WalletIndex:  int32(walletIndex),
+				AddressIndex: int32(addressIndex),
 			}
 		}
 	case currencies.Ether:
@@ -1124,7 +1126,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			}
 
 			if len(wallet.Adresses) == 0 {
-				restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+				restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser:\t[addr=%s]", c.Request.RemoteAddr)
 				c.JSON(code, gin.H{
 					"code":    http.StatusBadRequest,
 					"message": msgErrUserNotFound,
@@ -1371,15 +1373,33 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 		okWalletsBTC, okWalletsETH := fetchUndeletedWallets(user.Wallets, user.WalletsETH)
 
+		userTxs := []store.MultyTX{}
+
 		for _, wallet := range okWalletsBTC {
 			var pending bool
 
 			for _, address := range wallet.Adresses {
 
 				spOuts := getBTCAddressSpendableOutputs(address.Address, wallet.CurrencyID, wallet.NetworkID, restClient)
-				for _, spOut := range spOuts {
-					if spOut.TxStatus == store.TxStatusAppearedInMempoolIncoming {
-						pending = true
+				// for _, spOut := range spOuts {
+				// 	if spOut.TxStatus == store.TxStatusAppearedInMempoolIncoming {
+				// 		pending = true
+				// 	}
+				// }
+
+				//all user txs
+				err = restClient.userStore.GetAllWalletTransactions(user.UserID, wallet.CurrencyID, wallet.NetworkID, &userTxs)
+				if err != nil {
+					//empty history
+				}
+
+				for _, tx := range userTxs {
+					if len(tx.TxAddress) > 0 {
+						if tx.TxAddress[0] == address.Address {
+							if tx.TxStatus == store.TxStatusAppearedInMempoolIncoming || tx.TxStatus == store.TxStatusAppearedInMempoolOutcoming {
+								pending = true
+							}
+						}
 					}
 				}
 
@@ -1404,6 +1424,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 				Pending:        pending,
 			})
 			av = []AddressVerbose{}
+			userTxs = []store.MultyTX{}
 
 		}
 
@@ -1488,7 +1509,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 		}
 
 		networkid, err := strconv.Atoi(c.Param("networkid"))
-		restClient.log.Debugf("getWalletVerbose [%d] \t[networkid=%s]", walletIndex, c.Request.RemoteAddr)
+		restClient.log.Debugf("getWalletVerbose [%d] \t[networkid=%s]", networkid, c.Request.RemoteAddr)
 		if err != nil {
 			restClient.log.Errorf("getWalletVerbose: non int networkid index:[%d] %s \t[addr=%s]", networkid, err.Error(), c.Request.RemoteAddr)
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -1558,7 +1579,6 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 					}
 				}
 			}
-			restClient.log.Infof("---------len wallet addresses= %d", len(walletAddresses))
 
 			// TODO: fix this logic same wallet to samewallet tx
 
@@ -1585,27 +1605,6 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 							}
 						}
 					}
-					// for _, addr := range tx.TxAddress {
-					// 	if addr == address {
-					// 		restClient.log.Infof("---------address= %s, txid= %s", address, tx.TxID)
-					// 		var isTheSameWallet = false
-					// 		for _, input := range tx.WalletsInput {
-					// 			if walletIndex == input.WalletIndex {
-					// 				isTheSameWallet = true
-					// 			}
-					// 		}
-
-					// 		for _, output := range tx.WalletsOutput {
-					// 			if walletIndex == output.WalletIndex {
-					// 				isTheSameWallet = true
-					// 			}
-					// 		}
-
-					// 		if isTheSameWallet {
-					// 			walletTxs = append(walletTxs, tx)
-					// 		}
-					// 	}
-					// }
 				}
 			}
 

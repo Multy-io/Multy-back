@@ -7,7 +7,6 @@ package store
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -191,7 +190,6 @@ func (mStore *MongoUserStore) DeleteWallet(userid string, walletindex, currencyI
 		for i, wallet := range user.Wallets {
 			if wallet.NetworkID == networkID && wallet.WalletIndex == walletindex && wallet.CurrencyID == currencyID {
 				position = i
-				fmt.Println("\n position \n", position)
 				break
 			}
 		}
