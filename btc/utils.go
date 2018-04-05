@@ -8,11 +8,12 @@ package btc
 import (
 	"time"
 
+	"math"
+
 	pb "github.com/Appscrunch/Multy-back/node-streamer/btc"
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"math"
 )
 
 const ( // currency id  nsq
@@ -289,6 +290,36 @@ func saveMultyTransaction(tx store.MultyTX, resync bool, TransactionsCh chan pb.
 	// This is splited transaction! That means that transaction's WalletsInputs and WalletsOutput have the same WalletIndex!
 	//Here we have outgoing transaction for exact wallet!
 	if tx.WalletsInput != nil && len(tx.WalletsInput) > 0 {
+		if len(tx.WalletsInput) > 0 && len(tx.WalletsOutput) > 0 {
+			var amount int64
+			if len(tx.TxAddress) != 0 {
+				for _, in := range tx.TxInputs {
+					if in.Address == tx.TxAddress[0] {
+						amount += in.Amount
+					}
+				}
+			}
+			if amount == 0 {
+				for _, out := range tx.TxOutputs {
+					if out.Address == tx.TxAddress[0] {
+						amount += out.Amount
+					}
+				}
+			}
+
+			tx.TxOutAmount = amount
+		}
+		var amount int64
+		if len(tx.TxAddress) != 0 {
+			for _, in := range tx.TxInputs {
+				if in.Address == tx.TxAddress[0] {
+					amount += in.Amount
+				}
+			}
+		}
+		tx.TxOutAmount = amount
+		log.Errorf("tx.TxOutAmount = %d", tx.TxOutAmount)
+
 		//HACK: fetching userid like this
 		for _, input := range tx.WalletsInput {
 			if input.UserId != "" {
@@ -303,6 +334,25 @@ func saveMultyTransaction(tx store.MultyTX, resync bool, TransactionsCh chan pb.
 
 		return
 	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0 {
+		if len(tx.WalletsInput) > 0 && len(tx.WalletsOutput) > 0 {
+			var amount int64
+			if len(tx.TxAddress) != 0 {
+				for _, in := range tx.TxInputs {
+					if in.Address == tx.TxAddress[0] {
+						amount += in.Amount
+					}
+				}
+			}
+			if amount == 0 {
+				for _, out := range tx.TxOutputs {
+					if out.Address == tx.TxAddress[0] {
+						amount += out.Amount
+					}
+				}
+			}
+
+			tx.TxOutAmount = amount
+		}
 		//HACK: fetching userid like this
 		for _, output := range tx.WalletsOutput {
 			if output.UserId != "" {
@@ -668,15 +718,12 @@ func (c *Client) rawTxToMempoolRec(inTx *btcjson.TxRawResult) store.MempoolRecor
 	}
 	fee := inputSum - outputSum
 
-
-	floatFee := fee/float64(inTx.Size)*100000000
+	floatFee := fee / float64(inTx.Size) * 100000000
 
 	//It's some kind of Round function to prefent 0 FeeRates while casting from float to int
-	intFee := int(math.Floor(floatFee+0.5))
-
+	intFee := int(math.Floor(floatFee + 0.5))
 
 	rec := newMempoolRecord(intFee, inTx.Hash)
-
 
 	return rec
 }
