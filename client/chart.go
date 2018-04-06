@@ -81,6 +81,8 @@ func newExchangeChart(db store.UserStore) (*exchangeChart, error) {
 	}
 	chart.gdaxConn = gDaxConn
 
+	fmt.Println("--------------------------", gDaxConn)
+
 	poloniexConn, err := chart.newPoloniexAPI(chart.log)
 	if err != nil {
 		return nil, fmt.Errorf("initPoloniexAPI: %s", err)
@@ -97,10 +99,10 @@ func (eChart *exchangeChart) run() error {
 
 	go eChart.gdaxConn.listen()
 	//TODO: fix poloniex
-	// go eChart.poloniexConn.listen()
+	go eChart.poloniexConn.listen()
 
 	eChart.gdaxConn.subscribe()
-	// eChart.poloniexConn.subscribe()
+	eChart.poloniexConn.subscribe()
 
 	for {
 		select {

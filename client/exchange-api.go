@@ -145,7 +145,6 @@ func (eChart *exchangeChart) newPoloniexAPI(log slf.StructuredLogger) (*Poloniex
 			eChart.log.Errorf("poloniex connection: %s", err.Error())
 			return nil, err
 		}
-		return nil, err
 	}
 
 	poloniexAPI.conn = c
