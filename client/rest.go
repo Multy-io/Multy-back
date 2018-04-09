@@ -1631,7 +1631,11 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 			*/
 
 			for i := 0; i < len(walletTxs); i++ {
-				walletTxs[i].Confirmations = int(blockHeight-walletTxs[i].BlockHeight) + 1
+				if walletTxs[i].BlockHeight == -1 {
+					walletTxs[i].Confirmations = 0
+				} else {
+					walletTxs[i].Confirmations = int(blockHeight-walletTxs[i].BlockHeight) + 1
+				}
 			}
 
 		case currencies.Ether:

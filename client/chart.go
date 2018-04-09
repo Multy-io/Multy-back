@@ -81,8 +81,6 @@ func newExchangeChart(db store.UserStore) (*exchangeChart, error) {
 	}
 	chart.gdaxConn = gDaxConn
 
-	fmt.Println("--------------------------", gDaxConn)
-
 	poloniexConn, err := chart.newPoloniexAPI(chart.log)
 	if err != nil {
 		return nil, fmt.Errorf("initPoloniexAPI: %s", err)
