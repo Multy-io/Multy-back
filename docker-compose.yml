@@ -1,26 +1,55 @@
 version: '3.4'
-
 services:
-  multy-back:
-    image:  multyio/backend:1.0.1
-    command: ["make", "all"]
+  multy-back-stage:
+    image:  multyio/multy-back:stage
+    # build: .
+    #command: ["make", "all"]
     env_file: .env
+    network_mode: "host"
     volumes:
         - "${BACKEND_LOGS}:/go/src/github.com/Appscrunch/Multy-back/cmd/logs"
         - "${BACKEND_CONF}:/go/src/github.com/Appscrunch/Multy-back/cmd/multy.config"
-        - "${BTCD_CERT}:/go/src/github.com/Appscrunch/Multy-back/cmd/rpc.cert"
+        #- "${BTCD_CERT}:/go/src/github.com/Appscrunch/Multy-back/cmd/rpc.cert"
     ports:
-      - "7778:7778"
-      - "7780:7780"
+      - "6778:6778"
+      - "6780:6780"
     depends_on:
-      - nsq
-      - nsqlookup
-      - nsqadmin
-      - mongodb
-      # - btcd-testnet
+      - btc-node-service-mainnet-stage
+      - btc-node-service-testnet-stage
+      - nsq-stage
+      - nsqlookup-stage
+      - nsqadmin-stage
+      - mongodb-stage
 
-  mongodb:
-    container_name: "mongodb"
+
+  btc-node-service-mainnet-stage:
+    image: multyio/multy-btc-node-service
+    network_mode: "host"
+    volumes:
+      - "${BTCD_CERT}:/go/src/github.com/Appscrunch/Multy-BTC-node-service/cmd/rpc.cert"
+      - "${BTC_NODE_SERVICE_MAINNET}:/go/src/github.com/Appscrunch/Multy-BTC-node-service/cmd/client.config"
+    ports:
+      - "7000:7000"
+    depends_on:
+      - nsq-stage
+
+
+  btc-node-service-testnet-stage:
+    image: multyio/multy-btc-node-service
+    network_mode: "host"
+    volumes:
+      - "${BTC_NODE_SERVICE_TESTNET}:/go/src/github.com/Appscrunch/Multy-BTC-node-service/cmd/client.config"
+      - "${BTCD_CERT}:/go/src/github.com/Appscrunch/Multy-BTC-node-service/cmd/rpc.cert"
+    ports:
+      # - "6660:6660"
+      - "6000:6000"
+    depends_on:
+      - nsq-stage
+
+
+
+  mongodb-stage:
+    container_name: "mongo_db_stage"
     image: mongo:3.6.2
     env_file: .env
     command: mongod --smallfiles
@@ -31,24 +60,24 @@ services:
       - ${MONGO_DATA_DIR}:/data/db
       - ${MONGO_LOG_DIR}:/data/logs
     ports:
-      - 27017:27017
+      - 27015:27017
 
-  nsqlookup:
+  nsqlookup-stage:
     image: nsqio/nsq
-    hostname: nsqlookup
+    hostname: nsqlookup-stage
     ports:
-      - "4160:4160"
-      - "4161:4161"
+      - "6160:4160"
+      - "6161:4161"
     command: nsqlookupd
 
-  nsq:
+  nsq-stage:
     image: nsqio/nsq
     hostname: nsq
     ports:
-      - "4150:4150"
-      - "4151:4151"
+      - "6150:4150"
+      - "6151:4151"
     links:
-      - nsqlookup:nsqlookup
+      - nsqlookup-stage:nsqlookup
     env_file: .env
     environment:
       - NSQD_DATA_DIR=/data/nsqd
@@ -56,23 +85,11 @@ services:
       - ${NSQD_DATA_DIR}:/data/nsqd
     command: nsqd --broadcast-address nsq --lookupd-tcp-address=nsqlookup:4160 -data-path=/data
 
-  nsqadmin:
+  nsqadmin-stage:
     image: nsqio/nsq
-    hostname: nsqadmin
+    hostname: nsqadmin-stage
     links:
-      - nsqlookup:nsqlookup
+      - nsqlookup-stage:nsqlookup
     ports:
-      - "4171:4171"
+      - "6171:4171"
     command: nsqadmin --lookupd-http-address=nsqlookup:4161
-
- # btcd-testnet:
- #   image: multyio/btcd-testnet:1.0.0
- #   env_file: .env
- #   volumes:
- #    - "${BTCD}:/root/.btcd"
- #    - "${BTCCTL}:/root/.btcctl"
- #    - "${BTCD_CERT}:/root/rpc.cert"
- #    - "${BTCD_KEY}:/root/rpc.key"
- #   ports:
- #    - 1334:1334
- #   - 18334:18334
