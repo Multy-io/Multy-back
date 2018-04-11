@@ -3,12 +3,13 @@ NAME = multy
 BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
 COMMIT = $(shell git rev-parse --short HEAD)
 BUILDTIME = $(shell date +%Y-%m-%dT%T%z)
+LASTTAG = $(shell git describe --tags --abbrev=0 --dirty)
 
-LD_OPTS = -ldflags="-X main.branch=${BRANCH} -X main.commit=${COMMIT} -X main.buildtime=${BUILDTIME} -w"
+LD_OPTS = -ldflags="-X main.branch=${BRANCH} -X main.commit=${COMMIT} -X main.lasttag=${LASTTAG} -X main.buildtime=${BUILDTIME} -w "
 
 all:  build run
 
-all-with-deps: setup deps docker
+all-with-deps: setup deps
 
 all-docker:  setup deps
 	cd cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .

@@ -6,6 +6,8 @@ See LICENSE for details
 package main
 
 import (
+	"encoding/json"
+
 	"github.com/KristinaEtc/config"
 	_ "github.com/KristinaEtc/slflog"
 
@@ -20,7 +22,8 @@ var (
 	branch    string
 	commit    string
 	buildtime string
-)
+	lasttag   string
+}
 
 // TODO: add all default params
 var globalOpt = multy.Configuration{
@@ -52,6 +55,17 @@ func main() {
 	log.Infof("branch: %s", branch)
 	log.Infof("commit: %s", commit)
 	log.Infof("build time: %s", buildtime)
+	log.Infof("tag: %s", lasttag)
+	
+
+	sc := store.ServerConfig{
+		BranchName: branch,
+		CommitHash: commit,
+		Build:      buildtime,
+		Tag: 	    lasttag,
+	}
+
+	globalOpt.MultyVerison = sc
 
 	mu, err := multy.Init(&globalOpt)
 	if err != nil {

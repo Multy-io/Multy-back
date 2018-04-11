@@ -20,6 +20,7 @@ type Configuration struct {
 	NSQAddress        string
 	BTCNodeAddress    string
 	DonationAddresses []store.DonationInfo
+	MultyVerison      store.ServerConfig
 
 	SupportedNodes []store.CoinType
 }
