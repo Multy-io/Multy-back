@@ -502,16 +502,16 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 				"poloniex": []string{"usd_btc", "eth_btc", "eth_usd", "btc_usd"},
 				"gdax":     []string{"eur_btc", "usd_btc", "eth_btc", "eth_usd", "eth_eur", "btc_usd"},
 			},
-			"servertime": time.Now().Unix(),
+			"servertime": time.Now().UTC().Unix(),
 			"api":        "0.01",
 			"android": map[string]int{
-				"soft": 1,
-				"hard": 1,
+				"soft": 6,
+				"hard": 6,
 			},
 			"version": restClient.MultyVerison,
 			"ios": map[string]int{
-				"soft": 18,
-				"hard": 1,
+				"soft": 29,
+				"hard": 29,
 			},
 			"donate": restClient.donationAddresses,
 		}

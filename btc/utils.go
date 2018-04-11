@@ -321,9 +321,9 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int, resync bool) error {
 		// 	sel = bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
 		// }
 
-		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID}
+		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
 		if tx.BlockHeight != -1 {
-			sel = bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID}
+			sel = bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsInput[0].WalletIndex}
 		}
 
 		err := txStore.Find(sel).One(&multyTX)
@@ -365,7 +365,7 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int, resync bool) error {
 		// sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
 		// sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
 
-		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "txid": tx.TxID}
+		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
 
 		err := txStore.Find(sel).One(&multyTX)
 		if err == mgo.ErrNotFound {
