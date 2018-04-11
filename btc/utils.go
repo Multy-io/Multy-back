@@ -306,19 +306,22 @@ func saveMultyTransaction(tx store.MultyTX, resync bool, TransactionsCh chan pb.
 					}
 				}
 			}
-
 			tx.TxOutAmount = amount
+
+			// if tx.TxOutScript == "" {
+			// 	if tx.TxStatus == store.TxStatusAppearedInMempoolIncoming {
+			// 		tx.TxStatus = store.TxStatusAppearedInMempoolOutcoming
+			// 	}
+
+			// 	if tx.TxStatus == store.TxStatusAppearedInBlockIncoming {
+			// 		tx.TxStatus = store.TxStatusAppearedInBlockOutcoming
+			// 	}
+
+			// 	if tx.TxStatus == store.TxStatusInBlockConfirmedIncoming {
+			// 		tx.TxStatus = store.TxStatusInBlockConfirmedOutcoming
+			// 	}
+			// }
 		}
-		var amount int64
-		if len(tx.TxAddress) != 0 {
-			for _, in := range tx.TxInputs {
-				if in.Address == tx.TxAddress[0] {
-					amount += in.Amount
-				}
-			}
-		}
-		tx.TxOutAmount = amount
-		log.Errorf("tx.TxOutAmount = %d", tx.TxOutAmount)
 
 		//HACK: fetching userid like this
 		for _, input := range tx.WalletsInput {
@@ -352,7 +355,22 @@ func saveMultyTransaction(tx store.MultyTX, resync bool, TransactionsCh chan pb.
 			}
 
 			tx.TxOutAmount = amount
+
+			// if tx.TxOutScript == "" {
+			// 	if tx.TxStatus == store.TxStatusAppearedInMempoolIncoming {
+			// 		tx.TxStatus = store.TxStatusAppearedInMempoolOutcoming
+			// 	}
+
+			// 	if tx.TxStatus == store.TxStatusAppearedInBlockIncoming {
+			// 		tx.TxStatus = store.TxStatusAppearedInBlockOutcoming
+			// 	}
+
+			// 	if tx.TxStatus == store.TxStatusInBlockConfirmedIncoming {
+			// 		tx.TxStatus = store.TxStatusInBlockConfirmedOutcoming
+			// 	}
+			// }
 		}
+
 		//HACK: fetching userid like this
 		for _, output := range tx.WalletsOutput {
 			if output.UserId != "" {

@@ -56,8 +56,6 @@ func (s *Server) EventAddNewAddress(c context.Context, wa *pb.WatchAddress) (*pb
 	if newMap == nil {
 		newMap = map[string]store.AddressExtended{}
 	}
-	fmt.Println("map----", newMap)
-
 	//TODO: binded address fix
 	// _, ok := newMap[wa.Address]
 	// if ok {
