@@ -264,3 +264,10 @@ type AddressExtended struct {
 	WalletIndex  int
 	AddressIndex int
 }
+
+type ServerConfig struct {
+	BranchName string 'json:"branch"'
+	CommitHash string 'json:"commit"'
+	Build      string 'json:"build_time"'
+	Tag        string 'json:"tag"'
+}

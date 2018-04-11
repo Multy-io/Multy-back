@@ -179,6 +179,8 @@ func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 		router,
 		conf.DonationAddresses,
 		multy.BTC,
+		store.ServerConfig,
+		conf.MultyVerison,
 	)
 	if err != nil {
 		return err

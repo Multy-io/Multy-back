@@ -72,7 +72,8 @@ type RestClient struct {
 
 	donationAddresses []store.DonationInfo
 
-	BTC *btc.BTCConn
+	BTC          *btc.BTCConn
+	MultyVerison store.ServerConfig
 }
 
 type BTCApiConf struct {
@@ -84,12 +85,14 @@ func SetRestHandlers(
 	r *gin.Engine,
 	donationAddresses []store.DonationInfo,
 	btc *btc.BTCConn,
+	mv store.ServerConfig,
 ) (*RestClient, error) {
 	restClient := &RestClient{
 		userStore:         userDB,
 		log:               slf.WithContext("rest-client"),
 		donationAddresses: donationAddresses,
 		BTC:               btc,
+		MultyVerison:      mv,
 	}
 	initMiddlewareJWT(restClient)
 
@@ -507,6 +510,7 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 				"soft": 1,
 				"hard": 1,
 			},
+			"version": restClient.MultyVerison,
 			"ios": map[string]int{
 				"soft": 18,
 				"hard": 1,
