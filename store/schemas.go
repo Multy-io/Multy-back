@@ -266,8 +266,8 @@ type AddressExtended struct {
 }
 
 type ServerConfig struct {
-	BranchName string 'json:"branch"'
-	CommitHash string 'json:"commit"'
-	Build      string 'json:"build_time"'
-	Tag        string 'json:"tag"'
+	BranchName string `json:"branch"`
+	CommitHash string `json:"commit"`
+	Build      string `json:"build_time"`
+	Tag        string `json:"tag"`
 }

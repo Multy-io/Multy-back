@@ -6,8 +6,6 @@ See LICENSE for details
 package main
 
 import (
-	"encoding/json"
-
 	"github.com/KristinaEtc/config"
 	_ "github.com/KristinaEtc/slflog"
 
@@ -23,28 +21,27 @@ var (
 	commit    string
 	buildtime string
 	lasttag   string
-}
-
-// TODO: add all default params
-var globalOpt = multy.Configuration{
-	Name: "my-test-back",
-	Database: store.Conf{
-		Address:             "localhost:27017",
-		DBUsers:             "userDB-test",
-		DBFeeRates:          "BTCMempool-test",
-		DBTx:                "DBTx-test",
-		DBStockExchangeRate: "dev-DBStockExchangeRate",
-	},
-	RestAddress:    "localhost:7778",
-	SocketioAddr:   "localhost:7780",
-	NSQAddress:     "nsq:4150",
-	BTCNodeAddress: "localhost:18334",
-	// Etherium: ethereum.Conf{
-	// 	Address: "88.198.47.112",
-	// 	RpcPort: ":18545",
-	// 	WsPort:  ":8545",
-	// },
-}
+	// TODO: add all default params
+	globalOpt = multy.Configuration{
+		Name: "my-test-back",
+		Database: store.Conf{
+			Address:             "localhost:27017",
+			DBUsers:             "userDB-test",
+			DBFeeRates:          "BTCMempool-test",
+			DBTx:                "DBTx-test",
+			DBStockExchangeRate: "dev-DBStockExchangeRate",
+		},
+		RestAddress:    "localhost:7778",
+		SocketioAddr:   "localhost:7780",
+		NSQAddress:     "nsq:4150",
+		BTCNodeAddress: "localhost:18334",
+		// Etherium: ethereum.Conf{
+		// 	Address: "88.198.47.112",
+		// 	RpcPort: ":18545",
+		// 	WsPort:  ":8545",
+		// },
+	}
+)
 
 func main() {
 	config.ReadGlobalConfig(&globalOpt, "multy configuration")
@@ -56,13 +53,12 @@ func main() {
 	log.Infof("commit: %s", commit)
 	log.Infof("build time: %s", buildtime)
 	log.Infof("tag: %s", lasttag)
-	
 
 	sc := store.ServerConfig{
 		BranchName: branch,
 		CommitHash: commit,
 		Build:      buildtime,
-		Tag: 	    lasttag,
+		Tag:        lasttag,
 	}
 
 	globalOpt.MultyVerison = sc
