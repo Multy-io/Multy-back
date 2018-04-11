@@ -286,11 +286,9 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			if err == io.EOF {
 				break
 			}
-
 			if err != nil {
 				log.Errorf("initGrpcClient: cli.NewTx:stream.Recv: %s", err.Error())
 			}
-
 			tx := generatedTxDataToStore(gTx)
 
 			setExchangeRates(&tx, gTx.Resync, tx.MempoolTime)
@@ -338,7 +336,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 			log.Infof("New tx history in- %v out-%v\n", tx.WalletsInput, tx.WalletsOutput)
 
-			err = saveMultyTransaction(tx, networtkID)
+			err = saveMultyTransaction(tx, networtkID, gTx.Resync)
 			if err != nil {
 				log.Errorf("initGrpcClient: saveMultyTransaction: %s", err)
 			}

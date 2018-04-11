@@ -23,7 +23,7 @@ const (
 )
 
 const (
-	poloniexAPIAddr = "ws://api.hitbtc.com/api/2/ws"
+	poloniexAPIAddr = "wss://api.hitbtc.com/api/2/ws"
 	gdaxAPIAddr     = "wss://ws-feed.gdax.com"
 )
 

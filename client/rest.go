@@ -278,39 +278,37 @@ func changeName(cn ChangeName, token string, restClient *RestClient, c *gin.Cont
 
 	switch cn.CurrencyID {
 	case currencies.Bitcoin:
-		for _, wallet := range user.Wallets {
-			if wallet.CurrencyID == cn.CurrencyID && wallet.WalletIndex == cn.WalletIndex && wallet.NetworkID == cn.NetworkID {
-				sel := bson.M{"userID": user.UserID, "wallets.walletIndex": cn.WalletIndex, "wallets.networkID": cn.NetworkID}
-				update := bson.M{
-					"$set": bson.M{
-						"wallets.$.walletName": cn.WalletName,
-					},
-				}
-				err := restClient.userStore.Update(sel, update)
-				if err != nil {
-					err := errors.New(msgErrServerError)
-					return err
-				}
-				return nil
+		var position int
+
+		for i, wallet := range user.Wallets {
+			if wallet.NetworkID == cn.NetworkID && wallet.WalletIndex == cn.WalletIndex && wallet.CurrencyID == cn.CurrencyID {
+				position = i
+				break
 			}
 		}
+		sel := bson.M{"userID": user.UserID, "wallets.walletIndex": cn.WalletIndex, "wallets.networkID": cn.NetworkID}
+		update := bson.M{
+			"$set": bson.M{
+				"wallets." + strconv.Itoa(position) + ".walletName": cn.WalletName,
+			},
+		}
+		return restClient.userStore.Update(sel, update)
 	case currencies.Ether:
-		for _, walletETH := range user.WalletsETH {
-			if walletETH.CurrencyID == cn.CurrencyID && walletETH.WalletIndex == cn.WalletIndex && walletETH.NetworkID == cn.NetworkID {
-				sel := bson.M{"userID": user.UserID, "walletsEth.walletIndex": cn.WalletIndex, "walletsEth.networkID": cn.NetworkID}
-				update := bson.M{
-					"$set": bson.M{
-						"walletsEth.$.walletName": cn.WalletName,
-					},
-				}
-				err := restClient.userStore.Update(sel, update)
-				if err != nil {
-					err := errors.New(msgErrServerError)
-					return err
-				}
-				return nil
+		var position int
+
+		for i, wallet := range user.WalletsETH {
+			if wallet.NetworkID == cn.NetworkID && wallet.WalletIndex == cn.WalletIndex && wallet.CurrencyID == cn.CurrencyID {
+				position = i
+				break
 			}
 		}
+		sel := bson.M{"userID": user.UserID, "wallets.walletIndex": cn.WalletIndex, "wallets.networkID": cn.NetworkID}
+		update := bson.M{
+			"$set": bson.M{
+				"wallets." + strconv.Itoa(position) + ".walletName": cn.WalletName,
+			},
+		}
+		return restClient.userStore.Update(sel, update)
 	}
 
 	err := errors.New(msgErrNoWallet)
