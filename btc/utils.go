@@ -315,15 +315,9 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int, resync bool) error {
 	if tx.WalletsInput != nil && len(tx.WalletsInput) > 0 {
 		// sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
 		// sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex} // last
-
-		// sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsInput[0].WalletIndex}
-		// if tx.BlockHeight != -1 {
-		// 	sel = bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
-		// }
-
-		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
+		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsInput[0].WalletIndex}
 		if tx.BlockHeight != -1 {
-			sel = bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsInput[0].WalletIndex}
+			sel = bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
 		}
 
 		err := txStore.Find(sel).One(&multyTX)
@@ -337,36 +331,21 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int, resync bool) error {
 			return err
 		}
 
-		err = txStore.Remove(sel)
-		if err != nil {
-			log.Errorf("saveMultyTransaction: txStore.Remove: %v", err.Error())
-			return err
+		update := bson.M{
+			"$set": bson.M{
+				"txstatus":      tx.TxStatus,
+				"blockheight":   tx.BlockHeight,
+				"confirmations": tx.Confirmations,
+				"blocktime":     tx.BlockTime,
+				"walletsoutput": tx.WalletsOutput,
+				"walletsinput":  tx.WalletsInput,
+			},
 		}
-
-		err = txStore.Insert(tx)
-		if err != nil {
-			log.Errorf("saveMultyTransaction: txStore.Insert: %v", err.Error())
-			return err
-		}
-
-		// update := bson.M{
-		// 	"$set": bson.M{
-		// 		"txstatus":      tx.TxStatus,
-		// 		"blockheight":   tx.BlockHeight,
-		// 		"confirmations": tx.Confirmations,
-		// 		"blocktime":     tx.BlockTime,
-		// 		"walletsoutput": tx.WalletsOutput,
-		// 		"walletsinput":  tx.WalletsInput,
-		// 	},
-		// }
-
-		// return txStore.Update(sel, update)
+		err = txStore.Update(sel, update)
+		return err
 	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0 {
 		// sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
-		// sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
-
 		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
-
 		err := txStore.Find(sel).One(&multyTX)
 		if err == mgo.ErrNotFound {
 			// initial insertion
@@ -378,33 +357,21 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int, resync bool) error {
 			return err
 		}
 
-		err = txStore.Remove(sel)
-		if err != nil {
-			log.Errorf("saveMultyTransaction: txStore.Remove: %v", err.Error())
-			return err
+		update := bson.M{
+			"$set": bson.M{
+				"txstatus":      tx.TxStatus,
+				"blockheight":   tx.BlockHeight,
+				"confirmations": tx.Confirmations,
+				"blocktime":     tx.BlockTime,
+				"walletsoutput": tx.WalletsOutput,
+				"walletsinput":  tx.WalletsInput,
+			},
 		}
-
-		err = txStore.Insert(tx)
+		err = txStore.Update(sel, update)
 		if err != nil {
-			log.Errorf("saveMultyTransaction: txStore.Insert: %v", err.Error())
-			return err
+			log.Errorf("saveMultyTransaction:txsData.Update %s", err.Error())
 		}
-
-		// update := bson.M{
-		// 	"$set": bson.M{
-		// 		"txstatus":      tx.TxStatus,
-		// 		"blockheight":   tx.BlockHeight,
-		// 		"confirmations": tx.Confirmations,
-		// 		"blocktime":     tx.BlockTime,
-		// 		"walletsoutput": tx.WalletsOutput,
-		// 		"walletsinput":  tx.WalletsInput,
-		// 	},
-		// }
-		// err = txStore.Update(sel, update)
-		// if err != nil {
-		// 	log.Errorf("saveMultyTransaction:txsData.Update %s", err.Error())
-		// }
-		// return err
+		return err
 	}
 	return nil
 }
