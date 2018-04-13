@@ -505,8 +505,8 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 			"servertime": time.Now().UTC().Unix(),
 			"api":        "0.01",
 			"android": map[string]int{
-				"soft": 6,
-				"hard": 6,
+				"soft": 7,
+				"hard": 7,
 			},
 			"version": restClient.MultyVerison,
 			"ios": map[string]int{

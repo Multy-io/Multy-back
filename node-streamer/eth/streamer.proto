@@ -34,19 +34,21 @@ service NodeCommuunications {
 }
 
 message ETHTransaction {
-    string UserID = 1;                        
-	string Hash = 2;                       
-	string From = 3;                      
-	string To = 4;  
-    int64 Amount = 5;
-	int64 GasPrice = 6;        
-	int64 GasLimit = 7;          
-	int32 Nonce = 8;         
-	int32 Status = 9;      
-    int64 BlockTime = 10;         
-	int64 TxpoolTime = 11;        
-	int64 BlockHeight = 12;
-    bool Resync = 13;
+    string UserID = 1;
+    int32 WalletIndex = 2;
+    int32 AddressIndex =3;                        
+	string Hash = 4;                       
+	string From = 5;                      
+	string To = 6;  
+    int64 Amount = 7;
+	int64 GasPrice = 8;        
+	int64 GasLimit = 9;          
+	int32 Nonce = 10;         
+	int32 Status = 11;      
+    int64 BlockTime = 12;         
+	int64 TxpoolTime = 13;        
+	int64 BlockHeight = 14;
+    bool Resync = 15;
 }
 
 message BlockHeight{
@@ -60,6 +62,8 @@ message MempoolToDelete {
 message WatchAddress {
    string address = 1;
    string userID = 2;
+   int32 WalletIndex = 3; 
+   int32 AddressIndex = 4;
 }
 
  message MempoolRecord {
@@ -80,8 +84,15 @@ message AddressToResync {
 
 
 message UsersData {
-    map<string, string> map = 1;
+    map<string, AddressExtended> map = 1;
 }
+
+message AddressExtended {
+    string UserID = 1;    
+	int32 WalletIndex = 2; 
+	int32 AddressIndex = 3;
+}
+
 
 message ReplyInfo {
     string message = 1;
