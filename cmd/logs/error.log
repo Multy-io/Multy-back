@@ -1,0 +1,576 @@
+2018-03-11/22:47:47.134 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-11/22:47:47.264 [[31mERROR[0m] btc: RunProcess(): rpcclient.New x509: certificate signed by unknown authority
+ 
+2018-03-11/22:48:23.290 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-11/23:47:01.430 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-11/23:47:37.340 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-11/23:47:37.347 [[31mERROR[0m] btc: RunProcess(): rpcclient.New dial tcp [::1]:6660: getsockopt: connection refused
+ 
+2018-03-11/23:48:30.693 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-11/23:49:23.991 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-11/23:50:31.456 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-11/23:51:40.493 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-12/00:37:53.670 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-12/00:53:55.526 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-12/00:55:04.466 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-12/00:55:27.287 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-12/00:58:13.958 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-12/00:58:43.918 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-12/00:59:57.045 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-12/01:06:34.757 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-12/01:24:03.577 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-12/01:24:20.123 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-12/01:26:06.666 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-12/16:41:11.383 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-12/16:41:11.402 [[31mERROR[0m] btc: RunProcess(): rpcclient.New dial tcp [::1]:6660: getsockopt: connection refused
+ 
+2018-03-12/16:41:31.358 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-12/16:53:32.944 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/17:16:58.376 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/17:28:44.407 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/17:29:23.049 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/17:31:30.742 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/17:33:29.577 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/17:37:36.199 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/18:04:51.698 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/18:50:35.783 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/18:55:04.811 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/19:00:57.802 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/19:11:06.220 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/19:11:13.020 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/19:17:13.072 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/19:43:18.199 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/20:48:40.269 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/22:18:56.157 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/22:21:06.243 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-13/22:22:07.672 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/13:59:18.876 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/13:59:18.884 [[31mERROR[0m] btc: RunProcess(): rpcclient.New dial tcp [::1]:6660: getsockopt: connection refused
+ 
+2018-03-14/13:59:36.235 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/14:02:38.179 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/14:14:55.883 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/14:20:17.980 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/14:26:47.321 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/15:14:23.026 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/15:31:38.404 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/15:32:39.330 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/15:48:42.747 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/15:58:26.272 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/15:59:11.394 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/15:59:54.805 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:04:21.435 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:07:50.462 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:09:58.114 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:12:31.391 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:13:09.822 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:13:38.259 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:14:19.432 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:19:15.506 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:24:13.798 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:26:05.428 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:28:52.459 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:30:44.256 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:41:06.929 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:42:06.432 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:42:36.614 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:43:52.868 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/16:58:21.692 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/17:08:11.144 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/17:09:39.120 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/18:20:15.868 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/18:21:02.227 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-14/19:36:45.008 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-19/16:25:34.505 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-19/16:54:47.826 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-19/16:58:11.635 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-19/17:01:49.597 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-19/17:02:17.276 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-19/17:03:20.081 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/12:38:29.965 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/12:47:26.557 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/13:02:17.391 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/13:13:09.064 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/13:41:44.508 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/15:16:23.969 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/15:41:08.919 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/15:44:49.247 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/15:47:24.998 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/16:39:55.535 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/16:43:19.460 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/16:43:51.112 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/16:45:33.923 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/17:18:33.573 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/17:19:20.189 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/17:28:21.829 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/17:29:49.112 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/17:34:05.662 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/17:36:14.430 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/17:39:33.747 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/17:44:51.825 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/17:48:32.110 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/17:50:34.552 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/17:52:08.716 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/17:53:15.807 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/17:53:37.425 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/17:55:09.141 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-20/20:50:48.614 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/12:51:18.392 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/12:51:18.400 [[31mERROR[0m] btc: RunProcess(): rpcclient.New dial tcp [::1]:6660: getsockopt: connection refused
+ 
+2018-03-22/13:05:55.398 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/13:40:57.884 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/13:51:36.178 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/13:52:24.439 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/13:55:55.666 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/13:58:14.293 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/14:14:43.505 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/14:55:59.782 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/15:18:53.450 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/15:27:20.612 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/15:40:30.650 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/16:29:15.425 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/18:08:04.233 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/18:15:06.703 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/18:57:58.324 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-22/19:36:06.685 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-23/16:27:51.402 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-23/17:11:55.812 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-23/18:00:22.258 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-24/15:06:01.206 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-25/14:13:21.392 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-25/14:14:18.506 [[31mERROR[0m] btc: RunProcess(): rpcclient.New EOF
+ 
+2018-03-25/14:14:35.963 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-25/14:14:35.966 [[37mFATAL[0m] main: Server initialization: failed to listen: listen tcp :6000: bind: address already in use
+ 
+2018-03-25/14:14:43.851 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-25/14:15:40.981 [[31mERROR[0m] btc: RunProcess(): rpcclient.New EOF
+ 
+2018-03-25/14:18:11.249 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-25/14:19:49.678 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-25/14:26:24.374 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-25/15:08:22.484 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-25/15:30:01.999 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-25/15:30:14.731 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-25/15:39:01.558 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-25/15:43:15.737 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-25/15:44:21.299 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-25/15:46:52.231 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-25/15:51:56.756 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-26/17:50:12.641 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-26/17:50:12.645 [[31mERROR[0m] NodeClient: get certificate: open : no such file or directory 
+2018-03-26/17:50:12.648 [[31mERROR[0m] btc: RunProcess(): rpcclient.New dial tcp :443: getsockopt: connection refused
+ 
+2018-03-26/17:51:53.412 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-26/17:51:53.417 [[31mERROR[0m] NodeClient: get certificate: open : no such file or directory 
+2018-03-26/17:51:53.419 [[31mERROR[0m] btc: RunProcess(): rpcclient.New dial tcp :443: getsockopt: connection refused
+ 
+2018-03-26/17:54:14.515 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-26/17:54:14.518 [[31mERROR[0m] NodeClient: get certificate: open : no such file or directory 
+2018-03-26/17:54:14.519 [[31mERROR[0m] btc: RunProcess(): rpcclient.New dial tcp :443: getsockopt: connection refused
+ 
+2018-03-26/17:55:30.345 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-26/17:55:30.350 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://: http: no Host in request URL 
+2018-03-26/17:57:53.532 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-26/17:57:53.537 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://: http: no Host in request URL 
+2018-03-26/17:59:14.635 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-26/17:59:14.704 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.018545: dial tcp: lookup 0.0.0.018545: no such host 
+2018-03-26/17:59:40.659 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-26/18:00:19.786 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:03:24.087 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-26/18:03:26.259 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:03:59.536 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-26/18:04:27.093 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:04:52.202 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-26/18:04:57.256 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:06:04.842 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-26/18:06:06.523 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:06:43.685 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-26/18:07:07.482 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.600 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:07:07.856 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:59427->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:07.856 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.856 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.858 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.858 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:59220->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:07.859 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.860 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.860 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.861 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.862 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.862 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.862 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.864 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.862 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.864 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.864 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:07:07.864 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.865 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.866 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.864 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.866 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.866 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.867 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.867 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.863 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:07.867 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:08.860 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:08.863 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:08.864 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:08.864 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:08.866 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:07:08.867 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:08.867 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:60376->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:08.867 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:60377->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:08.868 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:08.867 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:08.867 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:08.867 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:08.867 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:08.868 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:60367->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:08.867 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:08.868 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:08.867 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:09.853 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:07:10.852 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:07:10.881 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:10.882 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:10.881 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:10.881 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:11.854 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:07:36.897 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:07:37.069 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:37.860 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:37.867 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: write tcp 127.0.0.1:62124->127.0.0.1:18545: write: broken pipe 
+2018-03-26/18:07:37.867 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:37.867 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:37.869 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:37.869 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:37.869 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:37.890 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:61936->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:37.890 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:62035->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:37.891 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:62041->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:37.891 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:62037->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:37.919 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:62060->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:37.920 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:62064->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:37.920 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:07:37.920 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:61956->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:37.934 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:62074->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:37.936 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:61985->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:37.936 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:61982->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:37.956 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:62206->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:37.973 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:62219->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:07:38.009 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:08:28.840 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:08:28.862 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:08:29.872 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.872 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.873 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.873 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.872 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.878 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.879 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.879 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.878 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:63119->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:29.878 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.879 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.879 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.879 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.879 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.879 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.883 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.883 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.883 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.883 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.886 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:62767->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:29.886 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.887 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.887 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:62766->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:29.886 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.887 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.891 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.892 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.892 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.892 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.891 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.895 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.896 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.896 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.903 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.903 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:63396->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:29.903 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:63398->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:29.904 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.903 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.905 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.915 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:63530->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:29.915 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.915 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.918 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: write tcp 127.0.0.1:63544->127.0.0.1:18545: write: protocol wrong type for socket 
+2018-03-26/18:08:29.918 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.918 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.918 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: write tcp 127.0.0.1:63548->127.0.0.1:18545: write: broken pipe 
+2018-03-26/18:08:29.918 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.918 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.920 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.935 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:63290->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:29.935 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: write tcp 127.0.0.1:63292->127.0.0.1:18545: write: broken pipe 
+2018-03-26/18:08:29.938 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:63300->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:29.938 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.939 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.938 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.939 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.939 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.939 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.939 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.939 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.938 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.941 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:63326->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:29.941 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.943 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.943 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.943 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.943 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.944 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.944 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.945 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:63555->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:29.946 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:63056->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:29.946 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.946 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:63556->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:29.946 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.946 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:63549->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:29.946 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.946 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.947 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.947 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:63553->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:29.947 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:63552->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:29.946 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.946 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:29.949 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:62786->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:29.950 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:08:30.852 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:08:30.853 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:30.853 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:31.853 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:31.853 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:08:32.852 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:08:33.853 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:08:34.854 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:08:35.854 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:08:36.881 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:08:37.852 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:08:38.947 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:64526->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:38.947 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: write tcp 127.0.0.1:64527->127.0.0.1:18545: write: broken pipe 
+2018-03-26/18:08:38.947 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:38.950 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:64646->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:38.951 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:38.952 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: read tcp 127.0.0.1:64645->127.0.0.1:18545: read: connection reset by peer 
+2018-03-26/18:08:38.967 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:38.974 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:38.975 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:38.974 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:38.974 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:38.974 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-26/18:08:39.006 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:08:39.852 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:08:40.851 [[31mERROR[0m] eth: Get Block Err:Post http://0.0.0.0:18545: EOF 
+2018-03-26/18:09:34.152 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-26/18:33:44.458 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-26/18:34:13.237 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/15:29:52.485 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:33:02.196 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:33:37.986 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:35:45.582 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:36:06.261 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:38:09.559 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:43:19.135 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:44:15.782 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:44:41.604 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:46:37.370 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:48:39.004 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:49:08.386 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:50:44.776 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:51:14.472 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:51:40.028 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:52:18.228 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:52:52.908 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:55:11.643 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/16:58:24.295 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:03:14.606 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: read tcp 127.0.0.1:62912->127.0.0.1:18545: read: connection reset by peer 
+2018-03-27/17:03:14.606 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: read tcp 127.0.0.1:62906->127.0.0.1:18545: read: connection reset by peer 
+2018-03-27/17:03:14.607 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: read tcp 127.0.0.1:62907->127.0.0.1:18545: read: connection reset by peer 
+2018-03-27/17:03:14.607 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: read tcp 127.0.0.1:62911->127.0.0.1:18545: read: connection reset by peer 
+2018-03-27/17:03:14.607 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: read tcp 127.0.0.1:62913->127.0.0.1:18545: read: connection reset by peer 
+2018-03-27/17:03:14.607 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: read tcp 127.0.0.1:62919->127.0.0.1:18545: read: connection reset by peer 
+2018-03-27/17:03:14.606 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: read tcp 127.0.0.1:62910->127.0.0.1:18545: read: connection reset by peer 
+2018-03-27/17:03:14.607 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: read tcp 127.0.0.1:62920->127.0.0.1:18545: read: connection reset by peer 
+2018-03-27/17:03:14.607 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: read tcp 127.0.0.1:62921->127.0.0.1:18545: read: connection reset by peer 
+2018-03-27/17:03:14.624 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: read tcp 127.0.0.1:63136->127.0.0.1:18545: read: connection reset by peer 
+2018-03-27/17:03:14.630 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.630 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.630 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.630 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.631 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.632 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.631 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: read tcp 127.0.0.1:63189->127.0.0.1:18545: read: connection reset by peer 
+2018-03-27/17:03:14.632 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.632 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.632 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.635 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: read tcp 127.0.0.1:63478->127.0.0.1:18545: read: connection reset by peer 
+2018-03-27/17:03:14.636 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: read tcp 127.0.0.1:63232->127.0.0.1:18545: read: connection reset by peer 
+2018-03-27/17:03:14.636 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.636 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.636 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.636 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.636 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.636 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.636 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.636 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: read tcp 127.0.0.1:63227->127.0.0.1:18545: read: connection reset by peer 
+2018-03-27/17:03:14.636 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.637 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.637 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.637 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.637 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.637 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.637 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.637 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.637 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.637 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.637 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: EOF 
+2018-03-27/17:03:14.636 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:03:14.637 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection reset by peer 
+2018-03-27/17:15:25.626 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:18:59.165 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:23:38.187 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:24:44.638 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:26:28.747 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:27:05.154 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:30:55.968 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:31:28.399 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:32:14.157 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:37:10.716 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:37:34.576 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:39:03.424 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:39:19.266 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:41:14.788 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:41:42.224 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:42:26.056 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:42:52.479 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:43:45.738 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:44:06.973 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/17:45:21.657 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/18:00:23.615 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/18:03:55.084 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/18:04:20.462 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/18:05:18.190 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/18:07:29.287 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/18:08:18.580 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/18:08:49.581 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/18:09:44.482 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/18:10:10.907 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/18:11:23.367 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/18:11:52.437 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/18:13:00.440 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/18:13:11.025 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/18:17:32.452 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-27/18:17:50.849 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/12:36:48.068 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/12:39:45.536 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/12:39:47.580 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: EOF 
+2018-03-28/12:40:12.303 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/12:40:12.306 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection refused 
+2018-03-28/12:40:58.896 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/12:40:58.907 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection refused 
+2018-03-28/12:50:48.348 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/12:50:48.354 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection refused 
+2018-03-28/12:51:20.853 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/12:53:48.579 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/12:55:03.815 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/12:56:44.509 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/12:57:04.854 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: EOF 
+2018-03-28/12:57:29.445 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/12:57:29.448 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection refused 
+2018-03-28/12:57:43.221 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/13:00:39.089 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/13:01:51.870 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/13:23:22.310 [[31mERROR[0m] eth: Get TX Err: Post http://0.0.0.0:18545: EOF 
+2018-03-28/13:27:30.562 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/13:27:50.229 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/13:29:14.823 [[31mERROR[0m] eth: Dial err: unexpected EOF 
+2018-03-28/13:29:28.883 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/13:29:28.953 [[31mERROR[0m] eth: Dial err: dial tcp 0.0.0.0:8545: getsockopt: connection refused 
+2018-03-28/13:29:39.154 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/14:07:32.697 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/16:22:43.216 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/16:27:52.192 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/16:28:21.272 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/16:28:40.528 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/16:30:32.486 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/16:31:25.065 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/16:32:02.934 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/16:32:21.766 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/16:33:59.217 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/16:34:34.787 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/16:53:19.884 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/16:55:24.985 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/16:56:21.334 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/16:59:53.297 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/17:02:02.188 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/17:03:18.809 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/17:06:30.753 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/17:10:50.895 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/17:13:02.821 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/17:15:49.985 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/17:19:12.956 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/17:20:53.251 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/17:21:38.424 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/17:36:34.116 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/18:44:27.669 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/18:45:07.519 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-28/19:04:03.223 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-29/15:30:20.567 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-29/15:32:26.599 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-29/15:33:56.722 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-29/15:39:11.018 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-29/16:06:06.093 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-29/17:48:27.509 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-29/17:48:27.514 [[37mFATAL[0m] main: Server initialization: failed to listen: listen tcp :6000: bind: address already in use
+ 
+2018-03-29/17:49:54.987 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-03-29/18:05:13.698 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/11:10:21.678 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/11:10:21.682 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection refused 
+2018-04-13/11:11:25.314 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/11:11:25.421 [[31mERROR[0m] eth: Dial err: dial tcp 0.0.0.0:8545: getsockopt: connection refused 
+2018-04-13/11:12:13.410 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/11:13:13.643 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/11:25:07.489 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/11:29:05.057 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/11:46:04.378 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/11:46:50.256 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/12:35:10.612 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/12:35:24.124 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/12:36:11.042 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/12:51:47.632 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/12:54:51.361 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/12:56:03.081 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/12:57:36.700 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/12:58:28.351 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/13:06:50.869 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/13:07:49.273 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/13:08:07.066 [[31mERROR[0m] streamer: NewTx history rpc error: code = Unavailable desc = transport is closing 
+2018-04-13/13:08:07.067 [[31mERROR[0m] streamer: NewTx history resend attempt(1) err = rpc error: code = Canceled desc = context canceled 
+2018-04-13/13:08:09.068 [[31mERROR[0m] streamer: NewTx history resend attempt(2) err = rpc error: code = Canceled desc = context canceled 
+2018-04-13/13:08:11.072 [[31mERROR[0m] streamer: NewTx history resend attempt(3) err = rpc error: code = Canceled desc = context canceled 
+2018-04-13/13:25:59.603 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/13:26:45.870 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/13:37:05.745 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/13:37:31.156 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/13:37:56.570 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/14:03:37.255 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/14:04:25.506 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/14:05:22.074 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/14:05:53.064 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/14:06:08.537 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/14:06:26.750 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-13/14:06:48.943 [[31mERROR[0m] main: --------------------------------new multy back server session 
