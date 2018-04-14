@@ -13,6 +13,12 @@ service NodeCommuunications {
     rpc EventGetBlockHeight (Empty) returns (BlockHeight){
     }
 
+    rpc EventGetAdressNonce (AddressToResync) returns (Nonce){
+    }
+
+    rpc EventGetAdressBalance (AddressToResync) returns (Balance){
+    }
+
     rpc EventGetAllMempool (Empty) returns (stream MempoolRecord){
     }
 
@@ -33,6 +39,13 @@ service NodeCommuunications {
 
 }
 
+message Balance {
+    int64 Balance = 1;
+}
+message Nonce {
+    int64 Nonce = 1;
+}
+
 message ETHTransaction {
     string UserID = 1;
     int32 WalletIndex = 2;
@@ -40,7 +53,7 @@ message ETHTransaction {
 	string Hash = 4;                       
 	string From = 5;                      
 	string To = 6;  
-    int64 Amount = 7;
+    string Amount = 7;
 	int64 GasPrice = 8;        
 	int64 GasLimit = 9;          
 	int32 Nonce = 10;         

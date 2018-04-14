@@ -222,18 +222,21 @@ type WalletETH struct {
 }
 
 type TransactionETH struct {
-	UserID            string                `json:"userid"`
-	Hash              string                `json:"hash"`
-	From              string                `json:"from"`
-	To                string                `json:"to"`
-	Amount            int64                 `json:"amount"`
-	GasPrice          int64                 `json:"gasprice"`
-	GasLimit          int64                 `json:"gaslimit"`
-	Nonce             int                   `json:"nonce"`
-	Status            int                   `json:"status"`
-	BlockTime         int64                 `json:"blocktime"`
-	PoolTime          int64                 `json:"tpooltime"`
-	BlockHeight       int64                 `json:"blockheight"`
+	UserID            string `json:"userid"`
+	WalletIndex       int    `json:"walletindex"`
+	AddressIndex      int    `json:"addressindex"`
+	Hash              string `json:"hash"`
+	From              string `json:"from"`
+	To                string `json:"to"`
+	Amount            string `json:"amount"`
+	GasPrice          int64  `json:"gasprice"`
+	GasLimit          int64  `json:"gaslimit"`
+	Nonce             int    `json:"nonce"`
+	Status            int    `json:"status"`
+	BlockTime         int64  `json:"blocktime"`
+	PoolTime          int64  `json:"tpooltime"`
+	BlockHeight       int64  `json:"blockheight"`
+	Confirmations     int
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 }
 
