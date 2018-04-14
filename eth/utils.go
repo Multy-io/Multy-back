@@ -42,11 +42,12 @@ func (client *Client) SendRawTransaction(rawTX string) (string, error) {
 }
 
 func (client *Client) GetAddressBalance(address string) (big.Int, error) {
-	balance, err := client.Rpc.EthGetBalance(address, "pending")
+	balance, err := client.Rpc.EthGetBalance(address, "latest")
 	if err != nil {
 		log.Errorf("GetAddressBalance:rpc.EthGetBalance: %s", err.Error())
 		return balance, err
 	}
+	log.Errorf("GetAddressBalance %v", balance.String())
 	return balance, err
 }
 
@@ -156,7 +157,7 @@ func rawToGenerated(rawTX ethrpc.Transaction) pb.ETHTransaction {
 		Hash:     rawTX.Hash,
 		From:     rawTX.From,
 		To:       rawTX.To,
-		Amount:   int64((float64(rawTX.Value.Int64()) / 1000000000000000000)), //TODO: fix to normal amount
+		Amount:   rawTX.Value.String(), //TODO: fix bigint (string)
 		GasPrice: int64(rawTX.GasPrice.Int64()),
 		GasLimit: int64(rawTX.Gas),
 		Nonce:    int32(rawTX.Nonce),

@@ -96,7 +96,19 @@ func (s *Server) EventGetAdressNonce(c context.Context, in *pb.AddressToResync) 
 		return &pb.Nonce{}, err
 	}
 	return &pb.Nonce{
+		// TODO:
 		Nonce: int64(n),
+	}, nil
+}
+
+func (s *Server) EventGetAdressBalance(ctx context.Context, in *pb.AddressToResync) (*pb.Balance, error) {
+	b, err := s.EthCli.GetAddressBalance(in.GetAddress())
+	if err != nil {
+		return &pb.Balance{}, err
+	}
+	return &pb.Balance{
+		// TODO:
+		Balance: int64(b.Int64()),
 	}, nil
 }
 
