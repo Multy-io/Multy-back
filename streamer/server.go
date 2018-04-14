@@ -90,7 +90,16 @@ func (s *Server) EventGetBlockHeight(ctx context.Context, in *pb.Empty) (*pb.Blo
 	}, nil
 }
 
-// EventAddNewAddress us used to add new watch address to existing pairs
+func (s *Server) EventGetAdressNonce(c context.Context, in *pb.AddressToResync) (*pb.Nonce, error) {
+	n, err := s.EthCli.GetAddressNonce(in.GetAddress())
+	if err != nil {
+		return &pb.Nonce{}, err
+	}
+	return &pb.Nonce{
+		Nonce: int64(n),
+	}, nil
+}
+
 func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventGetAllMempoolServer) error {
 	mp, err := s.EthCli.GetAllTxPool()
 	if err != nil {

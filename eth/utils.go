@@ -58,6 +58,10 @@ func (client *Client) GetBlockHeight() (int, error) {
 	return client.Rpc.EthBlockNumber()
 }
 
+func (client *Client) GetAddressNonce(address string) (int, error) {
+	return client.Rpc.EthGetTransactionCount(address, "latest")
+}
+
 func (client *Client) ResyncAddress(txid string) error {
 	tx, err := client.Rpc.EthGetTransactionByHash(txid)
 	if err != nil {
