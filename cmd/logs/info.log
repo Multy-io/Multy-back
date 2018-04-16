@@ -19325,3 +19325,33 @@ ERROR[0m] streamer: Add mempool record rpc error: code = Unavailable desc = tra
 2018-04-14/18:20:48.240 [[32mINFO[0m] streamer: NewTx history - UserID:"jkbgm4" Hash:"0x4d28463ddffea0487016194604a3667ae3ce58ef07299d6d569990b9a6a4853b" From:"0x7d477bf159f1c35c8f42253357eac829147dc209" To:"0x779fd21376920d972d16dd6401077bd16d5433ca" Amount:"1000000000000000000" GasPrice:21000000000 GasLimit:21000 Nonce:6 Status:4 BlockTime:1523719248 BlockHeight:1890585 Resync:true  
 2018-04-14/18:20:48.275 [[32mINFO[0m] streamer: NewTx history - UserID:"jkbgm4" Hash:"0xd34977897674cf8be6d983cba5041649aac17c524c82881a4b2d1290d258c8a6" From:"0x779fd21376920d972d16dd6401077bd16d5433ca" To:"0x7d477bf159f1c35c8f42253357eac829147dc209" Amount:"500000000000000000" GasPrice:21000000000 GasLimit:21000 Status:2 BlockTime:1523719248 BlockHeight:1890680 Resync:true  
 2018-04-14/18:20:48.310 [[32mINFO[0m] streamer: NewTx history - UserID:"jkbgm4" Hash:"0xef1bd3517be4d4bd8e8213f498e81872f0426e3289add42e9cbeffa1d96797f2" From:"0x7d477bf159f1c35c8f42253357eac829147dc209" To:"0xe18c6e2d9ca2d79b6a6cd9aeea89ae766ec68cbf" Amount:"0" GasPrice:1000000000 GasLimit:200000 Nonce:7 Status:4 BlockTime:1523719248 BlockHeight:2004587 Resync:true  
+2018-04-15/21:27:48.504 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-15/21:27:48.505 [[32mINFO[0m] main: CONFIGURATION={Name:eth-client GrpcPort::7001 EthConf:{Address:0.0.0.0 RpcPort::18545 WsPort::8545}} 
+2018-04-15/21:27:48.505 [[32mINFO[0m] main: branch: master 
+2018-04-15/21:27:48.506 [[32mINFO[0m] main: commit: e22c27a 
+2018-04-15/21:27:48.506 [[32mINFO[0m] main: build time: 2018-04-15T21:27:46+0300 
+2018-04-15/21:27:48.506 [[32mINFO[0m] NodeClient: Users data initialization done 
+2018-04-15/21:27:48.506 [[32mINFO[0m] NodeClient: ETH client initialization done 
+2018-04-15/21:27:48.506 [[32mINFO[0m] eth: Run ETH Process 
+2018-04-15/21:27:48.507 [[32mINFO[0m] eth: ETH RPC Connection http://0.0.0.0:18545 
+2018-04-15/21:27:48.508 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection refused 
+2018-04-16/10:15:02.690 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-16/10:15:02.692 [[32mINFO[0m] main: CONFIGURATION={Name:eth-client GrpcPort::7001 EthConf:{Address:0.0.0.0 RpcPort::18545 WsPort::8545}} 
+2018-04-16/10:15:02.692 [[32mINFO[0m] main: branch: master 
+2018-04-16/10:15:02.692 [[32mINFO[0m] main: commit: e22c27a 
+2018-04-16/10:15:02.693 [[32mINFO[0m] main: build time: 2018-04-16T10:15:01+0300 
+2018-04-16/10:15:02.693 [[32mINFO[0m] NodeClient: Users data initialization done 
+2018-04-16/10:15:02.694 [[32mINFO[0m] NodeClient: ETH client initialization done 
+2018-04-16/10:15:02.694 [[32mINFO[0m] eth: Run ETH Process 
+2018-04-16/10:15:02.694 [[32mINFO[0m] eth: ETH RPC Connection http://0.0.0.0:18545 
+2018-04-16/10:15:02.845 [[32mINFO[0m] eth: ETH RPC Connection ws://0.0.0.0:8545 
+2018-04-16/10:40:16.053 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-16/10:40:16.054 [[32mINFO[0m] main: CONFIGURATION={Name:eth-client GrpcPort::7001 EthConf:{Address:0.0.0.0 RpcPort::18545 WsPort::8545}} 
+2018-04-16/10:40:16.054 [[32mINFO[0m] main: branch: master 
+2018-04-16/10:40:16.054 [[32mINFO[0m] main: commit: e22c27a 
+2018-04-16/10:40:16.055 [[32mINFO[0m] main: build time: 2018-04-16T10:40:14+0300 
+2018-04-16/10:40:16.055 [[32mINFO[0m] NodeClient: Users data initialization done 
+2018-04-16/10:40:16.055 [[32mINFO[0m] NodeClient: ETH client initialization done 
+2018-04-16/10:40:16.055 [[32mINFO[0m] eth: Run ETH Process 
+2018-04-16/10:40:16.056 [[32mINFO[0m] eth: ETH RPC Connection http://0.0.0.0:18545 
+2018-04-16/10:40:16.207 [[32mINFO[0m] eth: ETH RPC Connection ws://0.0.0.0:8545 

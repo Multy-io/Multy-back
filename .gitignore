@@ -1,0 +1,16 @@
+cmd/cmd
+cmd/test
+cmd/stage
+cmd/multy
+cmd/multy.config
+cmd/btc.cert
+cmd/back-*
+cmd/logs
+cmd/rpc.cert
+cmd/client.config
+cmd/client
+
+rpc.cert
+data-db
+
+.env

@@ -12208,3 +12208,7 @@ mERROR[0m] streamer: Add mempool record rpc error: code = Canceled desc = conte
 2018-04-14/18:20:07.220 [[31mERROR[0m] streamer: Add mempool record resend attempt(3) err = rpc error: code = Canceled desc = context canceled 
 2018-04-14/18:20:10.948 [[31mERROR[0m] main: --------------------------------new multy back server session 
 2018-04-14/18:20:15.936 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-15/21:27:48.504 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-15/21:27:48.508 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection refused 
+2018-04-16/10:15:02.690 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-16/10:40:16.053 [[31mERROR[0m] main: --------------------------------new multy back server session 
