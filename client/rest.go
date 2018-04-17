@@ -1164,7 +1164,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			code = http.StatusOK
 			message = http.StatusText(http.StatusOK)
 
-			var av []AddressVerbose
+			var av []ETHAddressVerbose
 
 			query := bson.M{"devices.JWT": token}
 			if err := restClient.userStore.FindUser(query, &user); err != nil {
@@ -1222,7 +1222,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					restClient.log.Errorf("EventGetAdressNonce || EventGetAdressBalance: %v", err.Error())
 				}
 
-				av = append(av, AddressVerbose{
+				av = append(av, ETHAddressVerbose{
 					LastActionTime: address.LastActionTime,
 					Address:        address.Address,
 					AddressIndex:   address.AddressIndex,
@@ -1242,7 +1242,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 				VerboseAddress: av,
 				Pending:        pending,
 			})
-			av = []AddressVerbose{}
+			av = []ETHAddressVerbose{}
 
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -1272,16 +1272,16 @@ type WalletVerbose struct {
 }
 
 type WalletVerboseETH struct {
-	CurrencyID     int              `json:"currencyid"`
-	NetworkID      int              `json:"networkid"`
-	WalletIndex    int              `json:"walletindex"`
-	WalletName     string           `json:"walletname"`
-	LastActionTime int64            `json:"lastactiontime"`
-	DateOfCreation int64            `json:"dateofcreation"`
-	Nonce          int64            `json:"nonce"`
-	Balance        int64            `json:"balance"`
-	VerboseAddress []AddressVerbose `json:"addresses"`
-	Pending        bool             `json:"pending"`
+	CurrencyID     int                 `json:"currencyid"`
+	NetworkID      int                 `json:"networkid"`
+	WalletIndex    int                 `json:"walletindex"`
+	WalletName     string              `json:"walletname"`
+	LastActionTime int64               `json:"lastactiontime"`
+	DateOfCreation int64               `json:"dateofcreation"`
+	Nonce          int64               `json:"nonce"`
+	Balance        int64               `json:"balance"`
+	VerboseAddress []ETHAddressVerbose `json:"addresses"`
+	Pending        bool                `json:"pending"`
 }
 
 type AddressVerbose struct {
@@ -1294,10 +1294,12 @@ type AddressVerbose struct {
 }
 
 type ETHAddressVerbose struct {
-	LastActionTime int64  `json:"lastActionTime"`
-	Address        string `json:"address"`
-	AddressIndex   int    `json:"addressindex"`
-	Amount         int64  `json:"amount"`
+	LastActionTime int64                    `json:"lastActionTime"`
+	Address        string                   `json:"address"`
+	AddressIndex   int                      `json:"addressindex"`
+	Amount         string                   `json:"amount"`
+	SpendableOuts  []store.SpendableOutputs `json:"spendableoutputs,omitempty"`
+	Nonce          int64                    `json:"nonce,omitempty"`
 }
 
 type StockExchangeRate struct {
@@ -1375,8 +1377,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 		code = http.StatusOK
 		message = http.StatusText(http.StatusOK)
 
-		var av []AddressVerbose
-
 		okWallets := fetchUndeletedWallets(user.Wallets)
 
 		userTxs := []store.MultyTX{}
@@ -1385,6 +1385,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 			switch wallet.CurrencyID {
 			case currencies.Bitcoin:
+				var av []AddressVerbose
 				var pending bool
 				for _, address := range wallet.Adresses {
 					spOuts := getBTCAddressSpendableOutputs(address.Address, wallet.CurrencyID, wallet.NetworkID, restClient)
@@ -1428,6 +1429,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 				av = []AddressVerbose{}
 				userTxs = []store.MultyTX{}
 			case currencies.Ether:
+				var av []ETHAddressVerbose
 				var pending bool
 				for _, address := range wallet.Adresses {
 					amount := &ethpb.Balance{}
@@ -1458,7 +1460,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 						restClient.log.Errorf("EventGetAdressNonce || EventGetAdressBalance: %v", err.Error())
 					}
 
-					av = append(av, AddressVerbose{
+					av = append(av, ETHAddressVerbose{
 						LastActionTime: address.LastActionTime,
 						Address:        address.Address,
 						AddressIndex:   address.AddressIndex,
@@ -1468,7 +1470,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 				}
 
-				wv = append(wv, WalletVerbose{
+				wv = append(wv, WalletVerboseETH{
 					WalletIndex:    wallet.WalletIndex,
 					CurrencyID:     wallet.CurrencyID,
 					NetworkID:      wallet.NetworkID,
@@ -1478,7 +1480,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					VerboseAddress: av,
 					Pending:        pending,
 				})
-				av = []AddressVerbose{}
+				av = []ETHAddressVerbose{}
 			default:
 
 			}

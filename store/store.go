@@ -276,17 +276,15 @@ func (mStore *MongoUserStore) GetAllRates(currencyID, networkID int, sortBy stri
 			return mStore.BTCTestRatesData.Find(nil).Sort(sortBy).All(rates)
 		}
 	case currencies.Ether:
+		if networkID == currencies.Main {
+			return mStore.ETHMainRatesData.Find(nil).Sort(sortBy).All(rates)
+		}
+		if networkID == currencies.Test {
+			return mStore.ETHTestRatesData.Find(nil).Sort(sortBy).All(rates)
+		}
 	}
 	return nil
 }
-
-// func (mStore *MongoUserStore) FindUserTxs(query bson.M, userTxs *TxRecord) error {
-// 	return mStore.txsData.Find(query).One(userTxs)
-// }
-
-// func (mStore *MongoUserStore) InsertTxStore(userTxs TxRecord) error {
-// 	return mStore.txsData.Insert(userTxs)
-// }
 
 func (mStore *MongoUserStore) InsertExchangeRate(eRate ExchangeRates, exchangeStock string) error {
 	eRateRecord := &ExchangeRatesRecord{

@@ -18,10 +18,6 @@ const (
 
 	TxStatusInBlockConfirmedIncoming  = 5
 	TxStatusInBlockConfirmedOutcoming = 6
-
-	// TxStatusInBlockConfirmed = 5
-
-	// TxStatusRejectedFromBlock = -1
 )
 
 // User represents a single app user
@@ -72,7 +68,7 @@ const (
 type Wallet struct {
 	// Currency of wallet.
 	CurrencyID int `bson:"currencyID"`
-	// Currency of wallet.
+	// Sub-net of currency 0 - main 1 - test
 	NetworkID int `bson:"networkID"`
 
 	//wallet identifier

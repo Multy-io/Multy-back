@@ -124,15 +124,15 @@ func fethCoinType(coinTypes []store.CoinType, currencyID, networkID int) (string
 }
 
 // BtcTransaction stuct for ws notifications
-type BtcTransaction struct {
+type Transaction struct {
 	TransactionType int    `json:"transactionType"`
-	Amount          int64  `json:"amount"`
+	Amount          string `json:"amount"`
 	TxID            string `json:"txid"`
 	Address         string `json:"address"`
 }
 
 // BtcTransactionWithUserID sub-stuct for ws notifications
-type BtcTransactionWithUserID struct {
-	NotificationMsg *BtcTransaction
+type TransactionWithUserID struct {
+	NotificationMsg *Transaction
 	UserID          string
 }

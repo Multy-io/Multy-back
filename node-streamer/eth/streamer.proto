@@ -40,7 +40,7 @@ service NodeCommuunications {
 }
 
 message Balance {
-    int64 Balance = 1;
+    string Balance = 1;
 }
 message Nonce {
     int64 Nonce = 1;

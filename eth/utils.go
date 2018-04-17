@@ -119,17 +119,13 @@ func updateWalletAndAddressDate(tx store.MultyTX, networkID int) error {
 }
 
 func GetReSyncExchangeRate(time int64) ([]store.ExchangeRatesRecord, error) {
-	//TODO:Make eth ex rate
 	selCCCAGG := bson.M{
 		"stockexchange": "CCCAGG",
 		"timestamp":     bson.M{"$lt": time},
 	}
 	stocksCCCAGG := store.ExchangeRatesRecord{}
 	err := exRate.Find(selCCCAGG).Sort("-timestamp").One(&stocksCCCAGG)
-	if err != nil {
-		return nil, err
-	}
-	return []store.ExchangeRatesRecord{stocksCCCAGG}, nil
+	return []store.ExchangeRatesRecord{stocksCCCAGG}, err
 }
 
 func GetLatestExchangeRate() ([]store.ExchangeRatesRecord, error) {
@@ -156,7 +152,7 @@ func GetLatestExchangeRate() ([]store.ExchangeRatesRecord, error) {
 func setExchangeRates(tx *store.TransactionETH, isReSync bool, TxTime int64) {
 	var err error
 	if isReSync {
-		rates, err := GetReSyncExchangeRate(TxTime)
+		rates, err := GetReSyncExchangeRate(tx.BlockTime)
 		if err != nil {
 			log.Errorf("processTransaction:ExchangeRates: %s", err.Error())
 		}
@@ -176,11 +172,11 @@ func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer) {
 	//TODO: make correct notify
 
 	if tx.Status == store.TxStatusAppearedInBlockIncoming || tx.Status == store.TxStatusAppearedInMempoolIncoming || tx.Status == store.TxStatusInBlockConfirmedIncoming {
-		txMsq := BtcTransactionWithUserID{
+		txMsq := TransactionWithUserID{
 			UserID: tx.UserID,
-			NotificationMsg: &BtcTransaction{
+			NotificationMsg: &Transaction{
 				TransactionType: tx.Status,
-				Amount:          0, //TODO: tx.Amount
+				Amount:          tx.Amount,
 				TxID:            tx.Hash,
 				Address:         tx.To,
 			},
@@ -189,11 +185,11 @@ func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer) {
 	}
 
 	if tx.Status == store.TxStatusAppearedInBlockOutcoming || tx.Status == store.TxStatusAppearedInMempoolOutcoming || tx.Status == store.TxStatusInBlockConfirmedOutcoming {
-		txMsq := BtcTransactionWithUserID{
+		txMsq := TransactionWithUserID{
 			UserID: tx.UserID,
-			NotificationMsg: &BtcTransaction{
+			NotificationMsg: &Transaction{
 				TransactionType: tx.Status,
-				Amount:          0, //TODO: tx.Amount
+				Amount:          tx.Amount,
 				TxID:            tx.Hash,
 				Address:         tx.From,
 			},
@@ -202,7 +198,7 @@ func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer) {
 	}
 }
 
-func sendNotify(txMsq *BtcTransactionWithUserID, nsqProducer *nsq.Producer) {
+func sendNotify(txMsq *TransactionWithUserID, nsqProducer *nsq.Producer) {
 	newTxJSON, err := json.Marshal(txMsq)
 	if err != nil {
 		log.Errorf("sendNotifyToClients: [%+v] %s\n", txMsq, err.Error())
