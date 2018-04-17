@@ -19355,3 +19355,23 @@ ERROR[0m] streamer: Add mempool record rpc error: code = Unavailable desc = tra
 2018-04-16/10:40:16.055 [[32mINFO[0m] eth: Run ETH Process 
 2018-04-16/10:40:16.056 [[32mINFO[0m] eth: ETH RPC Connection http://0.0.0.0:18545 
 2018-04-16/10:40:16.207 [[32mINFO[0m] eth: ETH RPC Connection ws://0.0.0.0:8545 
+2018-04-16/21:46:17.895 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-16/21:46:17.896 [[32mINFO[0m] main: CONFIGURATION={Name:eth-client GrpcPort::7001 EthConf:{Address:0.0.0.0 RpcPort::18545 WsPort::8545}} 
+2018-04-16/21:46:17.896 [[32mINFO[0m] main: branch: master 
+2018-04-16/21:46:17.896 [[32mINFO[0m] main: commit: e94467f 
+2018-04-16/21:46:17.897 [[32mINFO[0m] main: build time: 2018-04-16T21:46:15+0300 
+2018-04-16/21:46:17.897 [[32mINFO[0m] NodeClient: Users data initialization done 
+2018-04-16/21:46:17.897 [[32mINFO[0m] NodeClient: ETH client initialization done 
+2018-04-16/21:46:17.897 [[32mINFO[0m] eth: Run ETH Process 
+2018-04-16/21:46:17.898 [[32mINFO[0m] eth: ETH RPC Connection http://0.0.0.0:18545 
+2018-04-16/21:46:17.899 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection refused 
+2018-04-17/14:48:27.226 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-17/14:48:27.227 [[32mINFO[0m] main: CONFIGURATION={Name:eth-client GrpcPort::7001 EthConf:{Address:0.0.0.0 RpcPort::18545 WsPort::8545}} 
+2018-04-17/14:48:27.227 [[32mINFO[0m] main: branch: master 
+2018-04-17/14:48:27.228 [[32mINFO[0m] main: commit: e94467f 
+2018-04-17/14:48:27.228 [[32mINFO[0m] main: build time: 2018-04-17T14:48:25+0300 
+2018-04-17/14:48:27.228 [[32mINFO[0m] NodeClient: Users data initialization done 
+2018-04-17/14:48:27.229 [[32mINFO[0m] NodeClient: ETH client initialization done 
+2018-04-17/14:48:27.229 [[32mINFO[0m] eth: Run ETH Process 
+2018-04-17/14:48:27.229 [[32mINFO[0m] eth: ETH RPC Connection http://0.0.0.0:18545 
+2018-04-17/14:48:27.230 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection refused 

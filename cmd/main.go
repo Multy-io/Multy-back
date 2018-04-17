@@ -22,7 +22,6 @@ var (
 	buildtime string
 )
 
-// TODO: add all default params
 var globalOpt = node.Configuration{
 	Name: "eth-node-service",
 }
