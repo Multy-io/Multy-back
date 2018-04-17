@@ -57,10 +57,12 @@ func (s *Server) EventAddNewAddress(c context.Context, wa *pb.WatchAddress) (*pb
 		newMap = map[string]store.AddressExtended{}
 	}
 	//TODO: binded address fix
-	// _, ok := newMap[wa.Address]
-	// if ok {
-	// 	return nil, errors.New("Address already binded")
-	// }
+	_, ok := newMap[wa.Address]
+	if ok {
+		return &pb.ReplyInfo{
+			Message: "err: Address already binded",
+		}, nil
+	}
 	newMap[wa.Address] = store.AddressExtended{
 		UserID:       wa.UserID,
 		WalletIndex:  int(wa.WalletIndex),

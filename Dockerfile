@@ -11,6 +11,9 @@ RUN go get github.com/Appscrunch/Multy-BTC-node-service && \
     rm -rf Multy-BTC-node-service && \
     git clone https://github.com/Appscrunch/Multy-BTC-node-service.git  && \
     cd $GOPATH/src/github.com/Appscrunch/Multy-BTC-node-service && \
+    git checkout stage  && \
+    git pull && \
+
     make all-with-deps
 
 WORKDIR /go/src/github.com/Appscrunch/Multy-BTC-node-service/cmd
