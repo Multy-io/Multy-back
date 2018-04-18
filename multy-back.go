@@ -142,9 +142,9 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) erro
 		case currencies.Ether:
 			var cli ethpb.NodeCommuunicationsClient
 			switch conCred.NetworkID {
-			case currencies.Main:
+			case currencies.ETHMain:
 				cli = m.ETH.CliMain
-			case currencies.Test:
+			case currencies.ETHTest:
 				cli = m.ETH.CliTest
 			default:
 				log.Errorf("setGRPCHandlers: wrong networkID:")

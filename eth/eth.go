@@ -71,7 +71,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	txsDataTest = db.DB(dbConf.DBTx).C(dbConf.TableTxsDataETHTest)
 
 	// setup main net
-	urlMain, err := fethCoinType(coinTypes, currencies.Ether, currencies.Main)
+	urlMain, err := fethCoinType(coinTypes, currencies.Ether, currencies.ETHMain)
 	if err != nil {
 		return cli, fmt.Errorf("fethCoinType: %s", err.Error())
 	}
@@ -86,7 +86,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	log.Infof("InitHandlers: initGrpcClient: Main: √")
 
 	// setup testnet
-	urlTest, err := fethCoinType(coinTypes, currencies.Ether, currencies.Test)
+	urlTest, err := fethCoinType(coinTypes, currencies.Ether, currencies.ETHTest)
 	if err != nil {
 		return cli, fmt.Errorf("fethCoinType: %s", err.Error())
 	}

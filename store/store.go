@@ -276,10 +276,10 @@ func (mStore *MongoUserStore) GetAllRates(currencyID, networkID int, sortBy stri
 			return mStore.BTCTestRatesData.Find(nil).Sort(sortBy).All(rates)
 		}
 	case currencies.Ether:
-		if networkID == currencies.Main {
+		if networkID == currencies.ETHMain {
 			return mStore.ETHMainRatesData.Find(nil).Sort(sortBy).All(rates)
 		}
-		if networkID == currencies.Test {
+		if networkID == currencies.ETHTest {
 			return mStore.ETHTestRatesData.Find(nil).Sort(sortBy).All(rates)
 		}
 	}
@@ -320,10 +320,10 @@ func (mStore *MongoUserStore) GetAllWalletEthTransactions(userid string, currenc
 	switch currencyID {
 	case currencies.Ether:
 		query := bson.M{"userid": userid}
-		if networkID == currencies.Main {
+		if networkID == currencies.ETHMain {
 			return mStore.ETHMainTxsData.Find(query).All(walletTxs)
 		}
-		if networkID == currencies.Test {
+		if networkID == currencies.ETHTest {
 			err := mStore.ETHTestTxsData.Find(query).All(walletTxs)
 			return err
 		}
