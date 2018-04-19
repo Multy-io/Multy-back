@@ -67,7 +67,6 @@ func Init(conf *Configuration) (*Multy, error) {
 	multy.userStore = userStore
 	log.Infof("UserStore initialization done on %s √", conf.Database)
 
-	//TODO: Mempool Data delete
 	multy.userStore.DeleteMempool()
 	log.Infof("Mempool Data delete √")
 

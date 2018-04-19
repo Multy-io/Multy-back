@@ -601,11 +601,19 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 				if err != nil {
 					restClient.log.Errorf("deleteWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 					c.JSON(http.StatusBadRequest, gin.H{
-						"code":    http.StatusBadRequest,
+						"code":    http.StatusInternalServerError,
 						"message": msgErrNoWallet,
 					})
 					return
 				}
+			}
+
+			if totalBalance != 0 {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": msgErrWalletNonZeroBalance,
+				})
+				return
 			}
 
 			code = http.StatusOK
@@ -639,11 +647,19 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 				if err != nil {
 					restClient.log.Errorf("deleteWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 					c.JSON(http.StatusBadRequest, gin.H{
-						"code":    http.StatusBadRequest,
+						"code":    http.StatusInternalServerError,
 						"message": msgErrNoWallet,
 					})
 					return
 				}
+			}
+
+			if balance.Balance != "0" {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": msgErrWalletNonZeroBalance,
+				})
+				return
 			}
 
 			code = http.StatusOK
@@ -813,6 +829,17 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 			})
 		case currencies.Ether:
 			//TODO: make eth feerate
+			c.JSON(http.StatusOK, gin.H{
+				"speeds": EstimationSpeeds{
+					VerySlow: 0,
+					Slow:     1,
+					Medium:   2,
+					Fast:     3,
+					VeryFast: 4,
+				},
+				"code":    http.StatusOK,
+				"message": http.StatusText(http.StatusOK),
+			})
 
 		default:
 
@@ -1698,11 +1725,11 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				return
 			}
 
-			for i := 0; i < len(walletTxs); i++ {
-				if walletTxs[i].BlockHeight == -1 {
-					walletTxs[i].Confirmations = 0
+			for i := 0; i < len(userTxs); i++ {
+				if userTxs[i].BlockHeight == -1 {
+					userTxs[i].Confirmations = 0
 				} else {
-					walletTxs[i].Confirmations = int(blockHeight-walletTxs[i].BlockHeight) + 1
+					userTxs[i].Confirmations = int(blockHeight-userTxs[i].BlockHeight) + 1
 				}
 			}
 
