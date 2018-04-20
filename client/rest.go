@@ -831,11 +831,11 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 			//TODO: make eth feerate
 			c.JSON(http.StatusOK, gin.H{
 				"speeds": EstimationSpeeds{
-					VerySlow: 0,
-					Slow:     1,
-					Medium:   2,
-					Fast:     3,
-					VeryFast: 4,
+					VerySlow: 1000000000,
+					Slow:     2000000000,
+					Medium:   3000000000,
+					Fast:     4000000000,
+					VeryFast: 5000000000,
 				},
 				"code":    http.StatusOK,
 				"message": http.StatusText(http.StatusOK),
@@ -1229,6 +1229,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			//TODO: make pending
 			var pending bool
 			var total string
+			var pendingBalance string
 			var waletNonce int64
 			for _, address := range wallet.Adresses {
 				amount := &ethpb.Balance{}
@@ -1259,6 +1260,11 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					restClient.log.Errorf("EventGetAdressNonce || EventGetAdressBalance: %v", err.Error())
 				}
 				total = amount.GetBalance()
+
+				p, _ := strconv.Atoi(amount.GetPendingBalance())
+				b, _ := strconv.Atoi(amount.GetBalance())
+				pendingBalance = strconv.Itoa(p - b)
+
 				waletNonce = nonce.GetNonce()
 
 				av = append(av, ETHAddressVerbose{
@@ -1280,6 +1286,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 				DateOfCreation: wallet.DateOfCreation,
 				Nonce:          waletNonce,
 				Balance:        total,
+				PendingBalance: pendingBalance,
 				VerboseAddress: av,
 				Pending:        pending,
 			})
@@ -1320,6 +1327,7 @@ type WalletVerboseETH struct {
 	LastActionTime int64               `json:"lastactiontime"`
 	DateOfCreation int64               `json:"dateofcreation"`
 	Nonce          int64               `json:"nonce"`
+	PendingBalance string              `json:"pendingbalance"`
 	Balance        string              `json:"balance"`
 	VerboseAddress []ETHAddressVerbose `json:"addresses"`
 	Pending        bool                `json:"pending"`
@@ -1473,6 +1481,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 				var av []ETHAddressVerbose
 				var pending bool
 				var total string
+				var pendingBalance string
 				var walletNonce int64
 
 				for _, address := range wallet.Adresses {
@@ -1505,6 +1514,11 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					}
 
 					total = amount.GetBalance()
+
+					p, _ := strconv.Atoi(amount.GetPendingBalance())
+					b, _ := strconv.Atoi(amount.GetBalance())
+					pendingBalance = strconv.Itoa(p - b)
+
 					walletNonce = nonce.GetNonce()
 
 					av = append(av, ETHAddressVerbose{
@@ -1522,6 +1536,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					CurrencyID:     wallet.CurrencyID,
 					NetworkID:      wallet.NetworkID,
 					Balance:        total,
+					PendingBalance: pendingBalance,
 					Nonce:          walletNonce,
 					WalletName:     wallet.WalletName,
 					LastActionTime: wallet.LastActionTime,
@@ -1733,10 +1748,17 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				}
 			}
 
+			history := []store.TransactionETH{}
+			for _, tx := range userTxs {
+				if tx.WalletIndex == walletIndex {
+					history = append(history, tx)
+				}
+			}
+
 			c.JSON(http.StatusOK, gin.H{
 				"code":    http.StatusOK,
 				"message": http.StatusText(http.StatusOK),
-				"history": userTxs,
+				"history": history,
 			})
 			return
 

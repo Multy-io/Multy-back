@@ -41,6 +41,7 @@ service NodeCommuunications {
 
 message Balance {
     string Balance = 1;
+    string PendingBalance = 2;
 }
 message Nonce {
     int64 Nonce = 1;

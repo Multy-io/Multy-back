@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 
+	// exchanger "github.com/Appscrunch/Multy-back-exchange-service"
 	"github.com/Appscrunch/Multy-back/btc"
 	"github.com/Appscrunch/Multy-back/client"
 	"github.com/Appscrunch/Multy-back/currencies"
@@ -69,6 +70,10 @@ func Init(conf *Configuration) (*Multy, error) {
 
 	multy.userStore.DeleteMempool()
 	log.Infof("Mempool Data delete √")
+
+	// exchange rates
+	// exchange := &exchanger.Exchanger{}
+	// exchange.InitExchanger(conf.ExchangerConfiguration)
 
 	//BTC
 	btcCli, err := btc.InitHandlers(&conf.Database, conf.SupportedNodes, conf.NSQAddress)

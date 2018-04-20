@@ -224,11 +224,11 @@ type TransactionETH struct {
 	Hash              string                `json:"txhash"`
 	From              string                `json:"from"`
 	To                string                `json:"to"`
-	Amount            string                `json:"amount"`
+	Amount            string                `json:"txoutamount"`
 	GasPrice          int64                 `json:"gasprice"`
 	GasLimit          int64                 `json:"gaslimit"`
 	Nonce             int                   `json:"nonce"`
-	Status            int                   `json:"status"`
+	Status            int                   `json:"txstatus" bson:"txstatus"`
 	BlockTime         int64                 `json:"blocktime"`
 	PoolTime          int64                 `json:"mempooltime"`
 	BlockHeight       int64                 `json:"blockheight"`
