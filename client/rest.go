@@ -759,6 +759,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 					"code":    http.StatusInternalServerError,
 					"message": msgErrRatesError,
 				})
+				return
 			}
 
 			var slowestValue, slowValue, mediumValue, fastValue, fastestValue int

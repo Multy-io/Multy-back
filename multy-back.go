@@ -65,7 +65,7 @@ func Init(conf *Configuration) (*Multy, error) {
 	log.Infof("UserStore initialization done on %s √", conf.Database)
 
 	//TODO: Mempool Data delete
-	// multy.userStore.DeleteMempool()
+	multy.userStore.DeleteMempool()
 	log.Infof("Mempool Data delete √")
 
 	btcCli, err := btc.InitHandlers(&conf.Database, conf.SupportedNodes, conf.NSQAddress)
