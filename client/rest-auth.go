@@ -29,7 +29,7 @@ func (restClient *RestClient) LoginHandler() gin.HandlerFunc {
 		var loginVals Login
 
 		if c.ShouldBindWith(&loginVals, binding.JSON) != nil {
-			restClient.middlewareJWT.unauthorized(c, http.StatusBadRequest, "Missing UserID, DeviceID, PushToken or DeviceType")
+			restClient.middlewareJWT.unauthorized(c, http.StatusBadRequest, "Missing UserID, DeviceID, PushToken, AppVersion or DeviceType")
 			return
 		}
 
@@ -64,7 +64,7 @@ func (restClient *RestClient) LoginHandler() gin.HandlerFunc {
 
 		if !ok {
 			// new User with new Device
-			device := createDevice(loginVals.DeviceID, c.ClientIP(), tokenString, loginVals.PushToken, loginVals.DeviceType)
+			device := createDevice(loginVals.DeviceID, c.ClientIP(), tokenString, loginVals.PushToken, loginVals.AppVersion, loginVals.DeviceType)
 
 			var wallet []store.Wallet
 			var devices []store.Device
@@ -117,7 +117,7 @@ func (restClient *RestClient) LoginHandler() gin.HandlerFunc {
 		restClient.log.Infof("creating new device %s", loginVals.DeviceID)
 		// case of adding new device to user account
 		// e.g. user want to use app on another device
-		device := createDevice(loginVals.DeviceID, c.ClientIP(), tokenString, loginVals.PushToken, loginVals.DeviceType)
+		device := createDevice(loginVals.DeviceID, c.ClientIP(), tokenString, loginVals.PushToken, loginVals.AppVersion, loginVals.DeviceType)
 		user.Devices = append(user.Devices, device)
 
 		sel := bson.M{"userID": userID}

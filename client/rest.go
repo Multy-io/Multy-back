@@ -23,8 +23,6 @@ import (
 	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 
-	"math/rand"
-
 	btcpb "github.com/Appscrunch/Multy-back/node-streamer/btc"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
@@ -219,13 +217,6 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 		}
 	}
 
-	for _, walletETH := range user.WalletsETH {
-		if walletETH.CurrencyID == wp.CurrencyID && walletETH.NetworkID == wp.NetworkID && walletETH.WalletIndex == wp.WalletIndex {
-			err = errors.New(msgErrWalletIndex)
-			return err
-		}
-	}
-
 	sel := bson.M{"devices.JWT": token}
 
 	switch wp.CurrencyID {
@@ -297,21 +288,7 @@ func changeName(cn ChangeName, token string, restClient *RestClient, c *gin.Cont
 		}
 		return restClient.userStore.Update(sel, update)
 	case currencies.Ether:
-		var position int
 
-		for i, wallet := range user.WalletsETH {
-			if wallet.NetworkID == cn.NetworkID && wallet.WalletIndex == cn.WalletIndex && wallet.CurrencyID == cn.CurrencyID {
-				position = i
-				break
-			}
-		}
-		sel := bson.M{"userID": user.UserID, "wallets.walletIndex": cn.WalletIndex, "wallets.networkID": cn.NetworkID}
-		update := bson.M{
-			"$set": bson.M{
-				"wallets." + strconv.Itoa(position) + ".walletName": cn.WalletName,
-			},
-		}
-		return restClient.userStore.Update(sel, update)
 	}
 
 	err := errors.New(msgErrNoWallet)
@@ -1168,67 +1145,6 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			av = []AddressVerbose{}
 
 		case currencies.Ether:
-			code = http.StatusOK
-			message = http.StatusText(http.StatusOK)
-			//TODO: maybe change it!
-			var av []AddressVerbose
-
-			query := bson.M{"devices.JWT": token}
-			if err := restClient.userStore.FindUser(query, &user); err != nil {
-				restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			}
-
-			// fetch wallet with concrete networkid currencyid and wallet index
-			wallet := store.WalletETH{}
-			for _, w := range user.WalletsETH {
-				if w.NetworkID == networkId && w.CurrencyID == currencyId && w.WalletIndex == walletIndex {
-					wallet = w
-					break
-				}
-			}
-
-			if len(wallet.Adresses) == 0 {
-				restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-				c.JSON(code, gin.H{
-					"code":    http.StatusBadRequest,
-					"message": msgErrUserNotFound,
-					"wallet":  wv,
-				})
-				return
-			}
-
-			var pending bool
-
-			//TODO: remove this hardcode!
-			pend := rand.Int31n(2)
-			if pend == 0 {
-				pending = true
-			} else {
-				pending = false
-			}
-
-			for _, address := range wallet.Adresses {
-
-				av = append(av, AddressVerbose{
-					LastActionTime: address.LastActionTime,
-					Address:        address.Address,
-					AddressIndex:   address.AddressIndex,
-					Amount:         wallet.Balance,
-				})
-			}
-			wv = append(wv, WalletVerboseETH{
-				WalletIndex:    wallet.WalletIndex,
-				CurrencyID:     wallet.CurrencyID,
-				NetworkID:      wallet.NetworkID,
-				WalletName:     wallet.WalletName,
-				LastActionTime: wallet.LastActionTime,
-				DateOfCreation: wallet.DateOfCreation,
-				Nonce:          wallet.Nonce,
-				Balance:        wallet.Balance,
-				VerboseAddress: av,
-				Pending:        pending,
-			})
-			av = []AddressVerbose{}
 
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -1297,14 +1213,10 @@ type TopIndex struct {
 	TopIndex   int `json:"topindex"`
 }
 
-func findTopIndexes(walletsBTC []store.Wallet, walletsETH []store.WalletETH) []TopIndex {
+func findTopIndexes(walletsBTC []store.Wallet) []TopIndex {
 	top := map[TopIndex]int{} // currency id -> topindex
 	topIndex := []TopIndex{}
 	for _, wallet := range walletsBTC {
-		top[TopIndex{wallet.CurrencyID, wallet.NetworkID, 0}]++
-	}
-
-	for _, wallet := range walletsETH {
 		top[TopIndex{wallet.CurrencyID, wallet.NetworkID, 0}]++
 	}
 
@@ -1318,10 +1230,9 @@ func findTopIndexes(walletsBTC []store.Wallet, walletsETH []store.WalletETH) []T
 	return topIndex
 }
 
-func fetchUndeletedWallets(walletsBTC []store.Wallet, walletsETH []store.WalletETH) ([]store.Wallet, []store.WalletETH) {
+func fetchUndeletedWallets(walletsBTC []store.Wallet) []store.Wallet {
 	//func fetchUndeletedWallets(wallets []store.Wallet) []store.Wallet {
 	okWalletsBTC := []store.Wallet{}
-	okWalletsETH := []store.WalletETH{}
 
 	for _, wallet := range walletsBTC {
 		if wallet.Status == store.WalletStatusOK {
@@ -1329,13 +1240,7 @@ func fetchUndeletedWallets(walletsBTC []store.Wallet, walletsETH []store.WalletE
 		}
 	}
 
-	for _, wallet := range walletsETH {
-		if wallet.Status == store.WalletStatusOK {
-			okWalletsETH = append(okWalletsETH, wallet)
-		}
-	}
-
-	return okWalletsBTC, okWalletsETH
+	return okWalletsBTC
 }
 
 func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
@@ -1367,14 +1272,14 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 			return
 		}
 
-		topIndexes := findTopIndexes(user.Wallets, user.WalletsETH)
+		topIndexes := findTopIndexes(user.Wallets)
 
 		code = http.StatusOK
 		message = http.StatusText(http.StatusOK)
 
 		var av []AddressVerbose
 
-		okWalletsBTC, okWalletsETH := fetchUndeletedWallets(user.Wallets, user.WalletsETH)
+		okWalletsBTC := fetchUndeletedWallets(user.Wallets)
 
 		userTxs := []store.MultyTX{}
 
@@ -1429,41 +1334,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 			av = []AddressVerbose{}
 			userTxs = []store.MultyTX{}
 
-		}
-
-		for _, walletETH := range okWalletsETH {
-			var pending bool
-
-			//TODO remove this hardcode!
-			pend := rand.Int31n(2)
-			if pend == 0 {
-				pending = true
-			} else {
-				pending = false
-			}
-
-			for _, address := range walletETH.Adresses {
-
-				av = append(av, AddressVerbose{
-					LastActionTime: address.LastActionTime,
-					Address:        address.Address,
-					AddressIndex:   address.AddressIndex,
-					Amount:         walletETH.Balance,
-				})
-			}
-			wv = append(wv, WalletVerboseETH{
-				WalletIndex:    walletETH.WalletIndex,
-				CurrencyID:     walletETH.CurrencyID,
-				NetworkID:      walletETH.NetworkID,
-				WalletName:     walletETH.WalletName,
-				LastActionTime: walletETH.LastActionTime,
-				DateOfCreation: walletETH.DateOfCreation,
-				Nonce:          walletETH.Nonce,
-				Balance:        walletETH.Balance,
-				VerboseAddress: av,
-				Pending:        pending,
-			})
-			av = []AddressVerbose{}
 		}
 
 		c.JSON(code, gin.H{

@@ -31,13 +31,14 @@ func createUser(userid string, device []store.Device, wallets []store.Wallet) st
 		Wallets: wallets,
 	}
 }
-func createDevice(deviceid, ip, jwt, pushToken string, deviceType int) store.Device {
+func createDevice(deviceid, ip, jwt, pushToken, appVersion string, deviceType int) store.Device {
 	return store.Device{
 		DeviceID:       deviceid,
 		PushToken:      pushToken,
 		JWT:            jwt,
 		LastActionIP:   ip,
 		LastActionTime: time.Now().Unix(),
+		AppVersion:     appVersion,
 		DeviceType:     deviceType,
 	}
 }
