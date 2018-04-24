@@ -309,17 +309,17 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int, resync bool) error {
 	// query := bson.M{"txid": tx.TxID}
 	// txStore.Find(query).All(&fetchedTxs)
 
-	// doubling txs fix
+	// Doubling txs fix
 	if tx.BlockHeight == -1 {
 		multyTX := store.MultyTX{}
-		if len(tx.WalletsInput[0].UserId) > 0 {
+		if len(tx.WalletsInput) != 0 {
 			sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsInput[0].WalletIndex}
 			err := txStore.Find(sel).One(multyTX)
 			if err == nil && multyTX.BlockHeight > -1 {
 				return nil
 			}
 		}
-		if len(tx.WalletsOutput[0].UserId) > 0 {
+		if len(tx.WalletsOutput) > 0 {
 			sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
 			err := txStore.Find(sel).One(multyTX)
 			if err == nil && multyTX.BlockHeight > -1 {
