@@ -309,6 +309,16 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int, resync bool) error {
 	// query := bson.M{"txid": tx.TxID}
 	// txStore.Find(query).All(&fetchedTxs)
 
+	// doubling txs fix
+	if tx.BlockHeight == -1 {
+		multyTX := store.MultyTX{}
+		sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsInput[0].WalletIndex}
+		err := txStore.Find(sel).One(multyTX)
+		if err == nil && multyTX.BlockHeight > -1 {
+			return nil
+		}
+	}
+
 	// This is splited transaction! That means that transaction's WalletsInputs and WalletsOutput have the same WalletIndex!
 	//Here we have outgoing transaction for exact wallet!
 	multyTX := store.MultyTX{}
