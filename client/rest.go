@@ -302,8 +302,7 @@ func addAddressToWallet(address, token string, currencyID, networkid, walletInde
 
 	if err := restClient.userStore.FindUser(query, &user); err != nil {
 		restClient.log.Errorf("deleteWallet: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-		err := errors.New(msgErrUserNotFound)
-		return err
+		return errors.New(msgErrUserNotFound)
 	}
 
 	var position int
@@ -312,8 +311,7 @@ func addAddressToWallet(address, token string, currencyID, networkid, walletInde
 			position = i
 			for _, walletAddress := range wallet.Adresses {
 				if walletAddress.AddressIndex == addressIndex {
-					err := errors.New(msgErrAddressIndex)
-					return err
+					return errors.New(msgErrAddressIndex)
 				}
 			}
 		}
@@ -328,8 +326,7 @@ func addAddressToWallet(address, token string, currencyID, networkid, walletInde
 	update := bson.M{"$push": bson.M{"wallets." + strconv.Itoa(position) + ".addresses": addr}}
 	if err := restClient.userStore.Update(sel, update); err != nil {
 		restClient.log.Errorf("addAddressToWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-		err := errors.New(msgErrServerError)
-		return err
+		return errors.New(msgErrServerError)
 	}
 
 	AddWatchAndResync(currencyID, networkid, walletIndex, addressIndex, user.UserID, address, restClient)
@@ -934,16 +931,6 @@ func (restClient *RestClient) sendRawHDTransaction() gin.HandlerFunc {
 			return
 		}
 
-		if rawTx.IsHD {
-			err = addAddressToWallet(rawTx.Address, token, rawTx.CurrencyID, rawTx.NetworkID, rawTx.WalletIndex, rawTx.AddressIndex, restClient, c)
-			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{
-					"code":    http.StatusBadRequest,
-					"message": err.Error(),
-				})
-				return
-			}
-		}
 		user := store.User{}
 		query := bson.M{"devices.JWT": token}
 		if err := restClient.userStore.FindUser(query, &user); err != nil {
@@ -955,10 +942,10 @@ func (restClient *RestClient) sendRawHDTransaction() gin.HandlerFunc {
 		switch rawTx.CurrencyID {
 		case currencies.Bitcoin:
 			if rawTx.NetworkID == currencies.Main {
-
 				resp, err := restClient.BTC.CliMain.EventSendRawTx(context.Background(), &btcpb.RawTx{
 					Transaction: rawTx.Transaction,
 				})
+
 				if err != nil {
 					restClient.log.Errorf("sendRawHDTransaction: restClient.BTC.CliMain.EventSendRawTx: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 					code = http.StatusBadRequest
@@ -968,6 +955,28 @@ func (restClient *RestClient) sendRawHDTransaction() gin.HandlerFunc {
 					})
 					return
 				}
+
+				if strings.Contains("err:", resp.GetMessage()) {
+					restClient.log.Errorf("sendRawHDTransaction: restClient.BTC.CliMain.EventSendRawTx:resp err %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					code = http.StatusBadRequest
+					c.JSON(code, gin.H{
+						"code":    code,
+						"message": resp.GetMessage(),
+					})
+					return
+				}
+
+				if rawTx.IsHD {
+					err = addAddressToWallet(rawTx.Address, token, rawTx.CurrencyID, rawTx.NetworkID, rawTx.WalletIndex, rawTx.AddressIndex, restClient, c)
+					if err != nil {
+						c.JSON(http.StatusBadRequest, gin.H{
+							"code":    http.StatusBadRequest,
+							"message": err.Error(),
+						})
+						return
+					}
+				}
+
 				c.JSON(code, gin.H{
 					"code":    code,
 					"message": resp.Message,
@@ -989,6 +998,28 @@ func (restClient *RestClient) sendRawHDTransaction() gin.HandlerFunc {
 					})
 					return
 				}
+
+				if strings.Contains("err:", resp.GetMessage()) {
+					restClient.log.Errorf("sendRawHDTransaction: restClient.BTC.CliMain.EventSendRawTx:resp err %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					code = http.StatusBadRequest
+					c.JSON(code, gin.H{
+						"code":    code,
+						"message": resp.GetMessage(),
+					})
+					return
+				}
+
+				if rawTx.IsHD {
+					err = addAddressToWallet(rawTx.Address, token, rawTx.CurrencyID, rawTx.NetworkID, rawTx.WalletIndex, rawTx.AddressIndex, restClient, c)
+					if err != nil {
+						c.JSON(http.StatusBadRequest, gin.H{
+							"code":    http.StatusBadRequest,
+							"message": err.Error(),
+						})
+						return
+					}
+				}
+
 				c.JSON(code, gin.H{
 					"code":    code,
 					"message": resp.Message,
