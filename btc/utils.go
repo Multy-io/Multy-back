@@ -329,10 +329,19 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int, resync bool) error {
 	}
 
 	// Doubling txs fix on a asynchronous err
-	sel := bson.M{"userid": tx.UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsInput[0].WalletIndex, "mempooltime": tx.MempoolTime}
-	err := txStore.Find(sel).One(nil)
-	if err == nil {
-		return nil
+	if len(tx.WalletsInput) != 0 {
+		sel := bson.M{"userid": tx.UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsInput[0].WalletIndex, "mempooltime": tx.MempoolTime}
+		err := txStore.Find(sel).One(nil)
+		if err == nil {
+			return nil
+		}
+	}
+	if len(tx.WalletsOutput) > 0 {
+		sel := bson.M{"userid": tx.UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex, "mempooltime": tx.MempoolTime}
+		err := txStore.Find(sel).One(nil)
+		if err == nil {
+			return nil
+		}
 	}
 
 	// This is splited transaction! That means that transaction's WalletsInputs and WalletsOutput have the same WalletIndex!
