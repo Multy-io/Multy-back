@@ -6,11 +6,11 @@ import (
 )
 
 // ProcessTransaction from block
-func blockTransactions(hash *chainhash.Hash, usersData *map[string]string) {
+func (c *Client) blockTransactions(hash *chainhash.Hash) {
 	log.Debugf("New block connected %s", hash.String())
 	// block Height
 
-	blockVerbose, err := RpcClient.GetBlockVerbose(hash)
+	blockVerbose, err := c.RpcClient.GetBlockVerbose(hash)
 	if err != nil {
 		log.Errorf("parseNewBlock:GetBlockVerbose: %s", err.Error())
 		return
@@ -18,27 +18,27 @@ func blockTransactions(hash *chainhash.Hash, usersData *map[string]string) {
 	blockHeight := blockVerbose.Height
 
 	//parse all block transactions
-	rawBlock, err := RpcClient.GetBlock(hash)
+	rawBlock, err := c.RpcClient.GetBlock(hash)
 	allBlockTransactions, err := rawBlock.TxHashes()
 	if err != nil {
 		log.Errorf("parseNewBlock:rawBlock.TxHashes: %s", err.Error())
 	}
 
-	//Broadcast to client to delete mempool
+	// Broadcast to client to delete mempool
 	for _, hash := range allBlockTransactions {
-		DeleteMempool <- pb.MempoolToDelete{
+		c.DeleteMempool <- pb.MempoolToDelete{
 			Hash: hash.String(),
 		}
 	}
 
 	for _, txHash := range allBlockTransactions {
 
-		blockTxVerbose, err := RpcClient.GetRawTransactionVerbose(&txHash)
+		blockTxVerbose, err := c.RpcClient.GetRawTransactionVerbose(&txHash)
 		if err != nil {
 			log.Errorf("parseNewBlock:RpcClient.GetRawTransactionVerbose: %s", err.Error())
 			continue
 		}
 
-		processTransaction(blockHeight, blockTxVerbose, false, usersData)
+		c.ProcessTransaction(blockHeight, blockTxVerbose, false)
 	}
 }

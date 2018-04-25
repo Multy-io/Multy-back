@@ -6,8 +6,9 @@ See LICENSE for details
 package btc
 
 import (
-	"fmt"
 	"time"
+
+	"math"
 
 	pb "github.com/Appscrunch/Multy-back/node-streamer/btc"
 	"github.com/Appscrunch/Multy-back/store"
@@ -26,10 +27,6 @@ const ( // currency id  nsq
 	TxStatusInBlockConfirmedOutcoming = 6
 
 	SatoshiInBitcoint = 100000000
-
-	// TxStatusInBlockConfirmed = 5
-
-	// TxStatusRejectedFromBlock = -1
 )
 
 var SatoshiToBitcoin = float64(100000000)
@@ -41,12 +38,12 @@ func newAddresAmount(address string, amount int64) store.AddresAmount {
 	}
 }
 
-func rawTxByTxid(txid string) (*btcjson.TxRawResult, error) {
+func (c *Client) rawTxByTxid(txid string) (*btcjson.TxRawResult, error) {
 	hash, err := chainhash.NewHashFromStr(txid)
 	if err != nil {
 		return nil, err
 	}
-	previousTxVerbose, err := RpcClient.GetRawTransactionVerbose(hash)
+	previousTxVerbose, err := c.RpcClient.GetRawTransactionVerbose(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +51,7 @@ func rawTxByTxid(txid string) (*btcjson.TxRawResult, error) {
 }
 
 // setTransactionInfo set fee, inputs and outputs
-func setTransactionInfo(multyTx *store.MultyTX, txVerbose *btcjson.TxRawResult, blockHeight int64, isReSync bool) error {
+func (c *Client) setTransactionInfo(multyTx *store.MultyTX, txVerbose *btcjson.TxRawResult, blockHeight int64, isReSync bool) error {
 	inputs := []store.AddresAmount{}
 	outputs := []store.AddresAmount{}
 	var inputSum float64
@@ -70,12 +67,11 @@ func setTransactionInfo(multyTx *store.MultyTX, txVerbose *btcjson.TxRawResult, 
 	for _, input := range txVerbose.Vin {
 		hash, err := chainhash.NewHashFromStr(input.Txid)
 		if err != nil {
-			fmt.Printf("[ERR] txInfo:chainhash.NewHashFromStr: %s", err.Error())
-
+			log.Errorf("setTransactionInfo:chainhash.NewHashFromStr: %s", err.Error())
 		}
-		previousTxVerbose, err := RpcClient.GetRawTransactionVerbose(hash)
+		previousTxVerbose, err := c.RpcClient.GetRawTransactionVerbose(hash)
 		if err != nil {
-			fmt.Printf("[ERR] txInfo:RpcClient.GetRawTransactionVerbose: %s", err.Error())
+			log.Errorf("setTransactionInfo:RpcClient.GetRawTransactionVerbose: %s", err.Error())
 		}
 
 		for _, address := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses {
@@ -116,38 +112,37 @@ can be called from:
 // 	processTransaction(blockChainBlockHeight, txVerbose, isReSync)
 // }
 
-func GetRawTransactionVerbose(txHash *chainhash.Hash) (*btcjson.TxRawResult, error) {
-	return RpcClient.GetRawTransactionVerbose(txHash)
-}
+// func GetRawTransactionVerbose(txHash *chainhash.Hash) (*btcjson.TxRawResult, error) {
+// 	return RpcClient.GetRawTransactionVerbose(txHash)
+// }
 
-func GetBlockHeight() (int64, error) {
-	return RpcClient.GetBlockCount()
-}
-func ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult, isReSync bool, usersData *map[string]string) {
-	processTransaction(blockChainBlockHeight, txVerbose, isReSync, usersData)
-}
+// func GetBlockHeight() (int64, error) {
+// 	return RpcClient.GetBlockCount()
+// }
 
-func processTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult, isReSync bool, usersData *map[string]string) {
-	// var multyTx store.MultyTX = parseRawTransaction(blockChainBlockHeight, txVerbose, usersData)
-	multyTx, related := parseRawTransaction(blockChainBlockHeight, txVerbose, usersData)
+// func ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult, isReSync bool, usersData *map[string]string) {
+// 	processTransaction(blockChainBlockHeight, txVerbose, isReSync, usersData)
+// }
+
+func (c *Client) ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult, isReSync bool) {
+	multyTx, related := c.ParseRawTransaction(blockChainBlockHeight, txVerbose)
 	if related {
-		log.Debugf("Our user tx")
-		CreateSpendableOutputs(txVerbose, blockChainBlockHeight, usersData)
-		DeleteSpendableOutputs(txVerbose, blockChainBlockHeight, usersData)
+		log.Debugf("ProcessTransaction...")
+		c.CreateSpendableOutputs(txVerbose, blockChainBlockHeight)
+		c.DeleteSpendableOutputs(txVerbose, blockChainBlockHeight)
 	}
 
 	if multyTx != nil {
 		multyTx.BlockHeight = blockChainBlockHeight
+		log.Debugf("ProcessTransaction... on blockHeight %d", blockChainBlockHeight)
 
-		setTransactionInfo(multyTx, txVerbose, blockChainBlockHeight, isReSync)
-		// log.Debugf("processTransaction:setTransactionInfo %v", multyTx)
+		c.setTransactionInfo(multyTx, txVerbose, blockChainBlockHeight, isReSync)
 
-		transactions := splitTransaction(*multyTx, blockChainBlockHeight)
-		// log.Debugf("processTransaction:splitTransaction %v", transactions)
+		transactions := c.splitTransaction(*multyTx, blockChainBlockHeight)
 
 		for _, transaction := range transactions {
 			finalizeTransaction(&transaction, txVerbose)
-			saveMultyTransaction(transaction, isReSync)
+			saveMultyTransaction(transaction, isReSync, c.TransactionsCh)
 		}
 	}
 }
@@ -168,17 +163,17 @@ Output:
 * multyTX - multy transaction Structure
 
 */
-func parseRawTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult, usersData *map[string]string) (*store.MultyTX, bool) {
+func (c *Client) ParseRawTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult) (*store.MultyTX, bool) {
 	multyTx := store.MultyTX{}
 
-	err := parseInputs(txVerbose, blockChainBlockHeight, &multyTx, usersData)
+	err := c.parseInputs(txVerbose, blockChainBlockHeight, &multyTx)
 	if err != nil {
-		fmt.Printf("[ERR] parseRawTransaction:parseInputs: %s", err.Error())
+		log.Errorf("ParseRawTransaction:parseInputs: %s", err.Error())
 	}
 
-	err = parseOutputs(txVerbose, blockChainBlockHeight, &multyTx, usersData)
+	err = c.parseOutputs(txVerbose, blockChainBlockHeight, &multyTx)
 	if err != nil {
-		fmt.Printf("[ERR] parseRoawTransaction:parseOutputs: %s", err.Error())
+		log.Errorf("ParseRawTransaction:parseOutputs: %s", err.Error())
 	}
 
 	if multyTx.TxID != "" {
@@ -192,13 +187,13 @@ func parseRawTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawRe
 This method need if we have one transaction with more the one u wser'sallet
 That means that from one btc transaction we should build more the one Multy Transaction
 */
-func splitTransaction(multyTx store.MultyTX, blockHeight int64) []store.MultyTX {
-	// transactions := make([]store.MultyTX, 1)
+func (c *Client) splitTransaction(multyTx store.MultyTX, blockHeight int64) []store.MultyTX {
+
 	transactions := []store.MultyTX{}
 
-	currentBlockHeight, err := RpcClient.GetBlockCount()
+	currentBlockHeight, err := c.RpcClient.GetBlockCount()
 	if err != nil {
-		fmt.Printf("[ERR] splitTransaction:getBlockCount: %s", err.Error())
+		log.Errorf("splitTransaction:getBlockCount: %s", err.Error())
 	}
 
 	blockDiff := currentBlockHeight - blockHeight
@@ -230,7 +225,6 @@ func splitTransaction(multyTx store.MultyTX, blockHeight int64) []store.MultyTX 
 			var alreadyAdded = false
 			for i := 0; i < len(transactions); i++ {
 				//Check if our output wallet is in the inputs
-				//var walletOutputExistInInputs = false
 				if transactions[i].WalletsInput != nil && len(transactions[i].WalletsInput) > 0 {
 					for _, splitedInput := range transactions[i].WalletsInput {
 						if splitedInput.UserId == walletOutput.UserId && splitedInput.WalletIndex == walletOutput.WalletIndex {
@@ -246,13 +240,11 @@ func splitTransaction(multyTx store.MultyTX, blockHeight int64) []store.MultyTX 
 							alreadyAdded = true
 							if &transactions[i] == nil {
 								transactions[i].WalletsOutput = append(transactions[i].WalletsOutput, walletOutput)
-								fmt.Printf("[ERR] splitTransaction error allocate memory")
+								log.Errorf("splitTransaction error allocate memory\n")
 							}
-							fmt.Printf("[ERR] splitTransaction ! no ! error allocate memory")
 						}
 					}
 				}
-
 			}
 
 			if alreadyAdded {
@@ -294,10 +286,43 @@ func newEntity(multyTx store.MultyTX) store.MultyTX {
 	return newTx
 }
 
-func saveMultyTransaction(tx store.MultyTX, resync bool) {
+func saveMultyTransaction(tx store.MultyTX, resync bool, TransactionsCh chan pb.BTCTransaction) {
 	// This is splited transaction! That means that transaction's WalletsInputs and WalletsOutput have the same WalletIndex!
 	//Here we have outgoing transaction for exact wallet!
 	if tx.WalletsInput != nil && len(tx.WalletsInput) > 0 {
+		if len(tx.WalletsInput) > 0 && len(tx.WalletsOutput) > 0 {
+			var amount int64
+			if len(tx.TxAddress) != 0 {
+				for _, in := range tx.TxInputs {
+					if in.Address == tx.TxAddress[0] {
+						amount += in.Amount
+					}
+				}
+			}
+			if amount == 0 {
+				for _, out := range tx.TxOutputs {
+					if out.Address == tx.TxAddress[0] {
+						amount += out.Amount
+					}
+				}
+			}
+			tx.TxOutAmount = amount
+
+			// if tx.TxOutScript == "" {
+			// 	if tx.TxStatus == store.TxStatusAppearedInMempoolIncoming {
+			// 		tx.TxStatus = store.TxStatusAppearedInMempoolOutcoming
+			// 	}
+
+			// 	if tx.TxStatus == store.TxStatusAppearedInBlockIncoming {
+			// 		tx.TxStatus = store.TxStatusAppearedInBlockOutcoming
+			// 	}
+
+			// 	if tx.TxStatus == store.TxStatusInBlockConfirmedIncoming {
+			// 		tx.TxStatus = store.TxStatusInBlockConfirmedOutcoming
+			// 	}
+			// }
+		}
+
 		//HACK: fetching userid like this
 		for _, input := range tx.WalletsInput {
 			if input.UserId != "" {
@@ -305,21 +330,47 @@ func saveMultyTransaction(tx store.MultyTX, resync bool) {
 				break
 			}
 		}
-		fmt.Println("[DEBUG] newOutcomingTx\n")
 
 		outcomingTx := storeTxToGenerated(tx)
 		// send to outcomingTx to chan
 		TransactionsCh <- outcomingTx
-		if resync {
-			log.Infof("re-sync tx = %v", outcomingTx)
-		}
-
-		if !resync {
-			log.Infof("new tx = %v", outcomingTx)
-		}
 
 		return
 	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0 {
+		if len(tx.WalletsInput) > 0 && len(tx.WalletsOutput) > 0 {
+			var amount int64
+			if len(tx.TxAddress) != 0 {
+				for _, in := range tx.TxInputs {
+					if in.Address == tx.TxAddress[0] {
+						amount += in.Amount
+					}
+				}
+			}
+			if amount == 0 {
+				for _, out := range tx.TxOutputs {
+					if out.Address == tx.TxAddress[0] {
+						amount += out.Amount
+					}
+				}
+			}
+
+			tx.TxOutAmount = amount
+
+			// if tx.TxOutScript == "" {
+			// 	if tx.TxStatus == store.TxStatusAppearedInMempoolIncoming {
+			// 		tx.TxStatus = store.TxStatusAppearedInMempoolOutcoming
+			// 	}
+
+			// 	if tx.TxStatus == store.TxStatusAppearedInBlockIncoming {
+			// 		tx.TxStatus = store.TxStatusAppearedInBlockOutcoming
+			// 	}
+
+			// 	if tx.TxStatus == store.TxStatusInBlockConfirmedIncoming {
+			// 		tx.TxStatus = store.TxStatusInBlockConfirmedOutcoming
+			// 	}
+			// }
+		}
+
 		//HACK: fetching userid like this
 		for _, output := range tx.WalletsOutput {
 			if output.UserId != "" {
@@ -327,19 +378,12 @@ func saveMultyTransaction(tx store.MultyTX, resync bool) {
 				break
 			}
 		}
-		fmt.Println("[DEBUG] newIncomingTx\n")
+		// fmt.Println("[DEBUG] newIncomingTx\n")
 
 		incomingTx := storeTxToGenerated(tx)
 		incomingTx.Resync = resync
 		// send to incomingTx to chan
 		TransactionsCh <- incomingTx
-		if resync {
-			log.Infof("re-sync tx = %v", incomingTx)
-		}
-
-		if !resync {
-			log.Infof("new tx = %v", incomingTx)
-		}
 
 		return
 	}
@@ -348,7 +392,6 @@ func saveMultyTransaction(tx store.MultyTX, resync bool) {
 func storeTxToGenerated(tx store.MultyTX) pb.BTCTransaction {
 	outs := []*pb.BTCTransaction_AddresAmount{}
 	for _, output := range tx.TxOutputs {
-
 		outs = append(outs, &pb.BTCTransaction_AddresAmount{
 			Address: output.Address,
 			Amount:  output.Amount,
@@ -404,33 +447,34 @@ func storeTxToGenerated(tx store.MultyTX) pb.BTCTransaction {
 	}
 }
 
-func parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *store.MultyTX, usersData *map[string]string) error {
+func (c *Client) parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *store.MultyTX) error {
 	//Ranging by inputs
 	for _, input := range txVerbose.Vin {
 
 		//getting previous verbose transaction from BTC Node for checking addresses
-		previousTxVerbose, err := rawTxByTxid(input.Txid)
+		previousTxVerbose, err := c.rawTxByTxid(input.Txid)
 		if err != nil {
-			fmt.Printf("[ERR] parseInput:rawTxByTxid: %s", err.Error())
+			log.Errorf("parseInputs:rawTxByTxid: %s", err.Error())
 			continue
 		}
 
 		for _, txInAddress := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses {
-
 			// check the ownership of the transaction to our users
-			ud := *usersData
-			userID, ok := ud[txInAddress]
+			c.UserDataM.Lock()
+			ud := *c.UsersData
+			addressEx, ok := ud[txInAddress]
+			c.UserDataM.Unlock()
 			if !ok {
 				continue
 			}
 
-			fmt.Println("[ITS OUR USER] ", userID)
-
 			txInAmount := int64(SatoshiToBitcoin * previousTxVerbose.Vout[input.Vout].Value)
 
 			currentWallet := store.WalletForTx{
-				UserId: userID,
+				UserId:      addressEx.UserID,
+				WalletIndex: addressEx.WalletIndex,
 				Address: store.AddressForWallet{
+					AddressIndex:    addressEx.AddressIndex,
 					Address:         txInAddress,
 					Amount:          txInAmount,
 					AddressOutIndex: int(input.Vout),
@@ -449,22 +493,25 @@ func parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *sto
 	return nil
 }
 
-func parseOutputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *store.MultyTX, usersData *map[string]string) error {
+func (c *Client) parseOutputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *store.MultyTX) error {
 
 	//Ranging by outputs
 	for _, output := range txVerbose.Vout {
 		for _, txOutAddress := range output.ScriptPubKey.Addresses {
 
-			ud := *usersData
-			userID, ok := ud[txOutAddress]
+			c.UserDataM.Lock()
+			ud := *c.UsersData
+			addressEx, ok := ud[txOutAddress]
+			c.UserDataM.Unlock()
 			if !ok {
 				continue
 			}
 
-			fmt.Println("[ITS OUR USER] ", userID)
 			currentWallet := store.WalletForTx{
-				UserId: userID,
+				UserId:      addressEx.UserID,
+				WalletIndex: addressEx.WalletIndex,
 				Address: store.AddressForWallet{
+					AddressIndex:    addressEx.AddressIndex,
 					Address:         txOutAddress,
 					Amount:          int64(SatoshiToBitcoin * output.Value),
 					AddressOutIndex: int(output.N),
@@ -494,7 +541,6 @@ func setTransactionStatus(tx *store.MultyTX, blockDiff int64, currentBlockHeight
 			tx.MempoolTime = transactionTime
 			tx.BlockTime = -1
 		}
-
 	} else if blockDiff >= 0 && blockDiff < 6 {
 		//This call was made from block or resync
 		//Transaction have no enough confirmations
@@ -534,7 +580,6 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 		for i := 0; i < len(tx.WalletsOutput); i++ {
 			//Here we descreasing amount of the current transaction
 			tx.TxOutAmount -= tx.WalletsOutput[i].Address.Amount
-
 			for _, output := range txVerbose.Vout {
 				for _, outAddr := range output.ScriptPubKey.Addresses {
 					if tx.WalletsOutput[i].Address.Address == outAddr {
@@ -543,7 +588,6 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 					}
 				}
 			}
-
 		}
 	} else {
 		for i := 0; i < len(tx.WalletsOutput); i++ {
@@ -563,13 +607,17 @@ func finalizeTransaction(tx *store.MultyTX, txVerbose *btcjson.TxRawResult) {
 	}
 }
 
-func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64, usersData *map[string]string) {
-
+func (c *Client) CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
+	log.Debugf("CreateSpendableOutputs")
 	for _, output := range tx.Vout {
 		if len(output.ScriptPubKey.Addresses) > 0 {
 			address := output.ScriptPubKey.Addresses[0]
-			ud := *usersData
-			userID, ok := ud[address]
+
+			c.UserDataM.Lock()
+			ud := *c.UsersData
+			addressEx, ok := ud[address]
+			c.UserDataM.Unlock()
+
 			if !ok {
 				continue
 			}
@@ -581,44 +629,44 @@ func CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64, usersDat
 
 			amount := int64(output.Value * SatoshiToBitcoin)
 			spendableOutput := store.SpendableOutputs{
-				TxID:        tx.Txid,
-				TxOutID:     int(output.N),
-				TxOutAmount: amount,
-				TxOutScript: output.ScriptPubKey.Hex,
-				Address:     address,
-				UserID:      userID,
-				// WalletIndex:       walletindex,
-				// AddressIndex:      addressIndex,
-				TxStatus: txStatus,
-				// StockExchangeRate: exRate,
+				TxID:         tx.Txid,
+				TxOutID:      int(output.N),
+				TxOutAmount:  amount,
+				TxOutScript:  output.ScriptPubKey.Hex,
+				Address:      address,
+				UserID:       addressEx.UserID,
+				TxStatus:     txStatus,
+				WalletIndex:  addressEx.WalletIndex,
+				AddressIndex: addressEx.AddressIndex,
 			}
 
 			spOut := spOutToGenerated(spendableOutput)
 			//send to channel of creation of spendable output
-			AddSpOut <- spOut
-
-			fmt.Printf("[DEBUG] newSpout %v\n", spOut.String())
+			c.AddSpOut <- spOut
 
 		}
 	}
 }
 func spOutToGenerated(spOut store.SpendableOutputs) pb.AddSpOut {
 	return pb.AddSpOut{
-		TxID:        spOut.TxID,
-		TxOutID:     int32(spOut.TxOutID),
-		TxOutAmount: spOut.TxOutAmount,
-		TxOutScript: spOut.TxOutScript,
-		Address:     spOut.Address,
-		UserID:      spOut.UserID,
-		TxStatus:    int32(spOut.TxStatus),
+		TxID:         spOut.TxID,
+		TxOutID:      int32(spOut.TxOutID),
+		TxOutAmount:  spOut.TxOutAmount,
+		TxOutScript:  spOut.TxOutScript,
+		Address:      spOut.Address,
+		UserID:       spOut.UserID,
+		TxStatus:     int32(spOut.TxStatus),
+		WalletIndex:  int32(spOut.WalletIndex),
+		AddressIndex: int32(spOut.AddressIndex),
 	}
 }
 
-func DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64, usersData *map[string]string) {
+func (c *Client) DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64) {
+	log.Debugf("DeleteSpendableOutputs")
 	for _, input := range tx.Vin {
-		previousTx, err := rawTxByTxid(input.Txid)
+		previousTx, err := c.rawTxByTxid(input.Txid)
 		if err != nil {
-			fmt.Printf("[ERR] DeleteSpendableOutputs:rawTxByTxid: %s", err.Error())
+			log.Errorf("DeleteSpendableOutputs:rawTxByTxid: %s", err.Error())
 		}
 
 		if previousTx == nil {
@@ -627,22 +675,26 @@ func DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64, usersDat
 
 		if len(previousTx.Vout[input.Vout].ScriptPubKey.Addresses) > 0 {
 			address := previousTx.Vout[input.Vout].ScriptPubKey.Addresses[0]
-			ud := *usersData
-			userID, ok := ud[address]
+
+			c.UserDataM.Lock()
+			ud := *c.UsersData
+			addressEx, ok := ud[address]
+			c.UserDataM.Unlock()
+
 			if !ok {
 				continue
 			}
 			reqDelete := store.DeleteSpendableOutput{
-				UserID:  userID,
+				UserID:  addressEx.UserID,
 				TxID:    previousTx.Txid,
 				Address: address,
 			}
 			// send to client and removefrom db
 
 			del := delSpOutToGenerated(reqDelete)
-			DelSpOut <- del
+			c.DelSpOut <- del
 
-			fmt.Printf("[DEBUG] deleteSpout %v \n", del.String())
+			// fmt.Printf("[DEBUG] deleteSpout %v \n", del.String())
 
 		}
 	}
@@ -655,12 +707,6 @@ func delSpOutToGenerated(del store.DeleteSpendableOutput) pb.ReqDeleteSpOut {
 	}
 }
 
-type ReqDeleteSpOut struct {
-	UserID  string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
-	TxID    string `protobuf:"bytes,2,opt,name=txID" json:"txID,omitempty"`
-	Address string `protobuf:"bytes,3,opt,name=address" json:"address,omitempty"`
-}
-
 func newMempoolRecord(category int, hashTX string) store.MempoolRecord {
 	return store.MempoolRecord{
 		Category: category,
@@ -668,7 +714,7 @@ func newMempoolRecord(category int, hashTX string) store.MempoolRecord {
 	}
 }
 
-func rawTxToMempoolRec(inTx *btcjson.TxRawResult) store.MempoolRecord {
+func (c *Client) rawTxToMempoolRec(inTx *btcjson.TxRawResult) store.MempoolRecord {
 	var inputSum float64
 	var outputSum float64
 	for _, input := range inTx.Vin {
@@ -676,7 +722,10 @@ func rawTxToMempoolRec(inTx *btcjson.TxRawResult) store.MempoolRecord {
 		if err != nil {
 			log.Errorf("newTxToDB: chainhash.NewHashFromStr: %s", err.Error())
 		}
-		previousTx, err := RpcClient.GetRawTransactionVerbose(txCHash)
+
+		c.RpcClientM.Lock()
+		previousTx, err := c.RpcClient.GetRawTransactionVerbose(txCHash)
+		c.RpcClientM.Unlock()
 		if err != nil {
 			log.Errorf("newTxToDB: rpcClient.GetTransaction: %s", err.Error())
 		}
@@ -686,6 +735,13 @@ func rawTxToMempoolRec(inTx *btcjson.TxRawResult) store.MempoolRecord {
 		outputSum += output.Value
 	}
 	fee := inputSum - outputSum
-	rec := newMempoolRecord(int(fee/float64(inTx.Size)*100000000), inTx.Hash)
+
+	floatFee := fee / float64(inTx.Size) * 100000000
+
+	//It's some kind of Round function to prefent 0 FeeRates while casting from float to int
+	intFee := int(math.Floor(floatFee + 0.5))
+
+	rec := newMempoolRecord(intFee, inTx.Hash)
+
 	return rec
 }
