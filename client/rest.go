@@ -97,7 +97,7 @@ func SetRestHandlers(
 	r.POST("/auth", restClient.LoginHandler())
 	r.GET("/server/config", restClient.getServerConfig())
 
-	r.GET("/statuscheck", restClient.statusCheck())
+	r.GET("/donations", restClient.donations())
 
 	v1 := r.Group("/api/v1")
 	v1.Use(restClient.middlewareJWT.MiddlewareFunc())
@@ -463,9 +463,23 @@ func (restClient *RestClient) changeWalletName() gin.HandlerFunc {
 	}
 }
 
-func (restClient *RestClient) statusCheck() gin.HandlerFunc {
+func (restClient *RestClient) donations() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, `{"Status":"ok"}`)
+		donationInfo := []store.Donation{}
+		for _, da := range restClient.donationAddresses {
+			b := checkBTCAddressbalance(da.DonationAddress, currencies.Bitcoin, currencies.Main, restClient)
+			donationInfo = append(donationInfo, store.Donation{
+				FeatureID: da.FeatureCode,
+				Address:   da.DonationAddress,
+				Amount:    b,
+				Status:    1,
+			})
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"code":      http.StatusOK,
+			"message":   http.StatusText(http.StatusOK),
+			"donations": donationInfo,
+		})
 	}
 }
 

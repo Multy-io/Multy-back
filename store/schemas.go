@@ -271,3 +271,15 @@ type ServerConfig struct {
 	Build      string `json:"build_time"`
 	Tag        string `json:"tag"`
 }
+
+// Donation Statuses
+// 0 - Pending
+// 1 - Active
+// 2 - Closed
+// 3 - Canceled
+type Donation struct {
+	FeatureID int    `json:"id"`
+	Address   string `json:"address"`
+	Amount    int64  `json:"amount"`
+	Status    int    `json:"status"`
+}
