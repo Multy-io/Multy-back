@@ -53,6 +53,10 @@ type Conf struct {
 	// ETH main
 	TableMempoolRatesETHTest string
 	TableTxsDataETHTest      string
+
+	//Authentification
+	Username string
+	Password string
 }
 
 type UserStore interface {
@@ -115,7 +119,16 @@ func InitUserStore(conf Conf) (UserStore, error) {
 	uStore := &MongoUserStore{
 		config: &conf,
 	}
-	session, err := mgo.Dial(conf.Address)
+
+	addr := []string{conf.Address}
+
+	mongoDBDial := &mgo.DialInfo{
+		Addrs:    addr,
+		Username: conf.Username,
+		Password: conf.Password,
+	}
+
+	session, err := mgo.DialWithInfo(mongoDBDial)
 	if err != nil {
 		return nil, err
 	}

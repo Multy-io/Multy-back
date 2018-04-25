@@ -30,6 +30,8 @@ var (
 			DBFeeRates:          "BTCMempool-test",
 			DBTx:                "DBTx-test",
 			DBStockExchangeRate: "dev-DBStockExchangeRate",
+			Username:            "Username",
+			Password:            "Password",
 		},
 		RestAddress:    "localhost:7778",
 		SocketioAddr:   "localhost:7780",

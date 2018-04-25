@@ -52,7 +52,15 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	cli.NsqProducer = p
 	log.Infof("InitHandlers: nsq.NewProducer: √")
 
-	db, err := mgo.Dial(dbConf.Address)
+	addr := []string{dbConf.Address}
+
+	mongoDBDial := &mgo.DialInfo{
+		Addrs:    addr,
+		Username: dbConf.Username,
+		Password: dbConf.Password,
+	}
+
+	db, err := mgo.DialWithInfo(mongoDBDial)
 	if err != nil {
 		log.Errorf("RunProcess: can't connect to DB: %s", err.Error())
 		return cli, fmt.Errorf("mgo.Dial: %s", err.Error())

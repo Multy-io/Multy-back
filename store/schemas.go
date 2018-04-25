@@ -22,10 +22,9 @@ const (
 
 // User represents a single app user
 type User struct {
-	UserID     string      `bson:"userID"`     // User uqnique identifier
-	Devices    []Device    `bson:"devices"`    // All user devices
-	Wallets    []Wallet    `bson:"wallets"`    // All user addresses in all chains
-	WalletsETH []WalletETH `bson:"walletsEth"` // All user addresses in all chains
+	UserID  string   `bson:"userID"`  // User uqnique identifier
+	Devices []Device `bson:"devices"` // All user devices
+	Wallets []Wallet `bson:"wallets"` // All user addresses in all chains
 }
 
 type BTCTransaction struct {
@@ -51,11 +50,12 @@ type TxInfo struct {
 
 // Device represents a single users device.
 type Device struct {
-	DeviceID       string `bson:"deviceID"`       // Device uqnique identifier (MAC address of device)
+	DeviceID       string `bson:"deviceID"`       // Device uqnique identifier
 	PushToken      string `bson:"pushToken"`      // Firebase
 	JWT            string `bson:"JWT"`            // Device JSON Web Token
 	LastActionTime int64  `bson:"lastActionTime"` // Last action time from current device
 	LastActionIP   string `bson:"lastActionIP"`   // IP from last session
+	AppVersion     string `bson:"appVersion"`     // Mobile app verson
 	DeviceType     int    `bson:"deviceType"`     // 1 - IOS, 2 - Android
 }
 
@@ -269,4 +269,16 @@ type ServerConfig struct {
 	CommitHash string `json:"commit"`
 	Build      string `json:"build_time"`
 	Tag        string `json:"tag"`
+}
+
+// Donation Statuses
+// 0 - Pending
+// 1 - Active
+// 2 - Closed
+// 3 - Canceled
+type Donation struct {
+	FeatureID int    `json:"id"`
+	Address   string `json:"address"`
+	Amount    int64  `json:"amount"`
+	Status    int    `json:"status"`
 }

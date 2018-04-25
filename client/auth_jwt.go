@@ -88,6 +88,7 @@ type Login struct {
 	UserID     string `form:"userID" json:"userID" binding:"required"`
 	DeviceID   string `form:"deviceID" json:"deviceID" binding:"required"`
 	PushToken  string `form:"pushToken" json:"pushToken" binding:"required"`
+	AppVersion string `form:"appVersion" json:"appVersion" binding:"required"`
 	DeviceType int    `form:"deviceType" json:"deviceType" binding:"required"`
 }
 
