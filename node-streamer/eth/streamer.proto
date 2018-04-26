@@ -4,6 +4,12 @@ package eth;
 
 service NodeCommuunications {
 
+    rpc ServiceInfo (Empty) returns (ServiceVersion){
+    }
+
+    rpc EventGetGasPrice (Empty) returns (GasPrice){
+    }
+
     rpc EventInitialAdd (UsersData) returns (ReplyInfo){
     }
         
@@ -45,6 +51,10 @@ message Balance {
 }
 message Nonce {
     int64 Nonce = 1;
+}
+
+message GasPrice {
+    string Gas = 1;
 }
 
 message ETHTransaction {
@@ -110,4 +120,11 @@ message AddressExtended {
 
 message ReplyInfo {
     string message = 1;
+}
+
+message ServiceVersion {
+    string branch = 1;    
+	string commit = 2;  
+	string buildtime = 3; 
+	string lasttag = 4;    
 }

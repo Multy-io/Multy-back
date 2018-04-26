@@ -174,6 +174,14 @@ type EstimationSpeeds struct {
 	VeryFast int
 }
 
+type EstimationSpeedsETH struct {
+	VerySlow string
+	Slow     string
+	Medium   string
+	Fast     string
+	VeryFast string
+}
+
 type Tx struct {
 	Transaction   string `json:"transaction"`
 	AllowHighFees bool   `json:"allowHighFees"`
@@ -841,13 +849,29 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 			})
 		case currencies.Ether:
 			//TODO: make eth feerate
+			var rate *ethpb.GasPrice
+			var err error
+			switch networkid {
+			case currencies.ETHMain:
+				rate, err = restClient.ETH.CliMain.EventGetGasPrice(context.Background(), &ethpb.Empty{})
+			case currencies.ETHTest:
+				rate, err = restClient.ETH.CliTest.EventGetGasPrice(context.Background(), &ethpb.Empty{})
+			default:
+				restClient.log.Errorf("getFeeRate:currencies.Ether: no such networkid")
+			}
+
+			if err != nil {
+				restClient.log.Errorf("getFeeRate:currencies.Ether:restClient.ETH.Cli: %v ", err.Error())
+			}
+			speed, _ := strconv.Atoi(rate.GetGas())
+
 			c.JSON(http.StatusOK, gin.H{
 				"speeds": EstimationSpeeds{
-					VerySlow: 1000000000,
-					Slow:     2000000000,
-					Medium:   3000000000,
-					Fast:     4000000000,
-					VeryFast: 5000000000,
+					VerySlow: speed,
+					Slow:     speed * 2,
+					Medium:   speed * 3,
+					Fast:     speed * 4,
+					VeryFast: speed * 5,
 				},
 				"code":    http.StatusOK,
 				"message": http.StatusText(http.StatusOK),

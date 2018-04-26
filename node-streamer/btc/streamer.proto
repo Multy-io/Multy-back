@@ -4,6 +4,9 @@ package btc;
 
 service NodeCommuunications {
 
+    rpc ServiceInfo (Empty) returns (ServiceVersion){
+    }
+
     rpc EventInitialAdd (UsersData) returns (ReplyInfo){
     }
         
@@ -138,4 +141,11 @@ message AddressExtended {
 
 message ReplyInfo {
     string message = 1;
+}
+
+message ServiceVersion {
+    string branch = 1;    
+	string commit = 2;  
+	string buildtime = 3; 
+	string lasttag = 4;  
 }

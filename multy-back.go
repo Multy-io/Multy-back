@@ -81,23 +81,27 @@ func Init(conf *Configuration) (*Multy, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Init: btc.InitHandlers: %s", err.Error())
 	}
+	btcVer, err := btcCli.CliMain.ServiceInfo(context.Background(), &btcpb.Empty{})
 	multy.BTC = btcCli
-	log.Infof(" BTC initialization done √")
+	log.Infof(" BTC initialization done on %v √", btcVer)
 
 	// ETH
 	ethCli, err := eth.InitHandlers(&conf.Database, conf.SupportedNodes, conf.NSQAddress)
 	if err != nil {
 		return nil, fmt.Errorf("Init: btc.InitHandlers: %s", err.Error())
 	}
+	ethVer, err := ethCli.CliMain.ServiceInfo(context.Background(), &ethpb.Empty{})
 	multy.ETH = ethCli
-	log.Infof(" ETH initialization done √")
+	log.Infof(" ETH initialization done on %v √", ethVer)
 
 	//users data set
-	err = multy.SetUserData(multy.userStore, conf.SupportedNodes)
+	sv, err := multy.SetUserData(multy.userStore, conf.SupportedNodes)
 	if err != nil {
 		return nil, fmt.Errorf("Init: multy.SetUserData: %s", err.Error())
 	}
 	log.Infof("Users data  initialization done √")
+
+	log.Debugf("Server versions %v", sv)
 
 	// REST handlers
 	if err = multy.initHttpRoutes(conf); err != nil {
@@ -107,11 +111,12 @@ func Init(conf *Configuration) (*Multy, error) {
 }
 
 // SetUserData make initial userdata to node service
-func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) error {
+func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]store.ServiceInfo, error) {
+	servicesInfo := []store.ServiceInfo{}
 	for _, conCred := range ct {
 		usersData, err := userStore.FindUserDataChain(conCred.СurrencyID, conCred.NetworkID)
 		if err != nil {
-			return fmt.Errorf("SetUserData: userStore.FindUserDataChain: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			return servicesInfo, fmt.Errorf("SetUserData: userStore.FindUserDataChain: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
 		}
 		if len(usersData) == 0 {
 			log.Infof("Empty userdata")
@@ -140,9 +145,20 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) erro
 			}
 			resp, err := cli.EventInitialAdd(context.Background(), &genUd)
 			if err != nil {
-				return fmt.Errorf("SetUserData:  btcCli.CliMain.EventInitialAdd: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+				return servicesInfo, fmt.Errorf("SetUserData:  btcCli.CliMain.EventInitialAdd: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
 			}
 			log.Debugf("Btc EventInitialAdd: resp: %s", resp.Message)
+
+			sv, err := cli.ServiceInfo(context.Background(), &btcpb.Empty{})
+			if err != nil {
+				return servicesInfo, fmt.Errorf("SetUserData:  cli.ServiceInfo: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			}
+			servicesInfo = append(servicesInfo, store.ServiceInfo{
+				Branch:    sv.Branch,
+				Commit:    sv.Commit,
+				Buildtime: sv.Buildtime,
+				Lasttag:   sv.Lasttag,
+			})
 
 		case currencies.Ether:
 			var cli ethpb.NodeCommuunicationsClient
@@ -168,13 +184,24 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) erro
 			}
 			resp, err := cli.EventInitialAdd(context.Background(), &genUd)
 			if err != nil {
-				return fmt.Errorf("SetUserData: btcCli.CliTest.EventInitialAdd: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+				return servicesInfo, fmt.Errorf("SetUserData: Ether.EventInitialAdd: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
 			}
-			log.Debugf("Ether .EventInitialAdd: resp: %s", resp.Message)
+			log.Debugf("Ether cli.EventInitialAdd: resp: %s", resp.Message)
+
+			sv, err := cli.ServiceInfo(context.Background(), &ethpb.Empty{})
+			if err != nil {
+				return servicesInfo, fmt.Errorf("SetUserData:  cli.ServiceInfo: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			}
+			servicesInfo = append(servicesInfo, store.ServiceInfo{
+				Branch:    sv.Branch,
+				Commit:    sv.Commit,
+				Buildtime: sv.Buildtime,
+				Lasttag:   sv.Lasttag,
+			})
 		}
 	}
 
-	return nil
+	return nil, nil
 }
 
 // initRoutes initialize client communication services

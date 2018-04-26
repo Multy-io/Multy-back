@@ -23,6 +23,7 @@ type Configuration struct {
 	DonationAddresses      []store.DonationInfo
 	MultyVerison           store.ServerConfig
 	ExchangerConfiguration core.ManagerConfiguration
+	ServicesInfo           []store.ServiceInfo
 
 	SupportedNodes []store.CoinType
 }

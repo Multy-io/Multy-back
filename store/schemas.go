@@ -282,3 +282,10 @@ type Donation struct {
 	Amount    int64  `json:"amount"`
 	Status    int    `json:"status"`
 }
+
+type ServiceInfo struct {
+	Branch    string
+	Commit    string
+	Buildtime string
+	Lasttag   string
+}
