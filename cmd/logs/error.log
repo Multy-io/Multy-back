@@ -12216,3 +12216,75 @@ mERROR[0m] streamer: Add mempool record rpc error: code = Canceled desc = conte
 2018-04-16/21:46:17.899 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection refused 
 2018-04-17/14:48:27.226 [[31mERROR[0m] main: --------------------------------new multy back server session 
 2018-04-17/14:48:27.230 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection refused 
+2018-04-19/17:40:56.691 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-19/17:40:56.696 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection refused 
+2018-04-19/17:42:19.712 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-19/17:43:19.314 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-19/17:43:43.943 [[31mERROR[0m] eth: GetAddressBalance 5591180569128829024 
+2018-04-19/17:43:43.987 [[31mERROR[0m] eth: GetAddressPendingBalance 5591180569128829024 
+2018-04-19/17:43:44.057 [[31mERROR[0m] eth: GetAddressBalance 5591180569128829024 
+2018-04-19/17:43:44.094 [[31mERROR[0m] eth: GetAddressPendingBalance 5591180569128829024 
+2018-04-19/17:43:49.776 [[31mERROR[0m] streamer: Add mempool record rpc error: code = Unavailable desc = transport is closing 
+2018-04-19/17:43:49.777 [[31mERROR[0m] streamer: Add mempool record resend attempt(1) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:43:49.778 [[31mERROR[0m] streamer: Add mempool record rpc error: code = Unavailable desc = transport is closing 
+2018-04-19/17:43:49.781 [[31mERROR[0m] streamer: Add mempool record resend attempt(1) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:43:51.779 [[31mERROR[0m] streamer: Add mempool record resend attempt(2) err = rpc error: code = Unavailable desc = transport is closing 
+2018-04-19/17:43:51.787 [[31mERROR[0m] streamer: Add mempool record resend attempt(2) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:43:53.783 [[31mERROR[0m] streamer: Add mempool record resend attempt(3) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:43:53.790 [[31mERROR[0m] streamer: Add mempool record resend attempt(3) err = rpc error: code = Unavailable desc = transport is closing 
+2018-04-19/17:43:54.782 [[31mERROR[0m] streamer: Delete mempool record rpc error: code = Canceled desc = context canceled2018-04-19/17:43:54.782  [[31
+mERROR[0m] streamer: Delete mempool record rpc error: code = Unavailable desc = transport is closing 
+2018-04-19/17:43:54.783 [[31mERROR[0m] streamer: Delete mempool record resend attempt(1) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:43:54.783 [[31mERROR[0m] streamer: Delete mempool record resend attempt(1) err = rpc error: code = Unavailable desc = transport is closing 
+2018-04-19/17:43:55.785 [[31mERROR[0m] streamer: Add mempool record rpc error: code = Unavailable desc = transport is closing 
+2018-04-19/17:43:55.785 [[31mERROR[0m] streamer: Add mempool record resend attempt(1) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:43:55.795 [[31mERROR[0m] streamer: Add mempool record rpc error: code = Unavailable desc = transport is closing 
+2018-04-19/17:43:55.796 [[31mERROR[0m] streamer: Add mempool record resend attempt(1) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:43:56.787 [[31mERROR[0m] streamer: Delete mempool record resend attempt(2) err = rpc error: code = Canceled desc = context canceled2018-04-19/17:43:56.787  [[
+31mERROR[0m] streamer: Delete mempool record resend attempt(2) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:43:57.790 [[31mERROR[0m] streamer: Add mempool record resend attempt(2) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:43:57.800 [[31mERROR[0m] streamer: Add mempool record resend attempt(2) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:43:58.792 [[31m2018-04-19/17:43:58.792ERROR [[[0m] 31streamerm: ERRORDelete mempool record resend attempt(3) err = rpc error: code = Canceled desc = context canceled[0m] streamer:  Delete mempool record resend attempt(3) err = rpc error: code = Unavailable desc = transport is closing 
+
+2018-04-19/17:43:59.796 [[31mERROR[0m] streamer: Add mempool record resend attempt(3) err = rpc error: code = Unavailable desc = transport is closing 
+2018-04-19/17:43:59.806 [[31mERROR[0m] streamer: Add mempool record resend attempt(3) err = rpc error: code = Unavailable desc = transport is closing 
+2018-04-19/17:44:00.798 [[31mERROR[0m] streamer: Delete mempool record rpc error: code = Unavailable desc = transport is closing2018-04-19/17:44:00.798  [[
+31mERROR[0m] streamer: Delete mempool record rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:00.799 [[312018-04-19/17:44:00.799m [[ERROR31[0m] mstreamerERROR: [0m] Delete mempool record resend attempt(1) err = rpc error: code = Unavailable desc = transport is closingstreamer : 
+Delete mempool record resend attempt(1) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:01.801 [[31mERROR[0m] streamer: Add mempool record rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:01.801 [[31mERROR[0m] streamer: Add mempool record resend attempt(1) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:01.811 [[31mERROR[0m] streamer: Add mempool record rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:01.812 [[31mERROR[0m] streamer: Add mempool record resend attempt(1) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:02.803 [[2018-04-19/17:44:02.80431 [[m31ERRORm[0m] ERRORstreamer[0m] : streamerDelete mempool record resend attempt(2) err = rpc error: code = Unavailable desc = transport is closing:  Delete mempool record resend attempt(2) err = rpc error: code = Canceled desc = context canceled
+ 
+2018-04-19/17:44:03.804 [[31mERROR[0m] streamer: Add mempool record resend attempt(2) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:03.817 [[31mERROR[0m] streamer: Add mempool record resend attempt(2) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:04.8092018-04-19/17:44:04.809 [[ [[3131mmERRORERROR[0m] [0m] streamerstreamer: : Delete mempool record resend attempt(3) err = rpc error: code = Canceled desc = context canceledDelete mempool record resend attempt(3) err = rpc error: code = Canceled desc = context canceled  
+
+2018-04-19/17:44:05.807 [[31mERROR[0m] streamer: Add mempool record resend attempt(3) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:05.822 [[31mERROR[0m] streamer: Add mempool record resend attempt(3) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:06.814 [[31mERROR[0m] streamer: Delete mempool record rpc error: code = Unavailable desc = transport is closing 
+2018-04-19/17:44:06.815 [[31mERROR[0m] streamer: Delete mempool record resend attempt(1) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:06.815 [[31mERROR[0m] streamer: Delete mempool record rpc error: code = Unavailable desc = transport is closing 
+2018-04-19/17:44:06.816 [[31mERROR[0m] streamer: Delete mempool record resend attempt(1) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:07.809 [[31mERROR[0m] streamer: Add mempool record rpc error: code = Unavailable desc = transport is closing 
+2018-04-19/17:44:07.810 [[31mERROR[0m] streamer: Add mempool record resend attempt(1) err = rpc error: code = Unavailable desc = transport is closing 
+2018-04-19/17:44:07.828 [[31mERROR[0m] streamer: Add mempool record rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:07.828 [[31mERROR[0m] streamer: Add mempool record resend attempt(1) err = rpc error: code = Unavailable desc = transport is closing 
+2018-04-19/17:44:08.8202018-04-19/17:44:08.820 [[31 [[mERROR31[0m] mstreamerERROR: [0m] Delete mempool record resend attempt(2) err = rpc error: code = Canceled desc = context canceledstreamer : 
+Delete mempool record resend attempt(2) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:09.812 [[31mERROR[0m] streamer: Add mempool record resend attempt(2) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:09.833 [[31mERROR[0m] streamer: Add mempool record resend attempt(2) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:10.825 [[31mERROR[0m] streamer: Delete mempool record resend attempt(3) err = rpc error: code = Canceled desc = context canceled 
+2018-04-19/17:44:10.827 [[31mERROR[0m] streamer: Delete mempool record resend attempt(3) err = rpc error: code = Unavailable desc = transport is closing 
+2018-04-25/20:05:29.935 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-25/20:09:51.609 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-25/20:12:56.580 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-25/20:17:20.119 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-25/20:17:32.143 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-25/20:20:01.955 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-25/20:20:50.528 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-26/12:35:44.933 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-27/14:10:37.125 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-27/14:10:37.129 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection refused 

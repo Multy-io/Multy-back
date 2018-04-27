@@ -18,14 +18,34 @@ import (
 	_ "github.com/KristinaEtc/slflog"
 )
 
+var log = slf.WithContext("streamer")
+
 // Server implements streamer interface and is a gRPC server
 type Server struct {
 	UsersData *map[string]store.AddressExtended
 	M         *sync.Mutex
 	EthCli    *eth.Client
+	Info      *store.ServiceInfo
 }
 
-var log = slf.WithContext("streamer")
+func (s *Server) ServiceInfo(c context.Context, in *pb.Empty) (*pb.ServiceVersion, error) {
+	return &pb.ServiceVersion{
+		Branch:    s.Info.Branch,
+		Commit:    s.Info.Commit,
+		Buildtime: s.Info.Buildtime,
+		Lasttag:   "",
+	}, nil
+}
+
+func (s *Server) EventGetGasPrice(ctx context.Context, in *pb.Empty) (*pb.GasPrice, error) {
+	gp, err := s.EthCli.GetGasPrice()
+	if err != nil {
+		return &pb.GasPrice{}, err
+	}
+	return &pb.GasPrice{
+		Gas: gp.String(),
+	}, nil
+}
 
 func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.ReplyInfo, error) {
 	log.Debugf("EventInitialAdd - %v", ud.Map)
@@ -57,11 +77,12 @@ func (s *Server) EventAddNewAddress(c context.Context, wa *pb.WatchAddress) (*pb
 	if newMap == nil {
 		newMap = map[string]store.AddressExtended{}
 	}
-	//TODO: binded address fix
-	// _, ok := newMap[wa.Address]
-	// if ok {
-	// 	return nil, errors.New("Address already binded")
-	// }
+	_, ok := newMap[wa.Address]
+	if ok {
+		return &pb.ReplyInfo{
+			Message: "err: Address already binded",
+		}, nil
+	}
 	newMap[strings.ToLower(wa.Address)] = store.AddressExtended{
 		UserID:       wa.UserID,
 		WalletIndex:  int(wa.WalletIndex),
@@ -96,7 +117,6 @@ func (s *Server) EventGetAdressNonce(c context.Context, in *pb.AddressToResync) 
 		return &pb.Nonce{}, err
 	}
 	return &pb.Nonce{
-		// TODO:
 		Nonce: int64(n),
 	}, nil
 }
@@ -106,9 +126,13 @@ func (s *Server) EventGetAdressBalance(ctx context.Context, in *pb.AddressToResy
 	if err != nil {
 		return &pb.Balance{}, err
 	}
+	p, err := s.EthCli.GetAddressPendingBalance(in.GetAddress())
+	if err != nil {
+		return &pb.Balance{}, err
+	}
 	return &pb.Balance{
-		// TODO:
-		Balance: int64(b.Int64()),
+		Balance:        b.String(),
+		PendingBalance: p.String(),
 	}, nil
 }
 

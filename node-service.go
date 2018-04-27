@@ -70,6 +70,7 @@ func Init(conf *Configuration) (*NodeClient, error) {
 		UsersData: cli.Clients,
 		M:         &sync.Mutex{},
 		EthCli:    cli.Instance,
+		Info:      &conf.ServiceInfo,
 	}
 
 	pb.RegisterNodeCommuunicationsServer(s, &srv)

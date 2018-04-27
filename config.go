@@ -5,16 +5,15 @@ See LICENSE for details
 */
 package node
 
-import "github.com/Appscrunch/Multy-ETH-node-service/eth"
+import (
+	"github.com/Appscrunch/Multy-ETH-node-service/eth"
+	"github.com/Appscrunch/Multy-back/store"
+)
 
 // Configuration is a struct with all service options
 type Configuration struct {
-	Name     string
-	GrpcPort string
-	EthConf  eth.Conf
+	Name        string
+	GrpcPort    string
+	EthConf     eth.Conf
+	ServiceInfo store.ServiceInfo
 }
-
-// // BTCApiConf provide blockcypher api
-// type BTCApiConf struct {
-// 	Token, Coin, Chain string
-// }

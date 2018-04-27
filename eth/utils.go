@@ -47,7 +47,25 @@ func (client *Client) GetAddressBalance(address string) (big.Int, error) {
 		log.Errorf("GetAddressBalance:rpc.EthGetBalance: %s", err.Error())
 		return balance, err
 	}
-	log.Errorf("GetAddressBalance %v", balance.String())
+	return balance, err
+}
+
+func (client *Client) GetGasPrice() (big.Int, error) {
+	gas, err := client.Rpc.EthGasPrice()
+	if err != nil {
+		log.Errorf("GetGasPrice:rpc.EthGetBalance: %s", err.Error())
+		return gas, err
+	}
+	return gas, err
+}
+
+func (client *Client) GetAddressPendingBalance(address string) (big.Int, error) {
+	balance, err := client.Rpc.EthGetBalance(address, "pending")
+	if err != nil {
+		log.Errorf("GetAddressPendingBalance:rpc.EthGetBalance: %s", err.Error())
+		return balance, err
+	}
+	log.Errorf("GetAddressPendingBalance %v", balance.String())
 	return balance, err
 }
 
@@ -96,12 +114,19 @@ func (client *Client) parseETHTransaction(rawTX ethrpc.Transaction, blockHeight 
 	tx := rawToGenerated(rawTX)
 	tx.Resync = isResync
 
-	if blockHeight == -1 {
-		tx.TxpoolTime = time.Now().Unix()
+	block, err := client.Rpc.EthGetBlockByHash(rawTX.BlockHash, false)
+	if err != nil {
+		if blockHeight == -1 {
+			tx.TxpoolTime = time.Now().Unix()
+		} else {
+			tx.BlockTime = time.Now().Unix()
+		}
+		tx.BlockHeight = blockHeight
 	} else {
-		tx.BlockTime = time.Now().Unix()
+		tx.BlockTime = int64(block.Timestamp)
+		tx.BlockHeight = int64(block.Number)
 	}
-	tx.BlockHeight = blockHeight
+
 	// log.Infof("tx - %v", tx)
 
 	/*
@@ -157,7 +182,7 @@ func rawToGenerated(rawTX ethrpc.Transaction) pb.ETHTransaction {
 		Hash:     rawTX.Hash,
 		From:     rawTX.From,
 		To:       rawTX.To,
-		Amount:   rawTX.Value.String(), //TODO: fix bigint (string)
+		Amount:   rawTX.Value.String(),
 		GasPrice: int64(rawTX.GasPrice.Int64()),
 		GasLimit: int64(rawTX.Gas),
 		Nonce:    int32(rawTX.Nonce),
