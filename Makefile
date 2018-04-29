@@ -12,6 +12,9 @@ all:  build run
 all-with-deps: setup deps 
 	cd cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
 
+rm:
+	rm -rf $$GOPATH/src/github.com/KristinaEtc/config
+
 all-docker:  setup deps
 	cd cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
 
