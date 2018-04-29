@@ -20,7 +20,7 @@ RUN cd $GOPATH/src/github.com/Appscrunch && \
 RUN cd $GOPATH/src/github.com/Appscrunch/Multy-ETH-node-service && \
     make all-with-deps
 
-WORKDIR /go/src/github.com/Appscrunch/Multy-ETH-node-service/cmd
+WORKDIR $GOPATH/src/github.com/Appscrunch/Multy-ETH-node-service/cmd
 
 RUN echo "VERSION 02"
 

@@ -12290,3 +12290,5 @@ Delete mempool record resend attempt(2) err = rpc error: code = Canceled desc = 
 2018-04-27/14:10:37.129 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection refused 
 2018-04-27/14:46:25.136 [[31mERROR[0m] main: --------------------------------new multy back server session 
 2018-04-27/14:46:25.141 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection refused 
+2018-04-29/16:16:11.609 [[31mERROR[0m] main: --------------------------------new multy back server session 
+2018-04-29/16:16:11.618 [[31mERROR[0m] eth: NewClient:EthNewPendingTransactionFilter: Post http://0.0.0.0:18545: dial tcp 0.0.0.0:18545: getsockopt: connection refused 
