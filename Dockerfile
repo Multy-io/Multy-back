@@ -18,8 +18,8 @@ RUN go get -d github.com/Appscrunch/Multy-back-exchange-service
 
 
 RUN cd $GOPATH/src/github.com/Appscrunch/Multy-back && \ 
-    make all-with-deps && \ 
-    make all-docker 
+    make all-with-deps 
+# make all-docker 
 
 WORKDIR /go/src/github.com/Appscrunch/Multy-back/cmd
 
