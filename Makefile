@@ -9,7 +9,7 @@ LD_OPTS = -ldflags="-X main.branch=${BRANCH} -X main.commit=${COMMIT} -X main.la
 
 all:  build run
 
-all-with-deps: setup deps 
+all-with-deps: setup deps rm
 	cd cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
 
 rm:
