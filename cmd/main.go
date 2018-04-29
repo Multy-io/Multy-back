@@ -6,12 +6,12 @@ See LICENSE for details
 package main
 
 import (
-	"github.com/KristinaEtc/config"
-	_ "github.com/KristinaEtc/slflog"
+	_ "github.com/jekabolt/slflog"
+	"github.com/jekabolt/config"
 
 	multy "github.com/Appscrunch/Multy-back"
 	"github.com/Appscrunch/Multy-back/store"
-	"github.com/KristinaEtc/slf"
+	"github.com/jekabolt/slf"
 )
 
 var (

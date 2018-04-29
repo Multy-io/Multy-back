@@ -14,7 +14,7 @@ import (
 	"github.com/Appscrunch/Multy-back/currencies"
 	ethpb "github.com/Appscrunch/Multy-back/node-streamer/eth"
 	"github.com/Appscrunch/Multy-back/store"
-	_ "github.com/KristinaEtc/slflog"
+	_ "github.com/jekabolt/slflog"
 	nsq "github.com/bitly/go-nsq"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"

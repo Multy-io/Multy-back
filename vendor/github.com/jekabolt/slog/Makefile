@@ -25,7 +25,7 @@ test:
 	for PACK in $(TEST_PACKS) ; do \
 		rm -f coverage.in ; \
 		touch coverage.in ; \
-	 	go test -coverprofile=coverage.in -covermode=atomic github.com/KristinaEtc/slog/$$PACK ; \
+	 	go test -coverprofile=coverage.in -covermode=atomic github.com/jekabolt/slog/$$PACK ; \
 	 	cat coverage.in >> coverage.txt ; \
 	 	rm coverage.in ; \
 	done

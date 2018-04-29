@@ -9,11 +9,9 @@ LD_OPTS = -ldflags="-X main.branch=${BRANCH} -X main.commit=${COMMIT} -X main.la
 
 all:  build run
 
-all-with-deps: setup deps rm
+all-with-deps: setup deps
 	cd cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
 
-rm:
-	rm -rf $$GOPATH/src/github.com/KristinaEtc/config
 
 all-docker:  setup deps
 	cd cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .

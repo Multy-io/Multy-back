@@ -22,7 +22,7 @@ import (
 	"github.com/Appscrunch/Multy-back/currencies"
 	"github.com/Appscrunch/Multy-back/eth"
 	"github.com/Appscrunch/Multy-back/store"
-	"github.com/KristinaEtc/slf"
+	"github.com/jekabolt/slf"
 
 	btcpb "github.com/Appscrunch/Multy-back/node-streamer/btc"
 	ethpb "github.com/Appscrunch/Multy-back/node-streamer/eth"

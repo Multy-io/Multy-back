@@ -11,7 +11,7 @@ import (
 	"strconv"
 
 	"github.com/Appscrunch/Multy-back/btc"
-	"github.com/KristinaEtc/slf"
+	"github.com/jekabolt/slf"
 	fcm "github.com/NaySoftware/go-fcm"
 	"github.com/gin-gonic/gin"
 

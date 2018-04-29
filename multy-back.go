@@ -17,7 +17,7 @@ import (
 	btcpb "github.com/Appscrunch/Multy-back/node-streamer/btc"
 	ethpb "github.com/Appscrunch/Multy-back/node-streamer/eth"
 	"github.com/Appscrunch/Multy-back/store"
-	"github.com/KristinaEtc/slf"
+	"github.com/jekabolt/slf"
 	"github.com/gin-gonic/gin"
 )
 

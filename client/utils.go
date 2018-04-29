@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/Appscrunch/Multy-back/store"
-	"github.com/KristinaEtc/slf"
+	"github.com/jekabolt/slf"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )

@@ -14,8 +14,8 @@ import (
 	"github.com/Appscrunch/Multy-back/currencies"
 	pb "github.com/Appscrunch/Multy-back/node-streamer/eth"
 	"github.com/Appscrunch/Multy-back/store"
-	"github.com/KristinaEtc/slf"
 	nsq "github.com/bitly/go-nsq"
+	"github.com/jekabolt/slf"
 )
 
 const (

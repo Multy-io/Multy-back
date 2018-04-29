@@ -14,7 +14,7 @@ RUN cd $GOPATH/src/github.com/Appscrunch && \
     git pull origin
 # git pull origin master
 
-RUN go get -d github.com/Appscrunch/Multy-back-exchange-service 
+# RUN go get -d github.com/Appscrunch/Multy-back-exchange-service 
 
 
 RUN cd $GOPATH/src/github.com/Appscrunch/Multy-back && \ 

@@ -3,30 +3,6 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "RH9upPyf+XsF6I2+rDURxmxyyKY=",
-			"path": "github.com/KristinaEtc/config",
-			"revision": "8ed85620171d70ac3b86a2d3a427dd8f06a4a139",
-			"revisionTime": "2016-10-07T10:41:38Z"
-		},
-		{
-			"checksumSHA1": "xzcT4PN/jZFELKV6FMILRLrByFg=",
-			"path": "github.com/KristinaEtc/slf",
-			"revision": "fad0076bdc4d841337361114f4f79f9722d6bc48",
-			"revisionTime": "2017-12-18T18:00:57Z"
-		},
-		{
-			"checksumSHA1": "guh9JrLNP6BJrZcbnfXa69fNxTg=",
-			"path": "github.com/KristinaEtc/slflog",
-			"revision": "7f74abafb53797806cb8628b4c84479ddacf6b32",
-			"revisionTime": "2017-12-18T18:05:58Z"
-		},
-		{
-			"checksumSHA1": "GeC69vuF9obBNoPhEvKZns9ShVk=",
-			"path": "github.com/KristinaEtc/slog",
-			"revision": "deae2a3cdc89c46e4df677260ea04db1fa4a21ef",
-			"revisionTime": "2017-12-11T19:21:08Z"
-		},
-		{
 			"checksumSHA1": "VwbbCirLNCq4YpvnRArXVKM4V+Q=",
 			"path": "github.com/NaySoftware/go-fcm",
 			"revision": "2a6c4f48b49f0d5dbfe621589da4c5405157d7c9",
@@ -70,7 +46,7 @@
 		},
 		{
 			"checksumSHA1": "zO44cJ8MvpMvJPYQv+o1PpHcLWU=",
-			"origin": "github.com/KristinaEtc/rpcclient",
+			"origin": "github.com/jekabolt/rpcclient",
 			"path": "github.com/btcsuite/btcd/rpcclient",
 			"revision": "45b040f68c7607f3abcf3d1085223058d5595bd6",
 			"revisionTime": "2017-12-18T17:01:45Z"
@@ -194,6 +170,30 @@
 			"path": "github.com/graarh/golang-socketio/transport",
 			"revision": "2c44953b9b5fcd4da83ec8816f002ce68a12ef2d",
 			"revisionTime": "2017-05-10T16:27:25Z"
+		},
+		{
+			"checksumSHA1": "y59o7KAzy9j4SI2So+yLewxNIxs=",
+			"path": "github.com/jekabolt/config",
+			"revision": "36585cd15f068c92e96c444d1e0d07e19a671824",
+			"revisionTime": "2018-04-29T20:24:24Z"
+		},
+		{
+			"checksumSHA1": "WaecoLeew1ILYmfXNrBb0Pfk9xw=",
+			"path": "github.com/jekabolt/slf",
+			"revision": "bc64c0210f5ec4da5f3ad20e03b652b34d1b7523",
+			"revisionTime": "2018-04-29T20:46:02Z"
+		},
+		{
+			"checksumSHA1": "D/fcFfPWyo5fuLO+1o90QGc7oTM=",
+			"path": "github.com/jekabolt/slflog",
+			"revision": "fddff2283e0dd5951aa2161d4673b569385ccbdb",
+			"revisionTime": "2018-04-29T20:42:51Z"
+		},
+		{
+			"checksumSHA1": "43Z4Gdd5Vrh+XaM54vGiokVuaQ4=",
+			"path": "github.com/jekabolt/slog",
+			"revision": "a73ae5c379905c31dd2484b4dd1dc6f661d1f157",
+			"revisionTime": "2018-04-29T20:39:53Z"
 		},
 		{
 			"checksumSHA1": "gEjGS03N1eysvpQ+FCHTxPcbxXc=",

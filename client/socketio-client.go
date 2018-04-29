@@ -14,7 +14,7 @@ import (
 
 	"github.com/Appscrunch/Multy-back/btc"
 	"github.com/Appscrunch/Multy-back/store"
-	"github.com/KristinaEtc/slf"
+	"github.com/jekabolt/slf"
 	nsq "github.com/bitly/go-nsq"
 	"github.com/graarh/golang-socketio"
 )
