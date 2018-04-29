@@ -2,7 +2,6 @@ FROM golang:1.9.4
 
 RUN go get golang.org/x/net/context
 RUN go get google.golang.org/grpc
-RUN go get github.com/Appscrunch/Multy-back-exchange-service
 
 RUN go get github.com/Appscrunch/Multy-back
 
@@ -14,6 +13,8 @@ RUN cd $GOPATH/src/github.com/Appscrunch && \
     git checkout versions && \
     git pull origin
 # git pull origin master
+
+RUN go get -d github.com/Appscrunch/Multy-back-exchange-service 
 
 
 RUN cd $GOPATH/src/github.com/Appscrunch/Multy-back && \ 

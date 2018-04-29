@@ -45,6 +45,7 @@ func GetUUID(DirWithUUID string) string {
 		fmt.Fprintf(os.Stderr, "[ERROR] [config]: guid:  Wrong directory for uuid file: [%s]; return uuid without saving in file\n", err.Error())
 	}
 	filename := filepath.Join(fpath, uuidFile)
+
 	// trying to take uuid from file
 	//
 	u, err := getUUIDFromFile(filename)
