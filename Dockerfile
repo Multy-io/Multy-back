@@ -10,9 +10,8 @@ RUN go get github.com/Appscrunch/Multy-back && \
 RUN cd $GOPATH/src/github.com/Appscrunch && \
     git clone https://github.com/Appscrunch/Multy-BTC-node-service.git && \
     cd Multy-BTC-node-service  && \
-    git checkout stage && \
-
-    git pull origin stage && \
+    git checkout versions && \
+    # git pull origin versions && \
     make all-with-deps
 
 # RUN cd $GOPATH/src/github.com/Appscrunch/Multy-BTC-node-service && \

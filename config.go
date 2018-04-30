@@ -5,6 +5,8 @@ See LICENSE for details
 */
 package node
 
+import "github.com/Appscrunch/Multy-back/store"
+
 // Configuration is a struct with all service options
 type Configuration struct {
 	Name           string
@@ -12,6 +14,7 @@ type Configuration struct {
 	BTCSertificate string
 	BTCNodeAddress string
 	BTCAPI         BTCApiConf
+	ServiceInfo    store.ServiceInfo
 }
 
 // BTCApiConf provide blockcypher api

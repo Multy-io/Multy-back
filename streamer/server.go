@@ -24,6 +24,16 @@ type Server struct {
 	BtcAPI    *gobcy.API
 	BtcCli    *btc.Client
 	M         *sync.Mutex
+	Info      *store.ServiceInfo
+}
+
+func (s *Server) ServiceInfo(c context.Context, in *pb.Empty) (*pb.ServiceVersion, error) {
+	return &pb.ServiceVersion{
+		Branch:    s.Info.Branch,
+		Commit:    s.Info.Commit,
+		Buildtime: s.Info.Buildtime,
+		Lasttag:   "",
+	}, nil
 }
 
 // EventInitialAdd us used to add initial pairs of watch addresses

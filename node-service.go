@@ -85,6 +85,7 @@ func Init(conf *Configuration) (*NodeClient, error) {
 		BtcAPI:    cli.BtcApi,
 		M:         &sync.Mutex{},
 		BtcCli:    btcClient,
+		Info:      &conf.ServiceInfo,
 	}
 
 	pb.RegisterNodeCommuunicationsServer(s, &srv)

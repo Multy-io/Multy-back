@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/Appscrunch/Multy-BTC-node-service"
+	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/config"
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"
@@ -32,10 +33,14 @@ func main() {
 	config.ReadGlobalConfig(&globalOpt, "multy configuration")
 	log.Error("--------------------------------new multy back server session")
 	log.Infof("CONFIGURATION=%+v", globalOpt)
-
 	log.Infof("branch: %s", branch)
 	log.Infof("commit: %s", commit)
 	log.Infof("build time: %s", buildtime)
+	globalOpt.ServiceInfo = store.ServiceInfo{
+		Branch:    branch,
+		Commit:    commit,
+		Buildtime: buildtime,
+	}
 
 	node, err := node.Init(&globalOpt)
 	if err != nil {
