@@ -4,7 +4,7 @@ RUN go get golang.org/x/net/context
 RUN go get google.golang.org/grpc
 
 RUN go get github.com/Appscrunch/Multy-back
-
+RUN go get github.com/satori/go.uuid
 
 RUN cd $GOPATH/src/github.com/Appscrunch && \ 
     rm -rf Multy-back && \ 
