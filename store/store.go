@@ -35,7 +35,6 @@ type Conf struct {
 	DBStockExchangeRate string
 
 	// BTC main
-	TableMempoolRatesBTCMain     string
 	TableTxsDataBTCMain          string
 	TableSpendableOutputsBTCMain string
 	TableSpentOutputsBTCMain     string
@@ -58,7 +57,6 @@ type UserStore interface {
 	Close() error
 	FindUser(query bson.M, user *User) error
 	UpdateUser(sel bson.M, user *User) error
-	GetAllRates(currencyID, networkID int, sortBy string, rates *[]MempoolRecord) error
 	// FindUserTxs(query bson.M, userTxs *TxRecord) error
 	// InsertTxStore(userTxs TxRecord) error
 	FindUserErr(query bson.M) error
@@ -76,7 +74,6 @@ type UserStore interface {
 	UpdateEthereumTransaction(sel, update bson.M) error
 	FindETHTransaction(sel bson.M) error
 	// DropTest()
-	DeleteMempool()
 
 	FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error)
 	FindUserDataChain(CurrencyID, NetworkID int) (map[string]AddressExtended, error)
@@ -88,12 +85,10 @@ type MongoUserStore struct {
 	usersData *mgo.Collection
 
 	// btc main
-	BTCMainRatesData        *mgo.Collection
 	BTCMainTxsData          *mgo.Collection
 	BTCMainSpendableOutputs *mgo.Collection
 
 	// btc test
-	BTCTestRatesData        *mgo.Collection
 	BTCTestTxsData          *mgo.Collection
 	BTCTestSpendableOutputs *mgo.Collection
 
@@ -125,12 +120,10 @@ func InitUserStore(conf Conf) (UserStore, error) {
 	uStore.stockExchangeRate = uStore.session.DB(conf.DBStockExchangeRate).C(TableStockExchangeRate)
 
 	// BTC main
-	uStore.BTCMainRatesData = uStore.session.DB(conf.DBFeeRates).C(conf.TableMempoolRatesBTCMain)
 	uStore.BTCMainTxsData = uStore.session.DB(conf.DBTx).C(conf.TableTxsDataBTCMain)
 	uStore.BTCMainSpendableOutputs = uStore.session.DB(conf.DBTx).C(conf.TableSpendableOutputsBTCMain)
 
 	// BTC test
-	uStore.BTCTestRatesData = uStore.session.DB(conf.DBFeeRates).C(conf.TableMempoolRatesBTCTest)
 	uStore.BTCTestTxsData = uStore.session.DB(conf.DBTx).C(conf.TableTxsDataBTCTest)
 	uStore.BTCTestSpendableOutputs = uStore.session.DB(conf.DBTx).C(conf.TableSpendableOutputsBTCTest)
 
@@ -161,11 +154,6 @@ func (mStore *MongoUserStore) FindUserDataChain(CurrencyID, NetworkID int) (map[
 		}
 	}
 	return usersData, nil
-}
-
-func (mStore *MongoUserStore) DeleteMempool() {
-	mStore.BTCMainRatesData.DropCollection()
-	mStore.BTCTestRatesData.DropCollection()
 }
 
 func (mStore *MongoUserStore) FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error) {
@@ -275,20 +263,6 @@ func (mStore *MongoUserStore) FindUserAddresses(query bson.M, sel bson.M, ws *Wa
 
 func (mStore *MongoUserStore) Insert(user User) error {
 	return mStore.usersData.Insert(user)
-}
-
-func (mStore *MongoUserStore) GetAllRates(currencyID, networkID int, sortBy string, rates *[]MempoolRecord) error {
-	switch currencyID {
-	case currencies.Bitcoin:
-		if networkID == currencies.Main {
-			return mStore.BTCMainRatesData.Find(nil).Sort(sortBy).All(rates)
-		}
-		if networkID == currencies.Test {
-			return mStore.BTCTestRatesData.Find(nil).Sort(sortBy).All(rates)
-		}
-	case currencies.Ether:
-	}
-	return nil
 }
 
 // func (mStore *MongoUserStore) FindUserTxs(query bson.M, userTxs *TxRecord) error {
