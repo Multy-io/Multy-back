@@ -1,11 +1,18 @@
 FROM golang:1.9.4
 
+# RUN go get github.com/Appscrunch/Multy-back && \
+#     cd $GOPATH/src/github.com/Appscrunch && \ 
+#     rm -rf Multy-back && \ 
+#     git clone https://github.com/Appscrunch/Multy-back.git && \ 
+#     cd Multy-back && \ 
+#     git pull origin master 
+
 RUN go get github.com/Appscrunch/Multy-back && \
+    rm -rf $GOPATH/src/github.com/Appscrunch/Multy-back && \
     cd $GOPATH/src/github.com/Appscrunch && \ 
-    rm -rf Multy-back && \ 
     git clone https://github.com/Appscrunch/Multy-back.git && \ 
     cd Multy-back && \ 
-    git pull origin master 
+    git checkout versions
 
 RUN cd $GOPATH/src/github.com/Appscrunch && \
     git clone https://github.com/Appscrunch/Multy-BTC-node-service.git && \
