@@ -1586,6 +1586,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 					p, _ := strconv.Atoi(amount.GetPendingBalance())
 					b, _ := strconv.Atoi(amount.GetBalance())
+					restClient.log.Errorf("Pending %v balance %v", p, b)
 					pendingBalance = strconv.Itoa(p - b)
 
 					walletNonce = nonce.GetNonce()
@@ -1737,6 +1738,8 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				}
 			}
 
+			// TODO: fix this logic same wallet to samewallet tx
+
 			for _, address := range walletAddresses {
 				for _, tx := range userTxs {
 					if len(tx.TxAddress) > 0 {
@@ -1763,6 +1766,26 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				}
 			}
 
+			/*
+				for _, tx := range userTxs {
+					//New Logic
+					var isTheSameWallet = false
+					for _, input := range tx.WalletsInput {
+						if walletIndex == input.WalletIndex {
+							isTheSameWallet = true
+						}
+					}
+					for _, output := range tx.WalletsOutput {
+						if walletIndex == output.WalletIndex {
+							isTheSameWallet = true
+						}
+					}
+					if isTheSameWallet {
+						walletTxs = append(walletTxs, tx)
+					}
+				}
+			*/
+
 			for i := 0; i < len(walletTxs); i++ {
 				if walletTxs[i].BlockHeight == -1 {
 					walletTxs[i].Confirmations = 0
@@ -1770,6 +1793,13 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 					walletTxs[i].Confirmations = int(blockHeight-walletTxs[i].BlockHeight) + 1
 				}
 			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"code":    http.StatusOK,
+				"message": http.StatusText(http.StatusOK),
+				"history": walletTxs,
+			})
+			return
 
 		case currencies.Ether:
 			var blockHeight int64
