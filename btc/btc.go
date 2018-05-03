@@ -7,6 +7,7 @@ package btc
 
 import (
 	"fmt"
+	"sync"
 
 	"google.golang.org/grpc"
 	mgo "gopkg.in/mgo.v2"
@@ -14,8 +15,8 @@ import (
 	"github.com/Appscrunch/Multy-back/currencies"
 	pb "github.com/Appscrunch/Multy-back/node-streamer/btc"
 	"github.com/Appscrunch/Multy-back/store"
-	"github.com/jekabolt/slf"
 	nsq "github.com/bitly/go-nsq"
+	"github.com/jekabolt/slf"
 )
 
 const (
@@ -30,6 +31,12 @@ type BTCConn struct {
 	CliMain          pb.NodeCommuunicationsClient
 	WatchAddressTest chan pb.WatchAddress
 	WatchAddressMain chan pb.WatchAddress
+
+	BtcMempool     *map[string]int
+	BtcMempoolTest *map[string]int
+
+	M     *sync.Mutex
+	MTest *sync.Mutex
 }
 
 var log = slf.WithContext("btc")
@@ -38,7 +45,12 @@ var log = slf.WithContext("btc")
 // return main client , test client , err
 func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string) (*BTCConn, error) {
 	//declare pacakge struct
-	cli := &BTCConn{}
+	cli := &BTCConn{
+		BtcMempool:     &map[string]int{},
+		BtcMempoolTest: &map[string]int{},
+		M:              &sync.Mutex{},
+		MTest:          &sync.Mutex{},
+	}
 
 	cli.WatchAddressMain = make(chan pb.WatchAddress)
 	cli.WatchAddressTest = make(chan pb.WatchAddress)
@@ -74,13 +86,11 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	exRate = db.DB(dbConf.DBStockExchangeRate).C("TableStockExchangeRate")
 
 	// main
-	mempoolRates = db.DB(dbConf.DBFeeRates).C(dbConf.TableMempoolRatesBTCMain)
 	txsData = db.DB(dbConf.DBTx).C(dbConf.TableTxsDataBTCMain)
 	spendableOutputs = db.DB(dbConf.DBTx).C(dbConf.TableSpendableOutputsBTCMain)
 	spentOutputs = db.DB(dbConf.DBTx).C(dbConf.TableSpentOutputsBTCMain)
 
 	// test
-	mempoolRatesTest = db.DB(dbConf.DBFeeRates).C(dbConf.TableMempoolRatesBTCTest)
 	txsDataTest = db.DB(dbConf.DBTx).C(dbConf.TableTxsDataBTCTest)
 	spendableOutputsTest = db.DB(dbConf.DBTx).C(dbConf.TableSpendableOutputsBTCTest)
 	spentOutputsTest = db.DB(dbConf.DBTx).C(dbConf.TableSpentOutputsBTCTest)
@@ -91,11 +101,12 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 		return cli, fmt.Errorf("fethCoinType: %s", err.Error())
 	}
 
-	cliMain, err := initGrpcClient(urlMain, mempoolRates)
+	cliMain, err := initGrpcClient(urlMain)
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
-	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.Main, cli.WatchAddressMain)
+
+	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.Main, cli.WatchAddressMain, cli.BtcMempool, cli.M)
 
 	cli.CliMain = cliMain
 	log.Infof("InitHandlers: initGrpcClient: Main: √")
@@ -105,11 +116,11 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	if err != nil {
 		return cli, fmt.Errorf("fethCoinType: %s", err.Error())
 	}
-	cliTest, err := initGrpcClient(urlTest, mempoolRatesTest)
+	cliTest, err := initGrpcClient(urlTest)
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
-	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.Test, cli.WatchAddressTest)
+	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.Test, cli.WatchAddressTest, cli.BtcMempoolTest, cli.MTest)
 
 	cli.CliTest = cliTest
 	log.Infof("InitHandlers: initGrpcClient: Test: √")
@@ -117,7 +128,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	return cli, nil
 }
 
-func initGrpcClient(url string, mpRates *mgo.Collection) (pb.NodeCommuunicationsClient, error) {
+func initGrpcClient(url string) (pb.NodeCommuunicationsClient, error) {
 	conn, err := grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
 		log.Errorf("initGrpcClient: grpc.Dial: %s", err.Error())

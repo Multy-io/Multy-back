@@ -17,8 +17,8 @@ import (
 	btcpb "github.com/Appscrunch/Multy-back/node-streamer/btc"
 	ethpb "github.com/Appscrunch/Multy-back/node-streamer/eth"
 	"github.com/Appscrunch/Multy-back/store"
-	"github.com/jekabolt/slf"
 	"github.com/gin-gonic/gin"
+	"github.com/jekabolt/slf"
 )
 
 var (
@@ -67,10 +67,6 @@ func Init(conf *Configuration) (*Multy, error) {
 	}
 	multy.userStore = userStore
 	log.Infof("UserStore initialization done on %s √", conf.Database)
-
-	//TODO: Mempool Data delete
-	multy.userStore.DeleteMempool()
-	log.Infof("Mempool Data delete √")
 
 	// exchange rates
 	// exchange := &exchanger.Exchanger{}

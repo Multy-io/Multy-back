@@ -14,8 +14,8 @@ import (
 	"github.com/Appscrunch/Multy-back/currencies"
 	ethpb "github.com/Appscrunch/Multy-back/node-streamer/eth"
 	"github.com/Appscrunch/Multy-back/store"
-	_ "github.com/jekabolt/slflog"
 	nsq "github.com/bitly/go-nsq"
+	_ "github.com/jekabolt/slflog"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -24,12 +24,10 @@ var (
 	exRate    *mgo.Collection
 	usersData *mgo.Collection
 
-	mempoolRates     *mgo.Collection
 	txsData          *mgo.Collection
 	spendableOutputs *mgo.Collection
 	spentOutputs     *mgo.Collection
 
-	mempoolRatesTest     *mgo.Collection
 	txsDataTest          *mgo.Collection
 	spendableOutputsTest *mgo.Collection
 	spentOutputsTest     *mgo.Collection
@@ -39,7 +37,6 @@ var (
 func updateWalletAndAddressDate(tx store.MultyTX, networkID int) error {
 	//TODO: make an update
 	for _, walletOutput := range tx.WalletsOutput {
-
 		// update addresses last action time
 		sel := bson.M{"userID": walletOutput.UserId, "wallets.addresses.address": walletOutput.Address.Address}
 		update := bson.M{

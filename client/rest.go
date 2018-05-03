@@ -14,6 +14,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -764,20 +765,32 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 
 		switch currencyID {
 		case currencies.Bitcoin:
-			var rates []store.MempoolRecord
+			restClient.BTC.M.Lock()
+			mempool := *restClient.BTC.BtcMempool
+			restClient.BTC.M.Unlock()
 
-			if err := restClient.userStore.GetAllRates(currencyID, networkid, "-category", &rates); err != nil {
-				c.JSON(http.StatusOK, gin.H{
-					"speeds":  sp,
-					"code":    http.StatusInternalServerError,
-					"message": msgErrRatesError,
-				})
-				return
+			type kv struct {
+				Key   string
+				Value int
 			}
 
+			var mp []kv
+			for k, v := range mempool {
+				mp = append(mp, kv{k, v})
+			}
+
+			sort.Slice(mp, func(i, j int) bool {
+				return mp[i].Value > mp[j].Value
+			})
+
+			// for _, kv := range ss {
+			// 	fmt.Printf("%s, %d\n", kv.Key, kv.Value)
+			// }
+
+			// var speeds []string{}
 			var slowestValue, slowValue, mediumValue, fastValue, fastestValue int
 
-			memPoolSize := len(rates)
+			memPoolSize := len(mempool)
 
 			if memPoolSize <= 2000 && memPoolSize > 0 {
 				//low rates logic
@@ -789,18 +802,18 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 				//slowestPosition := int(memPoolSize)
 
 				slowestValue = 2
-				slowValue = rates[slowPosition].Category
+
+				slowValue = mp[slowPosition].Value
 
 				if slowValue < 2 {
 					slowValue = 2
 				}
 
-				mediumValue = rates[mediumPosition].Category
-				fastValue = rates[fastPosition].Category
-				fastestValue = rates[fastestPosition].Category
+				mediumValue = mp[mediumPosition].Value
+				fastValue = mp[fastPosition].Value
+				fastestValue = mp[fastestPosition].Value
 
 			} else if memPoolSize == 0 {
-				//mempool is empty O_o
 				slowestValue = 2
 				slowValue = 2
 				mediumValue = 3
@@ -814,21 +827,21 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 				slowPosition := int(memPoolSize / 100 * 70)
 				slowestPosition := int(memPoolSize / 100 * 90)
 
-				slowestValue = rates[slowestPosition].Category
+				slowestValue = mp[slowestPosition].Value
 
 				if slowestValue < 2 {
 					slowestValue = 2
 				}
 
-				slowValue = rates[slowPosition].Category
+				slowValue = mp[slowPosition].Value
 
 				if slowValue < 2 {
 					slowValue = 2
 				}
 
-				mediumValue = rates[mediumPosition].Category
-				fastValue = rates[fastPosition].Category
-				fastestValue = rates[fastestPosition].Category
+				mediumValue = mp[mediumPosition].Value
+				fastValue = mp[fastPosition].Value
+				fastestValue = mp[fastestPosition].Value
 
 			}
 
@@ -1586,7 +1599,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 					p, _ := strconv.Atoi(amount.GetPendingBalance())
 					b, _ := strconv.Atoi(amount.GetBalance())
-					restClient.log.Errorf("Pending %v balance %v", p, b)
 					pendingBalance = strconv.Itoa(p - b)
 
 					walletNonce = nonce.GetNonce()

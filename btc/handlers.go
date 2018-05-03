@@ -8,6 +8,7 @@ package btc
 import (
 	"context"
 	"io"
+	"sync"
 	"time"
 
 	"gopkg.in/mgo.v2"
@@ -19,14 +20,15 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress) {
+func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress, mempool *map[string]int, m *sync.Mutex) {
+
+	mempoolCh := make(chan interface{})
 
 	// initial fill mempool respectively network id
 	go func() {
 		stream, err := cli.EventGetAllMempool(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())
-			// return nil, err
 		}
 
 		for {
@@ -38,23 +40,11 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				log.Errorf("setGRPCHandlers: client.EventGetAllMempool: %s", err.Error())
 			}
 
-			mpRates := &mgo.Collection{}
-			switch networtkID {
-			case currencies.Main:
-				mpRates = mempoolRates
-			case currencies.Test:
-				mpRates = mempoolRatesTest
-			default:
-				log.Errorf("setGRPCHandlers: wrong networkID:")
-			}
-
-			err = mpRates.Insert(store.MempoolRecord{
+			mempoolCh <- store.MempoolRecord{
 				Category: int(mpRec.Category),
 				HashTX:   mpRec.HashTX,
-			})
-			if err != nil {
-				log.Errorf("initGrpcClient: mpRates.Insert: %s", err.Error())
 			}
+
 		}
 	}()
 
@@ -66,16 +56,6 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			// return nil, err
 		}
 
-		mpRates := &mgo.Collection{}
-		switch networtkID {
-		case currencies.Main:
-			mpRates = mempoolRates
-		case currencies.Test:
-			mpRates = mempoolRatesTest
-		default:
-			log.Errorf("setGRPCHandlers: wrong networkID:")
-		}
-
 		for {
 			mpRec, err := stream.Recv()
 			if err == io.EOF {
@@ -84,10 +64,12 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			if err != nil {
 				log.Errorf("setGRPCHandlers: client.EventAddMempoolRecord:stream.Recv: %s", err.Error())
 			}
-			err = mpRates.Insert(store.MempoolRecord{
+
+			mempoolCh <- store.MempoolRecord{
 				Category: int(mpRec.Category),
 				HashTX:   mpRec.HashTX,
-			})
+			}
+
 			if err != nil {
 				log.Errorf("initGrpcClient: mpRates.Insert: %s", err.Error())
 			}
@@ -103,16 +85,6 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			// return nil, err
 		}
 
-		mpRates := &mgo.Collection{}
-		switch networtkID {
-		case currencies.Main:
-			mpRates = mempoolRates
-		case currencies.Test:
-			mpRates = mempoolRatesTest
-		default:
-			log.Errorf("setGRPCHandlers: wrong networkID:")
-		}
-
 		for {
 			mpRec, err := stream.Recv()
 			if err == io.EOF {
@@ -122,8 +94,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				log.Errorf("initGrpcClient: cli.EventDeleteMempool:stream.Recv: %s", err.Error())
 			}
 
-			query := bson.M{"hashtx": mpRec.Hash}
-			err = mpRates.Remove(query)
+			mempoolCh <- mpRec.Hash
 
 			if err != nil {
 				log.Errorf("setGRPCHandlers:mpRates.Remove: %s", err.Error())
@@ -366,6 +337,30 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				}
 				log.Debugf("EventResyncAddress Reply %s", rp)
 
+			}
+		}
+	}()
+
+	go func() {
+
+		for {
+			switch v := (<-mempoolCh).(type) {
+			// default:
+			// 	log.Errorf("Not found type: %v", v)
+			case string:
+				// delete tx from pool
+				newMap := *mempool
+				delete(newMap, v)
+				m.Lock()
+				*mempool = newMap
+				m.Unlock()
+			case store.MempoolRecord:
+				// add tx to pool
+				newMap := *mempool
+				newMap[v.HashTX] = v.Category
+				m.Lock()
+				*mempool = newMap
+				m.Unlock()
 			}
 		}
 	}()
