@@ -333,6 +333,14 @@ func AddWatchAndResync(currencyID, networkid, walletIndex, addressIndex int, use
 }
 
 func NewAddressNode(address, userid string, currencyID, networkID, walletIndex, addressIndex int, restClient *RestClient) error {
+
+	//add new re-sync to map
+	restClient.BTC.ResyncM.Lock()
+	re := *restClient.BTC.Resync
+	re[address] = true
+	*restClient.BTC.Resync = re
+	restClient.BTC.ResyncM.Unlock()
+
 	switch currencyID {
 	case currencies.Bitcoin:
 		if networkID == currencies.Main {
@@ -1422,6 +1430,7 @@ type AddressVerbose struct {
 	Amount         int64                    `json:"amount"`
 	SpendableOuts  []store.SpendableOutputs `json:"spendableoutputs,omitempty"`
 	Nonce          int64                    `json:"nonce,omitempty"`
+	IsSyncing      bool                     `json:"issyncing"`
 }
 
 type ETHAddressVerbose struct {
@@ -1537,12 +1546,19 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 						}
 					}
 
+					restClient.BTC.ResyncM.Lock()
+					re := *restClient.BTC.Resync
+					restClient.BTC.ResyncM.Unlock()
+
+					sync := re[address.Address]
+
 					av = append(av, AddressVerbose{
 						LastActionTime: address.LastActionTime,
 						Address:        address.Address,
 						AddressIndex:   address.AddressIndex,
 						Amount:         int64(checkBTCAddressbalance(address.Address, wallet.CurrencyID, wallet.NetworkID, restClient)),
 						SpendableOuts:  spOuts,
+						IsSyncing:      sync,
 					})
 
 				}

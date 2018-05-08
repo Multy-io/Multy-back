@@ -141,6 +141,15 @@ type MultyTX struct {
 	WalletsOutput     []WalletForTx         `json:"walletsoutput"` //here we storing all wallets and addresses that took part in Outputs of the transaction
 }
 
+type BTCResync struct {
+	Txs    []MultyTX
+	SpOuts []SpendableOutputs
+}
+type ResyncTx struct {
+	Hash        string
+	BlockHeight int
+}
+
 type AddresAmount struct {
 	Address string `json:"address"`
 	Amount  int64  `json:"amount"`

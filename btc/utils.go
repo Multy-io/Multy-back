@@ -291,14 +291,11 @@ func generatedSpOutsToStore(gSpOut *btcpb.AddSpOut) store.SpendableOutputs {
 func saveMultyTransaction(tx store.MultyTX, networtkID int, resync bool) error {
 
 	txStore := &mgo.Collection{}
-	// spend := &mgo.Collection{}
 	switch networtkID {
 	case currencies.Main:
 		txStore = txsData
-		// spend = spentOutputs
 	case currencies.Test:
 		txStore = txsDataTest
-		// spend = spentOutputsTest
 	default:
 		return errors.New("saveMultyTransaction: wrong networkID")
 	}
