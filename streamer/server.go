@@ -13,7 +13,6 @@ import (
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"
 	"github.com/blockcypher/gobcy"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
 var log = slf.WithContext("streamer")
@@ -114,7 +113,7 @@ func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_E
 
 func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResync) (*pb.ReplyInfo, error) {
 	log.Debugf("EventResyncAddress")
-	allResync := []resyncTx{}
+	allResync := []store.ResyncTx{}
 	requestTimes := 0
 	addrInfo, err := s.BtcAPI.GetAddrFull(address.Address, map[string]string{"limit": "50"})
 	if err != nil {
@@ -127,21 +126,20 @@ func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResy
 	}
 
 	for _, tx := range addrInfo.TXs {
-		allResync = append(allResync, resyncTx{
-			hash:        tx.Hash,
-			blockHeight: tx.BlockHeight,
+		allResync = append(allResync, store.ResyncTx{
+			Hash:        tx.Hash,
+			BlockHeight: tx.BlockHeight,
 		})
 	}
-
 	for i := 0; i < requestTimes; i++ {
-		addrInfo, err := s.BtcAPI.GetAddrFull(address.Address, map[string]string{"limit": "50", "before": strconv.Itoa(allResync[len(allResync)-1].blockHeight)})
+		addrInfo, err := s.BtcAPI.GetAddrFull(address.Address, map[string]string{"limit": "50", "before": strconv.Itoa(allResync[len(allResync)-1].BlockHeight)})
 		if err != nil {
 			return nil, fmt.Errorf("[ERR] EventResyncAddress: s.BtcAPI.GetAddrFull : %s", err.Error())
 		}
 		for _, tx := range addrInfo.TXs {
-			allResync = append(allResync, resyncTx{
-				hash:        tx.Hash,
-				blockHeight: tx.BlockHeight,
+			allResync = append(allResync, store.ResyncTx{
+				Hash:        tx.Hash,
+				BlockHeight: tx.BlockHeight,
 			})
 		}
 	}
@@ -149,19 +147,21 @@ func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResy
 	reverseResyncTx(allResync)
 	log.Debugf("EventResyncAddress:reverseResyncTx %d", len(allResync))
 
-	for _, reTx := range allResync {
-		txHash, err := chainhash.NewHashFromStr(reTx.hash)
-		if err != nil {
-			return nil, fmt.Errorf("resyncAddress: chainhash.NewHashFromStr = %s", err.Error())
-		}
+	s.BtcCli.ResyncAddresses(allResync, address)
 
-		rawTx, err := s.BtcCli.RpcClient.GetRawTransactionVerbose(txHash)
-		if err != nil {
-			return nil, fmt.Errorf("resyncAddress: RpcClient.GetRawTransactionVerbose = %s", err.Error())
-		}
-		s.BtcCli.ProcessTransaction(int64(reTx.blockHeight), rawTx, true)
-		log.Debugf("EventResyncAddress:ProcessTransaction %d", len(allResync))
-	}
+	// for _, reTx := range allResync {
+	// 	txHash, err := chainhash.NewHashFromStr(reTx.Hash)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("resyncAddress: chainhash.NewHashFromStr = %s", err.Error())
+	// 	}
+
+	// 	rawTx, err := s.BtcCli.RpcClient.GetRawTransactionVerbose(txHash)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("resyncAddress: RpcClient.GetRawTransactionVerbose = %s", err.Error())
+	// 	}
+	// 	s.BtcCli.ProcessTransaction(int64(reTx.BlockHeight), rawTx, true)
+	// 	log.Debugf("EventResyncAddress:ProcessTransaction %d", len(allResync))
+	// }
 
 	return &pb.ReplyInfo{
 		Message: "ok",
@@ -253,7 +253,7 @@ func (s *Server) EventDeleteSpendableOut(_ *pb.Empty, stream pb.NodeCommuunicati
 						break
 					}
 				} else {
-					log.Debugf("NewTx history resend success on %d attempt", i)
+					log.Debugf("EventDeleteSpendableOut history resend success on %d attempt", i)
 					break
 				}
 			}
@@ -306,6 +306,31 @@ func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommuunications_NewTxServer) e
 					time.Sleep(time.Second * 2)
 				} else {
 					log.Debugf("NewTx history resend success on %d attempt", i)
+					break
+				}
+			}
+
+		}
+	}
+	return nil
+}
+
+func (s *Server) ResyncAddress(_ *pb.Empty, stream pb.NodeCommuunications_ResyncAddressServer) error {
+	for res := range s.BtcCli.ResyncCh {
+		log.Infof("Resync address - %v", res.String())
+		err := stream.Send(&res)
+		if err != nil {
+			//HACK:
+			log.Errorf("Resync address %s", err.Error())
+			i := 0
+			for {
+				err := stream.Send(&res)
+				if err != nil {
+					i++
+					log.Errorf("Resync address resend attempt(%d) err = %s", i, err.Error())
+					time.Sleep(time.Second * 2)
+				} else {
+					log.Debugf("Resync address resend success on %d attempt", i)
 					break
 				}
 			}

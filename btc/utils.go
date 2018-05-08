@@ -107,7 +107,6 @@ can be called from:
 
 */
 
-// HACK is a wrapper for processTransaction. in future it will be in separate file
 // func ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult, isReSync bool) {
 // 	processTransaction(blockChainBlockHeight, txVerbose, isReSync)
 // }
@@ -145,6 +144,110 @@ func (c *Client) ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcj
 			saveMultyTransaction(transaction, isReSync, c.TransactionsCh)
 		}
 	}
+}
+
+func (c *Client) ResyncAddresses(reTxs []store.ResyncTx, address *pb.AddressToResync) {
+
+	resync := pb.Resync{}
+	for _, reTx := range reTxs {
+		rawTx, err := c.rawTxByTxid(reTx.Hash)
+		if err != nil {
+			log.Errorf("ResyncAddresses:chainhash.NewHashFromStr: %v", err.Error())
+		}
+
+		SpOut, SpOutDelete := c.ResyncSpendableOutputs(rawTx, int64(reTx.BlockHeight), address.GetAddress(), address.GetUserID())
+		resync.SpOutDelete = append(resync.SpOutDelete, SpOutDelete...)
+		resync.SpOuts = append(resync.SpOuts, SpOut...)
+
+		multyTx, _ := c.ParseRawTransaction(int64(reTx.BlockHeight), rawTx)
+		c.setTransactionInfo(multyTx, rawTx, int64(reTx.BlockHeight), true)
+		multyTx.UserId = address.GetUserID()
+		transactions := c.splitTransaction(*multyTx, int64(reTx.BlockHeight))
+		for _, transaction := range transactions {
+			finalizeTransaction(&transaction, rawTx)
+			sTx := storeTxToGenerated(transaction)
+			resync.Txs = append(resync.Txs, &sTx)
+		}
+	}
+	c.ResyncCh <- resync
+}
+
+func (c *Client) ResyncSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int64, address, userid string) ([]*pb.AddSpOut, []*pb.ReqDeleteSpOut) {
+	log.Debugf("ResyncSpendableOutputs")
+	spOuts := []*pb.AddSpOut{}
+	delOuts := []*pb.ReqDeleteSpOut{}
+	// add spout
+	for _, output := range tx.Vout {
+		if len(output.ScriptPubKey.Addresses) > 0 {
+			address := output.ScriptPubKey.Addresses[0]
+
+			c.UserDataM.Lock()
+			ud := *c.UsersData
+			addressEx, ok := ud[address]
+			c.UserDataM.Unlock()
+
+			if !ok {
+				continue
+			}
+
+			txStatus := store.TxStatusAppearedInBlockIncoming
+			if blockHeight == -1 {
+				txStatus = store.TxStatusAppearedInMempoolIncoming
+			}
+
+			amount := int64(output.Value * SatoshiToBitcoin)
+			spendableOutput := store.SpendableOutputs{
+				TxID:         tx.Txid,
+				TxOutID:      int(output.N),
+				TxOutAmount:  amount,
+				TxOutScript:  output.ScriptPubKey.Hex,
+				Address:      address,
+				UserID:       addressEx.UserID,
+				TxStatus:     txStatus,
+				WalletIndex:  addressEx.WalletIndex,
+				AddressIndex: addressEx.AddressIndex,
+			}
+
+			spOut := spOutToGenerated(spendableOutput)
+			//send to channel of creation of spendable output
+			spOuts = append(spOuts, &spOut)
+
+		}
+	}
+	// delete spout
+	for _, input := range tx.Vin {
+		previousTx, err := c.rawTxByTxid(input.Txid)
+		if err != nil {
+			log.Errorf("DeleteSpendableOutputs:rawTxByTxid: %s", err.Error())
+		}
+
+		if previousTx == nil {
+			continue
+		}
+
+		if len(previousTx.Vout[input.Vout].ScriptPubKey.Addresses) > 0 {
+			address := previousTx.Vout[input.Vout].ScriptPubKey.Addresses[0]
+
+			c.UserDataM.Lock()
+			ud := *c.UsersData
+			addressEx, ok := ud[address]
+			c.UserDataM.Unlock()
+
+			if !ok {
+				continue
+			}
+			reqDelete := store.DeleteSpendableOutput{
+				UserID:  addressEx.UserID,
+				TxID:    previousTx.Txid,
+				Address: address,
+			}
+			del := delSpOutToGenerated(reqDelete)
+			delOuts = append(delOuts, &del)
+
+		}
+	}
+	log.Errorf("spOuts %v delOuts %v", spOuts, delOuts)
+	return spOuts, delOuts
 }
 
 /*
@@ -307,20 +410,6 @@ func saveMultyTransaction(tx store.MultyTX, resync bool, TransactionsCh chan pb.
 				}
 			}
 			tx.TxOutAmount = amount
-
-			// if tx.TxOutScript == "" {
-			// 	if tx.TxStatus == store.TxStatusAppearedInMempoolIncoming {
-			// 		tx.TxStatus = store.TxStatusAppearedInMempoolOutcoming
-			// 	}
-
-			// 	if tx.TxStatus == store.TxStatusAppearedInBlockIncoming {
-			// 		tx.TxStatus = store.TxStatusAppearedInBlockOutcoming
-			// 	}
-
-			// 	if tx.TxStatus == store.TxStatusInBlockConfirmedIncoming {
-			// 		tx.TxStatus = store.TxStatusInBlockConfirmedOutcoming
-			// 	}
-			// }
 		}
 
 		//HACK: fetching userid like this
@@ -689,12 +778,9 @@ func (c *Client) DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 				TxID:    previousTx.Txid,
 				Address: address,
 			}
-			// send to client and removefrom db
 
 			del := delSpOutToGenerated(reqDelete)
 			c.DelSpOut <- del
-
-			// fmt.Printf("[DEBUG] deleteSpout %v \n", del.String())
 
 		}
 	}

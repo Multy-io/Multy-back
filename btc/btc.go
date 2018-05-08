@@ -21,6 +21,7 @@ import (
 
 type Client struct {
 	RpcClient      *rpcclient.Client
+	ResyncCh       chan pb.Resync
 	TransactionsCh chan pb.BTCTransaction
 	AddSpOut       chan pb.AddSpOut
 	DelSpOut       chan pb.ReqDeleteSpOut
@@ -37,6 +38,7 @@ var log = slf.WithContext("btc")
 func NewClient(certFromConf []byte, btcNodeAddress string, usersData *map[string]store.AddressExtended, udm, rpcm *sync.Mutex) (*Client, error) {
 
 	cli := &Client{
+		ResyncCh:       make(chan pb.Resync),
 		TransactionsCh: make(chan pb.BTCTransaction),
 		AddSpOut:       make(chan pb.AddSpOut),
 		DelSpOut:       make(chan pb.ReqDeleteSpOut),
