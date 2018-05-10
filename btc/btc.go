@@ -19,11 +19,6 @@ import (
 	"github.com/jekabolt/slf"
 )
 
-const (
-	// TopicTransaction is a topic for sending notifications to clients
-	TopicTransaction = "btcTransactionUpdate"
-)
-
 // BTCConn is a main struct of package
 type BTCConn struct {
 	NsqProducer      *nsq.Producer // a producer for sending data to clients
@@ -154,16 +149,16 @@ func fethCoinType(coinTypes []store.CoinType, currencyID, networkID int) (string
 	return "", fmt.Errorf("fethCoinType: no such coin in config")
 }
 
-// BtcTransaction stuct for ws notifications
-type BtcTransaction struct {
-	TransactionType int    `json:"transactionType"`
-	Amount          int64  `json:"amount"`
-	TxID            string `json:"txid"`
-	Address         string `json:"address"`
-}
+// // BtcTransaction stuct for ws notifications
+// type BtcTransaction struct {
+// 	TransactionType int    `json:"transactionType"`
+// 	Amount          int64  `json:"amount"`
+// 	TxID            string `json:"txid"`
+// 	Address         string `json:"address"`
+// }
 
-// BtcTransactionWithUserID sub-stuct for ws notifications
-type BtcTransactionWithUserID struct {
-	NotificationMsg *BtcTransaction
-	UserID          string
-}
+// // BtcTransactionWithUserID sub-stuct for ws notifications
+// type BtcTransactionWithUserID struct {
+// 	NotificationMsg *BtcTransaction
+// 	UserID          string
+// }

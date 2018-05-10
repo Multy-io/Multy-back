@@ -165,44 +165,48 @@ func setExchangeRates(tx *store.TransactionETH, isReSync bool, TxTime int64) {
 	}
 }
 
-func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer) {
+func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer, netid int) {
 	//TODO: make correct notify
 
 	if tx.Status == store.TxStatusAppearedInBlockIncoming || tx.Status == store.TxStatusAppearedInMempoolIncoming || tx.Status == store.TxStatusInBlockConfirmedIncoming {
-		txMsq := TransactionWithUserID{
+		txMsq := store.TransactionWithUserID{
 			UserID: tx.UserID,
-			NotificationMsg: &Transaction{
-				TransactionType: tx.Status,
+			NotificationMsg: &store.WsTxNotify{
+				CurrencyID:      currencies.Ether,
+				NetworkID:       netid,
+				Address:         tx.To,
 				Amount:          tx.Amount,
 				TxID:            tx.Hash,
-				Address:         tx.To,
+				TransactionType: tx.Status,
 			},
 		}
 		sendNotify(&txMsq, nsqProducer)
 	}
 
 	if tx.Status == store.TxStatusAppearedInBlockOutcoming || tx.Status == store.TxStatusAppearedInMempoolOutcoming || tx.Status == store.TxStatusInBlockConfirmedOutcoming {
-		txMsq := TransactionWithUserID{
+		txMsq := store.TransactionWithUserID{
 			UserID: tx.UserID,
-			NotificationMsg: &Transaction{
-				TransactionType: tx.Status,
+			NotificationMsg: &store.WsTxNotify{
+				CurrencyID:      currencies.Ether,
+				NetworkID:       netid,
+				Address:         tx.From,
 				Amount:          tx.Amount,
 				TxID:            tx.Hash,
-				Address:         tx.From,
+				TransactionType: tx.Status,
 			},
 		}
 		sendNotify(&txMsq, nsqProducer)
 	}
 }
 
-func sendNotify(txMsq *TransactionWithUserID, nsqProducer *nsq.Producer) {
+func sendNotify(txMsq *store.TransactionWithUserID, nsqProducer *nsq.Producer) {
 	newTxJSON, err := json.Marshal(txMsq)
 	if err != nil {
 		log.Errorf("sendNotifyToClients: [%+v] %s\n", txMsq, err.Error())
 		return
 	}
 
-	err = nsqProducer.Publish(TopicTransaction, newTxJSON)
+	err = nsqProducer.Publish(store.TopicTransaction, newTxJSON)
 	if err != nil {
 		log.Errorf("nsq publish new transaction: [%+v] %s\n", txMsq, err.Error())
 		return

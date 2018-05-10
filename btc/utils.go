@@ -168,43 +168,48 @@ func setExchangeRates(tx *store.MultyTX, isReSync bool, TxTime int64) {
 	}
 }
 
-func sendNotifyToClients(tx store.MultyTX, nsqProducer *nsq.Producer) {
+func sendNotifyToClients(tx store.MultyTX, nsqProducer *nsq.Producer, netid int) {
 
 	for _, walletOutput := range tx.WalletsOutput {
-		txMsq := BtcTransactionWithUserID{
+		txMsq := store.TransactionWithUserID{
 			UserID: walletOutput.UserId,
-			NotificationMsg: &BtcTransaction{
-				TransactionType: tx.TxStatus,
-				Amount:          tx.TxOutAmount,
-				TxID:            tx.TxID,
+			NotificationMsg: &store.WsTxNotify{
+				CurrencyID:      currencies.Bitcoin,
+				NetworkID:       netid,
 				Address:         walletOutput.Address.Address,
+				Amount:          strconv.Itoa(int(tx.TxOutAmount)),
+				TxID:            tx.TxID,
+				TransactionType: tx.TxStatus,
 			},
 		}
 		sendNotify(&txMsq, nsqProducer)
 	}
 
 	for _, walletInput := range tx.WalletsInput {
-		txMsq := BtcTransactionWithUserID{
+		txMsq := store.TransactionWithUserID{
 			UserID: walletInput.UserId,
-			NotificationMsg: &BtcTransaction{
-				TransactionType: tx.TxStatus,
-				Amount:          tx.TxOutAmount,
-				TxID:            tx.TxID,
+			NotificationMsg: &store.WsTxNotify{
+				CurrencyID:      currencies.Bitcoin,
+				NetworkID:       netid,
 				Address:         walletInput.Address.Address,
+				Amount:          strconv.Itoa(int(tx.TxOutAmount)),
+				TxID:            tx.TxID,
+				TransactionType: tx.TxStatus,
 			},
 		}
+
 		sendNotify(&txMsq, nsqProducer)
 	}
 }
 
-func sendNotify(txMsq *BtcTransactionWithUserID, nsqProducer *nsq.Producer) {
+func sendNotify(txMsq *store.TransactionWithUserID, nsqProducer *nsq.Producer) {
 	newTxJSON, err := json.Marshal(txMsq)
 	if err != nil {
 		log.Errorf("sendNotifyToClients: [%+v] %s\n", txMsq, err.Error())
 		return
 	}
 
-	err = nsqProducer.Publish(TopicTransaction, newTxJSON)
+	err = nsqProducer.Publish(store.TopicTransaction, newTxJSON)
 	if err != nil {
 		log.Errorf("nsq publish new transaction: [%+v] %s\n", txMsq, err.Error())
 		return

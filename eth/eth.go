@@ -19,11 +19,6 @@ import (
 	"github.com/jekabolt/slf"
 )
 
-const (
-	// TopicTransaction is a topic for sending notifications to clients
-	TopicTransaction = "ethTransactionUpdate"
-)
-
 // ETHConn is a main struct of package
 type ETHConn struct {
 	NsqProducer      *nsq.Producer // a producer for sending data to clients

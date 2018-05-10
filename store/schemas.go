@@ -7,6 +7,8 @@ package store
 
 import (
 	"time"
+
+	"github.com/graarh/golang-socketio"
 )
 
 const (
@@ -18,6 +20,9 @@ const (
 
 	TxStatusInBlockConfirmedIncoming  = 5
 	TxStatusInBlockConfirmedOutcoming = 6
+
+	// ws notification topic
+	TopicTransaction = "TransactionUpdate"
 )
 
 // User represents a single app user
@@ -148,6 +153,20 @@ type BTCResync struct {
 type ResyncTx struct {
 	Hash        string
 	BlockHeight int
+}
+
+type WsTxNotify struct {
+	CurrencyID      int    `json:"currencyid"`
+	NetworkID       int    `json:"networkid"`
+	Address         string `json:"address"`
+	Amount          string `json:"amount"`
+	TxID            string `json:"txid"`
+	TransactionType int    `json:"transactionType"`
+}
+
+type TransactionWithUserID struct {
+	NotificationMsg *WsTxNotify
+	UserID          string
 }
 
 type AddresAmount struct {
@@ -297,4 +316,30 @@ type ServiceInfo struct {
 	Commit    string
 	Buildtime string
 	Lasttag   string
+}
+
+type Receiver struct {
+	ID         string `json:"userid"`
+	CurrencyID int    `json:"currencyid"`
+	Amount     int64  `json:"amount"`
+	UserCode   string `json:"usercode"`
+	Socket     *gosocketio.Channel
+}
+
+type Sender struct {
+	ID       string `json:"userid"`
+	UserCode string `json:"usercode"`
+	Socket   *gosocketio.Channel
+}
+
+type ReceiverInData struct {
+	ID         string `json:"userid"`
+	CurrencyID int    `json:"currencyid"`
+	Amount     int64  `json:"amount"`
+	UserCode   string `json:"usercode"`
+}
+
+type SenderInData struct {
+	Code   string `json:"usercode"`
+	UserID string `json:"userid"`
 }

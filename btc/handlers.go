@@ -7,7 +7,6 @@ package btc
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -22,11 +21,6 @@ import (
 )
 
 func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress, mempool *map[string]int, m *sync.Mutex, resync *map[string]bool, resyncM *sync.Mutex) {
-
-	go func() {
-		fmt.Println("----", resync)
-		time.Sleep(time.Second * 10)
-	}()
 
 	mempoolCh := make(chan interface{})
 
@@ -309,8 +303,9 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				log.Errorf("initGrpcClient: saveMultyTransaction: %s", err)
 			}
 			updateWalletAndAddressDate(tx, networtkID)
-			sendNotifyToClients(tx, nsqProducer)
-
+			if !gTx.Resync {
+				sendNotifyToClients(tx, nsqProducer, networtkID)
+			}
 		}
 	}()
 

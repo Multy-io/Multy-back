@@ -1256,7 +1256,6 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 				})
 				return
 			}
-
 			var pending bool
 			for _, address := range wallet.Adresses {
 				spOuts := getBTCAddressSpendableOutputs(address.Address, currencyId, networkId, restClient)
@@ -1265,6 +1264,11 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 						pending = true
 					}
 				}
+				// TODO:
+				restClient.BTC.ResyncM.Lock()
+				re := *restClient.BTC.Resync
+				restClient.BTC.ResyncM.Unlock()
+				sync := re[address.Address]
 
 				av = append(av, AddressVerbose{
 					LastActionTime: address.LastActionTime,
@@ -1272,6 +1276,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					AddressIndex:   address.AddressIndex,
 					Amount:         int64(checkBTCAddressbalance(address.Address, currencyId, networkId, restClient)),
 					SpendableOuts:  spOuts,
+					IsSyncing:      sync,
 				})
 			}
 			wv = append(wv, WalletVerbose{

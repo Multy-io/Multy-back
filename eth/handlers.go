@@ -124,8 +124,8 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				log.Errorf("initGrpcClient: saveMultyTransaction: %s", err)
 			}
 
-			if gTx.GetResync() {
-				sendNotifyToClients(tx, nsqProducer)
+			if !gTx.GetResync() {
+				sendNotifyToClients(tx, nsqProducer, networtkID)
 			}
 		}
 	}()
