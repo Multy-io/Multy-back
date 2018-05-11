@@ -1360,6 +1360,14 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 				b, _ := strconv.Atoi(amount.GetBalance())
 				pendingBalance = strconv.Itoa(p - b)
 
+				if p != b {
+					pending = true
+				}
+
+				if p-b < 0 {
+					pendingBalance = strconv.Itoa(b - p)
+				}
+
 				waletNonce = nonce.GetNonce()
 
 				av = append(av, ETHAddressVerbose{
@@ -1621,6 +1629,14 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					p, _ := strconv.Atoi(amount.GetPendingBalance())
 					b, _ := strconv.Atoi(amount.GetBalance())
 					pendingBalance = strconv.Itoa(p - b)
+
+					if p != b {
+						pending = true
+					}
+
+					if p-b < 0 {
+						pendingBalance = strconv.Itoa(b - p)
+					}
 
 					walletNonce = nonce.GetNonce()
 
