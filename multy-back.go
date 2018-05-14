@@ -207,12 +207,12 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 	router := gin.Default()
 	multy.route = router
-
+	//
 	gin.SetMode(gin.DebugMode)
 
 	// socketIO server initialization. server -> mobile client
 	socketIORoute := router.Group("/socketio")
-	socketIOPool, err := client.SetSocketIOHandlers(socketIORoute, conf.SocketioAddr, conf.NSQAddress, multy.userStore)
+	socketIOPool, err := client.SetSocketIOHandlers(multy.restClient, multy.BTC, multy.ETH, socketIORoute, conf.SocketioAddr, conf.NSQAddress, multy.userStore)
 	if err != nil {
 		return err
 	}

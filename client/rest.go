@@ -287,7 +287,7 @@ func addAddressToWallet(address, token string, currencyID, networkid, walletInde
 	query := bson.M{"devices.JWT": token}
 
 	if err := restClient.userStore.FindUser(query, &user); err != nil {
-		restClient.log.Errorf("deleteWallet: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+		// restClient.log.Errorf("deleteWallet: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 		return errors.New(msgErrUserNotFound)
 	}
 
@@ -313,13 +313,60 @@ func addAddressToWallet(address, token string, currencyID, networkid, walletInde
 	sel := bson.M{"devices.JWT": token, "wallets.currencyID": currencyID, "wallets.networkID": networkid, "wallets.walletIndex": walletIndex}
 	update := bson.M{"$push": bson.M{"wallets." + strconv.Itoa(position) + ".addresses": addr}}
 	if err := restClient.userStore.Update(sel, update); err != nil {
-		restClient.log.Errorf("addAddressToWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+		// restClient.log.Errorf("addAddressToWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 		return errors.New(msgErrServerError)
 	}
 
 	return AddWatchAndResync(currencyID, networkid, walletIndex, addressIndex, user.UserID, address, restClient)
 
 }
+
+// func addAddressToWalletWS(address, token string, currencyID, networkid, walletIndex, addressIndex int) error {
+// 	user := store.User{}
+// 	query := bson.M{"devices.JWT": token}
+
+// 	if err := restClient.userStore.FindUser(query, &user); err != nil {
+// 		return errors.New(msgErrUserNotFound)
+// 	}
+
+// 	var position int
+// 	for i, wallet := range user.Wallets {
+// 		if wallet.NetworkID == networkid && wallet.CurrencyID == currencyID && wallet.WalletIndex == walletIndex {
+// 			position = i
+// 			for _, walletAddress := range wallet.Adresses {
+// 				if walletAddress.AddressIndex == addressIndex {
+// 					return errors.New(msgErrAddressIndex)
+// 				}
+// 			}
+// 		}
+// 	}
+
+// 	addr := store.Address{
+// 		Address:        address,
+// 		AddressIndex:   addressIndex,
+// 		LastActionTime: time.Now().Unix(),
+// 	}
+
+// 	sel := bson.M{"devices.JWT": token, "wallets.currencyID": currencyID, "wallets.networkID": networkid, "wallets.walletIndex": walletIndex}
+// 	update := bson.M{"$push": bson.M{"wallets." + strconv.Itoa(position) + ".addresses": addr}}
+// 	if err := restClient.userStore.Update(sel, update); err != nil {
+// 		return errors.New(msgErrServerError)
+// 	}
+
+// 	return AddWatchAndResyncWS(currencyID, networkid, walletIndex, addressIndex, user.UserID, address, restClient)
+
+// }
+
+// func AddWatchAndResyncWS(currencyID, networkid, walletIndex, addressIndex int, userid, address string) error {
+
+// 	err := NewAddressNode(address, userid, currencyID, networkid, walletIndex, addressIndex, restClient)
+// 	if err != nil {
+
+// 		return err
+// 	}
+
+// 	return nil
+// }
 
 func AddWatchAndResync(currencyID, networkid, walletIndex, addressIndex int, userid, address string, restClient *RestClient) error {
 

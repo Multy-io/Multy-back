@@ -6,15 +6,22 @@ See LICENSE for details
 package client
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 
+	"github.com/Appscrunch/Multy-back/btc"
+	"github.com/Appscrunch/Multy-back/currencies"
+	"github.com/Appscrunch/Multy-back/eth"
+	btcpb "github.com/Appscrunch/Multy-back/node-streamer/btc"
+	ethpb "github.com/Appscrunch/Multy-back/node-streamer/eth"
 	"github.com/Appscrunch/Multy-back/store"
-	"github.com/gin-gonic/gin"
-	"github.com/graarh/golang-socketio/transport"
 
+	"github.com/gin-gonic/gin"
 	"github.com/graarh/golang-socketio"
+	"github.com/graarh/golang-socketio/transport"
 )
 
 const (
@@ -36,9 +43,14 @@ const (
 	ReceiverOn = "event:receiver:on"
 	SenderOn   = "event:sender:on"
 
-	NewReceiver = "event:new:receiver"
-	Pay         = "event:pay"
-	PaymentSend = "event:payment:send"
+	SenderCheck = "event:sender:check"
+
+	Filter = "event:filter"
+
+	NewReceiver     = "event:new:receiver"
+	SendRaw         = "event:sendraw"
+	PaymentSend     = "event:payment:send"
+	PaymentReceived = "event:payment:received"
 )
 
 func getHeaderDataSocketIO(headers http.Header) (*SocketIOUser, error) {
@@ -64,9 +76,8 @@ func getHeaderDataSocketIO(headers http.Header) (*SocketIOUser, error) {
 	}, nil
 }
 
-func SetSocketIOHandlers(r *gin.RouterGroup, address, nsqAddr string, ratesDB store.UserStore) (*SocketIOConnectedPool, error) {
+func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHConn, r *gin.RouterGroup, address, nsqAddr string, ratesDB store.UserStore) (*SocketIOConnectedPool, error) {
 	server := gosocketio.NewServer(transport.GetDefaultWebsocketTransport())
-
 	pool, err := InitConnectedPool(server, address, nsqAddr, ratesDB)
 	if err != nil {
 		return nil, fmt.Errorf("connection pool initialization: %s", err.Error())
@@ -121,6 +132,121 @@ func SetSocketIOHandlers(r *gin.RouterGroup, address, nsqAddr string, ratesDB st
 		pool.log.Errorf("Error occurs %s", c.Id())
 	})
 
+	server.On(ReceiverOn, func(c *gosocketio.Channel, data store.Receiver) string {
+		pool.log.Infof("Got messeage Receiver On:", data)
+		c.Join(WirelessRoom)
+		receiver := store.Receiver{
+			ID:         data.ID,
+			UserCode:   data.UserCode,
+			CurrencyID: data.CurrencyID,
+			NetworkID:  data.NetworkID,
+			Address:    data.Address,
+			Amount:     data.Amount,
+			Socket:     c,
+		}
+
+		receiversM.Lock()
+		_, ok := receivers[receiver.UserCode]
+		if !ok {
+			receivers[receiver.UserCode] = receiver
+		}
+		receiversM.Unlock()
+
+		//TODO:
+		// wait for incoming tx
+
+		return "ok"
+	})
+
+	server.On(SenderCheck, func(c *gosocketio.Channel, nearIDs []string) {
+		rs := []store.Receiver{}
+		receiversM.Lock()
+		r := receivers
+		receiversM.Unlock()
+
+		for _, id := range nearIDs {
+			if res, ok := r[id]; ok {
+				rs = append(rs, res)
+			}
+		}
+		c.Emit(SenderCheck, rs)
+	})
+
+	server.On(SendRaw, func(c *gosocketio.Channel, raw store.RawHDTx) {
+		switch raw.CurrencyID {
+		case currencies.Bitcoin:
+			var resp *btcpb.ReplyInfo
+
+			if raw.NetworkID == currencies.Test {
+				resp, err = BTC.CliTest.EventSendRawTx(context.Background(), &btcpb.RawTx{
+					Transaction: raw.Transaction,
+				})
+			}
+			if raw.NetworkID == currencies.Main {
+				resp, err = BTC.CliMain.EventSendRawTx(context.Background(), &btcpb.RawTx{
+					Transaction: raw.Transaction,
+				})
+			}
+
+			if err != nil {
+				pool.log.Errorf("sendRawHDTransaction: restClient.BTC.CliMain.EventSendRawTx: %s", err.Error())
+				c.Emit(SendRaw, err.Error())
+				return
+			}
+
+			if strings.Contains("err:", resp.GetMessage()) {
+				pool.log.Errorf("sendRawHDTransaction: restClient.BTC.CliMain.EventSendRawTx:resp err %s", err.Error())
+				c.Emit(SendRaw, err.Error())
+				return
+			}
+
+			if raw.IsHD {
+				err = addAddressToWallet(raw.Address, raw.JWT, raw.CurrencyID, raw.NetworkID, raw.WalletIndex, raw.AddressIndex, restClient, nil)
+				if err != nil {
+					pool.log.Errorf("addAddressToWallet: %v", err.Error())
+				}
+				c.Emit(SendRaw, resp.GetMessage())
+				receiversM.Lock()
+				res := receivers[raw.UserCode]
+				receiversM.Unlock()
+				res.Socket.Emit(PaymentReceived, raw)
+
+			}
+
+		case currencies.Ether:
+			if raw.NetworkID == currencies.ETHMain {
+				h, err := restClient.ETH.CliMain.EventSendRawTx(context.Background(), &ethpb.RawTx{
+					Transaction: raw.Transaction,
+				})
+				if err != nil {
+					pool.log.Errorf("sendRawHDTransaction:eth.SendRawTransaction %s", err.Error())
+					c.Emit(SendRaw, err.Error())
+					return
+				}
+				c.Emit(SendRaw, h.GetMessage())
+				receiversM.Lock()
+				res := receivers[raw.UserCode]
+				receiversM.Unlock()
+				res.Socket.Emit(PaymentReceived, raw)
+			}
+			if raw.NetworkID == currencies.ETHTest {
+				h, err := restClient.ETH.CliMain.EventSendRawTx(context.Background(), &ethpb.RawTx{
+					Transaction: raw.Transaction,
+				})
+				if err != nil {
+					pool.log.Errorf("sendRawHDTransaction:eth.SendRawTransaction %s", err.Error())
+					c.Emit(SendRaw, err.Error())
+					return
+				}
+				c.Emit(SendRaw, h.GetMessage())
+				receiversM.Lock()
+				res := receivers[raw.UserCode]
+				receiversM.Unlock()
+				res.Socket.Emit(PaymentReceived, raw)
+			}
+		}
+	})
+
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
 		pool.log.Infof("Disconnected %s", c.Id())
 		pool.removeUserConn(c.Id())
@@ -138,118 +264,6 @@ func SetSocketIOHandlers(r *gin.RouterGroup, address, nsqAddr string, ratesDB st
 			}
 
 		}
-	})
-
-	server.On(SenderOn, func(c *gosocketio.Channel, data store.SenderInData) string {
-		pool.log.Infof("Sender become on: %v", c.Id())
-		sender := store.Sender{
-			ID:       data.UserID,
-			UserCode: data.Code,
-			Socket:   c,
-		}
-		pool.log.Infof("God data from sender: %v", sender)
-		senderExist := false
-
-		for _, cachedSender := range senders {
-			if cachedSender.ID == sender.ID {
-				senderExist = true
-			}
-		}
-		if !senderExist {
-			senders = append(senders, sender)
-		}
-
-		receiversM.Lock()
-		receiver, ok := receivers[sender.UserCode]
-		receiversM.Unlock()
-
-		// Find receiver by the code
-		if ok {
-			sender.Socket.Emit(NewReceiver, receiver)
-		} else {
-			senderExist := false
-			for _, cachedSender := range senders {
-				if cachedSender.ID == sender.ID {
-					senderExist = true
-				}
-			}
-			if !senderExist {
-				senders = append(senders, sender)
-			}
-		}
-		return "ok"
-	})
-
-	server.On(ReceiverOn, func(c *gosocketio.Channel, data store.ReceiverInData) string {
-		pool.log.Infof("Got messeage Receiver On:", data)
-		c.Join(WirelessRoom)
-		receiver := store.Receiver{
-			ID:         data.ID,
-			CurrencyID: data.CurrencyID,
-			Amount:     data.Amount,
-			UserCode:   data.UserCode,
-			Socket:     c,
-		}
-
-		receiversM.Lock()
-		_, ok := receivers[receiver.UserCode]
-
-		if !ok {
-			receivers[receiver.UserCode] = receiver
-		}
-		receiversM.Unlock()
-
-		//Find sender
-		for _, sender := range senders {
-			if sender.UserCode == receiver.UserCode {
-				sender.Socket.Emit(NewReceiver, receiver)
-			}
-		}
-		return "ok"
-	})
-
-	server.On(SenderOn, func(c *gosocketio.Channel, data store.SenderInData) string {
-
-		pool.log.Infof("Sender become on:", c.Id())
-
-		sender := store.Sender{
-			ID:       data.UserID,
-			UserCode: data.Code,
-			Socket:   c,
-		}
-
-		senderExist := false
-		for _, cachedSender := range senders {
-			if cachedSender.ID == sender.ID {
-				senderExist = true
-			}
-		}
-
-		if !senderExist {
-			senders = append(senders, sender)
-		}
-
-		receiversM.Lock()
-		receiver, ok := receivers[sender.UserCode]
-		receiversM.Unlock()
-
-		// Find Receiver by the code
-		if ok {
-			sender.Socket.Emit(NewReceiver, receiver)
-
-		} else {
-			senderExist := false
-			for _, cachedSender := range senders {
-				if cachedSender.ID == sender.ID {
-					senderExist = true
-				}
-			}
-			if !senderExist {
-				senders = append(senders, sender)
-			}
-		}
-
-		return "ok"
 	})
 
 	serveMux := http.NewServeMux()
