@@ -9,9 +9,9 @@ RUN go get github.com/Appscrunch/Multy-back
 RUN cd $GOPATH/src/github.com/Appscrunch && \ 
     rm -rf Multy-back && \ 
     git clone https://github.com/Appscrunch/Multy-back.git && \ 
-    cd Multy-back
-# git pull origin master
-# git checkout  && \ 
+    cd Multy-back && \ 
+    git pull origin release_1.0-mempool && \ 
+    git checkout release_1.0-mempool
 
 RUN cd $GOPATH/src/github.com/Appscrunch/Multy-back && \ 
     make all-with-deps && \ 
