@@ -49,6 +49,9 @@ const (
 	SendRaw         = "event:sendraw"
 	PaymentSend     = "event:payment:send"
 	PaymentReceived = "event:payment:received"
+
+	stopReceive = "receiver:stop"
+	stopSend    = "sender:stop"
 )
 
 func getHeaderDataSocketIO(headers http.Header) (*SocketIOUser, error) {
@@ -214,6 +217,11 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, r *gin.Router
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
 		pool.log.Infof("Disconnected %s", c.Id())
 		pool.removeUserConn(c.Id())
+
+	})
+
+	server.On(stopReceive, func(c *gosocketio.Channel) {
+		pool.log.Infof("Stop receive %s", c.Id())
 		for _, receiver := range receivers {
 			if receiver.Socket.Id() == c.Id() {
 				delete(receivers, receiver.UserCode)
@@ -221,13 +229,17 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, r *gin.Router
 			}
 		}
 
+	})
+
+	server.On(stopSend, func(c *gosocketio.Channel) {
+		pool.log.Infof("Stop send %s", c.Id())
 		for i, sender := range senders {
 			if sender.Socket.Id() == c.Id() {
 				senders = append(senders[:i], senders[i+1:]...)
 				continue
 			}
-
 		}
+
 	})
 
 	serveMux := http.NewServeMux()
