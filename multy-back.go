@@ -55,7 +55,6 @@ func Init(conf *Configuration) (*Multy, error) {
 	multy := &Multy{
 		config: conf,
 	}
-
 	// DB initialization
 	userStore, err := store.InitUserStore(conf.Database)
 	if err != nil {

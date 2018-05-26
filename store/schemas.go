@@ -342,3 +342,9 @@ type Payload struct {
 	Transaction  string `json:"transaction"`
 	IsHD         bool   `json:"ishd"`
 }
+
+type LastState struct {
+	BTCTestBlock int64  `json:"btctestblock"`
+	BTCMainBlock int64  `json:"btcmainblock"`
+	OffTime      string `json:"offtime"`
+}

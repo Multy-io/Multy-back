@@ -7,6 +7,7 @@ cmd/btc.cert
 cmd/back-*
 cmd/logs
 cmd/rpc.cert
+cmd/state.json
 
 rpc.cert
 data-db

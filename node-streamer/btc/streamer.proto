@@ -6,6 +6,9 @@ service NodeCommuunications {
 
     rpc EventInitialAdd (UsersData) returns (ReplyInfo){
     }
+
+    rpc SyncState (BlockHeight) returns (ReplyInfo){
+    }
         
     rpc EventAddNewAddress (WatchAddress) returns (ReplyInfo){
     }
@@ -88,6 +91,7 @@ message AddSpOut {
 message BlockHeight{
     int64 height = 1 ;
 }
+
 
 message ReqDeleteSpOut {
     string userID = 1;

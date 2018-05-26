@@ -83,6 +83,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, r *gin.Router
 	if err != nil {
 		return nil, fmt.Errorf("connection pool initialization: %s", err.Error())
 	}
+
 	chart, err := newExchangeChart(ratesDB)
 	if err != nil {
 		return nil, fmt.Errorf("exchange chart initialization: %s", err.Error())
@@ -157,6 +158,16 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, r *gin.Router
 		return "ok"
 	})
 
+	// go func() {
+	// 	for {
+	// 		receiversM.Lock()
+	// 		fmt.Println("+++++++++++++receivers", receivers)
+	// 		fmt.Println("+++++++++++++senders", senders)
+	// 		receiversM.Unlock()
+	// 		time.Sleep(7 * time.Second)
+	// 	}
+	// }()
+
 	server.On(SenderCheck, func(c *gosocketio.Channel, nearIDs store.NearVisible) []store.Receiver {
 		nearReceivers := []store.Receiver{}
 		receiversM.Lock()
@@ -217,10 +228,21 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, r *gin.Router
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
 		pool.log.Infof("Disconnected %s", c.Id())
 		pool.removeUserConn(c.Id())
-
+		for _, receiver := range receivers {
+			if receiver.Socket.Id() == c.Id() {
+				delete(receivers, receiver.UserCode)
+				continue
+			}
+		}
+		for i, sender := range senders {
+			if sender.Socket.Id() == c.Id() {
+				senders = append(senders[:i], senders[i+1:]...)
+				continue
+			}
+		}
 	})
 
-	server.On(stopReceive, func(c *gosocketio.Channel) {
+	server.On(stopReceive, func(c *gosocketio.Channel) string {
 		pool.log.Infof("Stop receive %s", c.Id())
 		for _, receiver := range receivers {
 			if receiver.Socket.Id() == c.Id() {
@@ -229,9 +251,13 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, r *gin.Router
 			}
 		}
 
+		receiversM.Lock()
+		fmt.Println("stopReceive", receivers)
+		receiversM.Unlock()
+		return stopReceive + ":ok"
 	})
 
-	server.On(stopSend, func(c *gosocketio.Channel) {
+	server.On(stopSend, func(c *gosocketio.Channel) string {
 		pool.log.Infof("Stop send %s", c.Id())
 		for i, sender := range senders {
 			if sender.Socket.Id() == c.Id() {
@@ -239,6 +265,10 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, r *gin.Router
 				continue
 			}
 		}
+		receiversM.Lock()
+		fmt.Println("stopReceive", senders)
+		receiversM.Unlock()
+		return stopSend + ":ok"
 
 	})
 
