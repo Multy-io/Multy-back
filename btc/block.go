@@ -6,7 +6,7 @@ import (
 )
 
 // ProcessTransaction from block
-func (c *Client) blockTransactions(hash *chainhash.Hash) {
+func (c *Client) BlockTransactions(hash *chainhash.Hash) {
 	log.Debugf("New block connected %s", hash.String())
 	// block Height
 
