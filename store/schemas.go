@@ -7,6 +7,8 @@ package store
 
 import (
 	"time"
+
+	"github.com/graarh/golang-socketio"
 )
 
 const (
@@ -282,4 +284,61 @@ type Donation struct {
 	Address   string `json:"address"`
 	Amount    int64  `json:"amount"`
 	Status    int    `json:"status"`
+}
+
+type Receiver struct {
+	ID         string `json:"userid"`
+	UserCode   string `json:"usercode"`
+	CurrencyID int    `json:"currencyid"`
+	NetworkID  int    `json:"networkid"`
+	Address    string `json:"address"`
+	Amount     string `json:"amount"`
+	Socket     *gosocketio.Channel
+}
+
+type Sender struct {
+	ID       string `json:"userid"`
+	UserCode string `json:"usercode"`
+	Visible  map[string]bool
+	Socket   *gosocketio.Channel
+}
+
+type ReceiverInData struct {
+	ID         string `json:"userid"`
+	CurrencyID int    `json:"currencyid"`
+	Amount     int64  `json:"amount"`
+	UserCode   string `json:"usercode"`
+}
+
+type SenderInData struct {
+	Code    string   `json:"usercode"`
+	UserID  string   `json:"userid"`
+	Visible []string `json:"userid"`
+}
+
+type PaymentData struct {
+	FromID     string `json:"fromid"`
+	ToID       string `json:"toid"`
+	CurrencyID int    `json:"currencyid"`
+	Amount     int64  `json:"amount"`
+}
+
+type NearVisible struct {
+	IDs []string `json:"ids"`
+}
+
+type RawHDTx struct {
+	CurrencyID int    `json:"currencyid"`
+	NetworkID  int    `json:"networkID"`
+	UserCode   string `json:"usercode"`
+	JWT        string `json:"JWT"`
+	Payload    `json:"payload"`
+}
+
+type Payload struct {
+	Address      string `json:"address"`
+	AddressIndex int    `json:"addressindex"`
+	WalletIndex  int    `json:"walletindex"`
+	Transaction  string `json:"transaction"`
+	IsHD         bool   `json:"ishd"`
 }

@@ -23,9 +23,11 @@ import (
 func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress, mempool *map[string]int, m *sync.Mutex) {
 
 	mempoolCh := make(chan interface{})
-
 	// initial fill mempool respectively network id
 	go func() {
+		// 		clientDeadline := time.Now().Add(time.Duration(100) * time.Second)
+		//      c, _ := context.WithDeadline(context.Background(), clientDeadline)
+
 		stream, err := cli.EventGetAllMempool(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())

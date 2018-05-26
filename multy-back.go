@@ -169,7 +169,7 @@ func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 
 	// socketIO server initialization. server -> mobile client
 	socketIORoute := router.Group("/socketio")
-	socketIOPool, err := client.SetSocketIOHandlers(socketIORoute, conf.SocketioAddr, conf.NSQAddress, multy.userStore)
+	socketIOPool, err := client.SetSocketIOHandlers(multy.restClient, multy.BTC, socketIORoute, conf.SocketioAddr, conf.NSQAddress, multy.userStore)
 	if err != nil {
 		return err
 	}
