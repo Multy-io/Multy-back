@@ -164,6 +164,8 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, r *gin.Router
 	// 		fmt.Println("+++++++++++++receivers", receivers)
 	// 		fmt.Println("+++++++++++++senders", senders)
 	// 		receiversM.Unlock()
+
+	// 		fmt.Println("restClient ", restClient)
 	// 		time.Sleep(7 * time.Second)
 	// 	}
 	// }()
@@ -183,7 +185,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, r *gin.Router
 		return nearReceivers
 	})
 
-	server.On(SendRaw, func(c *gosocketio.Channel, raw store.RawHDTx) {
+	server.On(SendRaw, func(c *gosocketio.Channel, raw store.RawHDTx) string {
 
 		var resp *btcpb.ReplyInfo
 
@@ -201,13 +203,13 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, r *gin.Router
 		if err != nil {
 			pool.log.Errorf("sendRawHDTransaction: restClient.BTC.CliMain.EventSendRawTx: %s", err.Error())
 			c.Emit(SendRaw, err.Error())
-			return
+			return err.Error()
 		}
 
 		if strings.Contains("err:", resp.GetMessage()) {
 			pool.log.Errorf("sendRawHDTransaction: restClient.BTC.CliMain.EventSendRawTx:resp err %s", err.Error())
-			c.Emit(SendRaw, err.Error())
-			return
+			c.Emit(SendRaw, resp.GetMessage())
+			return err.Error()
 		}
 
 		if raw.IsHD {
@@ -220,9 +222,9 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, r *gin.Router
 			res := receivers[raw.UserCode]
 			receiversM.Unlock()
 			res.Socket.Emit(PaymentReceived, raw)
-
 		}
 
+		return "success:" + resp.GetMessage()
 	})
 
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {

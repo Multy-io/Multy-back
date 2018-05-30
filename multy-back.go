@@ -166,14 +166,6 @@ func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 
 	gin.SetMode(gin.DebugMode)
 
-	// socketIO server initialization. server -> mobile client
-	socketIORoute := router.Group("/socketio")
-	socketIOPool, err := client.SetSocketIOHandlers(multy.restClient, multy.BTC, socketIORoute, conf.SocketioAddr, conf.NSQAddress, multy.userStore)
-	if err != nil {
-		return err
-	}
-	multy.clientPool = socketIOPool
-
 	restClient, err := client.SetRestHandlers(
 		multy.userStore,
 		router,
@@ -185,6 +177,14 @@ func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 		return err
 	}
 	multy.restClient = restClient
+
+	// socketIO server initialization. server -> mobile client
+	socketIORoute := router.Group("/socketio")
+	socketIOPool, err := client.SetSocketIOHandlers(multy.restClient, multy.BTC, socketIORoute, conf.SocketioAddr, conf.NSQAddress, multy.userStore)
+	if err != nil {
+		return err
+	}
+	multy.clientPool = socketIOPool
 
 	firebaseClient, err := client.InitFirebaseConn(&conf.Firebase, multy.route, conf.NSQAddress)
 	if err != nil {
