@@ -41,7 +41,7 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 		log: slf.WithContext("firebase"),
 	}
 	fClient.log.Info("Firebase connection initialization")
-	fClient.log.Debugf("Firebase sert=%s", fClient.conf.ServerKey)
+	fClient.log.Debugf("Firebase cert len =%d", len(fClient.conf.ServerKey))
 
 	nsqConsumer, err := nsq.NewConsumer(btc.TopicTransaction, "firebase", fClient.nsqConfig)
 	if err != nil {

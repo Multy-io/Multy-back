@@ -187,6 +187,8 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, r *gin.Router
 
 	server.On(SendRaw, func(c *gosocketio.Channel, raw store.RawHDTx) string {
 
+		pool.log.Errorf("raw request ===== %v", raw)
+
 		var resp *btcpb.ReplyInfo
 
 		if raw.NetworkID == currencies.Test {
