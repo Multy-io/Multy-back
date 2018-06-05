@@ -111,6 +111,40 @@ func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_E
 	return nil
 }
 
+func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyInfo, error) {
+	// s.BtcCli.RpcClient.GetTxOut()
+	// var blocks []*chainhash.Hash
+	s.BtcCli.RpcClientM.Lock()
+	currentH, err := s.BtcCli.RpcClient.GetBlockCount()
+	if err != nil {
+		log.Errorf("s.BtcCli.RpcClient.GetBlockCount: %v ", err.Error())
+	}
+	lastH := in.GetHeight()
+
+	log.Debugf("currentH %v lastH %v", currentH, lastH)
+
+	for ; lastH < currentH; lastH++ {
+		hash, err := s.BtcCli.RpcClient.GetBlockHash(lastH)
+		if err != nil {
+			log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
+		}
+		go s.BtcCli.BlockTransactions(hash)
+	}
+
+	// for i := in.GetHeight(); i <= currentH; i++ {
+	// hash, err := s.BtcCli.RpcClient.GetBlockHash(i)
+	// if err != nil {
+	// 	log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
+	// }
+	// go s.BtcCli.BlockTransactions(hash)
+	// }
+	s.BtcCli.RpcClientM.Unlock()
+
+	return &pb.ReplyInfo{
+		Message: "ok",
+	}, nil
+}
+
 func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResync) (*pb.ReplyInfo, error) {
 	log.Debugf("EventResyncAddress")
 	allResync := []store.ResyncTx{}
