@@ -4,6 +4,9 @@ package btc;
 
 service NodeCommuunications {
 
+    rpc ServiceInfo (Empty) returns (ServiceVersion){
+    }
+
     rpc EventInitialAdd (UsersData) returns (ReplyInfo){
     }
 
@@ -38,6 +41,9 @@ service NodeCommuunications {
     }
 
     rpc NewTx (Empty) returns (stream BTCTransaction){
+    }
+
+	 rpc ResyncAddress (Empty) returns (stream Resync){
     }
 
 }
@@ -88,6 +94,12 @@ message AddSpOut {
 	int32 addressIndex = 9;
 }
 
+message Resync {
+	repeated	BTCTransaction Txs = 1;
+	repeated	AddSpOut SpOuts = 2;
+	repeated ReqDeleteSpOut SpOutDelete = 3;
+}
+
 message BlockHeight{
     int64 height = 1 ;
 }
@@ -121,11 +133,14 @@ message Empty {
 }
 
 message RawTx {
-   string transaction = 1;
+	string transaction = 1;
 }
 
 message AddressToResync {
-   string address = 1;
+   string Address = 1;
+   string UserID = 2;    
+   int32 WalletIndex = 3; 
+   int32 AddressIndex = 4;
 }
 
 
@@ -142,4 +157,11 @@ message AddressExtended {
 
 message ReplyInfo {
     string message = 1;
+}
+
+message ServiceVersion {
+    string branch = 1;    
+	string commit = 2;  
+	string buildtime = 3; 
+	string lasttag = 4;  
 }

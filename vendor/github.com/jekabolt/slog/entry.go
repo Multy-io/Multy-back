@@ -4,8 +4,9 @@
 package slog
 
 import (
-	"github.com/KristinaEtc/slf"
 	"time"
+
+	"github.com/jekabolt/slf"
 )
 
 // EntryHandler processes filtered log entries in independent go-routines.

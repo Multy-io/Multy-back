@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/KristinaEtc/slf"
+	"github.com/jekabolt/slf"
 	"github.com/gorilla/websocket"
 )
 

@@ -58,7 +58,8 @@ func GetUUID(DirWithUUID string) string {
 
 	// trying to create new file with uuid
 	//
-	u = uuid.NewV4().String()
+	uid, _ := uuid.NewV4()
+	u = uid.String()
 
 	exist, err := Exists(fpath)
 	if err != nil || !exist {

@@ -314,14 +314,10 @@ func (mw *GinJWTMiddleware) parseToken(c *gin.Context) (*jwt.Token, error) {
 	}
 
 	if err != nil {
-		fmt.Println("[ERR]  parseToken:mw.jwtFromHeader ", err)
 		return nil, err
 	}
-	fmt.Println("[DEBUG]  parseToken:mw.jwtFromHeader : no error ")
 	return jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-		fmt.Println("[DEBUG]  SigningAlgorithm:", mw.SigningAlgorithm)
 		if jwt.GetSigningMethod(mw.SigningAlgorithm) != token.Method {
-			fmt.Println("[ERR]  .GetSigningMethod ", err)
 			return nil, errors.New("invalid signing algorithm")
 		}
 

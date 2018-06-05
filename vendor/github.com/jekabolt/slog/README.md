@@ -111,7 +111,7 @@ Copyright (c) 2016 Ventu.io, Oleg Sklyar, contributors.
 Distributed under a MIT style license found in the [LICENSE][license] file.
 
 
-[docs]: https://godoc.org/github.com/KristinaEtc/slog
+[docs]: https://godoc.org/github.com/jekabolt/slog
 [docsimage]: http://img.shields.io/badge/godoc-reference-blue.svg?style=flat
 
 [build]: https://travis-ci.org/KristinaEtc/slog
@@ -121,9 +121,9 @@ Distributed under a MIT style license found in the [LICENSE][license] file.
 [codecovimage]: https://codecov.io/github/KristinaEtc/slog/coverage.svg?branch=master
 
 [card]: http://goreportcard.com/report/KristinaEtc/slog
-[cardimage]: https://goreportcard.com/badge/github.com/KristinaEtc/slog
+[cardimage]: https://goreportcard.com/badge/github.com/jekabolt/slog
 
-[license]: https://github.com/KristinaEtc/slog/blob/master/LICENSE
+[license]: https://github.com/jekabolt/slog/blob/master/LICENSE
 
-[slf]: https://github.com/KristinaEtc/slf
+[slf]: https://github.com/jekabolt/slf
 [coloured]: https://raw.githubusercontent.com/KristinaEtc/slog/master/basic/coloured-basic-output.png

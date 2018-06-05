@@ -10,9 +10,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Appscrunch/Multy-back/currencies"
 	"github.com/Appscrunch/Multy-back/store"
-	"github.com/KristinaEtc/slf"
+	"github.com/jekabolt/slf"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
@@ -43,50 +42,23 @@ func createDevice(deviceid, ip, jwt, pushToken, appVersion string, deviceType in
 	}
 }
 
-func createWallet(currencyID, networkID int, address string, addressIndex int, walletIndex int, walletName string) interface{} {
-	if currencyID == currencies.Biocoin {
+func createWallet(currencyID, networkID int, address string, addressIndex int, walletIndex int, walletName string) store.Wallet {
 
-	}
-
-	switch currencyID {
-	case currencies.Bitcoin:
-		return store.Wallet{
-			CurrencyID:     currencyID,
-			NetworkID:      networkID,
-			WalletIndex:    walletIndex,
-			WalletName:     walletName,
-			LastActionTime: time.Now().Unix(),
-			DateOfCreation: time.Now().Unix(),
-			Status:         store.WalletStatusOK,
-			Adresses: []store.Address{
-				store.Address{
-					Address:        address,
-					AddressIndex:   addressIndex,
-					LastActionTime: time.Now().Unix(),
-				},
+	return store.Wallet{
+		CurrencyID:     currencyID,
+		NetworkID:      networkID,
+		WalletIndex:    walletIndex,
+		WalletName:     walletName,
+		LastActionTime: time.Now().Unix(),
+		DateOfCreation: time.Now().Unix(),
+		Status:         store.WalletStatusOK,
+		Adresses: []store.Address{
+			store.Address{
+				Address:        address,
+				AddressIndex:   addressIndex,
+				LastActionTime: time.Now().Unix(),
 			},
-		}
-	case currencies.Ether:
-		return store.WalletETH{
-			CurrencyID:     currencyID,
-			NetworkID:      networkID,
-			WalletIndex:    walletIndex,
-			WalletName:     walletName,
-			LastActionTime: time.Now().Unix(),
-			DateOfCreation: time.Now().Unix(),
-			Status:         store.WalletStatusOK,
-			Adresses: []store.Address{
-				store.Address{
-					Address:        address,
-					AddressIndex:   addressIndex,
-					LastActionTime: time.Now().Unix(),
-				},
-			},
-			Nonce:   1,
-			Balance: 0,
-		}
-	default:
-		return nil
+		},
 	}
 
 }

@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strconv"
-	"strings"
-	//"flag"
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strconv"
+	"strings"
 
 	"github.com/kardianos/osext"
 )

@@ -4,6 +4,12 @@ package eth;
 
 service NodeCommuunications {
 
+    rpc ServiceInfo (Empty) returns (ServiceVersion){
+    }
+
+    rpc EventGetGasPrice (Empty) returns (GasPrice){
+    }
+
     rpc EventInitialAdd (UsersData) returns (ReplyInfo){
     }
         
@@ -11,6 +17,12 @@ service NodeCommuunications {
     }
 
     rpc EventGetBlockHeight (Empty) returns (BlockHeight){
+    }
+
+    rpc EventGetAdressNonce (AddressToResync) returns (Nonce){
+    }
+
+    rpc EventGetAdressBalance (AddressToResync) returns (Balance){
     }
 
     rpc EventGetAllMempool (Empty) returns (stream MempoolRecord){
@@ -33,6 +45,18 @@ service NodeCommuunications {
 
 }
 
+message Balance {
+    string Balance = 1;
+    string PendingBalance = 2;
+}
+message Nonce {
+    int64 Nonce = 1;
+}
+
+message GasPrice {
+    string Gas = 1;
+}
+
 message ETHTransaction {
     string UserID = 1;
     int32 WalletIndex = 2;
@@ -40,7 +64,7 @@ message ETHTransaction {
 	string Hash = 4;                       
 	string From = 5;                      
 	string To = 6;  
-    int64 Amount = 7;
+    string Amount = 7;
 	int64 GasPrice = 8;        
 	int64 GasLimit = 9;          
 	int32 Nonce = 10;         
@@ -96,4 +120,11 @@ message AddressExtended {
 
 message ReplyInfo {
     string message = 1;
+}
+
+message ServiceVersion {
+    string branch = 1;    
+	string commit = 2;  
+	string buildtime = 3; 
+	string lasttag = 4;    
 }

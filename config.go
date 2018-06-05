@@ -6,6 +6,7 @@ See LICENSE for details
 package multyback
 
 import (
+	// "github.com/Appscrunch/Multy-back-exchange-service/core"
 	"github.com/Appscrunch/Multy-back/client"
 	"github.com/Appscrunch/Multy-back/store"
 )
@@ -21,6 +22,8 @@ type Configuration struct {
 	BTCNodeAddress    string
 	DonationAddresses []store.DonationInfo
 	MultyVerison      store.ServerConfig
+	// ExchangerConfiguration core.ManagerConfiguration
+	ServicesInfo []store.ServiceInfo
 
 	SupportedNodes []store.CoinType
 }

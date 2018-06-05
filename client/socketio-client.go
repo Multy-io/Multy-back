@@ -12,11 +12,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Appscrunch/Multy-back/btc"
 	"github.com/Appscrunch/Multy-back/store"
-	"github.com/KristinaEtc/slf"
 	nsq "github.com/bitly/go-nsq"
 	"github.com/graarh/golang-socketio"
+	"github.com/jekabolt/slf"
 )
 
 const updateExchangeClient = time.Second * 5
@@ -60,7 +59,7 @@ func InitConnectedPool(server *gosocketio.Server, address, nsqAddr string, db st
 
 func (sConnPool *SocketIOConnectedPool) newConsumerBTCTransaction(nsqAddr string) (*nsq.Consumer, error) {
 	sConnPool.log.Info("newConsumerBTCTransaction: init")
-	consumer, err := nsq.NewConsumer(btc.TopicTransaction, "socketio", nsq.NewConfig())
+	consumer, err := nsq.NewConsumer(store.TopicTransaction, "socketio", nsq.NewConfig())
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +68,7 @@ func (sConnPool *SocketIOConnectedPool) newConsumerBTCTransaction(nsqAddr string
 		// msgRaw := message.Body
 		// sConnPool.log.Debugf("socketio new transaction notify: %+v", string(msgRaw))
 
-		var newTransactionWithUserID = btc.BtcTransactionWithUserID{}
+		var newTransactionWithUserID = store.TransactionWithUserID{}
 		if err := json.Unmarshal(message.Body, &newTransactionWithUserID); err != nil {
 			sConnPool.log.Errorf("topic btc transaction update: %s", err.Error())
 			return err
@@ -86,7 +85,7 @@ func (sConnPool *SocketIOConnectedPool) newConsumerBTCTransaction(nsqAddr string
 	return consumer, nil
 }
 
-func (sConnPool *SocketIOConnectedPool) sendTransactionNotify(newTransactionWithUserID btc.BtcTransactionWithUserID) {
+func (sConnPool *SocketIOConnectedPool) sendTransactionNotify(newTransactionWithUserID store.TransactionWithUserID) {
 	// sConnPool.log.Debug("sendTransactionNotify")
 	sConnPool.m.Lock()
 	defer sConnPool.m.Unlock()
@@ -99,7 +98,7 @@ func (sConnPool *SocketIOConnectedPool) sendTransactionNotify(newTransactionWith
 
 	sConnPool.log.Debugf("btc nofify socketio: userID=%s, conns=%d", userID, len(userConns))
 	for _, conn := range userConns {
-		conn.Emit(btc.TopicTransaction, newTransactionWithUserID)
+		conn.Emit(store.TopicTransaction, newTransactionWithUserID)
 	}
 }
 

@@ -14,7 +14,9 @@ import (
 
 	"github.com/Appscrunch/Multy-back/btc"
 	"github.com/Appscrunch/Multy-back/currencies"
+	"github.com/Appscrunch/Multy-back/eth"
 	btcpb "github.com/Appscrunch/Multy-back/node-streamer/btc"
+	ethpb "github.com/Appscrunch/Multy-back/node-streamer/eth"
 	"github.com/Appscrunch/Multy-back/store"
 
 	"github.com/gin-gonic/gin"
@@ -35,7 +37,6 @@ const (
 )
 
 const (
-	PORT         = ":5555"
 	WirelessRoom = "wireless"
 
 	ReceiverOn = "event:receiver:on"
@@ -77,7 +78,7 @@ func getHeaderDataSocketIO(headers http.Header) (*SocketIOUser, error) {
 	}, nil
 }
 
-func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, r *gin.RouterGroup, address, nsqAddr string, ratesDB store.UserStore) (*SocketIOConnectedPool, error) {
+func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHConn, r *gin.RouterGroup, address, nsqAddr string, ratesDB store.UserStore) (*SocketIOConnectedPool, error) {
 	server := gosocketio.NewServer(transport.GetDefaultWebsocketTransport())
 	pool, err := InitConnectedPool(server, address, nsqAddr, ratesDB)
 	if err != nil {
@@ -127,6 +128,8 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, r *gin.Router
 		sendExchange(user, c)
 		pool.log.Debugf("OnConnection done")
 	})
+
+	//TODO: feature logic
 
 	server.On(gosocketio.OnError, func(c *gosocketio.Channel) {
 		pool.log.Errorf("Error occurs %s", c.Id())
@@ -186,47 +189,81 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, r *gin.Router
 	})
 
 	server.On(SendRaw, func(c *gosocketio.Channel, raw store.RawHDTx) string {
+		switch raw.CurrencyID {
+		case currencies.Bitcoin:
+			var resp *btcpb.ReplyInfo
 
-		pool.log.Errorf("raw request ===== %v", raw)
-
-		var resp *btcpb.ReplyInfo
-
-		if raw.NetworkID == currencies.Test {
-			resp, err = BTC.CliTest.EventSendRawTx(context.Background(), &btcpb.RawTx{
-				Transaction: raw.Transaction,
-			})
-		}
-		if raw.NetworkID == currencies.Main {
-			resp, err = BTC.CliMain.EventSendRawTx(context.Background(), &btcpb.RawTx{
-				Transaction: raw.Transaction,
-			})
-		}
-
-		if err != nil {
-			pool.log.Errorf("sendRawHDTransaction: restClient.BTC.CliMain.EventSendRawTx: %s", err.Error())
-			c.Emit(SendRaw, err.Error())
-			return err.Error()
-		}
-
-		if strings.Contains("err:", resp.GetMessage()) {
-			pool.log.Errorf("sendRawHDTransaction: restClient.BTC.CliMain.EventSendRawTx:resp err %s", err.Error())
-			c.Emit(SendRaw, resp.GetMessage())
-			return err.Error()
-		}
-
-		if raw.IsHD {
-			err = addAddressToWallet(raw.Address, raw.JWT, raw.CurrencyID, raw.NetworkID, raw.WalletIndex, raw.AddressIndex, restClient, nil)
-			if err != nil {
-				pool.log.Errorf("addAddressToWallet: %v", err.Error())
+			if raw.NetworkID == currencies.Test {
+				resp, err = BTC.CliTest.EventSendRawTx(context.Background(), &btcpb.RawTx{
+					Transaction: raw.Transaction,
+				})
 			}
-			c.Emit(SendRaw, resp.GetMessage())
-			receiversM.Lock()
-			res := receivers[raw.UserCode]
-			receiversM.Unlock()
-			res.Socket.Emit(PaymentReceived, raw)
-		}
+			if raw.NetworkID == currencies.Main {
+				resp, err = BTC.CliMain.EventSendRawTx(context.Background(), &btcpb.RawTx{
+					Transaction: raw.Transaction,
+				})
+			}
 
-		return "success:" + resp.GetMessage()
+			if err != nil {
+				pool.log.Errorf("sendRawHDTransaction: restClient.BTC.CliMain.EventSendRawTx: %s", err.Error())
+				c.Emit(SendRaw, err.Error())
+				return err.Error()
+			}
+
+			if strings.Contains("err:", resp.GetMessage()) {
+				pool.log.Errorf("sendRawHDTransaction: restClient.BTC.CliMain.EventSendRawTx:resp err %s", err.Error())
+				c.Emit(SendRaw, resp.GetMessage())
+				return err.Error()
+			}
+
+			if raw.IsHD && !strings.Contains("err:", resp.GetMessage()) {
+				err = addAddressToWallet(raw.Address, raw.JWT, raw.CurrencyID, raw.NetworkID, raw.WalletIndex, raw.AddressIndex, restClient, nil)
+				if err != nil {
+					pool.log.Errorf("addAddressToWallet: %v", err.Error())
+				}
+				c.Emit(SendRaw, resp.GetMessage())
+				receiversM.Lock()
+				res := receivers[raw.UserCode]
+				receiversM.Unlock()
+				res.Socket.Emit(PaymentReceived, raw)
+			}
+
+			return "success:" + resp.GetMessage()
+
+		case currencies.Ether:
+			if raw.NetworkID == currencies.ETHMain {
+				h, err := restClient.ETH.CliMain.EventSendRawTx(context.Background(), &ethpb.RawTx{
+					Transaction: raw.Transaction,
+				})
+				if err != nil {
+					pool.log.Errorf("sendRawHDTransaction:eth.SendRawTransaction %s", err.Error())
+					return err.Error()
+				}
+
+				if strings.Contains("err:", h.GetMessage()) {
+					pool.log.Errorf("sendRawHDTransaction: strings.Contains err: %s", err.Error())
+					return err.Error()
+				}
+				return "success:" + h.GetMessage()
+			}
+			if raw.NetworkID == currencies.ETHTest {
+				h, err := restClient.ETH.CliMain.EventSendRawTx(context.Background(), &ethpb.RawTx{
+					Transaction: raw.Transaction,
+				})
+				if err != nil {
+					pool.log.Errorf("sendRawHDTransaction:eth.SendRawTransaction %s", err.Error())
+					return err.Error()
+				}
+
+				if strings.Contains("err:", h.GetMessage()) {
+					pool.log.Errorf("sendRawHDTransaction: strings.Contains err: %s", err.Error())
+					return err.Error()
+				}
+				return "success:" + h.GetMessage()
+			}
+
+		}
+		return "err: no such curid or netid"
 	})
 
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
@@ -269,9 +306,6 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, r *gin.Router
 				continue
 			}
 		}
-		receiversM.Lock()
-		fmt.Println("stopReceive", senders)
-		receiversM.Unlock()
 		return stopSend + ":ok"
 
 	})

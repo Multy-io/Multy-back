@@ -45,6 +45,14 @@ type Conf struct {
 	TableSpendableOutputsBTCTest string
 	TableSpentOutputsBTCTest     string
 
+	// ETH main
+	TableMempoolRatesETHMain string
+	TableTxsDataETHMain      string
+
+	// ETH main
+	TableMempoolRatesETHTest string
+	TableTxsDataETHTest      string
+
 	//Authentification
 	Username string
 	Password string
@@ -66,13 +74,10 @@ type UserStore interface {
 
 	//TODo update this method by eth
 	GetAllWalletTransactions(userid string, currencyID, networkID int, walletTxs *[]MultyTX) error
+	GetAllWalletEthTransactions(userid string, currencyID, networkID int, walletTxs *[]TransactionETH) error
 	// GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs)
 	GetAddressSpendableOutputs(address string, currencyID, networkID int) ([]SpendableOutputs, error)
 	DeleteWallet(userid string, walletindex, currencyID, networkID int) error
-	GetEthereumTransationHistory(query bson.M) ([]TransactionETH, error)
-	AddEthereumTransaction(tx TransactionETH) error
-	UpdateEthereumTransaction(sel, update bson.M) error
-	FindETHTransaction(sel bson.M) error
 	// DropTest()
 
 	FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error)
@@ -91,6 +96,14 @@ type MongoUserStore struct {
 	// btc test
 	BTCTestTxsData          *mgo.Collection
 	BTCTestSpendableOutputs *mgo.Collection
+
+	//eth main
+	ETHMainRatesData *mgo.Collection
+	ETHMainTxsData   *mgo.Collection
+
+	//eth test
+	ETHTestRatesData *mgo.Collection
+	ETHTestTxsData   *mgo.Collection
 
 	stockExchangeRate *mgo.Collection
 	ethTxHistory      *mgo.Collection
@@ -127,8 +140,13 @@ func InitUserStore(conf Conf) (UserStore, error) {
 	uStore.BTCTestTxsData = uStore.session.DB(conf.DBTx).C(conf.TableTxsDataBTCTest)
 	uStore.BTCTestSpendableOutputs = uStore.session.DB(conf.DBTx).C(conf.TableSpendableOutputsBTCTest)
 
-	// ETH mock
-	uStore.ethTxHistory = uStore.session.DB(conf.DBTx).C("ETH")
+	// ETH main
+	uStore.ETHMainRatesData = uStore.session.DB(conf.DBFeeRates).C(conf.TableMempoolRatesETHMain)
+	uStore.ETHMainTxsData = uStore.session.DB(conf.DBTx).C(conf.TableTxsDataETHMain)
+
+	// ETH test
+	uStore.ETHTestRatesData = uStore.session.DB(conf.DBFeeRates).C(conf.TableMempoolRatesETHTest)
+	uStore.ETHTestTxsData = uStore.session.DB(conf.DBTx).C(conf.TableTxsDataETHTest)
 
 	return uStore, nil
 }
@@ -164,22 +182,6 @@ func (mStore *MongoUserStore) FindAllUserETHTransactions(sel bson.M) ([]Transact
 func (mStore *MongoUserStore) FindETHTransaction(sel bson.M) error {
 	err := mStore.ethTxHistory.Find(sel).One(nil)
 	return err
-}
-
-func (mStore *MongoUserStore) UpdateEthereumTransaction(sel, update bson.M) error {
-	err := mStore.ethTxHistory.Update(sel, update)
-	return err
-}
-
-func (mStore *MongoUserStore) AddEthereumTransaction(tx TransactionETH) error {
-	err := mStore.ethTxHistory.Insert(tx)
-	return err
-}
-
-func (mStore *MongoUserStore) GetEthereumTransationHistory(query bson.M) ([]TransactionETH, error) {
-	allTxs := []TransactionETH{}
-	err := mStore.ethTxHistory.Find(query).All(&allTxs)
-	return allTxs, err
 }
 
 func (mStore *MongoUserStore) DeleteWallet(userid string, walletindex, currencyID, networkID int) error {
@@ -265,14 +267,6 @@ func (mStore *MongoUserStore) Insert(user User) error {
 	return mStore.usersData.Insert(user)
 }
 
-// func (mStore *MongoUserStore) FindUserTxs(query bson.M, userTxs *TxRecord) error {
-// 	return mStore.txsData.Find(query).One(userTxs)
-// }
-
-// func (mStore *MongoUserStore) InsertTxStore(userTxs TxRecord) error {
-// 	return mStore.txsData.Insert(userTxs)
-// }
-
 func (mStore *MongoUserStore) InsertExchangeRate(eRate ExchangeRates, exchangeStock string) error {
 	eRateRecord := &ExchangeRatesRecord{
 		Exchanges:     eRate,
@@ -299,7 +293,22 @@ func (mStore *MongoUserStore) GetAllWalletTransactions(userid string, currencyID
 		if networkID == currencies.Test {
 			return mStore.BTCTestTxsData.Find(query).All(walletTxs)
 		}
+	}
+	return nil
+}
+
+func (mStore *MongoUserStore) GetAllWalletEthTransactions(userid string, currencyID, networkID int, walletTxs *[]TransactionETH) error {
+	switch currencyID {
 	case currencies.Ether:
+		query := bson.M{"userid": userid}
+		if networkID == currencies.ETHMain {
+			return mStore.ETHMainTxsData.Find(query).All(walletTxs)
+		}
+		if networkID == currencies.ETHTest {
+			err := mStore.ETHTestTxsData.Find(query).All(walletTxs)
+			return err
+		}
+
 	}
 	return nil
 }

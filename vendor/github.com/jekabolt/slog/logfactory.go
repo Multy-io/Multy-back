@@ -4,9 +4,10 @@
 package slog
 
 import (
-	"github.com/KristinaEtc/slf"
 	"strings"
 	"sync"
+
+	"github.com/jekabolt/slf"
 )
 
 const (

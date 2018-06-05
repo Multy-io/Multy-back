@@ -21,9 +21,8 @@ const (
 	TxStatusInBlockConfirmedIncoming  = 5
 	TxStatusInBlockConfirmedOutcoming = 6
 
-	// TxStatusInBlockConfirmed = 5
-
-	// TxStatusRejectedFromBlock = -1
+	// ws notification topic
+	TopicTransaction = "TransactionUpdate"
 )
 
 // User represents a single app user
@@ -74,7 +73,7 @@ const (
 type Wallet struct {
 	// Currency of wallet.
 	CurrencyID int `bson:"currencyID"`
-	// Currency of wallet.
+	// Sub-net of currency 0 - main 1 - test
 	NetworkID int `bson:"networkID"`
 
 	//wallet identifier
@@ -145,6 +144,29 @@ type MultyTX struct {
 	TxOutputs         []AddresAmount        `json:"txoutputs"`
 	WalletsInput      []WalletForTx         `json:"walletsinput"`  //here we storing all wallets and addresses that took part in Inputs of the transaction
 	WalletsOutput     []WalletForTx         `json:"walletsoutput"` //here we storing all wallets and addresses that took part in Outputs of the transaction
+}
+
+type BTCResync struct {
+	Txs    []MultyTX
+	SpOuts []SpendableOutputs
+}
+type ResyncTx struct {
+	Hash        string
+	BlockHeight int
+}
+
+type WsTxNotify struct {
+	CurrencyID      int    `json:"currencyid"`
+	NetworkID       int    `json:"networkid"`
+	Address         string `json:"address"`
+	Amount          string `json:"amount"`
+	TxID            string `json:"txid"`
+	TransactionType int    `json:"transactionType"`
+}
+
+type TransactionWithUserID struct {
+	NotificationMsg *WsTxNotify
+	UserID          string
 }
 
 type AddresAmount struct {
@@ -225,17 +247,20 @@ type WalletETH struct {
 
 type TransactionETH struct {
 	UserID            string                `json:"userid"`
-	Hash              string                `json:"hash"`
+	WalletIndex       int                   `json:"walletindex"`
+	AddressIndex      int                   `json:"addressindex"`
+	Hash              string                `json:"txhash"`
 	From              string                `json:"from"`
 	To                string                `json:"to"`
-	Amount            int64                 `json:"amount"`
+	Amount            string                `json:"txoutamount"`
 	GasPrice          int64                 `json:"gasprice"`
 	GasLimit          int64                 `json:"gaslimit"`
 	Nonce             int                   `json:"nonce"`
-	Status            int                   `json:"status"`
+	Status            int                   `json:"txstatus" bson:"txstatus"`
 	BlockTime         int64                 `json:"blocktime"`
-	PoolTime          int64                 `json:"tpooltime"`
+	PoolTime          int64                 `json:"mempooltime"`
 	BlockHeight       int64                 `json:"blockheight"`
+	Confirmations     int                   `json:"confirmations"`
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 }
 
@@ -284,6 +309,13 @@ type Donation struct {
 	Address   string `json:"address"`
 	Amount    int64  `json:"amount"`
 	Status    int    `json:"status"`
+}
+
+type ServiceInfo struct {
+	Branch    string
+	Commit    string
+	Buildtime string
+	Lasttag   string
 }
 
 type Receiver struct {

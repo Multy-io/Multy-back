@@ -10,10 +10,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/Appscrunch/Multy-back/btc"
-	"github.com/KristinaEtc/slf"
+	"github.com/Appscrunch/Multy-back/store"
 	fcm "github.com/NaySoftware/go-fcm"
 	"github.com/gin-gonic/gin"
+	"github.com/jekabolt/slf"
 
 	"github.com/nsqio/go-nsq"
 )
@@ -43,7 +43,7 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 	fClient.log.Info("Firebase connection initialization")
 	fClient.log.Debugf("Firebase cert len =%d", len(fClient.conf.ServerKey))
 
-	nsqConsumer, err := nsq.NewConsumer(btc.TopicTransaction, "firebase", fClient.nsqConfig)
+	nsqConsumer, err := nsq.NewConsumer(store.TopicTransaction, "firebase", fClient.nsqConfig)
 	if err != nil {
 		return nil, fmt.Errorf("new nsq consumer: %s", err.Error())
 	}
@@ -51,7 +51,7 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 		msgRaw := message.Body
 		// fClient.log.Debugf("firebase new transaction notify: %+v", string(msgRaw))
 
-		msg := btc.BtcTransactionWithUserID{}
+		msg := store.TransactionWithUserID{}
 		err := json.Unmarshal(msgRaw, &msg)
 		if err != nil {
 			return err
@@ -61,20 +61,20 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 			"txid":            msg.NotificationMsg.TxID,
 			"transactionType": strconv.Itoa(msg.NotificationMsg.TransactionType),
 			// "amount":          strconv.FormatFloat(msg.NotificationMsg.Amount, 'f', 3, 64),
-			"amount":  strconv.FormatInt(msg.NotificationMsg.Amount, 10),
+			"amount":  msg.NotificationMsg.Amount,
 			"address": msg.NotificationMsg.Address,
 		}
 		// fClient.log.Debugf("data=%+v", data)
 
 		// TODO: add version /v1
-		fClient.client.NewFcmMsgTo("/topics/"+btc.TopicTransaction+"-"+msg.UserID, data) //
+		fClient.client.NewFcmMsgTo("/topics/"+store.TopicTransaction+"-"+msg.UserID, data) //
 		status, err := fClient.client.Send()
 		if err != nil {
 			return err
 		}
 		status.PrintResults()
 		// TODO: add version /v1
-		fClient.client.NewFcmMsgTo(btc.TopicTransaction+"-"+msg.UserID, data) //
+		fClient.client.NewFcmMsgTo(store.TopicTransaction+"-"+msg.UserID, data) //
 		status, err = fClient.client.Send()
 		if err != nil {
 			return err
