@@ -127,6 +127,10 @@ func (client *Client) parseETHTransaction(rawTX ethrpc.Transaction, blockHeight 
 		tx.BlockHeight = int64(block.Number)
 	}
 
+	if blockHeight == -1 {
+		tx.TxpoolTime = time.Now().Unix()
+	}
+
 	// log.Infof("tx - %v", tx)
 
 	/*
