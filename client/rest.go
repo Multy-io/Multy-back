@@ -822,7 +822,6 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 		case currencies.Bitcoin:
 			restClient.BTC.M.Lock()
 			mempool := *restClient.BTC.BtcMempool
-			restClient.BTC.M.Unlock()
 
 			type kv struct {
 				Key   string
@@ -833,6 +832,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 			for k, v := range mempool {
 				mp = append(mp, kv{k, v})
 			}
+			restClient.BTC.M.Unlock()
 
 			sort.Slice(mp, func(i, j int) bool {
 				return mp[i].Value > mp[j].Value

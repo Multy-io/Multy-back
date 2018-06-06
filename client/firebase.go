@@ -6,25 +6,38 @@ See LICENSE for details
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 
+	firebase "firebase.google.com/go"
+	"firebase.google.com/go/messaging"
+	"github.com/Appscrunch/Multy-back/currencies"
 	"github.com/Appscrunch/Multy-back/store"
-	fcm "github.com/NaySoftware/go-fcm"
 	"github.com/gin-gonic/gin"
 	"github.com/jekabolt/slf"
+	"google.golang.org/api/option"
 
 	"github.com/nsqio/go-nsq"
 )
 
 type FirebaseConf struct {
-	ServerKey string
+	Type                    string `json:"type"`
+	ProjectID               string `json:"project_id"`
+	PrivateKeyID            string `json:"private_key_id"`
+	PrivateKey              string `json:"private_key"`
+	ClientEmail             string `json:"client_email"`
+	ClientID                string `json:"client_id"`
+	AuthURI                 string `json:"auth_uri"`
+	TokenURI                string `json:"token_uri"`
+	AuthProviderX509CertURL string `json:"auth_provider_x509_cert_url"`
+	ClientX509CertURL       string `json:"client_x509_cert_url"`
 }
 
 type FirebaseClient struct {
-	conf   *FirebaseConf
-	client *fcm.FcmClient
+	conf *FirebaseConf
+	// client *fcm.FcmClient
+	app *firebase.App
 
 	nsqConsumer *nsq.Consumer
 	nsqConfig   *nsq.Config
@@ -34,19 +47,24 @@ type FirebaseClient struct {
 
 func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*FirebaseClient, error) {
 	fClient := &FirebaseClient{
-		conf:      conf,
-		client:    fcm.NewFcmClient(conf.ServerKey),
+		conf: conf,
+		// client:    fcm.NewFcmClient(conf.ServerKey),
 		nsqConfig: nsq.NewConfig(),
 
 		log: slf.WithContext("firebase"),
 	}
 	fClient.log.Info("Firebase connection initialization")
-	fClient.log.Debugf("Firebase cert len =%d", len(fClient.conf.ServerKey))
+
+	service, err := NewPushService("./multy.config")
+	if err != nil {
+		return nil, fmt.Errorf("NewPushService: %s", err.Error())
+	}
 
 	nsqConsumer, err := nsq.NewConsumer(store.TopicTransaction, "firebase", fClient.nsqConfig)
 	if err != nil {
 		return nil, fmt.Errorf("new nsq consumer: %s", err.Error())
 	}
+
 	nsqConsumer.AddHandler(nsq.HandlerFunc(func(message *nsq.Message) error {
 		msgRaw := message.Body
 		// fClient.log.Debugf("firebase new transaction notify: %+v", string(msgRaw))
@@ -56,30 +74,61 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 		if err != nil {
 			return err
 		}
+		txType := msg.NotificationMsg.TransactionType
+		if txType == store.TxStatusAppearedInMempoolIncoming || txType == store.TxStatusAppearedInBlockIncoming || txType == store.TxStatusInBlockConfirmedIncoming {
+			// topic := store.TopicTransaction + "-" + msg.UserID
+			topic := "btcTransactionUpdate-" + msg.UserID
+			// topic := "btcTransactionUpdate-003b1e5227ce5f45b22676dc4b55ea00e1410c5f3cf8ae972724fa5d93ecc4585e"
 
-		data := map[string]string{
-			"txid":            msg.NotificationMsg.TxID,
-			"transactionType": strconv.Itoa(msg.NotificationMsg.TransactionType),
-			// "amount":          strconv.FormatFloat(msg.NotificationMsg.Amount, 'f', 3, 64),
-			"amount":  msg.NotificationMsg.Amount,
-			"address": msg.NotificationMsg.Address,
-		}
-		// fClient.log.Debugf("data=%+v", data)
+			messageKeys := map[string]string{
+				"score": "850",
+				"time":  "2:45",
+			}
+			messageToSend := &messaging.Message{
+				Data: messageKeys,
+				APNS: &messaging.APNSConfig{
+					Payload: &messaging.APNSPayload{
+						Aps: &messaging.Aps{
+							Alert: &messaging.ApsAlert{
+								Title: "You have a new incoming transaction",
+								Body:  msg.NotificationMsg.Amount + " " + currencies.CurrencyNames[msg.NotificationMsg.CurrencyID],
+							},
+						},
+					},
+				},
+				Topic: topic,
+			}
 
-		// TODO: add version /v1
-		fClient.client.NewFcmMsgTo("/topics/"+store.TopicTransaction+"-"+msg.UserID, data) //
-		status, err := fClient.client.Send()
-		if err != nil {
-			return err
+			// messageToSend := &messaging.Message{
+			// 	APNS: &messaging.APNSConfig{
+			// 		Payload: &messaging.APNSPayload{
+			// 			Aps: &messaging.Aps{
+			// 				Alert: &messaging.ApsAlert{
+			// 					Title: "$GOOG up 1.43% on the day",
+			// 					Body:  "$GOOG gained 11.80 points to close at 835.67, up 1.43% on the day.",
+			// 				},
+			// 			},
+			// 		},
+			// 	},
+			// 	Topic: topic,
+			// }
+
+			fClient.log.Errorf("\n\n msg %v \n", msg)
+			fClient.log.Errorf("\n\n MessageToSend : %v\n\n", messageToSend)
+
+			ctx := context.Background()
+			client, err := service.Messaging(ctx)
+			if err != nil {
+				fClient.log.Errorf("service.Messaging: %v", err.Error())
+			}
+
+			response, err := client.Send(ctx, messageToSend)
+			if err != nil {
+				fClient.log.Errorf("client.Send : %v", err.Error())
+			}
+
+			fClient.log.Errorf("\n\nFirebase push resp : %v\n\n", response)
 		}
-		status.PrintResults()
-		// TODO: add version /v1
-		fClient.client.NewFcmMsgTo(store.TopicTransaction+"-"+msg.UserID, data) //
-		status, err = fClient.client.Send()
-		if err != nil {
-			return err
-		}
-		status.PrintResults()
 
 		return nil
 	}))
@@ -89,4 +138,9 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 	}
 	fClient.log.Debugf("Firebase connection initialization done")
 	return fClient, nil
+}
+
+func NewPushService(withCredentialsFile string) (*firebase.App, error) {
+	opt := option.WithCredentialsFile(withCredentialsFile)
+	return firebase.NewApp(context.Background(), nil, opt)
 }
