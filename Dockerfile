@@ -1,32 +1,34 @@
 FROM golang:1.9.4
 
-# RUN go get github.com/Appscrunch/Multy-back && \
-#     cd $GOPATH/src/github.com/Appscrunch && \ 
-#     rm -rf Multy-back && \ 
-#     git clone https://github.com/Appscrunch/Multy-back.git && \ 
-#     cd Multy-back && \ 
-#     git pull origin master 
+
 
 RUN go get github.com/Appscrunch/Multy-back && \
     rm -rf $GOPATH/src/github.com/Appscrunch/Multy-back && \
     cd $GOPATH/src/github.com/Appscrunch && \ 
     git clone https://github.com/Appscrunch/Multy-back.git && \ 
     cd Multy-back && \ 
-    git checkout versions
+    git checkout release_1.1 && \  
+    go get firebase.google.com/go   && \ 
+    go get firebase.google.com/go/messaging  && \ 
+    go get google.golang.org/api/option  && \ 
+    go get github.com/satori/go.uuid
+
+RUN cd $GOPATH/src/github.com/Appscrunch/Multy-back && \
+    git checkout release_1.1 
+# make all-with-deps 
 
 RUN cd $GOPATH/src/github.com/Appscrunch && \
     git clone https://github.com/Appscrunch/Multy-BTC-node-service.git && \
-    cd Multy-BTC-node-service  && \
-    git checkout versions && \
-    # git pull origin versions && \
-    make all-with-deps
+    cd $GOPATH/src/github.com/Appscrunch/Multy-BTC-node-service 
+# go get ./...
 
-# RUN cd $GOPATH/src/github.com/Appscrunch/Multy-BTC-node-service && \
-#     git checkout 69c5aba051237417bb110736eddf0bc56efb2639 && \
-#     git pull && \
-#     make all-with-deps
 
-WORKDIR /go/src/github.com/Appscrunch/Multy-BTC-node-service/cmd
+RUN cd $GOPATH/src/github.com/Appscrunch/Multy-BTC-node-service && \
+    make all-with-deps && \
+    rm -r $GOPATH/src/github.com/Appscrunch/Multy-back 
+
+
+WORKDIR $GOPATH/src/github.com/Appscrunch/Multy-BTC-node-service/cmd
 
 RUN echo "VERSION 02"
 
