@@ -76,8 +76,8 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 		}
 		txType := msg.NotificationMsg.TransactionType
 		if txType == store.TxStatusAppearedInMempoolIncoming || txType == store.TxStatusAppearedInBlockIncoming || txType == store.TxStatusInBlockConfirmedIncoming {
-			// topic := store.TopicTransaction + "-" + msg.UserID
-			topic := "btcTransactionUpdate-" + msg.UserID
+			topic := store.TopicTransaction + "-" + msg.UserID
+			// topic := "btcTransactionUpdate-" + msg.UserID
 			// topic := "btcTransactionUpdate-003b1e5227ce5f45b22676dc4b55ea00e1410c5f3cf8ae972724fa5d93ecc4585e"
 
 			messageKeys := map[string]string{
@@ -98,20 +98,6 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 				},
 				Topic: topic,
 			}
-
-			// messageToSend := &messaging.Message{
-			// 	APNS: &messaging.APNSConfig{
-			// 		Payload: &messaging.APNSPayload{
-			// 			Aps: &messaging.Aps{
-			// 				Alert: &messaging.ApsAlert{
-			// 					Title: "$GOOG up 1.43% on the day",
-			// 					Body:  "$GOOG gained 11.80 points to close at 835.67, up 1.43% on the day.",
-			// 				},
-			// 			},
-			// 		},
-			// 	},
-			// 	Topic: topic,
-			// }
 
 			fClient.log.Errorf("\n\n msg %v \n", msg)
 			fClient.log.Errorf("\n\n MessageToSend : %v\n\n", messageToSend)
