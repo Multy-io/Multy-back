@@ -27,14 +27,10 @@ type BTCConn struct {
 	WatchAddressTest chan pb.WatchAddress
 	WatchAddressMain chan pb.WatchAddress
 
-	BtcMempool     *map[string]int
-	BtcMempoolTest *map[string]int
+	BtcMempool     sync.Map
+	BtcMempoolTest sync.Map
 
-	Resync  *map[string]bool
-	ResyncM *sync.Mutex
-
-	M     *sync.Mutex
-	MTest *sync.Mutex
+	Resync sync.Map
 }
 
 var log = slf.WithContext("btc")
@@ -44,12 +40,9 @@ var log = slf.WithContext("btc")
 func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string) (*BTCConn, error) {
 	//declare pacakge struct
 	cli := &BTCConn{
-		BtcMempool:     &map[string]int{},
-		BtcMempoolTest: &map[string]int{},
-		Resync:         &map[string]bool{},
-		ResyncM:        &sync.Mutex{},
-		M:              &sync.Mutex{},
-		MTest:          &sync.Mutex{},
+		BtcMempool:     sync.Map{},
+		BtcMempoolTest: sync.Map{},
+		Resync:         sync.Map{},
 	}
 
 	cli.WatchAddressMain = make(chan pb.WatchAddress)
@@ -106,7 +99,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
 
-	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.Main, cli.WatchAddressMain, cli.BtcMempool, cli.M, cli.Resync, cli.ResyncM)
+	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.Main, cli.WatchAddressMain, cli.BtcMempool, cli.Resync)
 
 	cli.CliMain = cliMain
 	log.Infof("InitHandlers: initGrpcClient: Main: √")
@@ -120,7 +113,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
-	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.Test, cli.WatchAddressTest, cli.BtcMempoolTest, cli.MTest, cli.Resync, cli.ResyncM)
+	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.Test, cli.WatchAddressTest, cli.BtcMempoolTest, cli.Resync)
 
 	cli.CliTest = cliTest
 	log.Infof("InitHandlers: initGrpcClient: Test: √")

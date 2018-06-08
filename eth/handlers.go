@@ -15,7 +15,7 @@ import (
 	nsq "github.com/bitly/go-nsq"
 )
 
-func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress, mempool *map[string]int, m *sync.Mutex) {
+func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress, mempool sync.Map) {
 
 	mempoolCh := make(chan interface{})
 
@@ -162,18 +162,10 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			// 	log.Errorf("Not found type: %v", v)
 			case string:
 				// delete tx from pool
-				newMap := *mempool
-				delete(newMap, v)
-				m.Lock()
-				*mempool = newMap
-				m.Unlock()
+				mempool.Delete(v)
 			case store.MempoolRecord:
 				// add tx to pool
-				newMap := *mempool
-				newMap[v.HashTX] = v.Category
-				m.Lock()
-				*mempool = newMap
-				m.Unlock()
+				mempool.Store(v.HashTX, v.Category)
 			}
 		}
 	}()

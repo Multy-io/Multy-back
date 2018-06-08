@@ -20,7 +20,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress, mempool *map[string]int, m *sync.Mutex, resync *map[string]bool, resyncM *sync.Mutex) {
+func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress, mempool sync.Map, resync sync.Map) {
 
 	mempoolCh := make(chan interface{})
 	// initial fill mempool respectively network id
@@ -463,13 +463,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				}
 			}
 			if len(rTxs.Txs) > 0 {
-
-				resyncM.Lock()
-				re := *resync
-				delete(re, rTxs.Txs[0].TxAddress[0])
-				// re[rTxs.SpOuts[0].Address] = false
-				*resync = re
-				resyncM.Unlock()
+				resync.Delete(rTxs.Txs[0].TxAddress[0])
 			}
 
 		}
@@ -504,25 +498,16 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 	}()
 
 	go func() {
-
 		for {
 			switch v := (<-mempoolCh).(type) {
 			// default:
 			// 	log.Errorf("Not found type: %v", v)
 			case string:
 				// delete tx from pool
-				newMap := *mempool
-				delete(newMap, v)
-				m.Lock()
-				*mempool = newMap
-				m.Unlock()
+				mempool.Delete(v)
 			case store.MempoolRecord:
 				// add tx to pool
-				newMap := *mempool
-				newMap[v.HashTX] = v.Category
-				m.Lock()
-				*mempool = newMap
-				m.Unlock()
+				mempool.Store(v.HashTX, v.Category)
 			}
 		}
 	}()

@@ -26,11 +26,14 @@ type ETHConn struct {
 	CliMain          pb.NodeCommuunicationsClient
 	WatchAddressTest chan pb.WatchAddress
 	WatchAddressMain chan pb.WatchAddress
-	Mempool          *map[string]int
-	MempoolTest      *map[string]int
+	// Mempool          *map[string]int
+	// MempoolTest      *map[string]int
 
-	M     *sync.Mutex
-	MTest *sync.Mutex
+	Mempool     sync.Map
+	MempoolTest sync.Map
+
+	// M     *sync.Mutex
+	// MTest *sync.Mutex
 }
 
 var log = slf.WithContext("eth")
@@ -40,10 +43,8 @@ var log = slf.WithContext("eth")
 func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string) (*ETHConn, error) {
 	//declare pacakge struct
 	cli := &ETHConn{
-		Mempool:     &map[string]int{},
-		MempoolTest: &map[string]int{},
-		M:           &sync.Mutex{},
-		MTest:       &sync.Mutex{},
+		Mempool:     sync.Map{},
+		MempoolTest: sync.Map{},
 	}
 
 	cli.WatchAddressMain = make(chan pb.WatchAddress)
@@ -92,7 +93,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
-	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.Main, cli.WatchAddressMain, cli.Mempool, cli.M)
+	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.Main, cli.WatchAddressMain, cli.Mempool)
 
 	cli.CliMain = cliMain
 	log.Infof("InitHandlers: initGrpcClient: Main: √")
@@ -106,7 +107,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
-	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.Test, cli.WatchAddressTest, cli.MempoolTest, cli.MTest)
+	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.Test, cli.WatchAddressTest, cli.MempoolTest)
 
 	cli.CliTest = cliTest
 	log.Infof("InitHandlers: initGrpcClient: Test: √")

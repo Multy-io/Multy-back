@@ -1,95 +1,36 @@
 version: '3.4'
 services:
-  multy-back-stage:
-    image:  multyio/multy-back:stage
-    # build: .
-    #command: ["make", "all"]
-    env_file: .env
-    network_mode: "host"
-    volumes:
-        - "${BACKEND_LOGS}:/go/src/github.com/Appscrunch/Multy-back/cmd/logs"
-        - "${BACKEND_CONF}:/go/src/github.com/Appscrunch/Multy-back/cmd/multy.config"
-        #- "${BTCD_CERT}:/go/src/github.com/Appscrunch/Multy-back/cmd/rpc.cert"
-    ports:
-      - "6778:6778"
-      - "6780:6780"
-    depends_on:
-      - btc-node-service-mainnet-stage
-      - btc-node-service-testnet-stage
-      - nsq-stage
-      - nsqlookup-stage
-      - nsqadmin-stage
-      - mongodb-stage
-
-
-  btc-node-service-mainnet-stage:
-    image: multyio/multy-btc-node-service
+  btc-node-service-mainnet-prod:
+    image: multyio/multy-btc-node-service:release_1.1
     network_mode: "host"
     volumes:
       - "${BTCD_CERT}:/go/src/github.com/Appscrunch/Multy-BTC-node-service/cmd/rpc.cert"
       - "${BTC_NODE_SERVICE_MAINNET}:/go/src/github.com/Appscrunch/Multy-BTC-node-service/cmd/client.config"
     ports:
-      - "7000:7000"
-    depends_on:
-      - nsq-stage
+      - "7755:7755"
 
-
-  btc-node-service-testnet-stage:
-    image: multyio/multy-btc-node-service
+  btc-node-service-testnet-prod:
+    image: multyio/multy-btc-node-service:release_1.1
     network_mode: "host"
     volumes:
-      - "${BTC_NODE_SERVICE_TESTNET}:/go/src/github.com/Appscrunch/Multy-BTC-node-service/cmd/client.config"
-      - "${BTCD_CERT}:/go/src/github.com/Appscrunch/Multy-BTC-node-service/cmd/rpc.cert"
+     - "${BTC_NODE_SERVICE_TESTNET}:/go/src/github.com/Appscrunch/Multy-BTC-node-service/cmd/client.config"
+     - "${BTCD_CERT}:/go/src/github.com/Appscrunch/Multy-BTC-node-service/cmd/rpc.cert"
     ports:
-      # - "6660:6660"
-      - "6000:6000"
-    depends_on:
-      - nsq-stage
+     - "6655:6655"
 
-
-
-  mongodb-stage:
-    container_name: "mongo_db_stage"
-    image: mongo:3.6.2
-    env_file: .env
-    command: mongod --smallfiles
-    environment:
-      - MONGO_DATA_DIR=/data/db
-      - MONGO_LOG_DIR=/data/logs
+  eth-node-service-mainnet-prod:
+    image: multyio/multy-eth-node-service:release_1.1
+    network_mode: "host"
     volumes:
-      - ${MONGO_DATA_DIR}:/data/db
-      - ${MONGO_LOG_DIR}:/data/logs
+      - "${ETH_NODE_SERVICE_MAINNET}:/go/src/github.com/Appscrunch/Multy-ETH-node-service/cmd/client.config"
     ports:
-      - 27015:27017
+      - "7744:7744"
 
-  nsqlookup-stage:
-    image: nsqio/nsq
-    hostname: nsqlookup-stage
-    ports:
-      - "6160:4160"
-      - "6161:4161"
-    command: nsqlookupd
 
-  nsq-stage:
-    image: nsqio/nsq
-    hostname: nsq
-    ports:
-      - "6150:4150"
-      - "6151:4151"
-    links:
-      - nsqlookup-stage:nsqlookup
-    env_file: .env
-    environment:
-      - NSQD_DATA_DIR=/data/nsqd
+  eth-node-service-testnet-prod:
+    image: multyio/multy-eth-node-service:release_1.1
+    network_mode: "host"
     volumes:
-      - ${NSQD_DATA_DIR}:/data/nsqd
-    command: nsqd --broadcast-address nsq --lookupd-tcp-address=nsqlookup:4160 -data-path=/data
-
-  nsqadmin-stage:
-    image: nsqio/nsq
-    hostname: nsqadmin-stage
-    links:
-      - nsqlookup-stage:nsqlookup
+      - "${ETH_NODE_SERVICE_TESTNET}:/go/src/github.com/Appscrunch/Multy-ETH-node-service/cmd/client.config"
     ports:
-      - "6171:4171"
-    command: nsqadmin --lookupd-http-address=nsqlookup:4161
+      - "6644:6644"
