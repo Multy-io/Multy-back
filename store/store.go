@@ -82,6 +82,8 @@ type UserStore interface {
 
 	FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error)
 	FindUserDataChain(CurrencyID, NetworkID int) (map[string]AddressExtended, error)
+
+	CheckTx(tx string) bool
 }
 
 type MongoUserStore struct {
@@ -149,6 +151,16 @@ func InitUserStore(conf Conf) (UserStore, error) {
 	uStore.ETHTestTxsData = uStore.session.DB(conf.DBTx).C(conf.TableTxsDataETHTest)
 
 	return uStore, nil
+}
+
+func (mStore *MongoUserStore) CheckTx(tx string) bool {
+	query := bson.M{"txid": tx}
+	// sp := SpendableOutputs{}
+	err := mStore.usersData.Find(query).One(nil)
+	if err != nil {
+		return true
+	}
+	return false
 }
 
 func (mStore *MongoUserStore) FindUserDataChain(CurrencyID, NetworkID int) (map[string]AddressExtended, error) {

@@ -24,6 +24,7 @@ type Configuration struct {
 	MultyVerison      store.ServerConfig
 	// ExchangerConfiguration core.ManagerConfiguration
 	ServicesInfo []store.ServiceInfo
+	Secretkey    string
 
 	SupportedNodes []store.CoinType
 }

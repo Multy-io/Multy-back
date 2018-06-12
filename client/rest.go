@@ -76,6 +76,7 @@ type RestClient struct {
 	BTC          *btc.BTCConn
 	ETH          *eth.ETHConn
 	MultyVerison store.ServerConfig
+	Secretkey    string
 }
 
 type BTCApiConf struct {
@@ -89,6 +90,7 @@ func SetRestHandlers(
 	btc *btc.BTCConn,
 	eth *eth.ETHConn,
 	mv store.ServerConfig,
+	secretkey string,
 ) (*RestClient, error) {
 	restClient := &RestClient{
 		userStore:         userDB,
@@ -97,6 +99,7 @@ func SetRestHandlers(
 		BTC:               btc,
 		ETH:               eth,
 		MultyVerison:      mv,
+		Secretkey:         secretkey,
 	}
 	initMiddlewareJWT(restClient)
 
@@ -127,7 +130,7 @@ func SetRestHandlers(
 func initMiddlewareJWT(restClient *RestClient) {
 	restClient.middlewareJWT = &GinJWTMiddleware{
 		Realm:      "test zone",
-		Key:        []byte("secret key"), // config
+		Key:        []byte(restClient.Secretkey), // config
 		Timeout:    time.Hour,
 		MaxRefresh: time.Hour,
 		Authenticator: func(userId, deviceId, pushToken string, deviceType int, c *gin.Context) (store.User, bool) {
@@ -1130,6 +1133,17 @@ func (restClient *RestClient) sendRawHDTransaction() gin.HandlerFunc {
 						return
 					}
 				}
+				flag := 4
+				for {
+					ex := restClient.userStore.CheckTx(resp.GetMessage())
+					if ex {
+						break
+					}
+					flag++
+					if flag == 4 {
+						break
+					}
+				}
 
 				c.JSON(code, gin.H{
 					"code":    code,
@@ -1332,7 +1346,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			}
 
 			if len(wallet.Adresses) == 0 {
-				restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+				restClient.log.Errorf("getAllWalletsVerbose: len(wallet.Adresses) == 0:\t[addr=%s]", c.Request.RemoteAddr)
 				c.JSON(code, gin.H{
 					"code":    http.StatusBadRequest,
 					"message": msgErrNoWallet,
@@ -1612,9 +1626,10 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 			case currencies.Ether:
 				var av []ETHAddressVerbose
 				var pending bool
-				var total string
-				var pendingBalance string
 				var walletNonce int64
+
+				var totalBalance string
+				var pendingBalance string
 
 				for _, address := range wallet.Adresses {
 					amount := &ethpb.Balance{}
@@ -1645,7 +1660,8 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 						restClient.log.Errorf("EventGetAdressNonce || EventGetAdressBalance: %v", err.Error())
 					}
 
-					total = amount.GetBalance()
+					totalBalance = amount.GetBalance()
+					pendingBalance = amount.GetPendingBalance()
 
 					p, _ := strconv.Atoi(amount.GetPendingBalance())
 					b, _ := strconv.Atoi(amount.GetBalance())
@@ -1655,9 +1671,19 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 						pending = true
 					}
 
-					if p-b < 0 {
-						pendingBalance = strconv.Itoa(b - p)
+					if p == b {
+						pendingBalance = "0"
 					}
+
+					//incoming
+					// if p > b{
+					// 	pendingBalance = "0"
+					// }
+
+					//outcoming
+					// if p < b{
+					// 	pendingBalance = "0"
+					// }
 
 					walletNonce = nonce.GetNonce()
 
@@ -1665,7 +1691,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 						LastActionTime: address.LastActionTime,
 						Address:        address.Address,
 						AddressIndex:   address.AddressIndex,
-						Amount:         amount.Balance,
+						Amount:         totalBalance,
 						Nonce:          nonce.Nonce,
 					})
 
@@ -1675,7 +1701,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					WalletIndex:    wallet.WalletIndex,
 					CurrencyID:     wallet.CurrencyID,
 					NetworkID:      wallet.NetworkID,
-					Balance:        total,
+					Balance:        totalBalance,
 					PendingBalance: pendingBalance,
 					Nonce:          walletNonce,
 					WalletName:     wallet.WalletName,

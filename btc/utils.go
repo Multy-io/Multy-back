@@ -34,82 +34,67 @@ var (
 )
 
 func updateWalletAndAddressDate(tx store.MultyTX, networkID int) error {
-
-	for _, walletOutput := range tx.WalletsOutput {
-
-		// update addresses last action time
-		sel := bson.M{"userID": walletOutput.UserId, "wallets.addresses.address": walletOutput.Address.Address}
-		update := bson.M{
-			"$set": bson.M{
-				"wallets.$.addresses.$[].lastActionTime": time.Now().Unix(),
-			},
-		}
-		err := usersData.Update(sel, update)
-		if err != nil {
-			return errors.New("updateWalletAndAddressDate:usersData.Update: " + err.Error())
-		}
-
-		//TODO: fix "wallets.$.status":store.WalletStatusOK,
-		// update wallets last action time
-		// Set status to OK if some money transfered to this address
+	for _, wallet := range tx.WalletsInput {
+		sel := bson.M{"userID": wallet.UserId, "wallets.addresses.address": wallet.Address.Address}
 		user := store.User{}
-		sel = bson.M{"userID": walletOutput.UserId, "wallets.walletIndex": walletOutput.WalletIndex, "wallets.addresses.address": walletOutput.Address.Address, "wallets.networkID": networkID, "wallets.currencyID": currencies.Bitcoin}
-		err = usersData.Find(sel).One(&user)
-		if err != nil {
-			return errors.New("updateWalletAndAddressDate:usersData.Update: " + err.Error())
-		}
+		err := usersData.Find(sel).One(&user)
+		update := bson.M{}
 
-		//TODO: fix hardcode if wallet.NetworkID == networkID && walletOutput.WalletIndex == walletindex && currencies.Bitcoin == currencyID {
-		var flag bool
-		var position int
-		for i, wallet := range user.Wallets {
-			if wallet.NetworkID == networkID && wallet.WalletIndex == walletOutput.WalletIndex && wallet.CurrencyID == currencies.Bitcoin {
-				position = i
-				flag = true
-				break
+		var ok bool
+
+		for i := range user.Wallets {
+			for j, addr := range user.Wallets[i].Adresses {
+				if addr.Address == wallet.Address.Address {
+					ok = true
+					update = bson.M{
+						"$set": bson.M{
+							"wallets." + strconv.Itoa(i) + ".lastActionTime":                                   time.Now().Unix(),
+							"wallets." + strconv.Itoa(i) + ".addresses." + strconv.Itoa(j) + ".lastActionTime": time.Now().Unix(),
+							"wallets." + strconv.Itoa(i) + ".status":                                           store.WalletStatusOK,
+						},
+					}
+					break
+				}
 			}
 		}
-
-		if flag {
-			update = bson.M{
-				"$set": bson.M{
-					"wallets." + strconv.Itoa(position) + ".status":         store.WalletStatusOK,
-					"wallets." + strconv.Itoa(position) + ".lastActionTime": time.Now().Unix(),
-				},
-			}
+		if ok {
 			err = usersData.Update(sel, update)
 			if err != nil {
 				return errors.New("updateWalletAndAddressDate:usersData.Update: " + err.Error())
 			}
-
 		}
 
 	}
+	for _, wallet := range tx.WalletsOutput {
+		sel := bson.M{"userID": wallet.UserId, "wallets.addresses.address": wallet.Address.Address}
+		user := store.User{}
+		err := usersData.Find(sel).One(&user)
+		update := bson.M{}
 
-	for _, walletInput := range tx.WalletsInput {
-		// update addresses last action time
-		sel := bson.M{"userID": walletInput.UserId, "wallets.addresses.address": walletInput.Address.Address}
-		update := bson.M{
-			"$set": bson.M{
-				"wallets.$.addresses.$[].lastActionTime": time.Now().Unix(),
-			},
+		var ok bool
+
+		for i := range user.Wallets {
+			for j, addr := range user.Wallets[i].Adresses {
+				if addr.Address == wallet.Address.Address {
+					ok = true
+					update = bson.M{
+						"$set": bson.M{
+							"wallets." + strconv.Itoa(i) + ".lastActionTime":                                   time.Now().Unix(),
+							"wallets." + strconv.Itoa(i) + ".addresses." + strconv.Itoa(j) + ".lastActionTime": time.Now().Unix(),
+							"wallets." + strconv.Itoa(i) + ".status":                                           store.WalletStatusOK,
+						},
+					}
+					break
+				}
+			}
 		}
-		err := usersData.Update(sel, update)
-		if err != nil {
-			return errors.New("updateWalletAndAddressDate:usersData.Update: " + err.Error())
+		if ok {
+			err = usersData.Update(sel, update)
+			if err != nil {
+				return errors.New("updateWalletAndAddressDate:usersData.Update: " + err.Error())
+			}
 		}
 
-		// update wallets last action time
-		sel = bson.M{"userID": walletInput.UserId, "wallets.walletIndex": walletInput.WalletIndex, "wallets.addresses.address": walletInput.Address.Address}
-		update = bson.M{
-			"$set": bson.M{
-				"wallets.$.lastActionTime": time.Now().Unix(),
-			},
-		}
-		err = usersData.Update(sel, update)
-		if err != nil {
-			return errors.New("updateWalletAndAddressDate:usersData.Update: " + err.Error())
-		}
 	}
 
 	return nil

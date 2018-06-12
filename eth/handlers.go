@@ -120,6 +120,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			setExchangeRates(&tx, gTx.Resync, tx.BlockTime)
 
 			err = saveTransaction(tx, networtkID, gTx.Resync)
+			updateWalletAndAddressDate(tx, networtkID)
 			if err != nil {
 				log.Errorf("initGrpcClient: saveMultyTransaction: %s", err)
 			}
