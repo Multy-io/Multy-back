@@ -1395,8 +1395,8 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 
 				p, _ := strconv.Atoi(amount.GetPendingBalance())
 				b, _ := strconv.Atoi(amount.GetBalance())
-				pendingBalance = strconv.Itoa(p - b)
-				pendingAmount = strconv.Itoa(p - b)
+				// pendingBalance = strconv.Itoa(p - b)
+				// pendingAmount = strconv.Itoa(p - b)
 
 				if p != b {
 					pending = true
@@ -1673,8 +1673,8 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 					p, _ := strconv.Atoi(amount.GetPendingBalance())
 					b, _ := strconv.Atoi(amount.GetBalance())
-					pendingBalance = strconv.Itoa(p - b)
-					pendingAmount = strconv.Itoa(p - b)
+					// pendingBalance = strconv.Itoa(p - b)
+					// pendingAmount = strconv.Itoa(p - b)
 
 					if p != b {
 						pending = true
