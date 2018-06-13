@@ -1,7 +1,5 @@
 FROM golang:1.9.4
 
-
-
 RUN go get github.com/Appscrunch/Multy-back && \
     rm -rf $GOPATH/src/github.com/Appscrunch/Multy-back && \
     cd $GOPATH/src/github.com/Appscrunch && \ 
@@ -12,10 +10,6 @@ RUN go get github.com/Appscrunch/Multy-back && \
     go get firebase.google.com/go/messaging  && \ 
     go get google.golang.org/api/option  && \ 
     go get github.com/satori/go.uuid
-
-RUN cd $GOPATH/src/github.com/Appscrunch/Multy-back && \
-    git checkout release_1.1 
-# make all-with-deps 
 
 RUN cd $GOPATH/src/github.com/Appscrunch && \
     git clone https://github.com/Appscrunch/Multy-BTC-node-service.git && \

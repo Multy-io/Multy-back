@@ -107,22 +107,6 @@ can be called from:
 
 */
 
-// func ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult, isReSync bool) {
-// 	processTransaction(blockChainBlockHeight, txVerbose, isReSync)
-// }
-
-// func GetRawTransactionVerbose(txHash *chainhash.Hash) (*btcjson.TxRawResult, error) {
-// 	return RpcClient.GetRawTransactionVerbose(txHash)
-// }
-
-// func GetBlockHeight() (int64, error) {
-// 	return RpcClient.GetBlockCount()
-// }
-
-// func ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult, isReSync bool, usersData *map[string]string) {
-// 	processTransaction(blockChainBlockHeight, txVerbose, isReSync, usersData)
-// }
-
 func (c *Client) ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcjson.TxRawResult, isReSync bool) {
 	multyTx, related := c.ParseRawTransaction(blockChainBlockHeight, txVerbose)
 	if related {
@@ -181,11 +165,8 @@ func (c *Client) ResyncSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 		if len(output.ScriptPubKey.Addresses) > 0 {
 			address := output.ScriptPubKey.Addresses[0]
 
-			c.UserDataM.Lock()
-			ud := *c.UsersData
-			addressEx, ok := ud[address]
-			c.UserDataM.Unlock()
-
+			addrEx, ok := c.UsersData.Load(address)
+			addressEx := addrEx.(store.AddressExtended)
 			if !ok {
 				continue
 			}
@@ -228,10 +209,11 @@ func (c *Client) ResyncSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 		if len(previousTx.Vout[input.Vout].ScriptPubKey.Addresses) > 0 {
 			address := previousTx.Vout[input.Vout].ScriptPubKey.Addresses[0]
 
-			c.UserDataM.Lock()
-			ud := *c.UsersData
-			addressEx, ok := ud[address]
-			c.UserDataM.Unlock()
+			addrEx, ok := c.UsersData.Load(address)
+			addressEx := addrEx.(store.AddressExtended)
+			if !ok {
+				continue
+			}
 
 			if !ok {
 				continue
@@ -549,10 +531,8 @@ func (c *Client) parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, 
 
 		for _, txInAddress := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses {
 			// check the ownership of the transaction to our users
-			c.UserDataM.Lock()
-			ud := *c.UsersData
-			addressEx, ok := ud[txInAddress]
-			c.UserDataM.Unlock()
+			addrEx, ok := c.UsersData.Load(txInAddress)
+			addressEx := addrEx.(store.AddressExtended)
 			if !ok {
 				continue
 			}
@@ -588,10 +568,8 @@ func (c *Client) parseOutputs(txVerbose *btcjson.TxRawResult, blockHeight int64,
 	for _, output := range txVerbose.Vout {
 		for _, txOutAddress := range output.ScriptPubKey.Addresses {
 
-			c.UserDataM.Lock()
-			ud := *c.UsersData
-			addressEx, ok := ud[txOutAddress]
-			c.UserDataM.Unlock()
+			addrEx, ok := c.UsersData.Load(txOutAddress)
+			addressEx := addrEx.(store.AddressExtended)
 			if !ok {
 				continue
 			}
@@ -702,11 +680,8 @@ func (c *Client) CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 		if len(output.ScriptPubKey.Addresses) > 0 {
 			address := output.ScriptPubKey.Addresses[0]
 
-			c.UserDataM.Lock()
-			ud := *c.UsersData
-			addressEx, ok := ud[address]
-			c.UserDataM.Unlock()
-
+			addrEx, ok := c.UsersData.Load(address)
+			addressEx := addrEx.(store.AddressExtended)
 			if !ok {
 				continue
 			}
@@ -765,14 +740,12 @@ func (c *Client) DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 		if len(previousTx.Vout[input.Vout].ScriptPubKey.Addresses) > 0 {
 			address := previousTx.Vout[input.Vout].ScriptPubKey.Addresses[0]
 
-			c.UserDataM.Lock()
-			ud := *c.UsersData
-			addressEx, ok := ud[address]
-			c.UserDataM.Unlock()
-
+			addrEx, ok := c.UsersData.Load(address)
+			addressEx := addrEx.(store.AddressExtended)
 			if !ok {
 				continue
 			}
+
 			reqDelete := store.DeleteSpendableOutput{
 				UserID:  addressEx.UserID,
 				TxID:    previousTx.Txid,

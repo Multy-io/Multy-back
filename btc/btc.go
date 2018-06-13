@@ -10,7 +10,6 @@ import (
 	"time"
 
 	pb "github.com/Appscrunch/Multy-back/node-streamer/btc"
-	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"
 	"github.com/btcsuite/btcd/btcjson"
@@ -27,15 +26,16 @@ type Client struct {
 	DelSpOut       chan pb.ReqDeleteSpOut
 	DeleteMempool  chan pb.MempoolToDelete
 	AddToMempool   chan pb.MempoolRecord
-	UsersData      *map[string]store.AddressExtended
-	rpcConf        *rpcclient.ConnConfig
-	UserDataM      *sync.Mutex
-	RpcClientM     *sync.Mutex
+	// UsersData      *map[string]store.AddressExtended
+	UsersData sync.Map
+	rpcConf   *rpcclient.ConnConfig
+	// UserDataM      *sync.Mutex
+	RpcClientM *sync.Mutex
 }
 
 var log = slf.WithContext("btc")
 
-func NewClient(certFromConf []byte, btcNodeAddress string, usersData *map[string]store.AddressExtended, udm, rpcm *sync.Mutex) (*Client, error) {
+func NewClient(certFromConf []byte, btcNodeAddress string, usersData sync.Map, rpcm *sync.Mutex) (*Client, error) {
 
 	cli := &Client{
 		ResyncCh:       make(chan pb.Resync),
@@ -54,7 +54,6 @@ func NewClient(certFromConf []byte, btcNodeAddress string, usersData *map[string
 			DisableTLS:   false, // Bitcoin core does not provide TLS by default
 		},
 		UsersData:  usersData,
-		UserDataM:  udm,
 		RpcClientM: rpcm,
 	}
 

@@ -19,7 +19,8 @@ var log = slf.WithContext("streamer")
 
 // Server implements streamer interface and is a gRPC server
 type Server struct {
-	UsersData *map[string]store.AddressExtended
+	// UsersData *map[string]store.AddressExtended
+	UsersData sync.Map
 	BtcAPI    *gobcy.API
 	BtcCli    *btc.Client
 	M         *sync.Mutex
@@ -39,18 +40,13 @@ func (s *Server) ServiceInfo(c context.Context, in *pb.Empty) (*pb.ServiceVersio
 func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.ReplyInfo, error) {
 	log.Debugf("EventInitialAdd - %v", ud.Map)
 
-	udMap := map[string]store.AddressExtended{}
-
 	for addr, ex := range ud.GetMap() {
-		udMap[addr] = store.AddressExtended{
+		s.UsersData.Store(addr, store.AddressExtended{
 			UserID:       ex.GetUserID(),
 			WalletIndex:  int(ex.GetWalletIndex()),
 			AddressIndex: int(ex.GetAddressIndex()),
-		}
+		})
 	}
-	s.BtcCli.UserDataM.Lock()
-	*s.UsersData = udMap
-	s.BtcCli.UserDataM.Unlock()
 
 	return &pb.ReplyInfo{
 		Message: "ok",
@@ -59,25 +55,18 @@ func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.Reply
 
 // EventAddNewAddress us used to add new watch address to existing pairs
 func (s *Server) EventAddNewAddress(c context.Context, wa *pb.WatchAddress) (*pb.ReplyInfo, error) {
-	s.BtcCli.UserDataM.Lock()
-	defer s.BtcCli.UserDataM.Unlock()
-	newMap := *s.UsersData
-	if newMap == nil {
-		newMap = map[string]store.AddressExtended{}
+
+	_, ok := s.UsersData.Load(wa.Address)
+
+	if !ok {
+		s.UsersData.Store(wa.Address, store.AddressExtended{
+			UserID:       wa.UserID,
+			WalletIndex:  int(wa.WalletIndex),
+			AddressIndex: int(wa.AddressIndex),
+		})
+	} else {
+		log.Errorf("EventAddNewAddress: double address add address:%v userid: %v walletindex; %v", wa.Address, wa.UserID, wa.WalletIndex)
 	}
-	//TODO: binded address fix
-	_, ok := newMap[wa.Address]
-	if ok {
-		return &pb.ReplyInfo{
-			Message: "err: Address already binded",
-		}, nil
-	}
-	newMap[wa.Address] = store.AddressExtended{
-		UserID:       wa.UserID,
-		WalletIndex:  int(wa.WalletIndex),
-		AddressIndex: int(wa.AddressIndex),
-	}
-	*s.UsersData = newMap
 
 	return &pb.ReplyInfo{
 		Message: "ok",
@@ -182,20 +171,6 @@ func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResy
 	log.Debugf("EventResyncAddress:reverseResyncTx %d", len(allResync))
 
 	s.BtcCli.ResyncAddresses(allResync, address)
-
-	// for _, reTx := range allResync {
-	// 	txHash, err := chainhash.NewHashFromStr(reTx.Hash)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("resyncAddress: chainhash.NewHashFromStr = %s", err.Error())
-	// 	}
-
-	// 	rawTx, err := s.BtcCli.RpcClient.GetRawTransactionVerbose(txHash)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("resyncAddress: RpcClient.GetRawTransactionVerbose = %s", err.Error())
-	// 	}
-	// 	s.BtcCli.ProcessTransaction(int64(reTx.BlockHeight), rawTx, true)
-	// 	log.Debugf("EventResyncAddress:ProcessTransaction %d", len(allResync))
-	// }
 
 	return &pb.ReplyInfo{
 		Message: "ok",
