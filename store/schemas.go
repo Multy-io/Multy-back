@@ -23,6 +23,7 @@ const (
 
 	// ws notification topic
 	TopicTransaction = "TransactionUpdate"
+	TopicNewIncoming = "NewIncoming"
 )
 
 // User represents a single app user
@@ -162,6 +163,7 @@ type WsTxNotify struct {
 	Amount          string `json:"amount"`
 	TxID            string `json:"txid"`
 	TransactionType int    `json:"transactionType"`
+	WalletIndex     int    `json:"walletindex"`
 }
 
 type TransactionWithUserID struct {

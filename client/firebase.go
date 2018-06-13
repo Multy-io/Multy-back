@@ -9,6 +9,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"time"
 
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
@@ -81,8 +83,14 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 			// topic := "btcTransactionUpdate-003b1e5227ce5f45b22676dc4b55ea00e1410c5f3cf8ae972724fa5d93ecc4585e"
 
 			messageKeys := map[string]string{
-				"score": "850",
-				"time":  "2:45",
+				"score":           "1",
+				"time":            time.Now().Format(time.Kitchen),
+				"amount":          msg.NotificationMsg.Amount,
+				"transactionType": strconv.Itoa(msg.NotificationMsg.TransactionType),
+				"currencyid":      strconv.Itoa(msg.NotificationMsg.CurrencyID),
+				"networkid":       strconv.Itoa(msg.NotificationMsg.NetworkID),
+				"walletindex":     strconv.Itoa(msg.NotificationMsg.WalletIndex),
+				"txid":            msg.NotificationMsg.TxID,
 			}
 			messageToSend := &messaging.Message{
 				Data: messageKeys,
@@ -91,7 +99,9 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 						Aps: &messaging.Aps{
 							Alert: &messaging.ApsAlert{
 								Title: "You have a new incoming transaction",
-								Body:  msg.NotificationMsg.Amount + " " + currencies.CurrencyNames[msg.NotificationMsg.CurrencyID],
+								// Body:  msg.NotificationMsg.Amount + " " + currencies.CurrencyNames[msg.NotificationMsg.CurrencyID],
+								LocKey:  store.TopicNewIncoming,
+								LocArgs: []string{msg.NotificationMsg.Amount, currencies.CurrencyNames[msg.NotificationMsg.CurrencyID]},
 							},
 						},
 					},

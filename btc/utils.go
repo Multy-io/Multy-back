@@ -165,6 +165,7 @@ func sendNotifyToClients(tx store.MultyTX, nsqProducer *nsq.Producer, netid int)
 				Amount:          strconv.Itoa(int(tx.TxOutAmount)),
 				TxID:            tx.TxID,
 				TransactionType: tx.TxStatus,
+				WalletIndex:     walletOutput.WalletIndex,
 			},
 		}
 		sendNotify(&txMsq, nsqProducer)
@@ -180,6 +181,7 @@ func sendNotifyToClients(tx store.MultyTX, nsqProducer *nsq.Producer, netid int)
 				Amount:          strconv.Itoa(int(tx.TxOutAmount)),
 				TxID:            tx.TxID,
 				TransactionType: tx.TxStatus,
+				WalletIndex:     walletInput.WalletIndex,
 			},
 		}
 

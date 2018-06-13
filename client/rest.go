@@ -1357,8 +1357,9 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 
 			//TODO: make pending
 			var pending bool
-			var total string
+			var totalBalance string
 			var pendingBalance string
+			var pendingAmount string
 			var waletNonce int64
 			for _, address := range wallet.Adresses {
 				amount := &ethpb.Balance{}
@@ -1388,18 +1389,22 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 				if err != nil {
 					restClient.log.Errorf("EventGetAdressNonce || EventGetAdressBalance: %v", err.Error())
 				}
-				total = amount.GetBalance()
+
+				totalBalance = amount.GetBalance()
+				pendingBalance = amount.GetPendingBalance()
 
 				p, _ := strconv.Atoi(amount.GetPendingBalance())
 				b, _ := strconv.Atoi(amount.GetBalance())
 				pendingBalance = strconv.Itoa(p - b)
+				pendingAmount = strconv.Itoa(p - b)
 
 				if p != b {
 					pending = true
+					address.LastActionTime = time.Now().Unix()
 				}
 
-				if p-b < 0 {
-					pendingBalance = strconv.Itoa(b - p)
+				if p == b {
+					pendingBalance = "0"
 				}
 
 				waletNonce = nonce.GetNonce()
@@ -1408,7 +1413,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					LastActionTime: address.LastActionTime,
 					Address:        address.Address,
 					AddressIndex:   address.AddressIndex,
-					Amount:         amount.Balance,
+					Amount:         totalBalance,
 					Nonce:          nonce.Nonce,
 				})
 
@@ -1422,8 +1427,9 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 				LastActionTime: wallet.LastActionTime,
 				DateOfCreation: wallet.DateOfCreation,
 				Nonce:          waletNonce,
-				Balance:        total,
+				Balance:        totalBalance,
 				PendingBalance: pendingBalance,
+				PendingAmount:  pendingAmount,
 				VerboseAddress: av,
 				Pending:        pending,
 			})
@@ -1465,13 +1471,14 @@ type WalletVerboseETH struct {
 	DateOfCreation int64               `json:"dateofcreation"`
 	Nonce          int64               `json:"nonce"`
 	PendingBalance string              `json:"pendingbalance"`
+	PendingAmount  string              `json:"pendingamount"`
 	Balance        string              `json:"balance"`
 	VerboseAddress []ETHAddressVerbose `json:"addresses"`
 	Pending        bool                `json:"pending"`
 }
 
 type AddressVerbose struct {
-	LastActionTime int64                    `json:"lastActionTime"`
+	LastActionTime int64                    `json:"lastactiontime"`
 	Address        string                   `json:"address"`
 	AddressIndex   int                      `json:"addressindex"`
 	Amount         int64                    `json:"amount"`
@@ -1481,7 +1488,7 @@ type AddressVerbose struct {
 }
 
 type ETHAddressVerbose struct {
-	LastActionTime int64                    `json:"lastActionTime"`
+	LastActionTime int64                    `json:"lastactiontime"`
 	Address        string                   `json:"address"`
 	AddressIndex   int                      `json:"addressindex"`
 	Amount         string                   `json:"amount"`
@@ -1630,6 +1637,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 				var totalBalance string
 				var pendingBalance string
+				var pendingAmount string
 
 				for _, address := range wallet.Adresses {
 					amount := &ethpb.Balance{}
@@ -1666,6 +1674,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					p, _ := strconv.Atoi(amount.GetPendingBalance())
 					b, _ := strconv.Atoi(amount.GetBalance())
 					pendingBalance = strconv.Itoa(p - b)
+					pendingAmount = strconv.Itoa(p - b)
 
 					if p != b {
 						pending = true
@@ -1703,6 +1712,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					NetworkID:      wallet.NetworkID,
 					Balance:        totalBalance,
 					PendingBalance: pendingBalance,
+					PendingAmount:  pendingAmount,
 					Nonce:          walletNonce,
 					WalletName:     wallet.WalletName,
 					LastActionTime: wallet.LastActionTime,

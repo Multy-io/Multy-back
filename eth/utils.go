@@ -161,6 +161,7 @@ func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer, net
 				Amount:          tx.Amount,
 				TxID:            tx.Hash,
 				TransactionType: tx.Status,
+				WalletIndex:     tx.WalletIndex,
 			},
 		}
 		sendNotify(&txMsq, nsqProducer)
@@ -176,6 +177,7 @@ func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer, net
 				Amount:          tx.Amount,
 				TxID:            tx.Hash,
 				TransactionType: tx.Status,
+				WalletIndex:     tx.WalletIndex,
 			},
 		}
 		sendNotify(&txMsq, nsqProducer)
