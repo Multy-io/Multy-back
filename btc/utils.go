@@ -166,10 +166,10 @@ func (c *Client) ResyncSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 			address := output.ScriptPubKey.Addresses[0]
 
 			addrEx, ok := c.UsersData.Load(address)
-			addressEx := addrEx.(store.AddressExtended)
 			if !ok {
 				continue
 			}
+			addressEx := addrEx.(store.AddressExtended)
 
 			txStatus := store.TxStatusAppearedInBlockIncoming
 			if blockHeight == -1 {
@@ -210,10 +210,10 @@ func (c *Client) ResyncSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 			address := previousTx.Vout[input.Vout].ScriptPubKey.Addresses[0]
 
 			addrEx, ok := c.UsersData.Load(address)
-			addressEx := addrEx.(store.AddressExtended)
 			if !ok {
 				continue
 			}
+			addressEx := addrEx.(store.AddressExtended)
 
 			if !ok {
 				continue
@@ -532,10 +532,10 @@ func (c *Client) parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, 
 		for _, txInAddress := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses {
 			// check the ownership of the transaction to our users
 			addrEx, ok := c.UsersData.Load(txInAddress)
-			addressEx := addrEx.(store.AddressExtended)
 			if !ok {
 				continue
 			}
+			addressEx := addrEx.(store.AddressExtended)
 
 			txInAmount := int64(SatoshiToBitcoin * previousTxVerbose.Vout[input.Vout].Value)
 
@@ -569,10 +569,10 @@ func (c *Client) parseOutputs(txVerbose *btcjson.TxRawResult, blockHeight int64,
 		for _, txOutAddress := range output.ScriptPubKey.Addresses {
 
 			addrEx, ok := c.UsersData.Load(txOutAddress)
-			addressEx := addrEx.(store.AddressExtended)
 			if !ok {
 				continue
 			}
+			addressEx := addrEx.(store.AddressExtended)
 
 			currentWallet := store.WalletForTx{
 				UserId:      addressEx.UserID,
@@ -681,10 +681,10 @@ func (c *Client) CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 			address := output.ScriptPubKey.Addresses[0]
 
 			addrEx, ok := c.UsersData.Load(address)
-			addressEx := addrEx.(store.AddressExtended)
 			if !ok {
 				continue
 			}
+			addressEx := addrEx.(store.AddressExtended)
 
 			txStatus := store.TxStatusAppearedInBlockIncoming
 			if blockHeight == -1 {
@@ -741,10 +741,10 @@ func (c *Client) DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 			address := previousTx.Vout[input.Vout].ScriptPubKey.Addresses[0]
 
 			addrEx, ok := c.UsersData.Load(address)
-			addressEx := addrEx.(store.AddressExtended)
 			if !ok {
 				continue
 			}
+			addressEx := addrEx.(store.AddressExtended)
 
 			reqDelete := store.DeleteSpendableOutput{
 				UserID:  addressEx.UserID,
