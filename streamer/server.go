@@ -19,12 +19,12 @@ var log = slf.WithContext("streamer")
 
 // Server implements streamer interface and is a gRPC server
 type Server struct {
-	// UsersData *map[string]store.AddressExtended
-	UsersData sync.Map
-	BtcAPI    *gobcy.API
-	BtcCli    *btc.Client
-	M         *sync.Mutex
-	Info      *store.ServiceInfo
+	UsersData *map[string]store.AddressExtended
+	// UsersData sync.Map
+	BtcAPI *gobcy.API
+	BtcCli *btc.Client
+	M      *sync.Mutex
+	Info   *store.ServiceInfo
 }
 
 func (s *Server) ServiceInfo(c context.Context, in *pb.Empty) (*pb.ServiceVersion, error) {
@@ -40,13 +40,18 @@ func (s *Server) ServiceInfo(c context.Context, in *pb.Empty) (*pb.ServiceVersio
 func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.ReplyInfo, error) {
 	log.Debugf("EventInitialAdd - %v", ud.Map)
 
+	udMap := map[string]store.AddressExtended{}
+
 	for addr, ex := range ud.GetMap() {
-		s.UsersData.Store(addr, store.AddressExtended{
+		udMap[addr] = store.AddressExtended{
 			UserID:       ex.GetUserID(),
 			WalletIndex:  int(ex.GetWalletIndex()),
 			AddressIndex: int(ex.GetAddressIndex()),
-		})
+		}
 	}
+	s.BtcCli.UserDataM.Lock()
+	*s.UsersData = udMap
+	s.BtcCli.UserDataM.Unlock()
 
 	return &pb.ReplyInfo{
 		Message: "ok",
@@ -55,18 +60,25 @@ func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.Reply
 
 // EventAddNewAddress us used to add new watch address to existing pairs
 func (s *Server) EventAddNewAddress(c context.Context, wa *pb.WatchAddress) (*pb.ReplyInfo, error) {
-
-	_, ok := s.UsersData.Load(wa.Address)
-
-	if !ok {
-		s.UsersData.Store(wa.Address, store.AddressExtended{
-			UserID:       wa.UserID,
-			WalletIndex:  int(wa.WalletIndex),
-			AddressIndex: int(wa.AddressIndex),
-		})
-	} else {
-		log.Errorf("EventAddNewAddress: double address add address:%v userid: %v walletindex; %v", wa.Address, wa.UserID, wa.WalletIndex)
+	s.BtcCli.UserDataM.Lock()
+	defer s.BtcCli.UserDataM.Unlock()
+	newMap := *s.UsersData
+	if newMap == nil {
+		newMap = map[string]store.AddressExtended{}
 	}
+	//TODO: binded address fix
+	_, ok := newMap[wa.Address]
+	if ok {
+		return &pb.ReplyInfo{
+			Message: "err: Address already binded",
+		}, nil
+	}
+	newMap[wa.Address] = store.AddressExtended{
+		UserID:       wa.UserID,
+		WalletIndex:  int(wa.WalletIndex),
+		AddressIndex: int(wa.AddressIndex),
+	}
+	*s.UsersData = newMap
 
 	return &pb.ReplyInfo{
 		Message: "ok",
@@ -108,17 +120,18 @@ func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyIn
 	if err != nil {
 		log.Errorf("s.BtcCli.RpcClient.GetBlockCount: %v ", err.Error())
 	}
-	lastH := in.GetHeight()
 
-	log.Debugf("currentH %v lastH %v", currentH, lastH)
+	log.Debugf("currentH %v lastH %v", currentH, in.GetHeight())
 
-	for ; lastH < currentH; lastH++ {
-		hash, err := s.BtcCli.RpcClient.GetBlockHash(lastH)
-		if err != nil {
-			log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
-		}
-		go s.BtcCli.BlockTransactions(hash)
-	}
+	// for lastH := int64(in.GetHeight()); lastH < currentH; lastH++ {
+	// 	hash, err := s.BtcCli.RpcClient.GetBlockHash(lastH)
+	// 	if err != nil {
+	// 		log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
+	// 	}
+	// 	log.Debugf("currentH %v lastH %v cur %v", currentH, lastH, int64(in.GetHeight()))
+	// 	fmt.Println("hash", hash.String())
+	// 	go s.BtcCli.BlockTransactions(hash)
+	// }
 
 	// for i := in.GetHeight(); i <= currentH; i++ {
 	// hash, err := s.BtcCli.RpcClient.GetBlockHash(i)
@@ -315,6 +328,31 @@ func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommuunications_NewTxServer) e
 					time.Sleep(time.Second * 2)
 				} else {
 					log.Debugf("NewTx history resend success on %d attempt", i)
+					break
+				}
+			}
+
+		}
+	}
+	return nil
+}
+
+func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommuunications_EventNewBlockServer) error {
+	for h := range s.BtcCli.Block {
+		log.Infof("New block height - %v", h.GetHeight())
+		err := stream.Send(&h)
+		if err != nil {
+			//HACK:
+			log.Errorf("New block %s", err.Error())
+			i := 0
+			for {
+				err := stream.Send(&h)
+				if err != nil {
+					i++
+					log.Errorf("New block resend attempt(%d) err = %s", i, err.Error())
+					time.Sleep(time.Second * 2)
+				} else {
+					log.Debugf("New block resend success on %d attempt", i)
 					break
 				}
 			}

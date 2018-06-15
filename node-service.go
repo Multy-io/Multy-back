@@ -15,6 +15,7 @@ import (
 	"github.com/Appscrunch/Multy-BTC-node-service/btc"
 	"github.com/Appscrunch/Multy-BTC-node-service/streamer"
 	pb "github.com/Appscrunch/Multy-back/node-streamer/btc"
+	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	"github.com/blockcypher/gobcy"
 	"google.golang.org/grpc"
@@ -31,9 +32,9 @@ type NodeClient struct {
 	Config     *Configuration
 	Instance   *btc.Client
 	GRPCserver *streamer.Server
-	// Clients    *map[string]store.AddressExtended // address to userid
-	Clients sync.Map // address to userid
-	BtcApi  *gobcy.API
+	Clients    *map[string]store.AddressExtended // address to userid
+	// Clients sync.Map // address to userid
+	BtcApi *gobcy.API
 }
 
 // Init initializes Multy instance
@@ -42,7 +43,13 @@ func Init(conf *Configuration) (*NodeClient, error) {
 		Config: conf,
 	}
 
-	var usersData = sync.Map{}
+	var usersData = map[string]store.AddressExtended{
+		"2MvPhdUf3cwaadRKsSgbQ2SXc83CPcBJezT": store.AddressExtended{
+			UserID:       "kek",
+			WalletIndex:  1,
+			AddressIndex: 2,
+		},
+	}
 
 	api := gobcy.API{
 		Token: conf.BTCAPI.Token,
@@ -53,7 +60,7 @@ func Init(conf *Configuration) (*NodeClient, error) {
 	log.Debug("btc api initialization done √")
 
 	// initail initialization of clients data
-	cli.Clients = usersData
+	cli.Clients = &usersData
 	log.Debug("Users data initialization done √")
 
 	// init gRPC server
@@ -63,8 +70,9 @@ func Init(conf *Configuration) (*NodeClient, error) {
 	}
 
 	rpcClientM := &sync.Mutex{}
+	usersDataM := &sync.Mutex{}
 
-	btcClient, err := btc.NewClient(getCertificate(conf.BTCSertificate), conf.BTCNodeAddress, cli.Clients, rpcClientM)
+	btcClient, err := btc.NewClient(getCertificate(conf.BTCSertificate), conf.BTCNodeAddress, cli.Clients, usersDataM, rpcClientM)
 	if err != nil {
 		return nil, fmt.Errorf("Blockchain api initialization: %s", err.Error())
 	}

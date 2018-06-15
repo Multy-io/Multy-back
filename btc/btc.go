@@ -10,6 +10,7 @@ import (
 	"time"
 
 	pb "github.com/Appscrunch/Multy-back/node-streamer/btc"
+	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"
 	"github.com/btcsuite/btcd/btcjson"
@@ -26,16 +27,16 @@ type Client struct {
 	DelSpOut       chan pb.ReqDeleteSpOut
 	DeleteMempool  chan pb.MempoolToDelete
 	AddToMempool   chan pb.MempoolRecord
-	// UsersData      *map[string]store.AddressExtended
-	UsersData sync.Map
-	rpcConf   *rpcclient.ConnConfig
-	// UserDataM      *sync.Mutex
-	RpcClientM *sync.Mutex
+	Block          chan pb.BlockHeight
+	UsersData      *map[string]store.AddressExtended
+	rpcConf        *rpcclient.ConnConfig
+	UserDataM      *sync.Mutex
+	RpcClientM     *sync.Mutex
 }
 
 var log = slf.WithContext("btc")
 
-func NewClient(certFromConf []byte, btcNodeAddress string, usersData sync.Map, rpcm *sync.Mutex) (*Client, error) {
+func NewClient(certFromConf []byte, btcNodeAddress string, usersData *map[string]store.AddressExtended, udm, rpcm *sync.Mutex) (*Client, error) {
 
 	cli := &Client{
 		ResyncCh:       make(chan pb.Resync),
@@ -44,6 +45,7 @@ func NewClient(certFromConf []byte, btcNodeAddress string, usersData sync.Map, r
 		DelSpOut:       make(chan pb.ReqDeleteSpOut),
 		DeleteMempool:  make(chan pb.MempoolToDelete),
 		AddToMempool:   make(chan pb.MempoolRecord),
+		Block:          make(chan pb.BlockHeight),
 		rpcConf: &rpcclient.ConnConfig{
 			Host:         btcNodeAddress,
 			User:         "multy",
@@ -54,6 +56,7 @@ func NewClient(certFromConf []byte, btcNodeAddress string, usersData sync.Map, r
 			DisableTLS:   false, // Bitcoin core does not provide TLS by default
 		},
 		UsersData:  usersData,
+		UserDataM:  udm,
 		RpcClientM: rpcm,
 	}
 
@@ -70,6 +73,7 @@ func (c *Client) RunProcess(btcNodeAddress string) error {
 		OnBlockConnected: func(hash *chainhash.Hash, height int32, t time.Time) {
 			log.Debugf("OnBlockConnected: %v (%d) %v", hash, height, t)
 			go c.BlockTransactions(hash)
+			c.Block <- pb.BlockHeight{Height: int64(height)}
 		},
 		OnTxAcceptedVerbose: func(txDetails *btcjson.TxRawResult) {
 			// log.Debugf("OnTxAcceptedVerbose: new transaction id = %v \n ud = %v lock = %v", txDetails.Txid, c.UsersData, c.UserDataM)
