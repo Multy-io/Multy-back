@@ -5,11 +5,14 @@ import (
 	"github.com/onrik/ethrpc"
 )
 
-func (c *Client) blockTransaction(hash string) {
+func (c *Client) BlockTransaction(hash string) {
 	block, err := c.Rpc.EthGetBlockByHash(hash, true)
 	if err != nil {
 		log.Errorf("Get Block Err:%s", err.Error())
 		return
+	}
+	c.Block <- pb.BlockHeight{
+		Height: int64(block.Number),
 	}
 
 	txs := []ethrpc.Transaction{}

@@ -26,6 +26,7 @@ type Client struct {
 	TransactionsCh chan pb.ETHTransaction
 	DeleteMempool  chan pb.MempoolToDelete
 	AddToMempool   chan pb.MempoolRecord
+	Block          chan pb.BlockHeight
 	UsersData      *map[string]store.AddressExtended
 	UserDataM      *sync.Mutex
 }
@@ -42,6 +43,7 @@ func NewClient(conf *Conf, usersData *map[string]store.AddressExtended) *Client 
 		TransactionsCh: make(chan pb.ETHTransaction),
 		DeleteMempool:  make(chan pb.MempoolToDelete),
 		AddToMempool:   make(chan pb.MempoolRecord),
+		Block:          make(chan pb.BlockHeight),
 		UsersData:      usersData,
 		UserDataM:      &sync.Mutex{},
 	}
@@ -96,7 +98,7 @@ func (c *Client) RunProcess() error {
 		case map[string]interface{}:
 			// tx block transactions
 			// fmt.Println(v)
-			go c.blockTransaction(v["hash"].(string))
+			go c.BlockTransaction(v["hash"].(string))
 		}
 	}
 

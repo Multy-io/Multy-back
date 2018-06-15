@@ -136,6 +136,54 @@ func (s *Server) EventGetAdressBalance(ctx context.Context, in *pb.AddressToResy
 	}, nil
 }
 
+func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommuunications_EventNewBlockServer) error {
+	for h := range s.EthCli.Block {
+		log.Infof("New block height - %v", h.GetHeight())
+		err := stream.Send(&h)
+		if err != nil {
+			//HACK:
+			log.Errorf("New block %s", err.Error())
+			i := 0
+			for {
+				err := stream.Send(&h)
+				if err != nil {
+					i++
+					log.Errorf("New block resend attempt(%d) err = %s", i, err.Error())
+					time.Sleep(time.Second * 2)
+				} else {
+					log.Debugf("New block resend success on %d attempt", i)
+					break
+				}
+			}
+
+		}
+	}
+	return nil
+}
+
+func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyInfo, error) {
+	// s.BtcCli.RpcClient.GetTxOut()
+	// var blocks []*chainhash.Hash
+	currentH, err := s.EthCli.GetBlockHeight()
+	if err != nil {
+		log.Errorf("s.BtcCli.RpcClient.GetBlockCount: %v ", err.Error())
+	}
+
+	log.Debugf("currentH %v lastH %v", currentH, in.GetHeight())
+
+	for lastH := int(in.GetHeight()); lastH < currentH; lastH++ {
+		b, err := s.EthCli.Rpc.EthGetBlockByNumber(lastH, false)
+		if err != nil {
+			log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
+		}
+		go s.EthCli.BlockTransaction(b.Hash)
+	}
+
+	return &pb.ReplyInfo{
+		Message: "ok",
+	}, nil
+}
+
 func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventGetAllMempoolServer) error {
 	mp, err := s.EthCli.GetAllTxPool()
 	if err != nil {
