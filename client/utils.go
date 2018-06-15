@@ -8,12 +8,13 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/Appscrunch/Multy-back/store"
-	"github.com/jekabolt/slf"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/jekabolt/slf"
 )
 
 func decodeBody(c *gin.Context, to interface{}) error {
@@ -109,4 +110,27 @@ func reconnectWebSocketConn(addr string, log slf.StructuredLogger) (*websocket.C
 			}
 		}
 	}
+}
+func convertToHuman(amount string, d int64) string {
+	n, _ := new(big.Float).SetString(amount)
+	divider := new(big.Float).SetInt64(100000000)
+	hu := ""
+	flag := false
+	for _, ch := range Reverse(n.Quo(n, divider).Text('f', 15)) {
+		if string(ch) != "0" && string(ch) != "." {
+			flag = true
+		}
+		if flag {
+			hu += string(ch)
+		}
+	}
+	return Reverse(hu)
+}
+
+func Reverse(s string) string {
+	r := []rune(s)
+	for i, j := 0, len(r)-1; i < len(r)/2; i, j = i+1, j-1 {
+		r[i], r[j] = r[j], r[i]
+	}
+	return string(r)
 }

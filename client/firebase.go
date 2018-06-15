@@ -77,7 +77,8 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 			return err
 		}
 		txType := msg.NotificationMsg.TransactionType
-		if txType == store.TxStatusAppearedInMempoolIncoming || txType == store.TxStatusAppearedInBlockIncoming || txType == store.TxStatusInBlockConfirmedIncoming {
+		// if txType == store.TxStatusAppearedInMempoolIncoming || txType == store.TxStatusAppearedInBlockIncoming || txType == store.TxStatusInBlockConfirmedIncoming {
+		if txType == store.TxStatusAppearedInMempoolIncoming {
 			topic := store.TopicTransaction + "-" + msg.UserID
 			// topic := "btcTransactionUpdate-" + msg.UserID
 			// topic := "btcTransactionUpdate-003b1e5227ce5f45b22676dc4b55ea00e1410c5f3cf8ae972724fa5d93ecc4585e"
@@ -92,16 +93,15 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 				"walletindex":     strconv.Itoa(msg.NotificationMsg.WalletIndex),
 				"txid":            msg.NotificationMsg.TxID,
 			}
+
 			messageToSend := &messaging.Message{
 				Data: messageKeys,
 				APNS: &messaging.APNSConfig{
 					Payload: &messaging.APNSPayload{
 						Aps: &messaging.Aps{
 							Alert: &messaging.ApsAlert{
-								Title: "You have a new incoming transaction",
-								// Body:  msg.NotificationMsg.Amount + " " + currencies.CurrencyNames[msg.NotificationMsg.CurrencyID],
 								LocKey:  store.TopicNewIncoming,
-								LocArgs: []string{msg.NotificationMsg.Amount, currencies.CurrencyNames[msg.NotificationMsg.CurrencyID]},
+								LocArgs: []string{convertToHuman(msg.NotificationMsg.Amount, currencies.Dividers[msg.NotificationMsg.CurrencyID]), currencies.CurrencyNames[msg.NotificationMsg.CurrencyID]},
 							},
 						},
 					},
