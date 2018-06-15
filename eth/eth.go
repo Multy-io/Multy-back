@@ -83,6 +83,9 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	// test
 	txsDataTest = db.DB(dbConf.DBTx).C(dbConf.TableTxsDataETHTest)
 
+	//restore state
+	restoreState = db.DB(dbConf.DBRestoreState).C(dbConf.TableState)
+
 	// setup main net
 	urlMain, err := fethCoinType(coinTypes, currencies.Ether, currencies.ETHMain)
 	if err != nil {

@@ -88,6 +88,8 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	spendableOutputsTest = db.DB(dbConf.DBTx).C(dbConf.TableSpendableOutputsBTCTest)
 	spentOutputsTest = db.DB(dbConf.DBTx).C(dbConf.TableSpentOutputsBTCTest)
 
+	restoreState = db.DB(dbConf.DBRestoreState).C(dbConf.TableState)
+
 	// setup main net
 	urlMain, err := fethCoinType(coinTypes, currencies.Bitcoin, currencies.Main)
 	if err != nil {

@@ -78,7 +78,7 @@ func main() {
 		log.Fatalf("Server initialization: %s\n", err.Error())
 	}
 
-	//TODO: Last state
+	// TODO: Last state
 	// go func() {
 	// var ls store.LastState
 

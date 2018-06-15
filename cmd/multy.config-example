@@ -52,7 +52,7 @@
         "Dbconfiguration":{
             "User": "1",
 	        "Password": "1",
-	        "Name": "1"
+	        "Name": "test"
         }
     },
     "Logs": {

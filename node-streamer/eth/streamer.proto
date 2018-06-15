@@ -37,10 +37,16 @@ service NodeCommuunications {
     rpc EventResyncAddress (AddressToResync) returns (ReplyInfo){
     }
 
+    rpc EventNewBlock (Empty) returns (stream BlockHeight){
+    }
+
     rpc EventSendRawTx (RawTx) returns (ReplyInfo){
     }
 
     rpc NewTx (Empty) returns (stream ETHTransaction){
+    }
+
+    rpc SyncState (BlockHeight) returns (ReplyInfo){
     }
 
 }

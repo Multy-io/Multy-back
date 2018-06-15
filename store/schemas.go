@@ -267,8 +267,8 @@ type TransactionETH struct {
 }
 
 type CoinType struct {
-	СurrencyID int
-	NetworkID  int
+	СurrencyID int `bson:"currencyID"`
+	NetworkID  int `bson:"networkID"`
 	GRPCUrl    string
 }
 
@@ -378,7 +378,7 @@ type Payload struct {
 }
 
 type LastState struct {
-	BTCTestBlock int64  `json:"btctestblock"`
-	BTCMainBlock int64  `json:"btcmainblock"`
-	OffTime      string `json:"offtime"`
+	BlockHeight int64 `bson:"blockheight"`
+	CurrencyID  int   `bson:"currencyid"`
+	NetworkID   int   `bson:"networkid"`
 }

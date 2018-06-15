@@ -117,6 +117,10 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 			log.Infof("Empty userdata")
 		}
 
+		// rp, err = multy.CliTest.SyncState(context.Background(), &btcpb.BlockHeight{
+		// 	Height: ls.BTCTestBlock,
+		// })
+
 		switch conCred.СurrencyID {
 		case currencies.Bitcoin:
 			var cli btcpb.NodeCommuunicationsClient
@@ -128,6 +132,27 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 			default:
 				log.Errorf("setGRPCHandlers: wrong networkID:")
 			}
+
+			//TODO: Re State
+			// h, err := m.userStore.FethLastSyncBlockState(conCred.СurrencyID, conCred.NetworkID)
+			// if err != nil {
+			// 	log.Errorf("SetUserData:  btcCli.CliMain.cli.FethLastSyncBlockState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			// 	// return servicesInfo, fmt.Errorf("SetUserData:  btcCli.CliMain.FethLastSyncBlockState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			// }
+			// rp, err := cli.SyncState(context.Background(), &btcpb.BlockHeight{
+			// 	Height: h,
+			// })
+			// if err != nil {
+			// 	log.Errorf("SetUserData:  btcCli.CliMain.cli.SyncState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			// 	// return servicesInfo, fmt.Errorf("SetUserData:  btcCli.CliMain.cli.SyncState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			// }
+
+			// if strings.Contains("err:", rp.GetMessage()) {
+			// 	log.Errorf("SetUserData:  Contains err : curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			// 	// return servicesInfo, fmt.Errorf("SetUserData:  Contains err : curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			// }
+			// log.Errorf("BTC ++++++++++ %v", h)
+
 			genUd := btcpb.UsersData{
 				Map: map[string]*btcpb.AddressExtended{},
 			}
@@ -165,6 +190,26 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 			default:
 				log.Errorf("setGRPCHandlers: wrong networkID:")
 			}
+
+			//TODO: Re State
+			// h, err := m.userStore.FethLastSyncBlockState(conCred.СurrencyID, conCred.NetworkID)
+			// if err != nil {
+			// 	log.Errorf("SetUserData:  btcCli.CliMain.cli.FethLastSyncBlockState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			// 	// return servicesInfo, fmt.Errorf("SetUserData:  btcCli.CliMain.FethLastSyncBlockState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			// }
+			// log.Errorf("ETH ++++++++++ %v", h)
+			// rp, err := cli.SyncState(context.Background(), &ethpb.BlockHeight{
+			// 	Height: h,
+			// })
+			// if err != nil {
+			// 	log.Errorf("SetUserData:  btcCli.CliMain.cli.SyncState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			// 	// return servicesInfo, fmt.Errorf("SetUserData:  btcCli.CliMain.cli.SyncState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			// }
+
+			// if strings.Contains("err:", rp.GetMessage()) {
+			// 	log.Errorf("SetUserData:  Contains err : curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			// 	// return servicesInfo, fmt.Errorf("SetUserData:  Contains err : curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			// }
 
 			genUd := ethpb.UsersData{
 				Map: map[string]*ethpb.AddressExtended{},

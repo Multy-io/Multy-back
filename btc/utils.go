@@ -31,6 +31,8 @@ var (
 	txsDataTest          *mgo.Collection
 	spendableOutputsTest *mgo.Collection
 	spentOutputsTest     *mgo.Collection
+
+	restoreState *mgo.Collection
 )
 
 func updateWalletAndAddressDate(tx store.MultyTX, networkID int) error {

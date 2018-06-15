@@ -53,6 +53,10 @@ type Conf struct {
 	TableMempoolRatesETHTest string
 	TableTxsDataETHTest      string
 
+	//RestoreState
+	DBRestoreState string
+	TableState     string
+
 	//Authentification
 	Username string
 	Password string
@@ -83,6 +87,10 @@ type UserStore interface {
 	FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error)
 	FindUserDataChain(CurrencyID, NetworkID int) (map[string]AddressExtended, error)
 
+	DeleteHistory(CurrencyID, NetworkID int, Address string) error
+
+	FethLastSyncBlockState(networkid, currencyid int) (int64, error)
+
 	CheckTx(tx string) bool
 }
 
@@ -110,6 +118,8 @@ type MongoUserStore struct {
 	stockExchangeRate *mgo.Collection
 	ethTxHistory      *mgo.Collection
 	ETHTest           *mgo.Collection
+
+	RestoreState *mgo.Collection
 }
 
 func InitUserStore(conf Conf) (UserStore, error) {
@@ -150,6 +160,8 @@ func InitUserStore(conf Conf) (UserStore, error) {
 	uStore.ETHTestRatesData = uStore.session.DB(conf.DBFeeRates).C(conf.TableMempoolRatesETHTest)
 	uStore.ETHTestTxsData = uStore.session.DB(conf.DBTx).C(conf.TableTxsDataETHTest)
 
+	uStore.RestoreState = uStore.session.DB(conf.DBRestoreState).C(conf.TableState)
+
 	return uStore, nil
 }
 
@@ -184,6 +196,35 @@ func (mStore *MongoUserStore) FindUserDataChain(CurrencyID, NetworkID int) (map[
 		}
 	}
 	return usersData, nil
+}
+
+func (mStore *MongoUserStore) DeleteHistory(CurrencyID, NetworkID int, Address string) error {
+
+	sel := bson.M{"txaddress": Address}
+	switch CurrencyID {
+	case currencies.Bitcoin:
+		if NetworkID == currencies.Main {
+			return mStore.BTCMainTxsData.Remove(sel)
+		}
+		if NetworkID == currencies.Test {
+			return mStore.BTCTestTxsData.Remove(sel)
+		}
+	case currencies.Ether:
+		if NetworkID == currencies.Main {
+
+		}
+		if NetworkID == currencies.Test {
+
+		}
+	}
+	return nil
+}
+
+func (mStore *MongoUserStore) FethLastSyncBlockState(networkid, currencyid int) (int64, error) {
+	ls := LastState{}
+	sel := bson.M{"networkid": networkid, "currencyid": currencyid}
+	err := mStore.RestoreState.Find(sel).Sort("blockheight").One(&ls)
+	return ls.BlockHeight, err
 }
 
 func (mStore *MongoUserStore) FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error) {

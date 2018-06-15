@@ -1850,7 +1850,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				for _, tx := range userTxs {
 					if len(tx.TxAddress) > 0 {
 						if tx.TxAddress[0] == address {
-							restClient.log.Infof("---------address= %s, txid= %s", address, tx.TxID)
+							// restClient.log.Infof("---------address= %s, txid= %s", address, tx.TxID)
 							var isTheSameWallet = false
 							for _, input := range tx.WalletsInput {
 								if walletIndex == input.WalletIndex {
@@ -2077,6 +2077,10 @@ func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 						WalletIndex:  int32(walletIndex),
 						AddressIndex: int32(address.AddressIndex),
 					})
+					err := restClient.userStore.DeleteHistory(currencyID, networkID, address.Address)
+					if err != nil {
+						restClient.log.Errorf("resyncWallet case currencies.Bitcoin:Main: %v", err.Error())
+					}
 				}
 			}
 
@@ -2088,7 +2092,12 @@ func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 						WalletIndex:  int32(walletIndex),
 						AddressIndex: int32(address.AddressIndex),
 					})
+					err := restClient.userStore.DeleteHistory(currencyID, networkID, address.Address)
+					if err != nil {
+						restClient.log.Errorf("resyncWallet case currencies.Bitcoin:Test: %v", err.Error())
+					}
 				}
+
 			}
 		case currencies.Ether:
 			if networkID == currencies.ETHMain {

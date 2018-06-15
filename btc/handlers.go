@@ -27,7 +27,6 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 	go func() {
 		// 		clientDeadline := time.Now().Add(time.Duration(100) * time.Second)
 		//      c, _ := context.WithDeadline(context.Background(), clientDeadline)
-
 		stream, err := cli.EventGetAllMempool(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())
@@ -78,6 +77,44 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 		}
 	}()
 
+	go func() {
+		stream, err := cli.EventNewBlock(context.Background(), &pb.Empty{})
+		if err != nil {
+			log.Errorf("setGRPCHandlers: cli.EventNewBlock: %s", err.Error())
+			// return nil, err
+		}
+
+		for {
+			h, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Errorf("setGRPCHandlers: client.EventNewBlock:stream.Recv: %s", err.Error())
+			}
+
+			query := bson.M{"currencyid": currencies.Bitcoin, "networkid": networtkID}
+			update := bson.M{
+				"$set": bson.M{
+					"blockheight": h.GetHeight(),
+				},
+			}
+
+			err = restoreState.Update(query, update)
+			if err == mgo.ErrNotFound {
+				restoreState.Insert(store.LastState{
+					BlockHeight: h.GetHeight(),
+					CurrencyID:  currencies.Bitcoin,
+					NetworkID:   networtkID,
+				})
+			}
+
+			if err != nil {
+				log.Errorf("initGrpcClient: mpRates.Insert: %s", err.Error())
+			}
+		}
+	}()
+
 	//deleting mempool record on block
 	go func() {
 		stream, err := cli.EventDeleteMempool(context.Background(), &pb.Empty{})
@@ -100,7 +137,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			if err != nil {
 				log.Errorf("setGRPCHandlers:mpRates.Remove: %s", err.Error())
 			} else {
-				log.Debugf("Tx removed: %s", mpRec.Hash)
+				// log.Debugf("Tx removed: %s", mpRec.Hash)
 			}
 		}
 
@@ -216,10 +253,15 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			i := 0
 			for {
 				//insert to spend collection
-				err := spend.Insert(del)
-				if err != nil {
-					log.Errorf("DeleteSpendableOutputs:spend.Insert: %s", err)
-				}
+				var once sync.Once
+
+				once.Do(func() {
+					err := spend.Insert(del)
+					if err != nil {
+						log.Errorf("DeleteSpendableOutputs:spend.Insert: %s", err)
+					}
+				})
+
 				query := bson.M{"userid": del.UserID, "txid": del.TxID, "address": del.Address}
 				log.Infof("-------- query delete %v\n", query)
 				err = spOutputs.Remove(query)

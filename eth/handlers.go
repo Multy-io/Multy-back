@@ -10,9 +10,12 @@ import (
 	"io"
 	"sync"
 
+	"github.com/Appscrunch/Multy-back/currencies"
 	pb "github.com/Appscrunch/Multy-back/node-streamer/eth"
 	"github.com/Appscrunch/Multy-back/store"
 	nsq "github.com/bitly/go-nsq"
+	mgo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress, mempool sync.Map) {
@@ -95,7 +98,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			if err != nil {
 				log.Errorf("setGRPCHandlers:mpRates.Remove: %s", err.Error())
 			} else {
-				log.Debugf("Tx removed: %s", mpRec.Hash)
+				// log.Debugf("Tx removed: %s", mpRec.Hash)
 			}
 		}
 
@@ -127,6 +130,43 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 			if !gTx.GetResync() {
 				sendNotifyToClients(tx, nsqProducer, networtkID)
+			}
+		}
+	}()
+
+	go func() {
+		stream, err := cli.EventNewBlock(context.Background(), &pb.Empty{})
+		if err != nil {
+			log.Errorf("setGRPCHandlers: cli.EventNewBlock: %s", err.Error())
+			// return nil, err
+		}
+		for {
+			h, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Errorf("setGRPCHandlers: client.EventNewBlock:stream.Recv: %s", err.Error())
+			}
+
+			query := bson.M{"currencyid": currencies.Bitcoin, "networkid": networtkID}
+			update := bson.M{
+				"$set": bson.M{
+					"blockheight": h.GetHeight(),
+				},
+			}
+
+			err = restoreState.Update(query, update)
+			if err == mgo.ErrNotFound {
+				restoreState.Insert(store.LastState{
+					BlockHeight: h.GetHeight(),
+					CurrencyID:  currencies.Bitcoin,
+					NetworkID:   networtkID,
+				})
+			}
+
+			if err != nil {
+				log.Errorf("initGrpcClient: mpRates.Insert: %s", err.Error())
 			}
 		}
 	}()

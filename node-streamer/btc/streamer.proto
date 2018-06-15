@@ -37,6 +37,9 @@ service NodeCommuunications {
     rpc EventDeleteSpendableOut (Empty) returns (stream ReqDeleteSpOut){
     }
 
+    rpc EventNewBlock (Empty) returns (stream BlockHeight){
+    }
+
     rpc EventAddSpendableOut (Empty) returns (stream AddSpOut){
     }
 
