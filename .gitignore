@@ -5,7 +5,9 @@ cmd/multy
 cmd/multy.config
 cmd/btc.cert
 cmd/back-*
-cmd/logs
+cmd/log*
+cmd
+cmd/client
 cmd/rpc.cert
 cmd/client.config
 cmd/client

@@ -5,7 +5,7 @@ RUN go get github.com/Appscrunch/Multy-back && \
     cd $GOPATH/src/github.com/Appscrunch && \ 
     git clone https://github.com/Appscrunch/Multy-back.git && \ 
     cd Multy-back && \ 
-    git checkout release_1.1  && \ 
+    git checkout release_1.1 && \ 
     go get firebase.google.com/go   && \ 
     go get firebase.google.com/go/messaging  && \ 
     go get google.golang.org/api/option  && \ 
