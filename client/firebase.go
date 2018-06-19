@@ -100,6 +100,8 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 					Payload: &messaging.APNSPayload{
 						Aps: &messaging.Aps{
 							Alert: &messaging.ApsAlert{
+								Title: "You have a new transaction",
+								// Body:  msg.NotificationMsg.Amount + " " + currencies.CurrencyNames[msg.NotificationMsg.CurrencyID],
 								LocKey:  store.TopicNewIncoming,
 								LocArgs: []string{convertToHuman(msg.NotificationMsg.Amount, currencies.Dividers[msg.NotificationMsg.CurrencyID]), currencies.CurrencyNames[msg.NotificationMsg.CurrencyID]},
 							},

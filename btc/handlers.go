@@ -110,7 +110,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			}
 
 			if err != nil {
-				log.Errorf("initGrpcClient: mpRates.Insert: %s", err.Error())
+				log.Errorf("initGrpcClient: cli.EventNewBlock: %s", err.Error())
 			}
 		}
 	}()

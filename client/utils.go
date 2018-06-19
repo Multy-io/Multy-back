@@ -113,7 +113,7 @@ func reconnectWebSocketConn(addr string, log slf.StructuredLogger) (*websocket.C
 }
 func convertToHuman(amount string, d int64) string {
 	n, _ := new(big.Float).SetString(amount)
-	divider := new(big.Float).SetInt64(100000000)
+	divider := new(big.Float).SetInt64(d)
 	hu := ""
 	flag := false
 	for _, ch := range Reverse(n.Quo(n, divider).Text('f', 15)) {

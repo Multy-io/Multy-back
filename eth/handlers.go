@@ -69,9 +69,6 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				Category: int(mpRec.Category),
 				HashTX:   mpRec.HashTX,
 			}
-			if err != nil {
-				log.Errorf("initGrpcClient: mpRates.Insert: %s", err.Error())
-			}
 		}
 	}()
 
@@ -166,7 +163,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			}
 
 			if err != nil {
-				log.Errorf("initGrpcClient: mpRates.Insert: %s", err.Error())
+				log.Errorf("initGrpcClient: restoreState.Update: %s", err.Error())
 			}
 		}
 	}()

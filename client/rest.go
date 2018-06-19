@@ -861,6 +861,19 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 
 			}
 
+			if fastValue > fastestValue {
+				fastestValue = fastValue
+			}
+			if mediumValue > fastValue {
+				fastValue = mediumValue
+			}
+			if slowValue > mediumValue {
+				mediumValue = slowValue
+			}
+			if slowestValue > slowValue {
+				slowValue = slowestValue
+			}
+
 			sp = EstimationSpeeds{
 				VerySlow: slowestValue,
 				Slow:     slowValue,
