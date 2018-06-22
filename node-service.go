@@ -45,7 +45,6 @@ func Init(conf *Configuration) (*NodeClient, error) {
 			AddressIndex: 2,
 		},
 	}
-
 	// initail initialization of clients data
 	cli.Clients = &usersData
 	log.Infof("Users data initialization done")
@@ -57,7 +56,7 @@ func Init(conf *Configuration) (*NodeClient, error) {
 	}
 	// Creates a new gRPC server
 
-	ethCli := eth.NewClient(&conf.EthConf, cli.Clients)
+	ethCli := eth.NewClient(&conf.EthConf, cli.Clients, conf.MultisigFactory)
 	if err != nil {
 		return nil, fmt.Errorf("eth.NewClient initialization: %s", err.Error())
 	}

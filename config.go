@@ -12,8 +12,9 @@ import (
 
 // Configuration is a struct with all service options
 type Configuration struct {
-	Name        string
-	GrpcPort    string
-	EthConf     eth.Conf
-	ServiceInfo store.ServiceInfo
+	Name            string
+	GrpcPort        string
+	MultisigFactory string
+	EthConf         eth.Conf
+	ServiceInfo     store.ServiceInfo
 }

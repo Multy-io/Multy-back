@@ -37,7 +37,7 @@ type Conf struct {
 	WsPort  string
 }
 
-func NewClient(conf *Conf, usersData *map[string]store.AddressExtended) *Client {
+func NewClient(conf *Conf, usersData *map[string]store.AddressExtended, multisig string) *Client {
 	c := &Client{
 		config:         conf,
 		TransactionsCh: make(chan pb.ETHTransaction),
