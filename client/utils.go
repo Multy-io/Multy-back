@@ -74,13 +74,6 @@ func createWallet(currencyID, networkID int, address string, addressIndex int, w
 // 		LastActionTime:  time.Now().Unix(),
 // 		DateOfCreation:  time.Now().Unix(),
 // 		Status:          store.WalletStatusOK,
-// 		Owners: []store.AddressExtended{
-// 			store.AddressExtended{
-// 				Address:        address,
-// 				AddressIndex:   addressIndex,
-// 				LastActionTime: time.Now().Unix(),
-// 			},
-// 		},
 // 	}
 // }
 
