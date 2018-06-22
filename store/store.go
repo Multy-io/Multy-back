@@ -86,6 +86,7 @@ type UserStore interface {
 
 	FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error)
 	FindUserDataChain(CurrencyID, NetworkID int) (map[string]AddressExtended, error)
+	// FindAllMultisigContracts( NetworkID int)
 
 	DeleteHistory(CurrencyID, NetworkID int, Address string) error
 

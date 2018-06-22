@@ -1013,11 +1013,15 @@ type RawHDTx struct {
 }
 
 type Payload struct {
-	Address      string `json:"address"`
-	AddressIndex int    `json:"addressindex"`
-	WalletIndex  int    `json:"walletindex"`
-	Transaction  string `json:"transaction"`
-	IsHD         bool   `json:"ishd"`
+	Address             string   `json:"address"`
+	AddressIndex        int      `json:"addressindex"`
+	WalletIndex         int      `json:"walletindex"`
+	Transaction         string   `json:"transaction"`
+	IsHD                bool     `json:"ishd"`
+	MultisigFactory     bool     `json:"multisigfactory"`
+	WalletName          string   `json:"walletname"`
+	Owners              []string `json:"owners"`
+	ConfirmationsNeeded int      `json:"confirmationsneeded"`
 }
 
 func (restClient *RestClient) sendRawHDTransaction() gin.HandlerFunc {
@@ -1177,6 +1181,7 @@ func (restClient *RestClient) sendRawHDTransaction() gin.HandlerFunc {
 					})
 					return
 				}
+				// TODO: Make a wallet
 
 				c.JSON(http.StatusOK, gin.H{
 					"code":    http.StatusOK,
@@ -1196,6 +1201,8 @@ func (restClient *RestClient) sendRawHDTransaction() gin.HandlerFunc {
 					})
 					return
 				}
+
+				// TODO: Make a wallet
 
 				c.JSON(http.StatusOK, gin.H{
 					"code":    http.StatusOK,

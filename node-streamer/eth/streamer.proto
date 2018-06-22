@@ -49,6 +49,9 @@ service NodeCommuunications {
     rpc SyncState (BlockHeight) returns (ReplyInfo){
     }
 
+    //  Multisig methods
+    
+
 }
 
 message Balance {

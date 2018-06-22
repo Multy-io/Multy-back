@@ -64,6 +64,26 @@ func createWallet(currencyID, networkID int, address string, addressIndex int, w
 
 }
 
+// func createMultisig(currencyID, networkID, addressIndex int, address, walletName, contractAddress, txOfCreation string) store.Multisig {
+// 	return store.Multisig{
+// 		CurrencyID:      currencyID,
+// 		NetworkID:       networkID,
+// 		WalletName:      walletName,
+// 		ContractAddress: contractAddress,
+// 		TxOfCreation:    txOfCreation,
+// 		LastActionTime:  time.Now().Unix(),
+// 		DateOfCreation:  time.Now().Unix(),
+// 		Status:          store.WalletStatusOK,
+// 		Adresses: []store.Address{
+// 			store.Address{
+// 				Address:        address,
+// 				AddressIndex:   addressIndex,
+// 				LastActionTime: time.Now().Unix(),
+// 			},
+// 		},
+// 	}
+// }
+
 func newEmptyTx(userID string) store.TxRecord {
 	return store.TxRecord{
 		UserID:       userID,

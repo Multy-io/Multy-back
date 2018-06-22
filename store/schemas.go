@@ -93,6 +93,19 @@ type Wallet struct {
 	Status string `bson:"status"`
 }
 
+type Multisig struct {
+	CurrencyID      int               `bson:"currencyID"`
+	NetworkID       int               `bson:"networkID"`
+	WalletName      string            `bson:"walletName"`
+	ContractAddress string            `bson:"walletName"`
+	TxOfCreation    string            `bson:"txofcreation"`
+	LastActionTime  int64             `bson:"lastActionTime"`
+	DateOfCreation  int64             `bson:"dateOfCreation"`
+	Adresses        []AddressExtended `bson:"addresses"` // User associated addresses
+	Owners          []AddressExtended `bson:"owners"`
+	Status          string            `bson:"status"`
+}
+
 type RatesRecord struct {
 	Category int    `json:"category" bson:"category"`
 	TxHash   string `json:"txHash" bson:"txHash"`
@@ -103,6 +116,7 @@ type Address struct {
 	Address        string `json:"address" bson:"address"`
 	LastActionTime int64  `json:"lastActionTime" bson:"lastActionTime"`
 }
+
 type WalletsSelect struct {
 	Wallets []struct {
 		Addresses []struct {
@@ -290,6 +304,7 @@ type DonationInfo struct {
 
 type AddressExtended struct {
 	UserID       string
+	Address      string // etereum asociated to contract address
 	WalletIndex  int
 	AddressIndex int
 }

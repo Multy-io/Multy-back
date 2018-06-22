@@ -117,10 +117,6 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 			log.Infof("Empty userdata")
 		}
 
-		// rp, err = multy.CliTest.SyncState(context.Background(), &btcpb.BlockHeight{
-		// 	Height: ls.BTCTestBlock,
-		// })
-
 		switch conCred.СurrencyID {
 		case currencies.Bitcoin:
 			var cli btcpb.NodeCommuunicationsClient
