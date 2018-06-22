@@ -511,7 +511,7 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 			"version": restClient.MultyVerison,
 			"ios": map[string]int{
 				"soft": 29,
-				"hard": 29,
+				"hard": 49,
 			},
 			"donate": restClient.donationAddresses,
 		}

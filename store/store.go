@@ -86,6 +86,8 @@ type UserStore interface {
 
 	FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error)
 	FindUserDataChain(CurrencyID, NetworkID int) (map[string]AddressExtended, error)
+
+	FethUserAddresses(currencyID, networkID int, userid string, addreses []string) (AddressExtended, error)
 	// FindAllMultisigContracts( NetworkID int)
 
 	DeleteHistory(CurrencyID, NetworkID int, Address string) error
@@ -197,6 +199,38 @@ func (mStore *MongoUserStore) FindUserDataChain(CurrencyID, NetworkID int) (map[
 		}
 	}
 	return usersData, nil
+}
+
+func (mStore *MongoUserStore) FethUserAddresses(currencyID, networkID int, userid string, addreses []string) (AddressExtended, error) {
+	user := User{}
+	err := mStore.usersData.Find(bson.M{"userID": userid}).One(&user)
+	if err != nil {
+		return AddressExtended{}, err
+	}
+	addresses := []AddressExtended{}
+
+	for _, wallet := range user.Wallets {
+		for _, addres := range wallet.Adresses {
+			if wallet.CurrencyID == currencyID && wallet.NetworkID == networkID {
+				for _, fethAddr := range addreses {
+
+					ae := AddressExtended{
+						Address:    fethAddr,
+						Associated: false,
+					}
+					if fethAddr == addres.Address {
+						ae.Associated = true
+						ae.WalletIndex = wallet.WalletIndex
+						ae.AddressIndex = addres.AddressIndex
+						ae.UserID = userid
+					}
+					addresses = append(addresses, ae)
+				}
+
+			}
+		}
+	}
+	return AddressExtended{}, nil
 }
 
 func (mStore *MongoUserStore) DeleteHistory(CurrencyID, NetworkID int, Address string) error {

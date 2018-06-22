@@ -101,7 +101,6 @@ type Multisig struct {
 	TxOfCreation    string            `bson:"txofcreation"`
 	LastActionTime  int64             `bson:"lastActionTime"`
 	DateOfCreation  int64             `bson:"dateOfCreation"`
-	Adresses        []AddressExtended `bson:"addresses"` // User associated addresses
 	Owners          []AddressExtended `bson:"owners"`
 	Status          string            `bson:"status"`
 }
@@ -305,6 +304,7 @@ type DonationInfo struct {
 type AddressExtended struct {
 	UserID       string
 	Address      string // etereum asociated to contract address
+	Associated   bool   // is associated
 	WalletIndex  int
 	AddressIndex int
 }
