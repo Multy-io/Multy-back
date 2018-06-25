@@ -13,8 +13,8 @@ import (
 	"github.com/jekabolt/config"
 	_ "github.com/jekabolt/slflog"
 
-	multy "github.com/Appscrunch/Multy-back"
-	"github.com/Appscrunch/Multy-back/store"
+	multy "github.com/Multy-io/Multy-back"
+	"github.com/Multy-io/Multy-back/store"
 	"github.com/jekabolt/slf"
 )
 

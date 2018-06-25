@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Appscrunch/Multy-back/store"
+	"github.com/Multy-io/Multy-back/store"
 	"github.com/jekabolt/slf"
 )
 

@@ -4,8 +4,8 @@ services:
     image: multyio/multy-btc-node-service:release_1.1
     network_mode: "host"
     volumes:
-      - "${BTCD_CERT}:/go/src/github.com/Appscrunch/Multy-BTC-node-service/cmd/rpc.cert"
-      - "${BTC_NODE_SERVICE_MAINNET}:/go/src/github.com/Appscrunch/Multy-BTC-node-service/cmd/client.config"
+      - "${BTCD_CERT}:/go/src/github.com/Multy-io/Multy-BTC-node-service/cmd/rpc.cert"
+      - "${BTC_NODE_SERVICE_MAINNET}:/go/src/github.com/Multy-io/Multy-BTC-node-service/cmd/client.config"
     ports:
       - "7755:7755"
 
@@ -13,8 +13,8 @@ services:
     image: multyio/multy-btc-node-service:release_1.1
     network_mode: "host"
     volumes:
-     - "${BTC_NODE_SERVICE_TESTNET}:/go/src/github.com/Appscrunch/Multy-BTC-node-service/cmd/client.config"
-     - "${BTCD_CERT}:/go/src/github.com/Appscrunch/Multy-BTC-node-service/cmd/rpc.cert"
+     - "${BTC_NODE_SERVICE_TESTNET}:/go/src/github.com/Multy-io/Multy-BTC-node-service/cmd/client.config"
+     - "${BTCD_CERT}:/go/src/github.com/Multy-io/Multy-BTC-node-service/cmd/rpc.cert"
     ports:
      - "6655:6655"
 
@@ -22,7 +22,7 @@ services:
     image: multyio/multy-eth-node-service:release_1.1
     network_mode: "host"
     volumes:
-      - "${ETH_NODE_SERVICE_MAINNET}:/go/src/github.com/Appscrunch/Multy-ETH-node-service/cmd/client.config"
+      - "${ETH_NODE_SERVICE_MAINNET}:/go/src/github.com/Multy-io/Multy-ETH-node-service/cmd/client.config"
     ports:
       - "7744:7744"
 
@@ -31,6 +31,6 @@ services:
     image: multyio/multy-eth-node-service:release_1.1
     network_mode: "host"
     volumes:
-      - "${ETH_NODE_SERVICE_TESTNET}:/go/src/github.com/Appscrunch/Multy-ETH-node-service/cmd/client.config"
+      - "${ETH_NODE_SERVICE_TESTNET}:/go/src/github.com/Multy-io/Multy-ETH-node-service/cmd/client.config"
     ports:
       - "6644:6644"

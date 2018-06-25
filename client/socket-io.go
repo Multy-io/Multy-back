@@ -12,12 +12,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Appscrunch/Multy-back/btc"
-	"github.com/Appscrunch/Multy-back/currencies"
-	"github.com/Appscrunch/Multy-back/eth"
-	btcpb "github.com/Appscrunch/Multy-back/node-streamer/btc"
-	ethpb "github.com/Appscrunch/Multy-back/node-streamer/eth"
-	"github.com/Appscrunch/Multy-back/store"
+	"github.com/Multy-io/Multy-back/btc"
+	"github.com/Multy-io/Multy-back/currencies"
+	"github.com/Multy-io/Multy-back/eth"
+	btcpb "github.com/Multy-io/Multy-back/node-streamer/btc"
+	ethpb "github.com/Multy-io/Multy-back/node-streamer/eth"
+	"github.com/Multy-io/Multy-back/store"
 
 	"github.com/gin-gonic/gin"
 	"github.com/graarh/golang-socketio"

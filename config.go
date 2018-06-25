@@ -6,9 +6,9 @@ See LICENSE for details
 package multyback
 
 import (
-	// "github.com/Appscrunch/Multy-back-exchange-service/core"
-	"github.com/Appscrunch/Multy-back/client"
-	"github.com/Appscrunch/Multy-back/store"
+	// "github.com/Multy-io/Multy-back-exchange-service/core"
+	"github.com/Multy-io/Multy-back/client"
+	"github.com/Multy-io/Multy-back/store"
 )
 
 // Configuration is a struct with all service options

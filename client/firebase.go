@@ -14,8 +14,8 @@ import (
 
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
-	"github.com/Appscrunch/Multy-back/currencies"
-	"github.com/Appscrunch/Multy-back/store"
+	"github.com/Multy-io/Multy-back/currencies"
+	"github.com/Multy-io/Multy-back/store"
 	"github.com/gin-gonic/gin"
 	"github.com/jekabolt/slf"
 	"google.golang.org/api/option"

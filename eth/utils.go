@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Appscrunch/Multy-back/currencies"
-	ethpb "github.com/Appscrunch/Multy-back/node-streamer/eth"
-	"github.com/Appscrunch/Multy-back/store"
+	"github.com/Multy-io/Multy-back/currencies"
+	ethpb "github.com/Multy-io/Multy-back/node-streamer/eth"
+	"github.com/Multy-io/Multy-back/store"
 	nsq "github.com/bitly/go-nsq"
 	_ "github.com/jekabolt/slflog"
 	mgo "gopkg.in/mgo.v2"

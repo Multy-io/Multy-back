@@ -11,7 +11,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/Appscrunch/Multy-back/store"
+	"github.com/Multy-io/Multy-back/store"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/jekabolt/slf"

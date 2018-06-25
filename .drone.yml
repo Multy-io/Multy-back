@@ -1,6 +1,6 @@
 workspace:
   base: /go
-  path: src/github.com/Appscrunch/Multy-back
+  path: src/github.com/Multy-io/Multy-back
 
 pipeline:
   build:
