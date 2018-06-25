@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/Appscrunch/Multy-back/node-streamer/btc"
-	"github.com/Appscrunch/Multy-back/store"
+	pb "github.com/Multy-io/Multy-back/node-streamer/btc"
+	"github.com/Multy-io/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"
 	"github.com/btcsuite/btcd/btcjson"

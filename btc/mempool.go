@@ -1,7 +1,7 @@
 package btc
 
 import (
-	pb "github.com/Appscrunch/Multy-back/node-streamer/btc"
+	pb "github.com/Multy-io/Multy-back/node-streamer/btc"
 	"github.com/btcsuite/btcd/btcjson"
 )
 

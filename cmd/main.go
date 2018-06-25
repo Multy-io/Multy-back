@@ -8,8 +8,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/Appscrunch/Multy-BTC-node-service"
-	"github.com/Appscrunch/Multy-back/store"
+	"github.com/Multy-io/Multy-BTC-node-service"
+	"github.com/Multy-io/Multy-back/store"
 	"github.com/KristinaEtc/config"
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"

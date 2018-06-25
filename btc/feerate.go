@@ -3,7 +3,7 @@ package btc
 import (
 	"math"
 
-	"github.com/Appscrunch/Multy-back/store"
+	"github.com/Multy-io/Multy-back/store"
 )
 
 const (

@@ -1,6 +1,6 @@
 package streamer
 
-import "github.com/Appscrunch/Multy-back/store"
+import "github.com/Multy-io/Multy-back/store"
 
 func reverseResyncTx(ss []store.ResyncTx) {
 	last := len(ss) - 1

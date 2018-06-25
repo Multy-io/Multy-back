@@ -6,7 +6,7 @@ See LICENSE for details
 package btc
 
 // import (
-// 	"github.com/Appscrunch/Multy-back/store"
+// 	"github.com/Multy-io/Multy-back/store"
 // 	"github.com/btcsuite/btcd/wire"
 // 	"gopkg.in/mgo.v2"
 // 	"gopkg.in/mgo.v2/bson"

@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Appscrunch/Multy-BTC-node-service/btc"
-	pb "github.com/Appscrunch/Multy-back/node-streamer/btc"
-	"github.com/Appscrunch/Multy-back/store"
+	"github.com/Multy-io/Multy-BTC-node-service/btc"
+	pb "github.com/Multy-io/Multy-back/node-streamer/btc"
+	"github.com/Multy-io/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"
 	"github.com/blockcypher/gobcy"
