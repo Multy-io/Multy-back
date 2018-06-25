@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/Appscrunch/Multy-back/node-streamer/eth"
-	"github.com/Appscrunch/Multy-back/store"
+	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
+	"github.com/Multy-io/Multy-back/store"
 	"github.com/onrik/ethrpc"
 	"gopkg.in/mgo.v2/bson"
 )
