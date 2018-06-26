@@ -9,10 +9,10 @@ import (
 	"context"
 	"sync"
 
-	pb "github.com/Appscrunch/Multy-back/node-streamer/eth"
-	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"
+	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
+	"github.com/Multy-io/Multy-back/store"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/onrik/ethrpc"
 )

@@ -6,7 +6,7 @@ See LICENSE for details
 package eth
 
 import (
-	pb "github.com/Appscrunch/Multy-back/node-streamer/eth"
+	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
 )
 
 func (c *Client) txpoolTransaction(txHash string) {

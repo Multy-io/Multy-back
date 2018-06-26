@@ -1,7 +1,7 @@
 package eth
 
 import (
-	pb "github.com/Appscrunch/Multy-back/node-streamer/eth"
+	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
 	"github.com/onrik/ethrpc"
 )
 

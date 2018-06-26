@@ -6,8 +6,8 @@ See LICENSE for details
 package node
 
 import (
-	"github.com/Appscrunch/Multy-ETH-node-service/eth"
-	"github.com/Appscrunch/Multy-back/store"
+	"github.com/Multy-io/Multy-ETH-node-service/eth"
+	"github.com/Multy-io/Multy-back/store"
 )
 
 // Configuration is a struct with all service options
