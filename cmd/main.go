@@ -8,11 +8,11 @@ package main
 import (
 	"fmt"
 
-	"github.com/Appscrunch/Multy-ETH-node-service"
-	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/config"
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"
+	"github.com/Multy-io/Multy-ETH-node-service"
+	"github.com/Multy-io/Multy-back/store"
 )
 
 var (
