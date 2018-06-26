@@ -9,9 +9,9 @@ import (
 	"github.com/KristinaEtc/config"
 	_ "github.com/KristinaEtc/slflog"
 
-	multy "github.com/Appscrunch/Multy-back"
-	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
+	multy "github.com/Multy-io/Multy-back"
+	"github.com/Multy-io/Multy-back/store"
 )
 
 var (

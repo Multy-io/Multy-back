@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Appscrunch/Multy-back/store"
+	"github.com/Multy-io/Multy-back/store"
 	"github.com/gin-gonic/gin"
 	"github.com/graarh/golang-socketio/transport"
 

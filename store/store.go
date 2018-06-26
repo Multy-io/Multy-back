@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Appscrunch/Multy-back/currencies"
+	"github.com/Multy-io/Multy-back/currencies"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )

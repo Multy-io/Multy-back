@@ -18,12 +18,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Appscrunch/Multy-back/btc"
-	"github.com/Appscrunch/Multy-back/currencies"
-	"github.com/Appscrunch/Multy-back/store"
+	"github.com/Multy-io/Multy-back/btc"
+	"github.com/Multy-io/Multy-back/currencies"
+	"github.com/Multy-io/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 
-	btcpb "github.com/Appscrunch/Multy-back/node-streamer/btc"
+	btcpb "github.com/Multy-io/Multy-back/node-streamer/btc"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
 	mgo "gopkg.in/mgo.v2"

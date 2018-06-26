@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Appscrunch/Multy-back/btc"
-	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
+	"github.com/Multy-io/Multy-back/btc"
+	"github.com/Multy-io/Multy-back/store"
 	nsq "github.com/bitly/go-nsq"
 	"github.com/graarh/golang-socketio"
 )

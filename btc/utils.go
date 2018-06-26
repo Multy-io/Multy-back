@@ -11,10 +11,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Appscrunch/Multy-back/currencies"
-	btcpb "github.com/Appscrunch/Multy-back/node-streamer/btc"
-	"github.com/Appscrunch/Multy-back/store"
 	_ "github.com/KristinaEtc/slflog"
+	"github.com/Multy-io/Multy-back/currencies"
+	btcpb "github.com/Multy-io/Multy-back/node-streamer/btc"
+	"github.com/Multy-io/Multy-back/store"
 	nsq "github.com/bitly/go-nsq"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"

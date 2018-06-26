@@ -1,6 +1,6 @@
 # Multy-back
 
-Back end server for [Multy](https://github.com/Appscrunch/Multy/wiki) application
+Back end server for [Multy](https://github.com/Multy-io/Multy/wiki) application
 
 ## Usage Instructions
 
@@ -38,4 +38,4 @@ docker-compose up
 
 ## API
 
-For API documentation, see https://godoc.org/github.com/Appscrunch/Multy-back
+For API documentation, see https://godoc.org/github.com/Multy-io/Multy-back

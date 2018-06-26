@@ -9,12 +9,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Appscrunch/Multy-back/btc"
-	"github.com/Appscrunch/Multy-back/client"
-	"github.com/Appscrunch/Multy-back/currencies"
-	btcpb "github.com/Appscrunch/Multy-back/node-streamer/btc"
-	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
+	"github.com/Multy-io/Multy-back/btc"
+	"github.com/Multy-io/Multy-back/client"
+	"github.com/Multy-io/Multy-back/currencies"
+	btcpb "github.com/Multy-io/Multy-back/node-streamer/btc"
+	"github.com/Multy-io/Multy-back/store"
 	"github.com/gin-gonic/gin"
 )
 

@@ -11,10 +11,10 @@ import (
 	"google.golang.org/grpc"
 	mgo "gopkg.in/mgo.v2"
 
-	"github.com/Appscrunch/Multy-back/currencies"
-	pb "github.com/Appscrunch/Multy-back/node-streamer/btc"
-	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
+	"github.com/Multy-io/Multy-back/currencies"
+	pb "github.com/Multy-io/Multy-back/node-streamer/btc"
+	"github.com/Multy-io/Multy-back/store"
 	nsq "github.com/bitly/go-nsq"
 )
 

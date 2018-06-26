@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Appscrunch/Multy-back/store"
+	"github.com/Multy-io/Multy-back/store"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"

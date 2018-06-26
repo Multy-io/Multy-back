@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Appscrunch/Multy-back/currencies"
-	"github.com/Appscrunch/Multy-back/store"
 	"github.com/KristinaEtc/slf"
+	"github.com/Multy-io/Multy-back/currencies"
+	"github.com/Multy-io/Multy-back/store"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
