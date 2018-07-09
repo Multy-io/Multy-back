@@ -17,4 +17,6 @@ type Configuration struct {
 	MultisigFactory string
 	EthConf         eth.Conf
 	ServiceInfo     store.ServiceInfo
+	NetworkID       int
+	ResyncUrl       string
 }

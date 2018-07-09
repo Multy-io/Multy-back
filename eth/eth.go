@@ -27,8 +27,10 @@ type Client struct {
 	DeleteMempool  chan pb.MempoolToDelete
 	AddToMempool   chan pb.MempoolRecord
 	Block          chan pb.BlockHeight
+	NewMultisig    chan pb.Multisig
 	UsersData      *map[string]store.AddressExtended
 	UserDataM      *sync.Mutex
+	Multisig       *Multisig
 }
 
 type Conf struct {
@@ -37,15 +39,17 @@ type Conf struct {
 	WsPort  string
 }
 
-func NewClient(conf *Conf, usersData *map[string]store.AddressExtended, multisig string) *Client {
+func NewClient(conf *Conf, usersData *map[string]store.AddressExtended, multisig *Multisig) *Client {
 	c := &Client{
 		config:         conf,
 		TransactionsCh: make(chan pb.ETHTransaction),
 		DeleteMempool:  make(chan pb.MempoolToDelete),
 		AddToMempool:   make(chan pb.MempoolRecord),
 		Block:          make(chan pb.BlockHeight),
+		NewMultisig:    make(chan pb.Multisig),
 		UsersData:      usersData,
 		UserDataM:      &sync.Mutex{},
+		Multisig:       multisig,
 	}
 	go c.RunProcess()
 	return c
