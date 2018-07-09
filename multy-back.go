@@ -117,6 +117,14 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 			log.Infof("Empty userdata")
 		}
 
+		usersContracts, err := userStore.FindUsersContractsChain(conCred.СurrencyID, conCred.NetworkID)
+		if err != nil {
+			return servicesInfo, fmt.Errorf("SetUserData: userStore.FindUsersContractsChain: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+		}
+		if len(usersData) == 0 {
+			log.Infof("Empty userscontracts")
+		}
+
 		switch conCred.СurrencyID {
 		case currencies.Bitcoin:
 			var cli btcpb.NodeCommuunicationsClient
@@ -208,7 +216,8 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 			// }
 
 			genUd := ethpb.UsersData{
-				Map: map[string]*ethpb.AddressExtended{},
+				Map:            map[string]*ethpb.AddressExtended{},
+				UsersContracts: usersContracts,
 			}
 
 			for address, ex := range usersData {

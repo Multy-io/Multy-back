@@ -120,6 +120,7 @@ func SetRestHandlers(
 		v1.GET("/wallet/:walletindex/verbose/:currencyid/:networkid", restClient.getWalletVerbose())
 		v1.GET("/wallets/verbose", restClient.getAllWalletsVerbose())
 		v1.GET("/wallets/transactions/:currencyid/:networkid/:walletindex", restClient.getWalletTransactionsHistory())
+		// v1.GET("/multisigs/transactions/:currencyid/:networkid/:address", restClient.getWalletTransactionsHistory())
 		v1.POST("/wallet/name", restClient.changeWalletName())
 		v1.POST("/resync/wallet/:currencyid/:networkid/:walletindex", restClient.resyncWallet())
 		v1.GET("/exchange/changelly/list", restClient.changellyListCurrencies())
@@ -1769,16 +1770,11 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 			return
 		}
 
+		var multisig string
 		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
 		restClient.log.Debugf("getWalletVerbose [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
 		if err != nil {
-			restClient.log.Errorf("getWalletVerbose: non int wallet index:[%d] %s \t[addr=%s]", walletIndex, err.Error(), c.Request.RemoteAddr)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrDecodeWalletIndexErr,
-				"history": walletTxs,
-			})
-			return
+			multisig = c.Param("walletindex")
 		}
 
 		currencyId, err := strconv.Atoi(c.Param("currencyid"))
@@ -1954,38 +1950,71 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				}
 				blockHeight = resp.Height
 			}
+
+			//history for ether wallet
 			userTxs := []store.TransactionETH{}
-			err = restClient.userStore.GetAllWalletEthTransactions(user.UserID, currencyId, networkid, &userTxs)
-			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{
-					"code":    http.StatusBadRequest,
-					"message": msgErrTxHistory,
-					"history": walletTxs,
+			if multisig == "" {
+				err = restClient.userStore.GetAllWalletEthTransactions(user.UserID, currencyId, networkid, &userTxs)
+				if err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": msgErrTxHistory,
+						"history": walletTxs,
+					})
+					return
+				}
+
+				for i := 0; i < len(userTxs); i++ {
+					if userTxs[i].BlockHeight == -1 {
+						userTxs[i].Confirmations = 0
+					} else {
+						userTxs[i].Confirmations = int(blockHeight-userTxs[i].BlockHeight) + 1
+					}
+				}
+
+				history := []store.TransactionETH{}
+				for _, tx := range userTxs {
+					if tx.WalletIndex == walletIndex {
+						history = append(history, tx)
+					}
+				}
+
+				c.JSON(http.StatusOK, gin.H{
+					"code":    http.StatusOK,
+					"message": http.StatusText(http.StatusOK),
+					"history": history,
 				})
 				return
 			}
 
-			for i := 0; i < len(userTxs); i++ {
-				if userTxs[i].BlockHeight == -1 {
-					userTxs[i].Confirmations = 0
-				} else {
-					userTxs[i].Confirmations = int(blockHeight-userTxs[i].BlockHeight) + 1
+			//history for ether multisig
+			if multisig != "" {
+				err = restClient.userStore.GetAllMultisigEthTransactions(multisig, currencyId, networkid, &userTxs)
+				if err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": msgErrTxHistory,
+						"history": walletTxs,
+					})
+					return
 				}
-			}
 
-			history := []store.TransactionETH{}
-			for _, tx := range userTxs {
-				if tx.WalletIndex == walletIndex {
-					history = append(history, tx)
+				for i := 0; i < len(userTxs); i++ {
+					if userTxs[i].BlockHeight == -1 {
+						userTxs[i].Confirmations = 0
+					} else {
+						userTxs[i].Confirmations = int(blockHeight-userTxs[i].BlockHeight) + 1
+					}
 				}
-			}
 
-			c.JSON(http.StatusOK, gin.H{
-				"code":    http.StatusOK,
-				"message": http.StatusText(http.StatusOK),
-				"history": history,
-			})
-			return
+				c.JSON(http.StatusOK, gin.H{
+					"code":    http.StatusOK,
+					"message": http.StatusText(http.StatusOK),
+					"history": userTxs,
+				})
+				return
+
+			}
 
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{

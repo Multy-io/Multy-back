@@ -50,8 +50,20 @@ service NodeCommuunications {
     }
 
     //  Multisig methods
-    
+    rpc AddMultisig (Empty) returns (stream Multisig){
+    }
 
+}
+
+//  Multisig messages
+
+message Multisig  {
+	int64 Confirmations        = 1; 
+	string FactoryAddress      = 2; 
+	string TxOfCreation        = 3; 
+	string Contract            = 4; 
+    bool isFailed              = 5;
+	repeated string Addresses  = 6; 
 }
 
 message Balance {
@@ -74,14 +86,21 @@ message ETHTransaction {
 	string From = 5;                      
 	string To = 6;  
     string Amount = 7;
-	int64 GasPrice = 8;        
-	int64 GasLimit = 9;          
-	int32 Nonce = 10;         
-	int32 Status = 11;      
-    int64 BlockTime = 12;         
-	int64 TxpoolTime = 13;        
-	int64 BlockHeight = 14;
-    bool Resync = 15;
+    string input = 8;
+	int64 GasPrice = 9;        
+	int64 GasLimit = 10;          
+	int32 Nonce = 11;         
+	int32 Status = 12;      
+    int64 BlockTime = 13;         
+	int64 TxpoolTime = 14;        
+	int64 BlockHeight = 15;
+    bool Resync = 16;
+    bool Multisig = 17;
+    string Contract = 18;
+    string MethodInvoked = 19;
+    string return = 20;
+    bool InvocationStatus = 21;
+
 }
 
 message BlockHeight{
@@ -118,6 +137,7 @@ message AddressToResync {
 
 message UsersData {
     map<string, AddressExtended> map = 1;
+    map<string, string> UsersContracts = 2;
 }
 
 message AddressExtended {

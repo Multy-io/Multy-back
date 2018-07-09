@@ -79,9 +79,11 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 
 	// main
 	txsData = db.DB(dbConf.DBTx).C(dbConf.TableTxsDataETHMain)
+	multisigData = db.DB(dbConf.DBTx).C(dbConf.TableMultisigTxsMain)
 
 	// test
 	txsDataTest = db.DB(dbConf.DBTx).C(dbConf.TableTxsDataETHTest)
+	multisigDataTest = db.DB(dbConf.DBTx).C(dbConf.TableMultisigTxsTest)
 
 	//restore state
 	restoreState = db.DB(dbConf.DBRestoreState).C(dbConf.TableState)
