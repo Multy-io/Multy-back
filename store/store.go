@@ -46,12 +46,12 @@ type Conf struct {
 	TableSpentOutputsBTCTest     string
 
 	// ETH main
-	TableMempoolRatesETHMain string
-	TableTxsDataETHMain      string
+	TableMultisigTxsMain string
+	TableTxsDataETHMain  string
 
 	// ETH main
-	TableMempoolRatesETHTest string
-	TableTxsDataETHTest      string
+	TableMultisigTxsTest string
+	TableTxsDataETHTest  string
 
 	//RestoreState
 	DBRestoreState string
@@ -79,6 +79,8 @@ type UserStore interface {
 	//TODo update this method by eth
 	GetAllWalletTransactions(userid string, currencyID, networkID int, walletTxs *[]MultyTX) error
 	GetAllWalletEthTransactions(userid string, currencyID, networkID int, walletTxs *[]TransactionETH) error
+	GetAllMultisigEthTransactions(contractAddress string, currencyID, networkID int, walletTxs *[]TransactionETH) error
+
 	// GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs)
 	GetAddressSpendableOutputs(address string, currencyID, networkID int) ([]SpendableOutputs, error)
 	DeleteWallet(userid string, walletindex, currencyID, networkID int) error
@@ -86,6 +88,7 @@ type UserStore interface {
 
 	FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error)
 	FindUserDataChain(CurrencyID, NetworkID int) (map[string]AddressExtended, error)
+	FindUsersContractsChain(CurrencyID, NetworkID int) (map[string]string, error)
 
 	FethUserAddresses(currencyID, networkID int, userid string, addreses []string) (AddressExtended, error)
 	// FindAllMultisigContracts( NetworkID int)
@@ -111,12 +114,18 @@ type MongoUserStore struct {
 	BTCTestSpendableOutputs *mgo.Collection
 
 	//eth main
-	ETHMainRatesData *mgo.Collection
-	ETHMainTxsData   *mgo.Collection
+	// ETHMainRatesData *mgo.Collection
+	ETHMainTxsData *mgo.Collection
 
 	//eth test
-	ETHTestRatesData *mgo.Collection
-	ETHTestTxsData   *mgo.Collection
+	// ETHTestRatesData *mgo.Collection
+	ETHTestTxsData *mgo.Collection
+
+	//eth multisig test
+	ETHTestMultisigTxsData *mgo.Collection
+
+	//eth multisig main
+	ETHMainMultisigTxsData *mgo.Collection
 
 	stockExchangeRate *mgo.Collection
 	ethTxHistory      *mgo.Collection
@@ -156,12 +165,16 @@ func InitUserStore(conf Conf) (UserStore, error) {
 	uStore.BTCTestSpendableOutputs = uStore.session.DB(conf.DBTx).C(conf.TableSpendableOutputsBTCTest)
 
 	// ETH main
-	uStore.ETHMainRatesData = uStore.session.DB(conf.DBFeeRates).C(conf.TableMempoolRatesETHMain)
 	uStore.ETHMainTxsData = uStore.session.DB(conf.DBTx).C(conf.TableTxsDataETHMain)
 
 	// ETH test
-	uStore.ETHTestRatesData = uStore.session.DB(conf.DBFeeRates).C(conf.TableMempoolRatesETHTest)
 	uStore.ETHTestTxsData = uStore.session.DB(conf.DBTx).C(conf.TableTxsDataETHTest)
+
+	//eth multisig test
+	uStore.ETHTestMultisigTxsData = uStore.session.DB(conf.DBTx).C(conf.TableMultisigTxsTest)
+
+	//eth multisig main
+	uStore.ETHMainMultisigTxsData = uStore.session.DB(conf.DBTx).C(conf.TableMultisigTxsMain)
 
 	uStore.RestoreState = uStore.session.DB(conf.DBRestoreState).C(conf.TableState)
 
@@ -199,6 +212,23 @@ func (mStore *MongoUserStore) FindUserDataChain(CurrencyID, NetworkID int) (map[
 		}
 	}
 	return usersData, nil
+}
+
+func (mStore *MongoUserStore) FindUsersContractsChain(CurrencyID, NetworkID int) (map[string]string, error) {
+	users := []User{}
+	UsersContracts := map[string]string{} // addres -> factory address
+	err := mStore.usersData.Find(nil).All(&users)
+	if err != nil {
+		return UsersContracts, err
+	}
+	for _, user := range users {
+		for _, multisig := range user.Multisigs {
+			if multisig.CurrencyID == CurrencyID && multisig.NetworkID == NetworkID {
+				UsersContracts[multisig.ContractAddress] = multisig.FactoryAddress
+			}
+		}
+	}
+	return UsersContracts, nil
 }
 
 func (mStore *MongoUserStore) FethUserAddresses(currencyID, networkID int, userid string, addreses []string) (AddressExtended, error) {
@@ -395,6 +425,22 @@ func (mStore *MongoUserStore) GetAllWalletEthTransactions(userid string, currenc
 		}
 		if networkID == currencies.ETHTest {
 			err := mStore.ETHTestTxsData.Find(query).All(walletTxs)
+			return err
+		}
+
+	}
+	return nil
+}
+
+func (mStore *MongoUserStore) GetAllMultisigEthTransactions(contractAddress string, currencyID, networkID int, multisigTxs *[]TransactionETH) error {
+	switch currencyID {
+	case currencies.Ether:
+		query := bson.M{"contract": contractAddress}
+		if networkID == currencies.ETHMain {
+			return mStore.ETHMainMultisigTxsData.Find(query).All(multisigTxs)
+		}
+		if networkID == currencies.ETHTest {
+			err := mStore.ETHTestMultisigTxsData.Find(query).All(multisigTxs)
 			return err
 		}
 

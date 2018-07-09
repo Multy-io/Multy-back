@@ -28,9 +28,10 @@ const (
 
 // User represents a single app user
 type User struct {
-	UserID  string   `bson:"userID"`  // User uqnique identifier
-	Devices []Device `bson:"devices"` // All user devices
-	Wallets []Wallet `bson:"wallets"` // All user addresses in all chains
+	UserID    string     `bson:"userID"`  // User uqnique identifier
+	Devices   []Device   `bson:"devices"` // All user devices
+	Wallets   []Wallet   `bson:"wallets"` // All user addresses in all chains
+	Multisigs []Multisig `bson:"multisig"`
 }
 
 type BTCTransaction struct {
@@ -94,15 +95,17 @@ type Wallet struct {
 }
 
 type Multisig struct {
-	CurrencyID      int               `bson:"currencyID"`
-	NetworkID       int               `bson:"networkID"`
-	WalletName      string            `bson:"walletName"`
-	ContractAddress string            `bson:"walletName"`
+	CurrencyID      int               `bson:"currencyid"`
+	NetworkID       int               `bson:"networkid"`
+	Confirmations   int               `bson:"confirmations"`
+	WalletName      string            `bson:"walletname"`
+	FactoryAddress  string            `bson:"factoryaddress"`
+	ContractAddress string            `bson:"contractaddress"`
 	TxOfCreation    string            `bson:"txofcreation"`
-	LastActionTime  int64             `bson:"lastActionTime"`
-	DateOfCreation  int64             `bson:"dateOfCreation"`
+	LastActionTime  int64             `bson:"lastactiontime"`
+	DateOfCreation  int64             `bson:"dateofcreation"`
 	Owners          []AddressExtended `bson:"owners"`
-	Status          string            `bson:"status"`
+	Status          bool              `bson:"status"`
 }
 
 type RatesRecord struct {
@@ -263,13 +266,14 @@ type WalletETH struct {
 }
 
 type TransactionETH struct {
-	UserID            string                `json:"userid"`
-	WalletIndex       int                   `json:"walletindex"`
-	AddressIndex      int                   `json:"addressindex"`
+	UserID            string                `json:"userid,omitempty"`
+	WalletIndex       int                   `json:"walletindex,omitempty"`
+	AddressIndex      int                   `json:"addressindex,omitempty"`
 	Hash              string                `json:"txhash"`
 	From              string                `json:"from"`
 	To                string                `json:"to"`
 	Amount            string                `json:"txoutamount"`
+	Input             string                `json:"input"`
 	GasPrice          int64                 `json:"gasprice"`
 	GasLimit          int64                 `json:"gaslimit"`
 	Nonce             int                   `json:"nonce"`
@@ -278,7 +282,24 @@ type TransactionETH struct {
 	PoolTime          int64                 `json:"mempooltime"`
 	BlockHeight       int64                 `json:"blockheight"`
 	Confirmations     int                   `json:"confirmations"`
+	Contract          string                `json:"contract,omitempty"`
+	Index             int64                 `json:"index,omitempty"`
+	MethodInvoked     string                `json:"methodinvoked,omitempty"`
+	InvocationStatus  bool                  `json:"invocationstatus,omitempty"`
+	Return            string                `json:"return,omitempty"`
+	Owners            []OwnerHistory        `json:"owners,omitempty"`
+	Confirmed         bool                  `json:"confirmed,omitempty"`
+	IsInternal        bool                  `json:"isinternal,omitempty"`
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
+}
+
+type OwnerHistory struct {
+	Address          string `json:"address"`
+	ConfirmationTX   string `json:"confirmationtx"`
+	Confirmed        bool   `json:"confirmed"`
+	Seen             bool   `json:"seen"`
+	ConfirmationTime int64  `json:"confirmationTime"`
+	SeenTime         int64  `json:"seenTime"`
 }
 
 type CoinType struct {
