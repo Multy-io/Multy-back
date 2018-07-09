@@ -156,6 +156,15 @@ func setExchangeRates(tx *store.MultyTX, isReSync bool, TxTime int64) {
 }
 
 func sendNotifyToClients(tx store.MultyTX, nsqProducer *nsq.Producer, netid int) {
+	// log.Infof("============\n")
+	// log.Infof("============\n")
+	// log.Infof(" Tx.TxAddress: %s", tx.TxAddress)
+	// log.Infof("============\n")
+	// log.Infof("============\n")
+	// log.Infof(" Tx.Input: %s", tx.WalletsInput)
+	// log.Infof(" Tx.Output: %s", tx.WalletsOutput)
+	// log.Infof("============\n")
+	// log.Infof("============\n")
 
 	for _, walletOutput := range tx.WalletsOutput {
 		txMsq := store.TransactionWithUserID{
@@ -167,10 +176,14 @@ func sendNotifyToClients(tx store.MultyTX, nsqProducer *nsq.Producer, netid int)
 				Amount:          strconv.Itoa(int(tx.TxOutAmount)),
 				TxID:            tx.TxID,
 				TransactionType: tx.TxStatus,
+				From:            walletOutput.Address.Address,
+				To:              tx.TxAddress[0],
 				WalletIndex:     walletOutput.WalletIndex,
 			},
 		}
-		sendNotify(&txMsq, nsqProducer)
+		if walletOutput.Address.Address != tx.TxAddress[0] {
+			sendNotify(&txMsq, nsqProducer)
+		}
 	}
 
 	for _, walletInput := range tx.WalletsInput {
@@ -184,10 +197,33 @@ func sendNotifyToClients(tx store.MultyTX, nsqProducer *nsq.Producer, netid int)
 				TxID:            tx.TxID,
 				TransactionType: tx.TxStatus,
 				WalletIndex:     walletInput.WalletIndex,
+				From:            walletInput.Address.Address,
+				To:              tx.TxAddress[0],
 			},
 		}
+		if walletInput.Address.Address != tx.TxAddress[0] {
+			sendNotify(&txMsq, nsqProducer)
+		}
+	}
 
-		sendNotify(&txMsq, nsqProducer)
+	for _, txInputs := range tx.TxInputs {
+		txMsq := store.TransactionWithUserID{
+			UserID: tx.UserId,
+			NotificationMsg: &store.WsTxNotify{
+				CurrencyID:      currencies.Bitcoin,
+				NetworkID:       netid,
+				Address:         tx.TxAddress[0],
+				Amount:          strconv.Itoa(int(tx.TxOutAmount)),
+				TxID:            tx.TxID,
+				TransactionType: tx.TxStatus,
+				WalletIndex:     100,
+				To:              tx.TxAddress[0],
+				From:            txInputs.Address,
+			},
+		}
+		if tx.TxAddress[0] != txInputs.Address {
+			sendNotify(&txMsq, nsqProducer)
+		}
 	}
 }
 
@@ -198,6 +234,7 @@ func sendNotify(txMsq *store.TransactionWithUserID, nsqProducer *nsq.Producer) {
 		return
 	}
 
+	log.Infof("THIS JSON IS: %s", newTxJSON)
 	err = nsqProducer.Publish(store.TopicTransaction, newTxJSON)
 	if err != nil {
 		log.Errorf("nsq publish new transaction: [%+v] %s\n", txMsq, err.Error())

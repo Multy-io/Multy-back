@@ -152,6 +152,9 @@ func setExchangeRates(tx *store.TransactionETH, isReSync bool, TxTime int64) {
 
 func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer, netid int) {
 	//TODO: make correct notify
+	log.Infof("============\n")
+	log.Infof("TX: %s, NetID: %v, UserID: %s", tx.Status, netid, tx.UserID)
+	log.Infof("============\n")
 
 	if tx.Status == store.TxStatusAppearedInBlockIncoming || tx.Status == store.TxStatusAppearedInMempoolIncoming || tx.Status == store.TxStatusInBlockConfirmedIncoming {
 		txMsq := store.TransactionWithUserID{
@@ -164,6 +167,8 @@ func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer, net
 				TxID:            tx.Hash,
 				TransactionType: tx.Status,
 				WalletIndex:     tx.WalletIndex,
+				From:            tx.From,
+				To:              tx.To,
 			},
 		}
 		sendNotify(&txMsq, nsqProducer)
@@ -180,6 +185,8 @@ func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer, net
 				TxID:            tx.Hash,
 				TransactionType: tx.Status,
 				WalletIndex:     tx.WalletIndex,
+				From:            tx.From,
+				To:              tx.To,
 			},
 		}
 		sendNotify(&txMsq, nsqProducer)
@@ -193,6 +200,7 @@ func sendNotify(txMsq *store.TransactionWithUserID, nsqProducer *nsq.Producer) {
 		return
 	}
 
+	log.Infof("THIS JSON IS: %s", newTxJSON)
 	err = nsqProducer.Publish(store.TopicTransaction, newTxJSON)
 	if err != nil {
 		log.Errorf("nsq publish new transaction: [%+v] %s\n", txMsq, err.Error())
@@ -225,9 +233,9 @@ func saveTransaction(tx store.TransactionETH, networtkID int, resync bool) error
 
 	txStore := &mgo.Collection{}
 	switch networtkID {
-	case currencies.Main:
+	case currencies.ETHMain:
 		txStore = txsData
-	case currencies.Test:
+	case currencies.ETHTest:
 		txStore = txsDataTest
 	default:
 		return errors.New("saveMultyTransaction: wrong networkID")

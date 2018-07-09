@@ -424,6 +424,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 
 		c.JSON(http.StatusCreated, gin.H{
 			"code":    code,
+			"tine":    time.Now().Unix(),
 			"message": message,
 		})
 		return
@@ -906,18 +907,32 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 				restClient.log.Errorf("getFeeRate:currencies.Ether:restClient.ETH.Cli: %v ", err.Error())
 			}
 			speed, _ := strconv.Atoi(rate.GetGas())
-
-			c.JSON(http.StatusOK, gin.H{
-				"speeds": EstimationSpeeds{
-					VerySlow: speed,
-					Slow:     speed * 2,
-					Medium:   speed * 3,
-					Fast:     speed * 4,
-					VeryFast: speed * 5,
-				},
-				"code":    http.StatusOK,
-				"message": http.StatusText(http.StatusOK),
-			})
+			switch networkid {
+			case currencies.ETHMain:
+				c.JSON(http.StatusOK, gin.H{
+					"speeds": EstimationSpeeds{
+						VerySlow: speed / 2,
+						Slow:     speed,
+						Medium:   speed * 15 / 10,
+						Fast:     speed * 2,
+						VeryFast: speed * 25 / 10,
+					},
+					"code":    http.StatusOK,
+					"message": http.StatusText(http.StatusOK),
+				})
+			case currencies.ETHTest:
+				c.JSON(http.StatusOK, gin.H{
+					"speeds": EstimationSpeeds{
+						VerySlow: 1000000000,
+						Slow:     2000000000,
+						Medium:   3000000000,
+						Fast:     4000000000,
+						VeryFast: 5000000000,
+					},
+					"code":    http.StatusOK,
+					"message": http.StatusText(http.StatusOK),
+				})
+			}
 
 		default:
 
@@ -1834,7 +1849,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 			case currencies.Main:
 				resp, err := restClient.BTC.CliMain.EventGetBlockHeight(context.Background(), &btcpb.Empty{})
 				if err != nil {
-					restClient.log.Errorf("getWalletTransactionsHistory: restClient.BTC.CliTest.EventGetBlockHeight %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					restClient.log.Errorf("getWalletTransactionsHistory: restClient.BTC.CliMain.EventGetBlockHeight %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 					c.JSON(http.StatusInternalServerError, gin.H{
 						"code":    http.StatusInternalServerError,
 						"message": http.StatusText(http.StatusInternalServerError),

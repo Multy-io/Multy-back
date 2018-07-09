@@ -32,9 +32,11 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 		for {
 			mpRec, err := stream.Recv()
+
 			if err == io.EOF {
 				break
 			}
+
 			if err != nil {
 				log.Errorf("setGRPCHandlers: client.EventGetAllMempool: %s", err.Error())
 			}

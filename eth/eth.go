@@ -91,12 +91,11 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	if err != nil {
 		return cli, fmt.Errorf("fethCoinType: %s", err.Error())
 	}
-
 	cliMain, err := initGrpcClient(urlMain)
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
-	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.Main, cli.WatchAddressMain, cli.Mempool)
+	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.ETHMain, cli.WatchAddressMain, cli.Mempool)
 
 	cli.CliMain = cliMain
 	log.Infof("InitHandlers: initGrpcClient: Main: √")
@@ -110,7 +109,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
-	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.Test, cli.WatchAddressTest, cli.MempoolTest)
+	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.ETHTest, cli.WatchAddressTest, cli.MempoolTest)
 
 	cli.CliTest = cliTest
 	log.Infof("InitHandlers: initGrpcClient: Test: √")

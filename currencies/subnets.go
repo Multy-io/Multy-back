@@ -5,5 +5,5 @@ const (
 	Test = 1
 
 	ETHMain = 1
-	ETHTest = 4
+	ETHTest = 3
 )

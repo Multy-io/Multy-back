@@ -143,8 +143,8 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			UserCode:   data.UserCode,
 			CurrencyID: data.CurrencyID,
 			NetworkID:  data.NetworkID,
-			Address:    data.Address,
 			Amount:     data.Amount,
+			Address:    data.Address,
 			Socket:     c,
 		}
 
@@ -275,12 +275,14 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 				continue
 			}
 		}
+		pool.log.Infof("Got messeage Senders ...........:", senders)
 		for i, sender := range senders {
 			if sender.Socket.Id() == c.Id() {
 				senders = append(senders[:i], senders[i+1:]...)
 				continue
 			}
 		}
+		pool.log.Infof("Done Senders ...........:", senders)
 	})
 
 	server.On(stopReceive, func(c *gosocketio.Channel) string {

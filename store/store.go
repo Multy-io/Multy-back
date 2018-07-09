@@ -245,10 +245,10 @@ func (mStore *MongoUserStore) DeleteHistory(CurrencyID, NetworkID int, Address s
 			return mStore.BTCTestTxsData.Remove(sel)
 		}
 	case currencies.Ether:
-		if NetworkID == currencies.Main {
+		if NetworkID == currencies.ETHMain {
 
 		}
-		if NetworkID == currencies.Test {
+		if NetworkID == currencies.ETHTest {
 
 		}
 	}
@@ -390,7 +390,8 @@ func (mStore *MongoUserStore) GetAllWalletEthTransactions(userid string, currenc
 	case currencies.Ether:
 		query := bson.M{"userid": userid}
 		if networkID == currencies.ETHMain {
-			return mStore.ETHMainTxsData.Find(query).All(walletTxs)
+			err := mStore.ETHMainTxsData.Find(query).All(walletTxs)
+			return err
 		}
 		if networkID == currencies.ETHTest {
 			err := mStore.ETHTestTxsData.Find(query).All(walletTxs)
