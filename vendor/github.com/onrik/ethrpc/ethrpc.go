@@ -120,10 +120,12 @@ func (rpc *EthRPC) Web3ClientVersion() (string, error) {
 }
 
 // TxPoolContent returns raw txpool.
-func (rpc *EthRPC) TxPoolContent() (map[string]interface{}, error) {
-	var txPool map[string]interface{}
+func (rpc *EthRPC) TxPoolContent() ([]map[string]interface{}, error) {
+	var txPool []map[string]interface{}
 
-	err := rpc.call("txpool_content", &txPool)
+	//err := rpc.call("parity_pendingTransactions", &txPool)
+	err := rpc.call("parity_pendingTransactions", &txPool)
+
 	return txPool, err
 }
 
@@ -216,7 +218,6 @@ func (rpc *EthRPC) EthGasPrice() (big.Int, error) {
 	if err := rpc.call("eth_gasPrice", &response); err != nil {
 		return big.Int{}, err
 	}
-
 	return ParseBigInt(response)
 }
 

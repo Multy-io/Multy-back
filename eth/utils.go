@@ -69,7 +69,7 @@ func (client *Client) GetAddressPendingBalance(address string) (big.Int, error) 
 	return balance, err
 }
 
-func (client *Client) GetAllTxPool() (map[string]interface{}, error) {
+func (client *Client) GetAllTxPool() ([]map[string]interface{}, error) {
 	return client.Rpc.TxPoolContent()
 }
 
@@ -93,10 +93,7 @@ func (client *Client) ResyncAddress(txid string) error {
 func (client *Client) parseETHTransaction(rawTX ethrpc.Transaction, blockHeight int64, isResync bool) {
 	var fromUser store.AddressExtended
 	var toUser store.AddressExtended
-
-	client.UserDataM.Lock()
 	ud := *client.UsersData
-	client.UserDataM.Unlock()
 
 	if udFrom, ok := ud[rawTX.From]; ok {
 		fromUser = udFrom

@@ -23,7 +23,7 @@ var log = slf.WithContext("streamer")
 // Server implements streamer interface and is a gRPC server
 type Server struct {
 	UsersData *map[string]store.AddressExtended
-	M         *sync.Mutex
+	M         *sync.Map
 	EthCli    *eth.Client
 	Info      *store.ServiceInfo
 }
@@ -58,9 +58,8 @@ func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.Reply
 			AddressIndex: int(ex.GetAddressIndex()),
 		}
 	}
-	s.EthCli.UserDataM.Lock()
+
 	*s.UsersData = udMap
-	s.EthCli.UserDataM.Unlock()
 
 	log.Debugf("EventInitialAdd - %v", udMap)
 
@@ -71,9 +70,7 @@ func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.Reply
 
 // EventAddNewAddress us used to add new watch address to existing pairs
 func (s *Server) EventAddNewAddress(c context.Context, wa *pb.WatchAddress) (*pb.ReplyInfo, error) {
-	s.EthCli.UserDataM.Lock()
 	newMap := *s.UsersData
-	s.EthCli.UserDataM.Unlock()
 	if newMap == nil {
 		newMap = map[string]store.AddressExtended{}
 	}
@@ -89,9 +86,7 @@ func (s *Server) EventAddNewAddress(c context.Context, wa *pb.WatchAddress) (*pb
 		AddressIndex: int(wa.AddressIndex),
 	}
 
-	s.EthCli.UserDataM.Lock()
 	*s.UsersData = newMap
-	s.EthCli.UserDataM.Unlock()
 
 	log.Debugf("EventAddNewAddress - %v", newMap)
 
@@ -186,25 +181,53 @@ func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyIn
 
 func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventGetAllMempoolServer) error {
 	mp, err := s.EthCli.GetAllTxPool()
+
 	if err != nil {
 		return err
 	}
 
-	for _, txs := range mp["pending"].(map[string]interface{}) {
-		for _, tx := range txs.(map[string]interface{}) {
-			gas, err := strconv.ParseInt(tx.(map[string]interface{})["gas"].(string), 0, 64)
-			if err != nil {
-				log.Errorf("EventGetAllMempool:strconv.ParseInt")
-			}
-			hash := tx.(map[string]interface{})["hash"].(string)
-			stream.Send(&pb.MempoolRecord{
-				Category: int32(gas),
-				HashTX:   hash,
-			})
+	for _, tx := range mp {
+		gas, err := strconv.ParseInt(tx["gas"].(string), 0, 64)
+		if err != nil {
+			log.Errorf("EventGetAllMempool:strconv.ParseInt")
 		}
+		hash := tx["hash"].(string)
+		stream.Send(&pb.MempoolRecord{
+			Category: int32(gas),
+			HashTX:   hash,
+		})
 	}
 	return nil
 }
+
+// func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventGetAllMempoolServer) error {
+// 	mp, err := s.EthCli.GetAllTxPool()
+// 	fmt.Println("==========================\n\n\n")
+// 	fmt.Println("%s\n", mp)
+// 	fmt.Println("==========================\n\n\n")
+// 	if err != nil {
+// 		return err
+// 	}
+// 	// for key, value := range mp {
+// 	// 	fmt.Printf("%T ============== %s\n", value, key)
+
+// 	// }
+
+// 	// for _, txs := range mp["result"].(map[string]interface{}) {
+// 	// 	for _, tx := range txs.(map[string]interface{}) {
+// 	// 		gas, err := strconv.ParseInt(tx.(map[string]interface{})["gas"].(string), 0, 64)
+// 	// 		if err != nil {
+// 	// 			log.Errorf("EventGetAllMempool:strconv.ParseInt")
+// 	// 		}
+// 	// 		hash := tx.(map[string]interface{})["hash"].(string)
+// 	// 		stream.Send(&pb.MempoolRecord{
+// 	// 			Category: int32(gas),
+// 	// 			HashTX:   hash,
+// 	// 		})
+// 	// 	}
+// 	// }
+// 	return nil
+// }
 
 type resyncTx struct {
 	Message string `json:"message"`

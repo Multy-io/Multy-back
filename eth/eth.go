@@ -28,7 +28,7 @@ type Client struct {
 	AddToMempool   chan pb.MempoolRecord
 	Block          chan pb.BlockHeight
 	UsersData      *map[string]store.AddressExtended
-	UserDataM      *sync.Mutex
+	UserDataM      *sync.Map
 }
 
 type Conf struct {
@@ -45,7 +45,7 @@ func NewClient(conf *Conf, usersData *map[string]store.AddressExtended) *Client 
 		AddToMempool:   make(chan pb.MempoolRecord),
 		Block:          make(chan pb.BlockHeight),
 		UsersData:      usersData,
-		UserDataM:      &sync.Mutex{},
+		UserDataM:      &sync.Map{},
 	}
 	go c.RunProcess()
 	return c

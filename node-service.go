@@ -68,7 +68,7 @@ func Init(conf *Configuration) (*NodeClient, error) {
 	s := grpc.NewServer()
 	srv := streamer.Server{
 		UsersData: cli.Clients,
-		M:         &sync.Mutex{},
+		M:         &sync.Map{},
 		EthCli:    cli.Instance,
 		Info:      &conf.ServiceInfo,
 	}
