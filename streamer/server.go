@@ -23,9 +23,10 @@ var log = slf.WithContext("streamer")
 // Server implements streamer interface and is a gRPC server
 type Server struct {
 	UsersData *sync.Map
-	M         *sync.Map
+	Multisig  *eth.Multisig
 	EthCli    *eth.Client
 	Info      *store.ServiceInfo
+	ResyncUrl string
 }
 
 func (s *Server) ServiceInfo(c context.Context, in *pb.Empty) (*pb.ServiceVersion, error) {
@@ -60,6 +61,13 @@ func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.Reply
 	}
 
 	*s.UsersData = udMap
+
+	s.EthCli.Multisig.M.Lock()
+	s.Multisig.UsersContracts = ud.GetUsersContracts()
+	if s.Multisig.UsersContracts == nil {
+		s.Multisig.UsersContracts = map[string]string{}
+	}
+	s.EthCli.Multisig.M.Unlock()
 
 	log.Debugf("EventInitialAdd - %v", udMap)
 
@@ -156,6 +164,34 @@ func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommuunications_EventN
 	return nil
 }
 
+func (s *Server) AddMultisig(_ *pb.Empty, stream pb.NodeCommuunications_AddMultisigServer) error {
+	n := 1
+	for m := range s.EthCli.NewMultisig {
+
+		log.Infof("AddMultisig new contract address - %v", m.GetContract())
+		err := stream.Send(&m)
+		if err != nil {
+			//HACK:
+			log.Errorf("New block %s", err.Error())
+			i := 0
+			for {
+				err := stream.Send(&m)
+				if err != nil {
+					i++
+					log.Errorf("Add multisig resend attempt(%d) err = %s", i, err.Error())
+					time.Sleep(time.Second * 2)
+				} else {
+					log.Debugf("Add multisig resend success on %d attempt", i)
+					break
+				}
+			}
+			log.Errorf("rrrrrrrrrrrrrr   %v", n)
+			n++
+		}
+	}
+	return nil
+}
+
 func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyInfo, error) {
 	// s.BtcCli.RpcClient.GetTxOut()
 	// var blocks []*chainhash.Hash
@@ -239,7 +275,7 @@ type resyncTx struct {
 func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResync) (*pb.ReplyInfo, error) {
 	log.Debugf("EventResyncAddress")
 	addr := address.GetAddress()
-	url := "http://api-rinkeby.etherscan.io/api?sort=asc&endblock=99999999&startblock=0&address=" + addr + "&action=txlist&module=account"
+	url := s.ResyncUrl + addr + "&action=txlist&module=account"
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

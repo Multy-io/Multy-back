@@ -16,7 +16,9 @@ func (c *Client) txpoolTransaction(txHash string) {
 		log.Errorf("Get TX Err: %s", err.Error())
 	}
 	c.parseETHTransaction(*rawTx, -1, false)
-	log.Debugf("new txpool tx %v", rawTx.Hash)
+
+	c.parseETHMultisig(*rawTx, -1, false)
+	// log.Debugf("new txpool tx %v", rawTx.Hash)
 
 	// add txpool record
 	c.AddToMempool <- pb.MempoolRecord{

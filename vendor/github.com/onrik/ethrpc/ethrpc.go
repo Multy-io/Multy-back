@@ -129,6 +129,13 @@ func (rpc *EthRPC) TxPoolContent() ([]map[string]interface{}, error) {
 	return txPool, err
 }
 
+func (rpc *EthRPC) TraceTransaction(hash string) (map[string]interface{}, error) {
+	var trace map[string]interface{}
+
+	err := rpc.call("debug_traceTransaction", &trace, hash)
+	return trace, err
+}
+
 // Web3Sha3 returns Keccak-256 (not the standardized SHA3-256) of the given data.
 func (rpc *EthRPC) Web3Sha3(data []byte) (string, error) {
 	var hash string

@@ -21,19 +21,19 @@ import (
 
 var log = slf.WithContext("NodeClient")
 
-// Multy is a main struct of service
-
 // NodeClient is a main struct of service
 type NodeClient struct {
-	Config     *Configuration
-	Instance   *eth.Client
-	GRPCserver *streamer.Server
-	Clients    *sync.Map // address to userid
-	// BtcApi     *gobcy.API
+	Config      *Configuration
+	Instance    *eth.Client
+	GRPCserver  *streamer.Server
+	Clients     *sync.Map // address to userid
+	CliMultisig *eth.Multisig
 }
 
 // Init initializes Multy instance
 func Init(conf *Configuration) (*NodeClient, error) {
+	resyncUrl := FethResyncUrl(conf.NetworkID)
+	conf.ResyncUrl = resyncUrl
 	cli := &NodeClient{
 		Config: conf,
 	}
@@ -48,6 +48,18 @@ func Init(conf *Configuration) (*NodeClient, error) {
 
 	// initail initialization of clients data
 	cli.Clients = &usersData
+
+	//TODO: init contract clients
+	multisig := eth.Multisig{
+		FactoryAddress: conf.MultisigFactory,
+		UsersContracts: map[string]string{
+			"0x7d2d50791f839aea9b3ebe2c1dfd4dea13bc12ca": "0x116FfA11DD8829524767f561da5d33D3D170E17d",
+		},
+		M: sync.Mutex{},
+	}
+	// initail initialization of clients contracts data
+	cli.CliMultisig = &multisig
+
 	log.Infof("Users data initialization done")
 
 	// init gRPC server
@@ -57,7 +69,7 @@ func Init(conf *Configuration) (*NodeClient, error) {
 	}
 	// Creates a new gRPC server
 
-	ethCli := eth.NewClient(&conf.EthConf, cli.Clients)
+	ethCli := eth.NewClient(&conf.EthConf, cli.Clients, cli.CliMultisig)
 	if err != nil {
 		return nil, fmt.Errorf("eth.NewClient initialization: %s", err.Error())
 	}
@@ -68,13 +80,25 @@ func Init(conf *Configuration) (*NodeClient, error) {
 	s := grpc.NewServer()
 	srv := streamer.Server{
 		UsersData: cli.Clients,
-		M:         &sync.Map{},
 		EthCli:    cli.Instance,
 		Info:      &conf.ServiceInfo,
+		Multisig:  cli.CliMultisig,
+		ResyncUrl: resyncUrl,
 	}
 
 	pb.RegisterNodeCommuunicationsServer(s, &srv)
 	go s.Serve(lis)
 
 	return cli, nil
+}
+
+func FethResyncUrl(networkid int) string {
+	switch networkid {
+	case 4:
+		return "http://api-rinkeby.etherscan.io/api?sort=asc&endblock=99999999&startblock=0&address="
+	case 1:
+		return "http://api.etherscan.io/api?sort=asc&endblock=99999999&startblock=0&address="
+	default:
+		return "http://api.etherscan.io/api?sort=asc&endblock=99999999&startblock=0&address="
+	}
 }
