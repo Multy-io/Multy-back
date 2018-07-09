@@ -28,7 +28,7 @@ type NodeClient struct {
 	Config     *Configuration
 	Instance   *eth.Client
 	GRPCserver *streamer.Server
-	Clients    *map[string]store.AddressExtended // address to userid
+	Clients    *sync.Map // address to userid
 	// BtcApi     *gobcy.API
 }
 
@@ -38,13 +38,13 @@ func Init(conf *Configuration) (*NodeClient, error) {
 		Config: conf,
 	}
 
-	var usersData = map[string]store.AddressExtended{
-		"address": store.AddressExtended{
-			UserID:       "kek",
-			WalletIndex:  1,
-			AddressIndex: 2,
-		},
-	}
+	var usersData sync.Map
+
+	usersData.Store("address", store.AddressExtended{
+		UserID:       "kek",
+		WalletIndex:  1,
+		AddressIndex: 2,
+	})
 
 	// initail initialization of clients data
 	cli.Clients = &usersData

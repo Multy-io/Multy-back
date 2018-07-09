@@ -12,7 +12,6 @@ import (
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"
 	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
-	"github.com/Multy-io/Multy-back/store"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/onrik/ethrpc"
 )
@@ -27,8 +26,7 @@ type Client struct {
 	DeleteMempool  chan pb.MempoolToDelete
 	AddToMempool   chan pb.MempoolRecord
 	Block          chan pb.BlockHeight
-	UsersData      *map[string]store.AddressExtended
-	UserDataM      *sync.Map
+	UsersData      *sync.Map
 }
 
 type Conf struct {
@@ -37,7 +35,7 @@ type Conf struct {
 	WsPort  string
 }
 
-func NewClient(conf *Conf, usersData *map[string]store.AddressExtended) *Client {
+func NewClient(conf *Conf, usersData *sync.Map) *Client {
 	c := &Client{
 		config:         conf,
 		TransactionsCh: make(chan pb.ETHTransaction),
@@ -45,8 +43,8 @@ func NewClient(conf *Conf, usersData *map[string]store.AddressExtended) *Client 
 		AddToMempool:   make(chan pb.MempoolRecord),
 		Block:          make(chan pb.BlockHeight),
 		UsersData:      usersData,
-		UserDataM:      &sync.Map{},
 	}
+
 	go c.RunProcess()
 	return c
 }

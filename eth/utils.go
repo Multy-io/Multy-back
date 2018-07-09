@@ -93,14 +93,13 @@ func (client *Client) ResyncAddress(txid string) error {
 func (client *Client) parseETHTransaction(rawTX ethrpc.Transaction, blockHeight int64, isResync bool) {
 	var fromUser store.AddressExtended
 	var toUser store.AddressExtended
-	ud := *client.UsersData
 
-	if udFrom, ok := ud[rawTX.From]; ok {
-		fromUser = udFrom
+	if udFrom, ok := client.UsersData.Load(rawTX.From); ok {
+		fromUser = udFrom.(store.AddressExtended)
 	}
 
-	if udTo, ok := ud[rawTX.To]; ok {
-		toUser = udTo
+	if udTo, ok := client.UsersData.Load(rawTX.To); ok {
+		toUser = udTo.(store.AddressExtended)
 	}
 
 	if fromUser.UserID == toUser.UserID && fromUser.UserID == "" {

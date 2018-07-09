@@ -22,7 +22,7 @@ var log = slf.WithContext("streamer")
 
 // Server implements streamer interface and is a gRPC server
 type Server struct {
-	UsersData *map[string]store.AddressExtended
+	UsersData *sync.Map
 	M         *sync.Map
 	EthCli    *eth.Client
 	Info      *store.ServiceInfo
@@ -50,13 +50,13 @@ func (s *Server) EventGetGasPrice(ctx context.Context, in *pb.Empty) (*pb.GasPri
 func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.ReplyInfo, error) {
 	log.Debugf("EventInitialAdd - %v", ud.Map)
 
-	udMap := map[string]store.AddressExtended{}
+	udMap := sync.Map{}
 	for addr, ex := range ud.GetMap() {
-		udMap[strings.ToLower(addr)] = store.AddressExtended{
+		udMap.Store(strings.ToLower(addr), store.AddressExtended{
 			UserID:       ex.GetUserID(),
 			WalletIndex:  int(ex.GetWalletIndex()),
 			AddressIndex: int(ex.GetAddressIndex()),
-		}
+		})
 	}
 
 	*s.UsersData = udMap
@@ -71,20 +71,20 @@ func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.Reply
 // EventAddNewAddress us used to add new watch address to existing pairs
 func (s *Server) EventAddNewAddress(c context.Context, wa *pb.WatchAddress) (*pb.ReplyInfo, error) {
 	newMap := *s.UsersData
-	if newMap == nil {
-		newMap = map[string]store.AddressExtended{}
-	}
-	_, ok := newMap[wa.Address]
+	// if newMap == nil {
+	// 	newMap = sync.Map{}
+	// }
+	_, ok := newMap.Load(wa.Address)
 	if ok {
 		return &pb.ReplyInfo{
 			Message: "err: Address already binded",
 		}, nil
 	}
-	newMap[strings.ToLower(wa.Address)] = store.AddressExtended{
+	newMap.Store(strings.ToLower(wa.Address), store.AddressExtended{
 		UserID:       wa.UserID,
 		WalletIndex:  int(wa.WalletIndex),
 		AddressIndex: int(wa.AddressIndex),
-	}
+	})
 
 	*s.UsersData = newMap
 
