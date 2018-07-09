@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/KristinaEtc/slf"
+	_ "github.com/KristinaEtc/slflog"
 	"github.com/Multy-io/Multy-BTC-node-service/btc"
 	pb "github.com/Multy-io/Multy-back/node-streamer/btc"
 	"github.com/Multy-io/Multy-back/store"
-	"github.com/KristinaEtc/slf"
-	_ "github.com/KristinaEtc/slflog"
 	"github.com/blockcypher/gobcy"
 )
 
@@ -19,7 +19,7 @@ var log = slf.WithContext("streamer")
 
 // Server implements streamer interface and is a gRPC server
 type Server struct {
-	UsersData *map[string]store.AddressExtended
+	UsersData *sync.Map
 	// UsersData sync.Map
 	BtcAPI *gobcy.API
 	BtcCli *btc.Client
@@ -40,18 +40,17 @@ func (s *Server) ServiceInfo(c context.Context, in *pb.Empty) (*pb.ServiceVersio
 func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.ReplyInfo, error) {
 	log.Debugf("EventInitialAdd - %v", ud.Map)
 
-	udMap := map[string]store.AddressExtended{}
+	udMap := sync.Map{}
 
 	for addr, ex := range ud.GetMap() {
-		udMap[addr] = store.AddressExtended{
+		udMap.Store(addr, store.AddressExtended{
 			UserID:       ex.GetUserID(),
 			WalletIndex:  int(ex.GetWalletIndex()),
 			AddressIndex: int(ex.GetAddressIndex()),
-		}
+		})
 	}
-	s.BtcCli.UserDataM.Lock()
+
 	*s.UsersData = udMap
-	s.BtcCli.UserDataM.Unlock()
 
 	return &pb.ReplyInfo{
 		Message: "ok",
@@ -60,24 +59,23 @@ func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.Reply
 
 // EventAddNewAddress us used to add new watch address to existing pairs
 func (s *Server) EventAddNewAddress(c context.Context, wa *pb.WatchAddress) (*pb.ReplyInfo, error) {
-	s.BtcCli.UserDataM.Lock()
-	defer s.BtcCli.UserDataM.Unlock()
 	newMap := *s.UsersData
-	if newMap == nil {
-		newMap = map[string]store.AddressExtended{}
-	}
+	// if newMap == nil {
+	// 	newMap = map[string]store.AddressExtended{}
+	// }
 	//TODO: binded address fix
-	_, ok := newMap[wa.Address]
+	_, ok := newMap.Load(wa.Address)
 	if ok {
 		return &pb.ReplyInfo{
 			Message: "err: Address already binded",
 		}, nil
 	}
-	newMap[wa.Address] = store.AddressExtended{
+	newMap.Store(wa.Address, store.AddressExtended{
 		UserID:       wa.UserID,
 		WalletIndex:  int(wa.WalletIndex),
 		AddressIndex: int(wa.AddressIndex),
-	}
+	})
+
 	*s.UsersData = newMap
 
 	return &pb.ReplyInfo{
@@ -115,7 +113,6 @@ func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_E
 func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyInfo, error) {
 	// s.BtcCli.RpcClient.GetTxOut()
 	// var blocks []*chainhash.Hash
-	s.BtcCli.RpcClientM.Lock()
 	currentH, err := s.BtcCli.RpcClient.GetBlockCount()
 	if err != nil {
 		log.Errorf("s.BtcCli.RpcClient.GetBlockCount: %v ", err.Error())
@@ -140,7 +137,6 @@ func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyIn
 	// }
 	// go s.BtcCli.BlockTransactions(hash)
 	// }
-	s.BtcCli.RpcClientM.Unlock()
 
 	return &pb.ReplyInfo{
 		Message: "ok",

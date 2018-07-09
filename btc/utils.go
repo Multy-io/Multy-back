@@ -165,14 +165,14 @@ func (c *Client) ResyncSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 		if len(output.ScriptPubKey.Addresses) > 0 {
 			address := output.ScriptPubKey.Addresses[0]
 
-			c.UserDataM.Lock()
 			ud := *c.UsersData
-			addressEx, ok := ud[address]
-			c.UserDataM.Unlock()
+			addressExt, ok := ud.Load(address)
 
 			if !ok {
 				continue
 			}
+
+			addressEx := addressExt.(store.AddressExtended)
 
 			txStatus := store.TxStatusAppearedInBlockIncoming
 			if blockHeight == -1 {
@@ -212,14 +212,15 @@ func (c *Client) ResyncSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 		if len(previousTx.Vout[input.Vout].ScriptPubKey.Addresses) > 0 {
 			address := previousTx.Vout[input.Vout].ScriptPubKey.Addresses[0]
 
-			c.UserDataM.Lock()
 			ud := *c.UsersData
-			addressEx, ok := ud[address]
-			c.UserDataM.Unlock()
+			addressExt, ok := ud.Load(address)
 
 			if !ok {
 				continue
 			}
+
+			addressEx := addressExt.(store.AddressExtended)
+
 			reqDelete := store.DeleteSpendableOutput{
 				UserID:  addressEx.UserID,
 				TxID:    previousTx.Txid,
@@ -533,13 +534,15 @@ func (c *Client) parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, 
 
 		for _, txInAddress := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses {
 			// check the ownership of the transaction to our users
-			c.UserDataM.Lock()
+
 			ud := *c.UsersData
-			addressEx, ok := ud[txInAddress]
-			c.UserDataM.Unlock()
+			addressExt, ok := ud.Load(txInAddress)
+
 			if !ok {
 				continue
 			}
+
+			addressEx := addressExt.(store.AddressExtended)
 
 			txInAmount := int64(SatoshiToBitcoin * previousTxVerbose.Vout[input.Vout].Value)
 
@@ -572,13 +575,14 @@ func (c *Client) parseOutputs(txVerbose *btcjson.TxRawResult, blockHeight int64,
 	for _, output := range txVerbose.Vout {
 		for _, txOutAddress := range output.ScriptPubKey.Addresses {
 
-			c.UserDataM.Lock()
 			ud := *c.UsersData
-			addressEx, ok := ud[txOutAddress]
-			c.UserDataM.Unlock()
+			addressExt, ok := ud.Load(txOutAddress)
+
 			if !ok {
 				continue
 			}
+
+			addressEx := addressExt.(store.AddressExtended)
 
 			currentWallet := store.WalletForTx{
 				UserId:      addressEx.UserID,
@@ -686,14 +690,14 @@ func (c *Client) CreateSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 		if len(output.ScriptPubKey.Addresses) > 0 {
 			address := output.ScriptPubKey.Addresses[0]
 
-			c.UserDataM.Lock()
 			ud := *c.UsersData
-			addressEx, ok := ud[address]
-			c.UserDataM.Unlock()
+			addressExt, ok := ud.Load(address)
 
 			if !ok {
 				continue
 			}
+
+			addressEx := addressExt.(store.AddressExtended)
 
 			txStatus := store.TxStatusAppearedInBlockIncoming
 			if blockHeight == -1 {
@@ -749,14 +753,15 @@ func (c *Client) DeleteSpendableOutputs(tx *btcjson.TxRawResult, blockHeight int
 		if len(previousTx.Vout[input.Vout].ScriptPubKey.Addresses) > 0 {
 			address := previousTx.Vout[input.Vout].ScriptPubKey.Addresses[0]
 
-			c.UserDataM.Lock()
 			ud := *c.UsersData
-			addressEx, ok := ud[address]
-			c.UserDataM.Unlock()
+			addressExt, ok := ud.Load(address)
 
 			if !ok {
 				continue
 			}
+
+			addressEx := addressExt.(store.AddressExtended)
+
 			reqDelete := store.DeleteSpendableOutput{
 				UserID:  addressEx.UserID,
 				TxID:    previousTx.Txid,
@@ -794,9 +799,8 @@ func (c *Client) rawTxToMempoolRec(inTx *btcjson.TxRawResult) store.MempoolRecor
 			log.Errorf("newTxToDB: chainhash.NewHashFromStr: %s", err.Error())
 		}
 
-		c.RpcClientM.Lock()
 		previousTx, err := c.RpcClient.GetRawTransactionVerbose(txCHash)
-		c.RpcClientM.Unlock()
+
 		if err != nil {
 			log.Errorf("newTxToDB: rpcClient.GetTransaction: %s", err.Error())
 		}

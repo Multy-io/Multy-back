@@ -9,10 +9,9 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/Multy-io/Multy-back/node-streamer/btc"
-	"github.com/Multy-io/Multy-back/store"
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"
+	pb "github.com/Multy-io/Multy-back/node-streamer/btc"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
@@ -28,15 +27,13 @@ type Client struct {
 	DeleteMempool  chan pb.MempoolToDelete
 	AddToMempool   chan pb.MempoolRecord
 	Block          chan pb.BlockHeight
-	UsersData      *map[string]store.AddressExtended
+	UsersData      *sync.Map
 	rpcConf        *rpcclient.ConnConfig
-	UserDataM      *sync.Mutex
-	RpcClientM     *sync.Mutex
 }
 
 var log = slf.WithContext("btc")
 
-func NewClient(certFromConf []byte, btcNodeAddress string, usersData *map[string]store.AddressExtended, udm, rpcm *sync.Mutex) (*Client, error) {
+func NewClient(certFromConf []byte, btcNodeAddress string, usersData *sync.Map) (*Client, error) {
 
 	cli := &Client{
 		ResyncCh:       make(chan pb.Resync),
@@ -55,9 +52,7 @@ func NewClient(certFromConf []byte, btcNodeAddress string, usersData *map[string
 			HTTPPostMode: false, // Bitcoin core only supports HTTP POST mode
 			DisableTLS:   false, // Bitcoin core does not provide TLS by default
 		},
-		UsersData:  usersData,
-		UserDataM:  udm,
-		RpcClientM: rpcm,
+		UsersData: usersData,
 	}
 
 	log.Infof("cert= %d bytes\n", len(certFromConf))
@@ -102,9 +97,7 @@ func (c *Client) RunProcess(btcNodeAddress string) error {
 	}
 	log.Info("NotifyNewTransactions: Registration Complete")
 
-	c.RpcClientM.Lock()
 	c.RpcClient = rpcClient
-	c.RpcClientM.Unlock()
 
 	c.RpcClient.WaitForShutdown()
 	return nil
