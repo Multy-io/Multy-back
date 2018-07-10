@@ -268,22 +268,38 @@ func changeName(cn ChangeName, token string, restClient *RestClient, c *gin.Cont
 	}
 	var position int
 
-	for i, wallet := range user.Wallets {
-		if wallet.NetworkID == cn.NetworkID && wallet.WalletIndex == cn.WalletIndex && wallet.CurrencyID == cn.CurrencyID {
-			position = i
-			break
+	// change multisig name
+	if cn.Address != "" {
+		query := bson.M{"userID": user.UserID, "multisig.contractaddress": cn.Address}
+		update := bson.M{
+			"$set": bson.M{
+				"multisig.$.walletname": cn.WalletName,
+			},
 		}
-	}
-	sel := bson.M{"userID": user.UserID, "wallets.walletIndex": cn.WalletIndex, "wallets.networkID": cn.NetworkID}
-	update := bson.M{
-		"$set": bson.M{
-			"wallets." + strconv.Itoa(position) + ".walletName": cn.WalletName,
-		},
-	}
-	return restClient.userStore.Update(sel, update)
 
-	err := errors.New(msgErrNoWallet)
-	return err
+		err := restClient.userStore.Update(query, update)
+		return err
+	}
+
+	// change wallet name
+	if cn.Address == "" {
+
+		for i, wallet := range user.Wallets {
+			if wallet.NetworkID == cn.NetworkID && wallet.WalletIndex == cn.WalletIndex && wallet.CurrencyID == cn.CurrencyID {
+				position = i
+				break
+			}
+		}
+		sel := bson.M{"userID": user.UserID, "wallets.walletIndex": cn.WalletIndex, "wallets.networkID": cn.NetworkID}
+		update := bson.M{
+			"$set": bson.M{
+				"wallets." + strconv.Itoa(position) + ".walletName": cn.WalletName,
+			},
+		}
+		return restClient.userStore.Update(sel, update)
+	}
+
+	return errors.New(msgErrNoWallet)
 
 }
 
@@ -437,6 +453,7 @@ type ChangeName struct {
 	CurrencyID  int    `json:"currencyID"`
 	WalletIndex int    `json:"walletIndex"`
 	NetworkID   int    `json:"networkId"`
+	Address     string `json:"address"`
 }
 
 func (restClient *RestClient) changeWalletName() gin.HandlerFunc {
