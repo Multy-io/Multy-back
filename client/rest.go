@@ -1282,16 +1282,11 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			return
 		}
 
+		var multisigAddress string
 		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
 		restClient.log.Debugf("getWalletVerbose [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
 		if err != nil {
-			restClient.log.Errorf("getWalletVerbose: non int wallet index:[%d] %s \t[addr=%s]", walletIndex, err.Error(), c.Request.RemoteAddr)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrDecodeWalletIndexErr,
-				"wallet":  wv,
-			})
-			return
+			multisigAddress = c.Param("walletindex")
 		}
 
 		currencyId, err := strconv.Atoi(c.Param("currencyid"))
@@ -1398,37 +1393,37 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			}
 
 			// fetch wallet with concrete networkid currencyid and wallet index
-			wallet := store.Wallet{}
-			for _, w := range user.Wallets {
-				if w.NetworkID == networkId && w.CurrencyID == currencyId && w.WalletIndex == walletIndex {
-					wallet = w
-					break
-				}
-			}
-
-			if len(wallet.Adresses) == 0 {
-				restClient.log.Errorf("getAllWalletsVerbose: len(wallet.Adresses) == 0:\t[addr=%s]", c.Request.RemoteAddr)
-				c.JSON(code, gin.H{
-					"code":    http.StatusBadRequest,
-					"message": msgErrNoWallet,
-					"wallet":  wv,
-				})
-				return
-			}
-
-			//TODO: make pending
 			var pending bool
 			var totalBalance string
 			var pendingBalance string
-			var pendingAmount string
 			var waletNonce int64
-			for _, address := range wallet.Adresses {
+			wallet := store.Wallet{}
+			multisig := store.Multisig{}
+
+			// multisig verbose
+			if multisigAddress != "" {
+				for _, m := range user.Multisigs {
+					if m.NetworkID == networkId && m.CurrencyID == currencyId && m.ContractAddress == multisigAddress {
+						multisig = m
+						break
+					}
+				}
+				if len(multisig.ContractAddress) == 0 {
+					restClient.log.Errorf("getAllWalletsVerbose: len(multisig.ContractAddress) == 0:\t[addr=%s]", c.Request.RemoteAddr)
+					c.JSON(code, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": msgErrNoWallet,
+						"wallet":  wv,
+					})
+					return
+				}
+
 				amount := &ethpb.Balance{}
 				nonce := &ethpb.Nonce{}
 
 				var err error
 				adr := ethpb.AddressToResync{
-					Address: address.Address,
+					Address: multisig.ContractAddress,
 				}
 
 				switch networkId {
@@ -1456,12 +1451,10 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 
 				p, _ := strconv.Atoi(amount.GetPendingBalance())
 				b, _ := strconv.Atoi(amount.GetBalance())
-				// pendingBalance = strconv.Itoa(p - b)
-				// pendingAmount = strconv.Itoa(p - b)
 
 				if p != b {
 					pending = true
-					address.LastActionTime = time.Now().Unix()
+					multisig.LastActionTime = time.Now().Unix()
 				}
 
 				if p == b {
@@ -1471,30 +1464,121 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 				waletNonce = nonce.GetNonce()
 
 				av = append(av, ETHAddressVerbose{
-					LastActionTime: address.LastActionTime,
-					Address:        address.Address,
-					AddressIndex:   address.AddressIndex,
+					LastActionTime: multisig.LastActionTime,
+					Address:        multisig.ContractAddress,
 					Amount:         totalBalance,
 					Nonce:          nonce.Nonce,
 				})
 
+				wv = append(wv, WalletVerboseETH{
+					CurrencyID:     multisig.CurrencyID,
+					NetworkID:      multisig.NetworkID,
+					WalletName:     multisig.WalletName,
+					LastActionTime: multisig.LastActionTime,
+					DateOfCreation: multisig.DateOfCreation,
+					Nonce:          waletNonce,
+					Balance:        totalBalance,
+					PendingBalance: pendingBalance,
+					VerboseAddress: av,
+					Pending:        pending,
+					Owners:         multisig.Owners,
+				})
+
 			}
 
-			wv = append(wv, WalletVerboseETH{
-				WalletIndex:    wallet.WalletIndex,
-				CurrencyID:     wallet.CurrencyID,
-				NetworkID:      wallet.NetworkID,
-				WalletName:     wallet.WalletName,
-				LastActionTime: wallet.LastActionTime,
-				DateOfCreation: wallet.DateOfCreation,
-				Nonce:          waletNonce,
-				Balance:        totalBalance,
-				PendingBalance: pendingBalance,
-				PendingAmount:  pendingAmount,
-				VerboseAddress: av,
-				Pending:        pending,
-			})
-			av = []ETHAddressVerbose{}
+			// wallet verbose
+			if multisigAddress == "" {
+				for _, w := range user.Wallets {
+					if w.NetworkID == networkId && w.CurrencyID == currencyId && w.WalletIndex == walletIndex {
+						wallet = w
+						break
+					}
+				}
+
+				if len(wallet.Adresses) == 0 {
+					restClient.log.Errorf("getAllWalletsVerbose: len(wallet.Adresses) == 0:\t[addr=%s]", c.Request.RemoteAddr)
+					c.JSON(code, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": msgErrNoWallet,
+						"wallet":  wv,
+					})
+					return
+				}
+
+				for _, address := range wallet.Adresses {
+					amount := &ethpb.Balance{}
+					nonce := &ethpb.Nonce{}
+
+					var err error
+					adr := ethpb.AddressToResync{
+						Address: address.Address,
+					}
+
+					switch networkId {
+					case currencies.ETHTest:
+						nonce, err = restClient.ETH.CliTest.EventGetAdressNonce(context.Background(), &adr)
+						amount, err = restClient.ETH.CliTest.EventGetAdressBalance(context.Background(), &adr)
+					case currencies.ETHMain:
+						nonce, err = restClient.ETH.CliMain.EventGetAdressNonce(context.Background(), &adr)
+						amount, err = restClient.ETH.CliMain.EventGetAdressBalance(context.Background(), &adr)
+					default:
+						c.JSON(code, gin.H{
+							"code":    http.StatusBadRequest,
+							"message": msgErrMethodNotImplennted,
+							"wallet":  wv,
+						})
+						return
+					}
+
+					if err != nil {
+						restClient.log.Errorf("EventGetAdressNonce || EventGetAdressBalance: %v", err.Error())
+					}
+
+					totalBalance = amount.GetBalance()
+					pendingBalance = amount.GetPendingBalance()
+
+					p, _ := strconv.Atoi(amount.GetPendingBalance())
+					b, _ := strconv.Atoi(amount.GetBalance())
+					// pendingBalance = strconv.Itoa(p - b)
+					// pendingAmount = strconv.Itoa(p - b)
+
+					if p != b {
+						pending = true
+						address.LastActionTime = time.Now().Unix()
+					}
+
+					if p == b {
+						pendingBalance = "0"
+					}
+
+					waletNonce = nonce.GetNonce()
+
+					av = append(av, ETHAddressVerbose{
+						LastActionTime: address.LastActionTime,
+						Address:        address.Address,
+						AddressIndex:   address.AddressIndex,
+						Amount:         totalBalance,
+						Nonce:          nonce.Nonce,
+					})
+
+				}
+
+				wv = append(wv, WalletVerboseETH{
+					WalletIndex:    wallet.WalletIndex,
+					CurrencyID:     wallet.CurrencyID,
+					NetworkID:      wallet.NetworkID,
+					WalletName:     wallet.WalletName,
+					LastActionTime: wallet.LastActionTime,
+					DateOfCreation: wallet.DateOfCreation,
+					Nonce:          waletNonce,
+					Balance:        totalBalance,
+					PendingBalance: pendingBalance,
+					VerboseAddress: av,
+					Pending:        pending,
+				})
+				av = []ETHAddressVerbose{}
+
+			}
 
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -1524,18 +1608,18 @@ type WalletVerbose struct {
 }
 
 type WalletVerboseETH struct {
-	CurrencyID     int                 `json:"currencyid"`
-	NetworkID      int                 `json:"networkid"`
-	WalletIndex    int                 `json:"walletindex"`
-	WalletName     string              `json:"walletname"`
-	LastActionTime int64               `json:"lastactiontime"`
-	DateOfCreation int64               `json:"dateofcreation"`
-	Nonce          int64               `json:"nonce"`
-	PendingBalance string              `json:"pendingbalance"`
-	PendingAmount  string              `json:"pendingamount"`
-	Balance        string              `json:"balance"`
-	VerboseAddress []ETHAddressVerbose `json:"addresses"`
-	Pending        bool                `json:"pending"`
+	CurrencyID     int                     `json:"currencyid"`
+	NetworkID      int                     `json:"networkid"`
+	WalletIndex    int                     `json:"walletindex"`
+	WalletName     string                  `json:"walletname"`
+	LastActionTime int64                   `json:"lastactiontime"`
+	DateOfCreation int64                   `json:"dateofcreation"`
+	Nonce          int64                   `json:"nonce"`
+	PendingBalance string                  `json:"pendingbalance"`
+	Balance        string                  `json:"balance"`
+	VerboseAddress []ETHAddressVerbose     `json:"addresses"`
+	Pending        bool                    `json:"pending"`
+	Owners         []store.AddressExtended `json:"owners"`
 }
 
 type AddressVerbose struct {
@@ -1637,7 +1721,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 		userTxs := []store.MultyTX{}
 
 		for _, wallet := range okWallets {
-
 			switch wallet.CurrencyID {
 			case currencies.Bitcoin:
 				var av []AddressVerbose
@@ -1698,8 +1781,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 				var totalBalance string
 				var pendingBalance string
-				var pendingAmount string
-
 				for _, address := range wallet.Adresses {
 					amount := &ethpb.Balance{}
 					nonce := &ethpb.Nonce{}
@@ -1734,8 +1815,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 					p, _ := strconv.Atoi(amount.GetPendingBalance())
 					b, _ := strconv.Atoi(amount.GetBalance())
-					// pendingBalance = strconv.Itoa(p - b)
-					// pendingAmount = strconv.Itoa(p - b)
 
 					if p != b {
 						pending = true
@@ -1744,17 +1823,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					if p == b {
 						pendingBalance = "0"
 					}
-
-					//incoming
-					// if p > b{
-					// 	pendingBalance = "0"
-					// }
-
-					//outcoming
-					// if p < b{
-					// 	pendingBalance = "0"
-					// }
-
 					walletNonce = nonce.GetNonce()
 
 					av = append(av, ETHAddressVerbose{
@@ -1773,7 +1841,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					NetworkID:      wallet.NetworkID,
 					Balance:        totalBalance,
 					PendingBalance: pendingBalance,
-					PendingAmount:  pendingAmount,
 					Nonce:          walletNonce,
 					WalletName:     wallet.WalletName,
 					LastActionTime: wallet.LastActionTime,
@@ -1785,6 +1852,75 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 			default:
 
 			}
+
+		}
+		for _, multisig := range user.Multisigs {
+			var av []ETHAddressVerbose
+			var pending bool
+
+			var totalBalance string
+			var pendingBalance string
+
+			amount := &ethpb.Balance{}
+			nonce := &ethpb.Nonce{}
+
+			adr := ethpb.AddressToResync{
+				Address: multisig.ContractAddress,
+			}
+
+			switch multisig.NetworkID {
+			case currencies.ETHTest:
+				nonce, err = restClient.ETH.CliTest.EventGetAdressNonce(context.Background(), &adr)
+				amount, err = restClient.ETH.CliTest.EventGetAdressBalance(context.Background(), &adr)
+			case currencies.ETHMain:
+				nonce, err = restClient.ETH.CliMain.EventGetAdressNonce(context.Background(), &adr)
+				amount, err = restClient.ETH.CliMain.EventGetAdressBalance(context.Background(), &adr)
+			default:
+				c.JSON(code, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": msgErrMethodNotImplennted,
+					"wallet":  wv,
+				})
+				return
+			}
+
+			totalBalance = amount.GetBalance()
+			pendingBalance = amount.GetPendingBalance()
+
+			p, _ := strconv.Atoi(amount.GetPendingBalance())
+			b, _ := strconv.Atoi(amount.GetBalance())
+
+			if p != b {
+				pending = true
+				multisig.LastActionTime = time.Now().Unix()
+			}
+
+			if p == b {
+				pendingBalance = "0"
+			}
+
+			waletNonce := nonce.GetNonce()
+
+			av = append(av, ETHAddressVerbose{
+				LastActionTime: multisig.LastActionTime,
+				Address:        multisig.ContractAddress,
+				Amount:         totalBalance,
+				Nonce:          nonce.Nonce,
+			})
+
+			wv = append(wv, WalletVerboseETH{
+				CurrencyID:     multisig.CurrencyID,
+				NetworkID:      multisig.NetworkID,
+				WalletName:     multisig.WalletName,
+				LastActionTime: multisig.LastActionTime,
+				DateOfCreation: multisig.DateOfCreation,
+				Nonce:          waletNonce,
+				Balance:        totalBalance,
+				PendingBalance: pendingBalance,
+				VerboseAddress: av,
+				Pending:        pending,
+				Owners:         multisig.Owners,
+			})
 
 		}
 
