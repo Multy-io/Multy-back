@@ -83,6 +83,7 @@ func Init(conf *Configuration) (*NodeClient, error) {
 		EthCli:    cli.Instance,
 		Info:      &conf.ServiceInfo,
 		Multisig:  cli.CliMultisig,
+		NetworkID: conf.NetworkID,
 		ResyncUrl: resyncUrl,
 	}
 
@@ -96,6 +97,8 @@ func FethResyncUrl(networkid int) string {
 	switch networkid {
 	case 4:
 		return "http://api-rinkeby.etherscan.io/api?sort=asc&endblock=99999999&startblock=0&address="
+	case 3:
+		return "http://api-ropsten.etherscan.io/api?sort=asc&endblock=99999999&startblock=0&address="
 	case 1:
 		return "http://api.etherscan.io/api?sort=asc&endblock=99999999&startblock=0&address="
 	default:

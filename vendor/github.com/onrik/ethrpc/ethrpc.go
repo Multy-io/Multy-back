@@ -120,13 +120,32 @@ func (rpc *EthRPC) Web3ClientVersion() (string, error) {
 }
 
 // TxPoolContent returns raw txpool.
-func (rpc *EthRPC) TxPoolContent() ([]map[string]interface{}, error) {
-	var txPool []map[string]interface{}
+func (rpc *EthRPC) TxPoolContent(networkID int) (map[string]string, error) {
+	// var txPool []map[string]interface{}
 
-	//err := rpc.call("parity_pendingTransactions", &txPool)
-	err := rpc.call("parity_pendingTransactions", &txPool)
+	// switch networkID {
+	// case 1:
+	// 	// err := rpc.call("parity_pendingTransactions", &txPool)
+	// 	return map[string]string{}, err
+	// case 3:
+	// 	// err := rpc.call("parity_pendingTransactions", &txPool)
+	// 	return map[string]string{}, err
+	// case 4:
+	// 	// var txPoolLocal map[string]interface{}
 
-	return txPool, err
+	// 	// mempool := map[string]string{}
+
+	// 	// _ = rpc.call("txpool_content", &txPoolLocal)
+
+	// 	// for key, value := range txPoolLocal["pending"].(map[string]interface{}) {
+	// 	// 	fmt.Printf("\nkey %v  type:%T Value %T\n", key, key, value)
+	// 	// 	mempool[key] = value.(map[string]interface{})["gas"].(string)
+	// 	// }
+	// 	// fmt.Println(mempool)
+	// 	return map[string]string{}, nil
+	// }
+
+	return map[string]string{}, nil
 }
 
 func (rpc *EthRPC) TraceTransaction(hash string) (map[string]interface{}, error) {

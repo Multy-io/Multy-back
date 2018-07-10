@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -26,6 +25,7 @@ type Server struct {
 	Multisig  *eth.Multisig
 	EthCli    *eth.Client
 	Info      *store.ServiceInfo
+	NetworkID int
 	ResyncUrl string
 }
 
@@ -216,54 +216,24 @@ func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyIn
 }
 
 func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventGetAllMempoolServer) error {
-	mp, err := s.EthCli.GetAllTxPool()
+	// mp, err := s.EthCli.GetAllTxPool(s.NetworkID)
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
-	for _, tx := range mp {
-		gas, err := strconv.ParseInt(tx["gas"].(string), 0, 64)
-		if err != nil {
-			log.Errorf("EventGetAllMempool:strconv.ParseInt")
-		}
-		hash := tx["hash"].(string)
-		stream.Send(&pb.MempoolRecord{
-			Category: int32(gas),
-			HashTX:   hash,
-		})
-	}
+	// for hash, gas := range mp {
+	// 	ngas, err := strconv.Atoi(gas)
+	// 	if err != nil {
+	// 		continue
+	// 	}
+	stream.Send(&pb.MempoolRecord{
+		Category: 10,
+		HashTX:   "",
+	})
+
 	return nil
 }
-
-// func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventGetAllMempoolServer) error {
-// 	mp, err := s.EthCli.GetAllTxPool()
-// 	fmt.Println("==========================\n\n\n")
-// 	fmt.Println("%s\n", mp)
-// 	fmt.Println("==========================\n\n\n")
-// 	if err != nil {
-// 		return err
-// 	}
-// 	// for key, value := range mp {
-// 	// 	fmt.Printf("%T ============== %s\n", value, key)
-
-// 	// }
-
-// 	// for _, txs := range mp["result"].(map[string]interface{}) {
-// 	// 	for _, tx := range txs.(map[string]interface{}) {
-// 	// 		gas, err := strconv.ParseInt(tx.(map[string]interface{})["gas"].(string), 0, 64)
-// 	// 		if err != nil {
-// 	// 			log.Errorf("EventGetAllMempool:strconv.ParseInt")
-// 	// 		}
-// 	// 		hash := tx.(map[string]interface{})["hash"].(string)
-// 	// 		stream.Send(&pb.MempoolRecord{
-// 	// 			Category: int32(gas),
-// 	// 			HashTX:   hash,
-// 	// 		})
-// 	// 	}
-// 	// }
-// 	return nil
-// }
 
 type resyncTx struct {
 	Message string `json:"message"`
