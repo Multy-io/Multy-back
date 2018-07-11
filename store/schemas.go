@@ -105,7 +105,8 @@ type Multisig struct {
 	LastActionTime  int64             `bson:"lastactiontime"`
 	DateOfCreation  int64             `bson:"dateofcreation"`
 	Owners          []AddressExtended `bson:"owners"`
-	Status          bool              `bson:"status"`
+	DeployStatus    bool
+	Status          string `bson:"status"`
 }
 
 type RatesRecord struct {

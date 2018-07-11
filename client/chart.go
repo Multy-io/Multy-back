@@ -128,7 +128,6 @@ func (eChart *exchangeChart) updateDayRates() {
 		eChart.log.Errorf("GetExchangeRatesDay: %s", err.Error())
 		return
 	}
-	// TODO: saving to in-memory store
 	eChart.rates.mDay.Unlock()
 }
 

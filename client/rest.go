@@ -28,7 +28,8 @@ import (
 	btcpb "github.com/Multy-io/Multy-back/node-streamer/btc"
 	ethpb "github.com/Multy-io/Multy-back/node-streamer/eth"
 	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin" // gin-swagger middleware
+	// swagger embed files
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -120,7 +121,6 @@ func SetRestHandlers(
 		v1.GET("/wallet/:walletindex/verbose/:currencyid/:networkid", restClient.getWalletVerbose())
 		v1.GET("/wallets/verbose", restClient.getAllWalletsVerbose())
 		v1.GET("/wallets/transactions/:currencyid/:networkid/:walletindex", restClient.getWalletTransactionsHistory())
-		// v1.GET("/multisigs/transactions/:currencyid/:networkid/:address", restClient.getWalletTransactionsHistory())
 		v1.POST("/wallet/name", restClient.changeWalletName())
 		v1.POST("/resync/wallet/:currencyid/:networkid/:walletindex", restClient.resyncWallet())
 		v1.GET("/exchange/changelly/list", restClient.changellyListCurrencies())
@@ -570,15 +570,11 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 			return
 		}
 
+		var multisigAddress string
 		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
 		restClient.log.Debugf("getWalletVerbose [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
 		if err != nil {
-			restClient.log.Errorf("getWalletVerbose: non int wallet index:[%d] %s \t[addr=%s]", walletIndex, err.Error(), c.Request.RemoteAddr)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrDecodeWalletIndexErr,
-			})
-			return
+			multisigAddress = c.Param("walletindex")
 		}
 
 		currencyId, err := strconv.Atoi(c.Param("currencyid"))
@@ -646,7 +642,7 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 			}
 
 			if totalBalance == 0 {
-				err := restClient.userStore.DeleteWallet(user.UserID, walletIndex, currencyId, networkid)
+				err := restClient.userStore.DeleteWallet(user.UserID, "", walletIndex, currencyId, networkid)
 				if err != nil {
 					restClient.log.Errorf("deleteWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 					c.JSON(http.StatusBadRequest, gin.H{
@@ -671,10 +667,18 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 		case currencies.Ether:
 
 			var address string
-			for _, wallet := range user.Wallets {
-				if wallet.WalletIndex == walletIndex {
-					if len(wallet.Adresses) > 0 {
-						address = wallet.Adresses[0].Address
+			// delete multisig
+			if multisigAddress != "" {
+				address = multisigAddress
+			}
+			// delete wallwt
+			if multisigAddress != "" {
+
+				for _, wallet := range user.Wallets {
+					if wallet.WalletIndex == walletIndex {
+						if len(wallet.Adresses) > 0 {
+							address = wallet.Adresses[0].Address
+						}
 					}
 				}
 			}
@@ -692,7 +696,7 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 			}
 
 			if balance.Balance == "0" || balance.Balance == "" {
-				err := restClient.userStore.DeleteWallet(user.UserID, walletIndex, currencyId, networkid)
+				err := restClient.userStore.DeleteWallet(user.UserID, address, walletIndex, currencyId, networkid)
 				if err != nil {
 					restClient.log.Errorf("deleteWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 					c.JSON(http.StatusBadRequest, gin.H{
@@ -1486,7 +1490,6 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					Amount:         totalBalance,
 					Nonce:          nonce.Nonce,
 				})
-
 				wv = append(wv, WalletVerboseETH{
 					CurrencyID:     multisig.CurrencyID,
 					NetworkID:      multisig.NetworkID,
@@ -1498,7 +1501,13 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					PendingBalance: pendingBalance,
 					VerboseAddress: av,
 					Pending:        pending,
-					Owners:         multisig.Owners,
+					Multisig: MultisigVerbose{
+						Owners:         multisig.Owners,
+						Confirmations:  multisig.Confirmations,
+						IsDeployed:     multisig.DeployStatus,
+						FactoryAddress: multisig.FactoryAddress,
+						TxOfCreation:   multisig.TxOfCreation,
+					},
 				})
 
 			}
@@ -1625,18 +1634,18 @@ type WalletVerbose struct {
 }
 
 type WalletVerboseETH struct {
-	CurrencyID     int                     `json:"currencyid"`
-	NetworkID      int                     `json:"networkid"`
-	WalletIndex    int                     `json:"walletindex"`
-	WalletName     string                  `json:"walletname"`
-	LastActionTime int64                   `json:"lastactiontime"`
-	DateOfCreation int64                   `json:"dateofcreation"`
-	Nonce          int64                   `json:"nonce"`
-	PendingBalance string                  `json:"pendingbalance"`
-	Balance        string                  `json:"balance"`
-	VerboseAddress []ETHAddressVerbose     `json:"addresses"`
-	Pending        bool                    `json:"pending"`
-	Owners         []store.AddressExtended `json:"owners"`
+	CurrencyID     int                 `json:"currencyid"`
+	NetworkID      int                 `json:"networkid"`
+	WalletIndex    int                 `json:"walletindex"`
+	WalletName     string              `json:"walletname"`
+	LastActionTime int64               `json:"lastactiontime"`
+	DateOfCreation int64               `json:"dateofcreation"`
+	Nonce          int64               `json:"nonce"`
+	PendingBalance string              `json:"pendingbalance"`
+	Balance        string              `json:"balance"`
+	VerboseAddress []ETHAddressVerbose `json:"addresses"`
+	Pending        bool                `json:"pending"`
+	Multisig       MultisigVerbose     `json:"multisig,omitempty"`
 }
 
 type AddressVerbose struct {
@@ -1650,12 +1659,19 @@ type AddressVerbose struct {
 }
 
 type ETHAddressVerbose struct {
-	LastActionTime int64                    `json:"lastactiontime"`
-	Address        string                   `json:"address"`
-	AddressIndex   int                      `json:"addressindex"`
-	Amount         string                   `json:"amount"`
-	SpendableOuts  []store.SpendableOutputs `json:"spendableoutputs,omitempty"`
-	Nonce          int64                    `json:"nonce,omitempty"`
+	LastActionTime int64  `json:"lastactiontime"`
+	Address        string `json:"address"`
+	AddressIndex   int    `json:"addressindex"`
+	Amount         string `json:"amount"`
+	Nonce          int64  `json:"nonce,omitempty"`
+}
+
+type MultisigVerbose struct {
+	Owners         []store.AddressExtended `json:"owners"`
+	Confirmations  int                     `json:"Confirmations"`
+	IsDeployed     bool                    `json:"isdeployed"`
+	FactoryAddress string                  `json:"factoryaddress"`
+	TxOfCreation   string                  `json:"txofcreation"`
 }
 
 type StockExchangeRate struct {
@@ -1936,7 +1952,13 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 				PendingBalance: pendingBalance,
 				VerboseAddress: av,
 				Pending:        pending,
-				Owners:         multisig.Owners,
+				Multisig: MultisigVerbose{
+					Owners:         multisig.Owners,
+					Confirmations:  multisig.Confirmations,
+					IsDeployed:     multisig.DeployStatus,
+					FactoryAddress: multisig.FactoryAddress,
+					TxOfCreation:   multisig.TxOfCreation,
+				},
 			})
 
 		}
@@ -2059,7 +2081,6 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				for _, tx := range userTxs {
 					if len(tx.TxAddress) > 0 {
 						if tx.TxAddress[0] == address {
-							// restClient.log.Infof("---------address= %s, txid= %s", address, tx.TxID)
 							var isTheSameWallet = false
 							for _, input := range tx.WalletsInput {
 								if walletIndex == input.WalletIndex {
@@ -2080,27 +2101,6 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 					}
 				}
 			}
-
-			/*
-				for _, tx := range userTxs {
-					//New Logic
-					var isTheSameWallet = false
-					for _, input := range tx.WalletsInput {
-						if walletIndex == input.WalletIndex {
-							isTheSameWallet = true
-						}
-					}
-					for _, output := range tx.WalletsOutput {
-						if walletIndex == output.WalletIndex {
-							isTheSameWallet = true
-						}
-					}
-					if isTheSameWallet {
-						walletTxs = append(walletTxs, tx)
-					}
-				}
-			*/
-
 			for i := 0; i < len(walletTxs); i++ {
 				if walletTxs[i].BlockHeight == -1 {
 					walletTxs[i].Confirmations = 0

@@ -62,7 +62,7 @@ message Multisig  {
 	string FactoryAddress      = 2; 
 	string TxOfCreation        = 3; 
 	string Contract            = 4; 
-    bool isFailed              = 5;
+    bool DeployStatus              = 5;
 	repeated string Addresses  = 6; 
 }
 

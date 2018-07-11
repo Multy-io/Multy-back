@@ -336,7 +336,6 @@ func processMultisig(tx *store.TransactionETH, networtkID int) error {
 	}
 
 	tx.Contract = tx.To
-
 	multyTX := &store.TransactionETH{}
 	if tx.Status == store.TxStatusAppearedInBlockIncoming || tx.Status == store.TxStatusAppearedInMempoolIncoming || tx.Status == store.TxStatusInBlockConfirmedIncoming {
 		log.Debugf("saveTransaction new incoming tx to %v", tx.To)
@@ -719,24 +718,6 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 }
 
-// func createMultisig(currencyID, networkID, addressIndex int, userid, walletName, contractAddress, txOfCreation string, owners []string) store.Multisig {
-// 	addrs, err := FethUserAddresses(currencyID, networkID, userid, owners)
-// 	if err != nil {
-// 		log.Errorf("createMultisig:FethUserAddresses: %v", err.Error())
-// 	}
-// 	return store.Multisig{
-// 		CurrencyID:      currencyID,
-// 		NetworkID:       networkID,
-// 		WalletName:      walletName,
-// 		ContractAddress: contractAddress,
-// 		TxOfCreation:    txOfCreation,
-// 		LastActionTime:  time.Now().Unix(),
-// 		DateOfCreation:  time.Now().Unix(),
-// 		Status:          true,
-// 		Owners:          addrs,
-// 	}
-// }
-
 func generatedMultisigTxToStore(mul *ethpb.Multisig) store.Multisig {
 	return store.Multisig{
 		Confirmations:   int(mul.GetConfirmations()),
@@ -745,7 +726,8 @@ func generatedMultisigTxToStore(mul *ethpb.Multisig) store.Multisig {
 		FactoryAddress:  mul.GetFactoryAddress(),
 		LastActionTime:  time.Now().Unix(),
 		DateOfCreation:  time.Now().Unix(),
-		Status:          mul.GetIsFailed(),
+		DeployStatus:    mul.GetDeployStatus(),
+		Status:          store.WalletStatusOK,
 	}
 }
 
