@@ -161,9 +161,6 @@ func setExchangeRates(tx *store.TransactionETH, isReSync bool, TxTime int64) {
 
 func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer, netid int) {
 	//TODO: make correct notify
-	log.Infof("============\n")
-	log.Infof("TX: %s, NetID: %v, UserID: %s", tx.Status, netid, tx.UserID)
-	log.Infof("============\n")
 
 	if tx.Status == store.TxStatusAppearedInBlockIncoming || tx.Status == store.TxStatusAppearedInMempoolIncoming || tx.Status == store.TxStatusInBlockConfirmedIncoming {
 		txMsq := store.TransactionWithUserID{
@@ -346,16 +343,10 @@ func processMultisig(tx *store.TransactionETH, networtkID int) error {
 		sel := bson.M{"hash": tx.Hash}
 		err := multisigStore.Find(sel).One(nil)
 		if err == mgo.ErrNotFound {
-			// initial insertion
-			//TODO: add additional info like MethodInvoked InvocationStatus Owners
-			// owners, _ := FethContractOwners(currencies.Ether, networtkID, tx.Contract)
-			// tx.Owners = owners
-			// tx.MethodInvoked = fethMethod(tx.Input)
 			multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore)
 			log.Warnf("multyTX.amount %v", multyTX.Amount)
 			err := multisigStore.Insert(multyTX)
 			return err
-
 		}
 
 		multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore)
@@ -364,7 +355,6 @@ func processMultisig(tx *store.TransactionETH, networtkID int) error {
 			// database error
 			return err
 		}
-		// method := ParseMultisigInput(tx, multisigStore, txStore)
 
 		update := bson.M{
 			"$set": bson.M{
@@ -400,7 +390,8 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 	switch tx.MethodInvoked {
 	case submitTransaction: // "c6427474": "submitTransaction(address,uint256,bytes)"
-		// TODO: feth contract owners, send notfy to owners about transation. status: waiting for confirmations
+		// Feth contract owners, send notfy to owners about transation. status: waiting for confirmations
+
 		// find in db if one one confirmation needed DONE internal transaction
 		log.Debugf("submitTransaction:  Input :%v Return :%v ", tx.Input, tx.Return)
 		if tx.BlockTime != 0 {
@@ -439,8 +430,8 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 					sel := bson.M{"wallets.addresses.address": address}
 					_ = usersData.Find(sel).One(&user)
 
-					//TODO: to contract to contract history
 					isOurUser := false
+					// internal tansaction to wallet
 					for _, wallet := range user.Wallets {
 						for _, adr := range wallet.Adresses {
 							if adr.Address == address {
@@ -463,6 +454,29 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 					if isOurUser {
 						_ = txStore.Insert(tx)
+					}
+					isOurUser = false
+
+					sel = bson.M{"multisig.contractaddress": address}
+					usersData.Find(sel).One(&user)
+					// internal tansaction to multisig
+					for _, multisig := range user.Multisigs {
+						if multisig.ContractAddress == address {
+							txToUser.From = contract.ContractAddress
+							txToUser.To = multisig.ContractAddress
+							txToUser.PoolTime = time.Now().Unix()
+							txToUser.MethodInvoked = executeTransaction
+							isOurUser = true
+							txToUser.Amount = amount
+							txToUser.Hash = tx.Hash
+							txToUser.Status = store.TxStatusInBlockConfirmedIncoming
+							txToUser.IsInternal = true
+							break
+						}
+					}
+
+					if isOurUser {
+						_ = multisigStore.Insert(tx)
 					}
 
 				}
@@ -498,9 +512,6 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 	case confirmTransaction: // "c01a8c84": "confirmTransaction(uint256)"
 		//TODO: send notfy to owners about +1 confirmation. store confiramtions id db
-
-		//TODO: update confirmations conut in origin tx and return tx of confirmTransaction if is enough
-		//  confirmations fakeit internal transaction
 
 		log.Debugf("confirmTransaction: %v", tx.Input)
 		i, _ := new(big.Int).SetString(tx.Input[10:], 16)
@@ -553,9 +564,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 		// Internal transaction contract to user
 		if contract.Confirmations <= confirmations && tx.BlockTime != 0 {
-			//TODO: submit transaction history
 			tx.Confirmed = true
-
 			//update owners history
 			sel := bson.M{"hash": originTx.Hash}
 			update := bson.M{
@@ -578,48 +587,74 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 				log.Debugf("Internal transaction:", MultiSigFactory)
 
 				isOurUser := false
+				var outputAddress string
+				var amount string
+				user := store.User{}
 				if len(originTx.Input) >= 266 {
 					in := originTx.Input[10:]
 					re := regexp.MustCompile(`.{64}`) // Every 64 chars
 					parts := re.FindAllString(in, -1) // Split the string into 64 chars blocks.
 
-					address := ""
 					if len(parts) == 4 {
-						address = strings.ToLower("0x" + parts[0][24:])
+						outputAddress = strings.ToLower("0x" + parts[0][24:])
 
 						a, _ := new(big.Int).SetString(parts[1], 16)
-						amount := a.String()
+						amount = a.String()
 
-						user := store.User{}
-						//TODO: to contract to contract history
-						sel := bson.M{"wallets.addresses.address": address}
+					}
+				}
 
-						_ = usersData.Find(sel).One(&user)
-						log.Warnf("found userid %v address %v", user.UserID)
-						for _, wallet := range user.Wallets {
-							for _, adr := range wallet.Adresses {
-								if adr.Address == address {
-									txToUser.From = contract.ContractAddress
-									txToUser.To = adr.Address
-									txToUser.PoolTime = time.Now().Unix()
-									txToUser.MethodInvoked = executeTransaction
-									isOurUser = true
-									txToUser.UserID = user.UserID
-									txToUser.WalletIndex = wallet.WalletIndex
-									txToUser.AddressIndex = adr.AddressIndex
-									txToUser.Amount = amount
-									txToUser.Hash = tx.Hash
-									txToUser.Status = store.TxStatusInBlockConfirmedIncoming
-									txToUser.IsInternal = true
-									break
-								}
-							}
+				// internal transaction contract to addres
+				sel := bson.M{"wallets.addresses.address": outputAddress}
+				_ = usersData.Find(sel).One(&user)
+				log.Warnf("found userid %v address %v", user.UserID)
+				for _, wallet := range user.Wallets {
+					for _, adr := range wallet.Adresses {
+						if adr.Address == outputAddress {
+							txToUser.From = contract.ContractAddress
+							txToUser.To = adr.Address
+							txToUser.PoolTime = time.Now().Unix()
+							txToUser.MethodInvoked = executeTransaction
+							isOurUser = true
+							txToUser.UserID = user.UserID
+							txToUser.WalletIndex = wallet.WalletIndex
+							txToUser.AddressIndex = adr.AddressIndex
+							txToUser.Amount = amount
+							txToUser.Hash = tx.Hash
+							txToUser.Status = store.TxStatusInBlockConfirmedIncoming
+							txToUser.IsInternal = true
+							break
 						}
 					}
 				}
+
 				if isOurUser {
 					log.Warnf("not our user")
 					_ = txStore.Insert(txToUser)
+				}
+
+				// contract to contract history
+				isOurUser = false
+				sel = bson.M{"multisig.contractaddress": outputAddress}
+				usersData.Find(sel).One(&user)
+				// internal tansaction to multisig
+				for _, multisig := range user.Multisigs {
+					if multisig.ContractAddress == outputAddress {
+						txToUser.From = contract.ContractAddress
+						txToUser.To = multisig.ContractAddress
+						txToUser.PoolTime = time.Now().Unix()
+						txToUser.MethodInvoked = executeTransaction
+						isOurUser = true
+						txToUser.Amount = amount
+						txToUser.Hash = tx.Hash
+						txToUser.Status = store.TxStatusInBlockConfirmedIncoming
+						txToUser.IsInternal = true
+						break
+					}
+				}
+
+				if isOurUser {
+					_ = multisigStore.Insert(tx)
 				}
 			}
 			if err != nil && err != mgo.ErrNotFound {
@@ -671,8 +706,6 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		}
 
 		return tx
-	// case executeTransaction: // "ee22610b": "executeTransaction(uint256)"
-	// 	// TODO: feth contract owners, send notfy to owners about transation. status: conformed transatcion
 	case "0x": // incoming transaction
 		// TODO: notify owners about new transation
 		log.Debugf("incoming transaction: %v", tx.Input)
