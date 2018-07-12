@@ -159,7 +159,7 @@ func setExchangeRates(tx *store.TransactionETH, isReSync bool, TxTime int64) {
 	}
 }
 
-func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer, netid int) {
+func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer, netid int, userid ...string) {
 	//TODO: make correct notify
 
 	if tx.Status == store.TxStatusAppearedInBlockIncoming || tx.Status == store.TxStatusAppearedInMempoolIncoming || tx.Status == store.TxStatusInBlockConfirmedIncoming {
@@ -175,7 +175,11 @@ func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer, net
 				WalletIndex:     tx.WalletIndex,
 				From:            tx.From,
 				To:              tx.To,
+				Multisig:        tx.Contract,
 			},
+		}
+		if len(userid) > 0 {
+			txMsq.UserID = userid[0]
 		}
 		sendNotify(&txMsq, nsqProducer)
 	}
@@ -193,6 +197,7 @@ func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer, net
 				WalletIndex:     tx.WalletIndex,
 				From:            tx.From,
 				To:              tx.To,
+				Multisig:        tx.Contract,
 			},
 		}
 		sendNotify(&txMsq, nsqProducer)
@@ -312,7 +317,7 @@ func saveTransaction(tx store.TransactionETH, networtkID int, resync bool) error
 	return nil
 }
 
-func processMultisig(tx *store.TransactionETH, networtkID int) error {
+func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.Producer) error {
 
 	multisigStore := &mgo.Collection{}
 	txStore := &mgo.Collection{}
@@ -342,13 +347,13 @@ func processMultisig(tx *store.TransactionETH, networtkID int) error {
 		sel := bson.M{"hash": tx.Hash}
 		err := multisigStore.Find(sel).One(nil)
 		if err == mgo.ErrNotFound {
-			multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore)
+			multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore, nsqProducer)
 			log.Warnf("multyTX.amount %v", multyTX.Amount)
 			err := multisigStore.Insert(multyTX)
 			return err
 		}
 
-		multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore)
+		multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore, nsqProducer)
 
 		if err != nil && err != mgo.ErrNotFound {
 			// database error
@@ -375,7 +380,7 @@ func processMultisig(tx *store.TransactionETH, networtkID int) error {
 	return nil
 }
 
-func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore, txStore *mgo.Collection) *store.TransactionETH { // method
+func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore, txStore *mgo.Collection, nsqProducer *nsq.Producer) *store.TransactionETH { // method
 
 	owners, _ := FethContractOwners(currencies.Ether, networtkID, tx.Contract)
 	tx.Owners = owners
@@ -390,26 +395,13 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 	switch tx.MethodInvoked {
 	case submitTransaction: // "c6427474": "submitTransaction(address,uint256,bytes)"
 		// Feth contract owners, send notfy to owners about transation. status: waiting for confirmations
-
 		// find in db if one one confirmation needed DONE internal transaction
 		log.Debugf("submitTransaction:  Input :%v Return :%v ", tx.Input, tx.Return)
 		if tx.BlockTime != 0 {
 			i, _ := new(big.Int).SetString(tx.Return, 16)
 			tx.Index = i.Int64()
 
-			var address string
-			var amount string
-			if len(tx.Input) >= 266 {
-				in := tx.Input[10:]
-				re := regexp.MustCompile(`.{64}`) // Every 64 chars
-				parts := re.FindAllString(in, -1) // Split the string into 64 chars blocks.
-
-				if len(parts) == 4 {
-					address = strings.ToLower("0x" + parts[0][24:])
-					a, _ := new(big.Int).SetString(parts[1], 16)
-					amount = a.String()
-				}
-			}
+			address, amount := parseSubmitInput(tx.Input)
 
 			tx.Amount = amount
 			log.Warnf("tx.Amount %v", tx.Amount)
@@ -507,11 +499,18 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 		tx.Owners = ownerHistorys
 
+		//TODO: notifications
+		// //notify users
+		// for _, user := range users {
+		// 	sendNotifyToClients(*tx, nsqProducer, networtkID, user.UserID)
+		// }
+
 		return tx
 
 	case confirmTransaction: // "c01a8c84": "confirmTransaction(uint256)"
 		//TODO: send notfy to owners about +1 confirmation. store confiramtions id db
 
+		//TODO: outcoming tranastions for multisig
 		log.Debugf("confirmTransaction: %v", tx.Input)
 		i, _ := new(big.Int).SetString(tx.Input[10:], 16)
 		sel := bson.M{"index": i.Int64(), "contract": tx.Contract}
@@ -586,22 +585,9 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 				log.Debugf("Internal transaction:", MultiSigFactory)
 
 				isOurUser := false
-				var outputAddress string
-				var amount string
+
 				user := store.User{}
-				if len(originTx.Input) >= 266 {
-					in := originTx.Input[10:]
-					re := regexp.MustCompile(`.{64}`) // Every 64 chars
-					parts := re.FindAllString(in, -1) // Split the string into 64 chars blocks.
-
-					if len(parts) == 4 {
-						outputAddress = strings.ToLower("0x" + parts[0][24:])
-
-						a, _ := new(big.Int).SetString(parts[1], 16)
-						amount = a.String()
-
-					}
-				}
+				outputAddress, amount := parseSubmitInput(originTx.Input)
 
 				// internal transaction contract to addres
 				sel := bson.M{"wallets.addresses.address": outputAddress}
@@ -814,4 +800,22 @@ func findContractOwners(contract string) []store.User {
 		log.Errorf("cli.AddMultisig:stream.Recv:usersData.Find: not multy user in contrat %v  %v", err.Error(), contract)
 	}
 	return users
+}
+
+func parseSubmitInput(input string) (string, string) {
+	address := ""
+	amount := ""
+	if len(input) >= 266 {
+		in := input[10:]
+		re := regexp.MustCompile(`.{64}`) // Every 64 chars
+		parts := re.FindAllString(in, -1) // Split the string into 64 chars blocks.
+
+		if len(parts) == 4 {
+			address = strings.ToLower("0x" + parts[0][24:])
+			a, _ := new(big.Int).SetString(parts[1], 16)
+			amount = a.String()
+		}
+	}
+
+	return address, amount
 }

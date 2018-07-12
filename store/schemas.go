@@ -105,8 +105,10 @@ type Multisig struct {
 	LastActionTime  int64             `bson:"lastactiontime"`
 	DateOfCreation  int64             `bson:"dateofcreation"`
 	Owners          []AddressExtended `bson:"owners"`
-	DeployStatus    bool
-	Status          string `bson:"status"`
+	DeployStatus    bool              `bson:"deploystatus"`
+	Status          string            `bson:"status"`
+	InviteCode      string            `bson:"invitecode"`
+	OwnersCount     int               `bson:"ownerscount"`
 }
 
 type RatesRecord struct {
@@ -183,6 +185,7 @@ type WsTxNotify struct {
 	WalletIndex     int    `json:"walletindex"`
 	From            string `json:"from"`
 	To              string `json:"to"`
+	Multisig        string `json:"multisig"`
 }
 
 type TransactionWithUserID struct {
@@ -329,6 +332,7 @@ type AddressExtended struct {
 	UserID       string
 	Address      string // etereum asociated to contract address
 	Associated   bool   // is associated
+	Creator      bool
 	WalletIndex  int
 	AddressIndex int
 }
@@ -420,4 +424,13 @@ type LastState struct {
 	BlockHeight int64 `bson:"blockheight"`
 	CurrencyID  int   `bson:"currencyid"`
 	NetworkID   int   `bson:"networkid"`
+}
+
+type JoinMultisig struct {
+	UserID      string `bson:"userid"`
+	Address     string `bson:"address"`
+	InviteCode  string `bson:"invitecode"`
+	WalletIndex int    `bson:"walletindex"`
+	CurrencyID  int    `bson:"currencyid"`
+	NetworkID   int    `bson:"networkid"`
 }

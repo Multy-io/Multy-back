@@ -60,7 +60,30 @@ func createWallet(currencyID, networkID int, address string, addressIndex int, w
 			},
 		},
 	}
-
+}
+func createMultisig(currencyID, networkID, addressIndex, walletIndex, confirmations, ownerscount int, userid, address, walletName, invitecode string) store.Multisig {
+	return store.Multisig{
+		CurrencyID:     currencyID,
+		NetworkID:      networkID,
+		WalletName:     walletName,
+		LastActionTime: time.Now().Unix(),
+		DateOfCreation: time.Now().Unix(),
+		Status:         store.WalletStatusOK,
+		Confirmations:  confirmations,
+		OwnersCount:    ownerscount,
+		Owners: []store.AddressExtended{
+			store.AddressExtended{
+				UserID:       userid,
+				Address:      address,
+				Associated:   true,
+				WalletIndex:  walletIndex,
+				AddressIndex: addressIndex,
+				Creator:      true,
+			},
+		},
+		DeployStatus: false,
+		InviteCode:   invitecode,
+	}
 }
 
 func newEmptyTx(userID string) store.TxRecord {

@@ -156,12 +156,20 @@ func initMiddlewareJWT(restClient *RestClient) {
 }
 
 type WalletParams struct {
-	CurrencyID   int    `json:"currencyID"`
-	NetworkID    int    `json:"networkID"`
-	Address      string `json:"address"`
-	AddressIndex int    `json:"addressIndex"`
-	WalletIndex  int    `json:"walletIndex"`
-	WalletName   string `json:"walletName"`
+	CurrencyID   int            `json:"currencyID"`
+	NetworkID    int            `json:"networkID"`
+	Address      string         `json:"address"`
+	AddressIndex int            `json:"addressIndex"`
+	WalletIndex  int            `json:"walletIndex"`
+	WalletName   string         `json:"walletName"`
+	Multisig     MultisigWallet `json:"multisig"`
+}
+
+type MultisigWallet struct {
+	IsMultisig    bool   `json:"ismultisig"`
+	Confirmations int    `json:"confirmations"`
+	OwnersCount   int    `json:"ownerscount"`
+	InviteCode    string `json:"invitecode"`
 }
 
 type SelectWallet struct {
@@ -254,6 +262,29 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 		return err
 	}
 
+	return nil
+}
+
+func createCustomMultisig(wp WalletParams, token string, restClient *RestClient, c *gin.Context) error {
+	user := store.User{}
+	query := bson.M{"devices.JWT": token}
+
+	err := restClient.userStore.FindUser(query, &user)
+	if err != nil {
+		restClient.log.Errorf("createCustomMultisig: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+		err = errors.New(msgErrUserNotFound)
+		return err
+	}
+
+	sel := bson.M{"devices.JWT": token}
+	multisg := createMultisig(wp.CurrencyID, wp.NetworkID, wp.AddressIndex, wp.WalletIndex, wp.Multisig.Confirmations, wp.Multisig.OwnersCount, user.UserID, wp.Address, wp.WalletName, wp.Multisig.InviteCode)
+	update := bson.M{"$push": bson.M{"multisig": multisg}}
+	err = restClient.userStore.Update(sel, update)
+	if err != nil {
+		restClient.log.Errorf("createCustomMultisig: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+		err := errors.New(msgErrServerError)
+		return err
+	}
 	return nil
 }
 
@@ -429,19 +460,33 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 			})
 			return
 		}
+		// Create multisig
+		if wp.Multisig.IsMultisig {
+			err = createCustomMultisig(wp, token, restClient, c)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": err.Error(),
+				})
+				return
+			}
+		}
 
-		err = createCustomWallet(wp, token, restClient, c)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": err.Error(),
-			})
-			return
+		// Create wallet
+		if wp.Multisig.IsMultisig == false {
+			err = createCustomWallet(wp, token, restClient, c)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": err.Error(),
+				})
+				return
+			}
 		}
 
 		c.JSON(http.StatusCreated, gin.H{
 			"code":    code,
-			"tine":    time.Now().Unix(),
+			"time":    time.Now().Unix(),
 			"message": message,
 		})
 		return
@@ -798,9 +843,6 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 
 		switch currencyID {
 		case currencies.Bitcoin:
-			// restClient.BTC.M.Lock()
-			// mempool := *restClient.BTC.BtcMempool
-			// restClient.BTC.M.Unlock()
 
 			type kv struct {
 				Key   string
@@ -813,20 +855,10 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 				return true
 			})
 
-			// var mp []kv
-			// for k, v := range mempool {
-			// 	mp = append(mp, kv{k, v})
-			// }
-
 			sort.Slice(mp, func(i, j int) bool {
 				return mp[i].Value > mp[j].Value
 			})
 
-			// for _, kv := range ss {
-			// 	fmt.Printf("%s, %d\n", kv.Key, kv.Value)
-			// }
-
-			// var speeds []string{}
 			var slowestValue, slowValue, mediumValue, fastValue, fastestValue int
 
 			memPoolSize := len(mp)

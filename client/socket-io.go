@@ -46,6 +46,7 @@ const (
 
 	Filter = "event:filter"
 
+	// wireless send
 	NewReceiver     = "event:new:receiver"
 	SendRaw         = "event:sendraw"
 	PaymentSend     = "event:payment:send"
@@ -53,6 +54,11 @@ const (
 
 	stopReceive = "receiver:stop"
 	stopSend    = "sender:stop"
+
+	// multisig
+	joinMultisig   = "join:multisig"
+	leaveMultisig  = "leave:multisig"
+	deleteMultisig = "delete:multisig"
 )
 
 func getHeaderDataSocketIO(headers http.Header) (*SocketIOUser, error) {
@@ -97,12 +103,6 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 	senders := []store.Sender{}
 
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
-		// pool.log.Debugf("connected: %s", c.Id())
-
-		// moved to next release
-		//ratesDay := pool.chart.getExchangeDay()
-		//c.Emit(topicExchangeDay, ratesDay)
-
 		user, err := getHeaderDataSocketIO(c.RequestHeader())
 		if err != nil {
 			pool.log.Errorf("get socketio headers: %s", err.Error())
@@ -129,12 +129,11 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 		pool.log.Debugf("OnConnection done")
 	})
 
-	//TODO: feature logic
-
 	server.On(gosocketio.OnError, func(c *gosocketio.Channel) {
 		pool.log.Errorf("Error occurs %s", c.Id())
 	})
 
+	//feature logic
 	server.On(ReceiverOn, func(c *gosocketio.Channel, data store.Receiver) string {
 		pool.log.Infof("Got messeage Receiver On:", data)
 		c.Join(WirelessRoom)
@@ -155,23 +154,8 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 		}
 		receiversM.Unlock()
 
-		//TODO:
-		// wait for incoming tx
-
 		return "ok"
 	})
-
-	// go func() {
-	// 	for {
-	// 		receiversM.Lock()
-	// 		fmt.Println("+++++++++++++receivers", receivers)
-	// 		fmt.Println("+++++++++++++senders", senders)
-	// 		receiversM.Unlock()
-
-	// 		fmt.Println("restClient ", restClient)
-	// 		time.Sleep(7 * time.Second)
-	// 	}
-	// }()
 
 	server.On(SenderCheck, func(c *gosocketio.Channel, nearIDs store.NearVisible) []store.Receiver {
 		nearReceivers := []store.Receiver{}
@@ -275,14 +259,12 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 				continue
 			}
 		}
-		pool.log.Infof("Got messeage Senders ...........:", senders)
 		for i, sender := range senders {
 			if sender.Socket.Id() == c.Id() {
 				senders = append(senders[:i], senders[i+1:]...)
 				continue
 			}
 		}
-		pool.log.Infof("Done Senders ...........:", senders)
 	})
 
 	server.On(stopReceive, func(c *gosocketio.Channel) string {
@@ -310,6 +292,104 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 		}
 		return stopSend + ":ok"
 
+	})
+
+	// off chain multisig logic
+	server.On(joinMultisig, func(c *gosocketio.Channel, jm store.JoinMultisig) string {
+		//TODO: check current multisig for able to joining
+		multisig, err := ratesDB.FindMultisig(jm)
+		if err != nil {
+			pool.log.Errorf("server.On:joinMultisig : %v", err.Error())
+			return "can't join multisig: " + err.Error()
+		}
+
+		joined := len(multisig.Owners)
+		if multisig.OwnersCount < joined {
+			err = ratesDB.JoinMultisig(jm, multisig)
+			if err != nil {
+				//db err
+				pool.log.Errorf("server.On:joinMultisigratesDB.JoinMultisig: %v", err.Error())
+				return "can't join multisig: " + err.Error()
+			}
+			return joinMultisig + ":ok"
+		}
+
+		if multisig.OwnersCount == joined {
+			pool.log.Errorf("server.On:joinMultisig: can't join multisig: sufficient number of owners")
+			return "can't join multisig: sufficient number of owners"
+		}
+		return ""
+	})
+
+	server.On(leaveMultisig, func(c *gosocketio.Channel, jm store.JoinMultisig) string {
+		//TODO: check current multisig for able to joining
+		multisig, err := ratesDB.FindMultisig(jm)
+		if err != nil {
+			pool.log.Errorf("server.On:joinMultisig : %v", err.Error())
+			return "can't join multisig: " + err.Error()
+		}
+		exists := false
+		for _, owner := range multisig.Owners {
+			if owner.Address == jm.Address {
+				exists = true
+				if owner.Creator {
+					pool.log.Errorf("server.On:leaveMultisig: can't leave multisig if you are creator you need delete it")
+					return "can't leave multisig if you are creator you need delete it "
+				}
+			}
+		}
+
+		owners := []store.AddressExtended{}
+		if exists {
+			//delete multisig from user
+			err := ratesDB.LeaveMultisig(jm)
+			if err != nil {
+				pool.log.Errorf("server.On:leaveMultisig:ratesDB.LeaveMultisig : %v", err.Error())
+				return "can't leave multisig: " + err.Error()
+			}
+
+			//delete owner from owners list
+			for _, owner := range multisig.Owners {
+				if owner.Address != jm.Address {
+					owners = append(owners, owner)
+				}
+			}
+			ratesDB.CleanOwnerList(jm, multisig, owners)
+
+		}
+
+		if !exists {
+			pool.log.Errorf("server.On:leaveMultisig: can't leave multisig if you are not a owner")
+			return "can't leave multisig if you are not a owner"
+		}
+		return ""
+	})
+
+	//TODO:
+	//TODO:
+	//TODO:
+	server.On(deleteMultisig, func(c *gosocketio.Channel, jm store.JoinMultisig) string {
+		//TODO: check current multisig for able to joining
+		multisig, err := ratesDB.FindMultisig(jm)
+		if err != nil {
+			pool.log.Errorf("server.On:joinMultisig : %v", err.Error())
+			return "can't join multisig: " + err.Error()
+		}
+		owner := false
+		for _, owner := range multisig.Owners {
+			if owner.Address == jm.Address {
+				if owner.Creator {
+
+					//delete
+				}
+			}
+		}
+
+		if !owner {
+			pool.log.Errorf("server.On:leaveMultisig: can't delete multisig if you are not a creator")
+			return "can't delete multisig if you are not a creator"
+		}
+		return ""
 	})
 
 	serveMux := http.NewServeMux()
