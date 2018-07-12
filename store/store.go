@@ -91,7 +91,11 @@ type UserStore interface {
 	FindUsersContractsChain(CurrencyID, NetworkID int) (map[string]string, error)
 
 	FethUserAddresses(currencyID, networkID int, userid string, addreses []string) (AddressExtended, error)
-	// FindAllMultisigContracts( NetworkID int)
+
+	FindMultisig(jm JoinMultisig) (*Multisig, error)
+	JoinMultisig(jm JoinMultisig, multisig *Multisig) error
+	LeaveMultisig(jm JoinMultisig) error
+	CleanOwnerList(jm JoinMultisig, multisig *Multisig, owners []AddressExtended) error
 
 	DeleteHistory(CurrencyID, NetworkID int, Address string) error
 
@@ -471,6 +475,75 @@ func (mStore *MongoUserStore) GetAllMultisigEthTransactions(contractAddress stri
 			return err
 		}
 
+	}
+	return nil
+}
+
+func (mStore *MongoUserStore) FindMultisig(jm JoinMultisig) (*Multisig, error) {
+
+	users := []User{}
+	multisig := Multisig{}
+	sel := bson.M{"invitecode": jm.InviteCode}
+	err := mStore.usersData.Find(sel).All(&users)
+	if err != nil {
+		return &multisig, errors.New("No such multisigs with this invite code")
+	}
+
+	// feth creators multisig
+	for _, user := range users {
+		for _, userMultisig := range user.Multisigs {
+			if userMultisig.InviteCode == jm.InviteCode {
+				for _, owner := range userMultisig.Owners {
+					if user.UserID == owner.UserID {
+						multisig = userMultisig
+						// only accept one address from one user in multisig
+						if user.UserID == jm.UserID {
+							return &multisig, errors.New("Only accept one address from one user in multisig")
+						}
+						break
+					}
+				}
+			}
+		}
+	}
+
+	return &multisig, nil
+}
+
+func (mStore *MongoUserStore) JoinMultisig(jm JoinMultisig, multisig *Multisig) error {
+	sel := bson.M{"userID": jm.UserID}
+	update := bson.M{"$push": bson.M{"multisig": multisig}}
+	return mStore.usersData.Update(sel, update)
+}
+func (mStore *MongoUserStore) LeaveMultisig(jm JoinMultisig) error {
+	sel := bson.M{"userID": jm.UserID}
+	user := User{}
+
+	multisigs := []Multisig{}
+	err := mStore.usersData.Find(sel).One(&user)
+	if err != nil {
+		return err
+	}
+	for _, multisig := range user.Multisigs {
+		if multisig.InviteCode != jm.InviteCode {
+			multisigs = append(multisigs, multisig)
+		}
+	}
+	update := bson.M{"$set": bson.M{"multisig": multisigs}}
+	return mStore.usersData.Update(sel, update)
+}
+
+func (mStore *MongoUserStore) CleanOwnerList(jm JoinMultisig, multisig *Multisig, owners []AddressExtended) error {
+	sel := bson.M{"invitecode": jm.InviteCode}
+	users := []User{}
+	err := mStore.usersData.Find(sel).All(&users)
+	if err != nil {
+		return err
+	}
+	for _, user := range users {
+		sel := bson.M{"userID": user.UserID, "invitecode": jm.InviteCode}
+		update := bson.M{"$set": bson.M{"multisig.$.owners": owners}}
+		mStore.usersData.Update(sel, update)
 	}
 	return nil
 }

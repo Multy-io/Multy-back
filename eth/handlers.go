@@ -204,7 +204,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				}
 			}
 
-			err = processMultisig(&tx, networtkID)
+			err = processMultisig(&tx, networtkID, nsqProducer)
 			if err != nil {
 				log.Errorf("initGrpcClient: processMultisig: %s", err.Error())
 			}
