@@ -63,12 +63,9 @@ func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.Reply
 
 	*s.UsersData = udMap
 
-	s.EthCli.Multisig.M.Lock()
-	s.Multisig.UsersContracts = ud.GetUsersContracts()
-	if s.Multisig.UsersContracts == nil {
-		s.Multisig.UsersContracts = map[string]string{}
+	for key, value := range ud.GetUsersContracts() {
+		s.Multisig.UsersContracts.Store(key, value)
 	}
-	s.EthCli.Multisig.M.Unlock()
 
 	log.Debugf("EventInitialAdd - %v", udMap)
 

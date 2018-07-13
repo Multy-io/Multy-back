@@ -52,11 +52,11 @@ func Init(conf *Configuration) (*NodeClient, error) {
 	//TODO: init contract clients
 	multisig := eth.Multisig{
 		FactoryAddress: conf.MultisigFactory,
-		UsersContracts: map[string]string{
-			"0x7d2d50791f839aea9b3ebe2c1dfd4dea13bc12ca": "0x116FfA11DD8829524767f561da5d33D3D170E17d",
-		},
-		M: sync.Mutex{},
+		UsersContracts: sync.Map{},
 	}
+
+	multisig.UsersContracts.Store("0x7d2d50791f839aea9b3ebe2c1dfd4dea13bc12ca", "0x116FfA11DD8829524767f561da5d33D3D170E17d")
+
 	// initail initialization of clients contracts data
 	cli.CliMultisig = &multisig
 
