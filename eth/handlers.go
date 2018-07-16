@@ -202,6 +202,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				if !gTx.GetResync() {
 					sendNotifyToClients(tx, nsqProducer, networtkID)
 				}
+				return
 			}
 
 			err = processMultisig(&tx, networtkID, nsqProducer)

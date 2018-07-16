@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/Multy-io/Multy-back/btc"
 	"github.com/Multy-io/Multy-back/currencies"
@@ -59,6 +60,9 @@ const (
 	joinMultisig   = "join:multisig"
 	leaveMultisig  = "leave:multisig"
 	deleteMultisig = "delete:multisig"
+
+	msgSend    = "message:send"
+	msgRecieve = "message:recieve"
 )
 
 func getHeaderDataSocketIO(headers http.Header) (*SocketIOUser, error) {
@@ -158,6 +162,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 	})
 
 	server.On(SenderCheck, func(c *gosocketio.Channel, nearIDs store.NearVisible) []store.Receiver {
+		pool.log.Warnf("SenderCheck")
 		nearReceivers := []store.Receiver{}
 		receiversM.Lock()
 		allR := receivers
@@ -294,38 +299,149 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 
 	})
 
+	server.On("ack:check", func(c *gosocketio.Channel, req string) string {
+		fmt.Printf("-------ack:check %v \n", req)
+		return "ok " + req
+	})
+
+	server.On("forward:ack:check", func(c *gosocketio.Channel, req string) string {
+		pool.log.Warnf("forward:ack:check")
+		s := time.Duration(20) * time.Second
+		go func() {
+			str, err := c.Ack("forward:ack:check", "sobaka", s)
+			pool.log.Warnf(" str %v  err %v", str, err)
+		}()
+		return "ok"
+	})
+
+	server.On(msgSend, func(c *gosocketio.Channel, msg store.WsMessage) interface{} {
+		switch msg.Type {
+		case joinMultisig:
+			msgMultisig, ok := msg.Payload.(store.MultisigMsg)
+			if ok {
+				if ratesDB.CheckInviteCode(msgMultisig.InviteCode) {
+					// check current multisig for able to joining
+					multisig, err := ratesDB.FindMultisig(msgMultisig)
+					if err != nil {
+						pool.log.Errorf("server.On:msgSend:joinMultisig %v", err.Error())
+						return "can't join multisig: " + err.Error()
+					}
+
+					joined := len(multisig.Owners)
+					if multisig.OwnersCount < joined {
+						owners := []store.AddressExtended{}
+						multisigToJoin := multisig
+						for _, owner := range multisigToJoin.Owners {
+							owner.UserID = ""
+							owner.WalletIndex = 0
+							owner.AddressIndex = 0
+							owner.Associated = false
+						}
+
+						owners = append(owners, store.AddressExtended{
+							UserID:       msgMultisig.UserID,
+							Address:      msgMultisig.Address,
+							WalletIndex:  msgMultisig.WalletIndex,
+							AddressIndex: 0,
+							Associated:   true,
+						})
+
+						multisigToJoin.Owners = owners
+						err = ratesDB.JoinMultisig(msgMultisig.UserID, multisigToJoin)
+						if err != nil {
+							//db err
+							pool.log.Errorf("server.On:MultisigMsgratesDB.MultisigMsg: %v", err.Error())
+							return store.WsResponse{
+								Message: joinMultisig + "can't join multisig: " + err.Error(),
+								Payload: "",
+							}
+
+						}
+
+						users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
+						for _, owner := range multisig.Owners {
+							owner.UserID = ""
+							owner.WalletIndex = 0
+							owner.AddressIndex = 0
+							owner.Associated = false
+						}
+						//TODO: send new multisig entitiy to all owners by ws
+						for _, user := range users {
+							_, online := pool.users[user.UserID]
+							if online {
+								userMultisig := multisig
+								for _, wallet := range user.Wallets {
+									for _, address := range wallet.Adresses {
+										for _, owner := range userMultisig.Owners {
+											if owner.Address == address.Address {
+												owner.AddressIndex = address.AddressIndex
+												owner.WalletIndex = wallet.WalletIndex
+												owner.UserID = user.UserID
+												owner.Associated = true
+												break
+											}
+										}
+									}
+								}
+								// msg := store.WsMessage{
+								// 	Type
+								// }
+								server.BroadcastTo("message", msgRecieve+":"+user.UserID, userMultisig)
+							}
+						}
+						return store.WsResponse{
+							Message: joinMultisig + ":ok",
+							Payload: owners,
+						}
+
+					}
+
+				}
+			}
+
+		case leaveMultisig:
+			return ""
+		case deleteMultisig:
+			return ""
+		}
+		return ""
+	})
+
+	server.On(msgRecieve, func(c *gosocketio.Channel, msg store.WsMessage) string {
+		return ""
+	})
+
 	// off chain multisig logic
-	server.On(joinMultisig, func(c *gosocketio.Channel, jm store.JoinMultisig) string {
+	server.On(joinMultisig, func(c *gosocketio.Channel, jm store.MultisigMsg) string {
 		//TODO: check current multisig for able to joining
 		multisig, err := ratesDB.FindMultisig(jm)
 		if err != nil {
-			pool.log.Errorf("server.On:joinMultisig : %v", err.Error())
+			pool.log.Errorf("server.On:MultisigMsg: %v", err.Error())
 			return "can't join multisig: " + err.Error()
 		}
 
 		joined := len(multisig.Owners)
 		if multisig.OwnersCount < joined {
-			err = ratesDB.JoinMultisig(jm, multisig)
+			err = ratesDB.JoinMultisig(jm.UserID, multisig)
 			if err != nil {
 				//db err
-				pool.log.Errorf("server.On:joinMultisigratesDB.JoinMultisig: %v", err.Error())
+				pool.log.Errorf("server.On:MultisigMsgratesDB.MultisigMsg: %v", err.Error())
 				return "can't join multisig: " + err.Error()
 			}
 			return joinMultisig + ":ok"
 		}
 
 		if multisig.OwnersCount == joined {
-			pool.log.Errorf("server.On:joinMultisig: can't join multisig: sufficient number of owners")
+			pool.log.Errorf("server.On:MultisigMsg: can't join multisig: sufficient number of owners")
 			return "can't join multisig: sufficient number of owners"
 		}
 		return ""
 	})
 
-	server.On(leaveMultisig, func(c *gosocketio.Channel, jm store.JoinMultisig) string {
-		//TODO: check current multisig for able to joining
+	server.On(leaveMultisig, func(c *gosocketio.Channel, jm store.MultisigMsg) string {
 		multisig, err := ratesDB.FindMultisig(jm)
 		if err != nil {
-			pool.log.Errorf("server.On:joinMultisig : %v", err.Error())
+			pool.log.Errorf("server.On:MultisigMsg : %v", err.Error())
 			return "can't join multisig: " + err.Error()
 		}
 		exists := false
@@ -356,6 +472,8 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			}
 			ratesDB.CleanOwnerList(jm, multisig, owners)
 
+			return leaveMultisig + ":ok"
+
 		}
 
 		if !exists {
@@ -368,11 +486,11 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 	//TODO:
 	//TODO:
 	//TODO:
-	server.On(deleteMultisig, func(c *gosocketio.Channel, jm store.JoinMultisig) string {
+	server.On(deleteMultisig, func(c *gosocketio.Channel, jm store.MultisigMsg) string {
 		//TODO: check current multisig for able to joining
 		multisig, err := ratesDB.FindMultisig(jm)
 		if err != nil {
-			pool.log.Errorf("server.On:joinMultisig : %v", err.Error())
+			pool.log.Errorf("server.On:MultisigMsg : %v", err.Error())
 			return "can't join multisig: " + err.Error()
 		}
 		owner := false
