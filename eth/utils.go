@@ -36,8 +36,7 @@ type FactoryInfo struct {
 
 type Multisig struct {
 	FactoryAddress string
-	UsersContracts map[string]string // concrete multysig contract as a key. FactoryAddress as value
-	M              sync.Mutex
+	UsersContracts sync.Map // concrete multysig contract as a key. FactoryAddress as value
 }
 
 func newETHtx(hash, from, to string, amount float64, gas, gasprice, nonce int) store.TransactionETH {
@@ -81,8 +80,8 @@ func (client *Client) GetAddressPendingBalance(address string) (big.Int, error) 
 	return balance, err
 }
 
-func (client *Client) GetAllTxPool(networkID int) (map[string]string, error) {
-	return client.Rpc.TxPoolContent(networkID)
+func (client *Client) GetAllTxPool() (map[string]interface{}, error) {
+	return client.Rpc.TxPoolContent()
 }
 
 func (client *Client) GetBlockHeight() (int, error) {
@@ -193,15 +192,13 @@ func (client *Client) parseETHMultisig(rawTX ethrpc.Transaction, blockHeight int
 	var fromUser string
 	var toUser string
 
-	client.Multisig.M.Lock()
 	ud := client.Multisig.UsersContracts
-	client.Multisig.M.Unlock()
 
-	if _, ok := ud[rawTX.From]; ok {
+	if _, ok := ud.Load(rawTX.From); ok {
 		fromUser = rawTX.From
 	}
 
-	if _, ok := ud[rawTX.To]; ok {
+	if _, ok := ud.Load(rawTX.To); ok {
 		toUser = rawTX.To
 	}
 

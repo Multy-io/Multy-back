@@ -36,11 +36,15 @@ func (c *Client) FactoryContract(hash string) {
 
 	// Add to local contract store
 
-	c.Multisig.M.Lock()
+	// if c.Multisig.UsersContracts == nil {
+	// 	c.Multisig.UsersContracts = map[string]string{
+	// 		fi.Contract: fi.FactoryAddress,
+	// 	}
+	// } else {
+	// 	c.Multisig.UsersContracts[fi.Contract] = fi.FactoryAddress
+	// }
 
-	c.Multisig.UsersContracts[fi.Contract] = fi.FactoryAddress
-
-	c.Multisig.M.Unlock()
+	c.Multisig.UsersContracts.Store(fi.Contract, fi.FactoryAddress)
 
 	c.NewMultisig <- *fi
 
