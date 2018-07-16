@@ -426,7 +426,20 @@ type LastState struct {
 	NetworkID   int   `bson:"networkid"`
 }
 
-type JoinMultisig struct {
+type WsMessage struct {
+	Type    string      `bson:"type"`
+	From    string      `bson:"from"`
+	To      string      `bson:"to"`
+	Date    int64       `bson:"date"`
+	Status  int         `bson:"status"`
+	Payload interface{} `bson:"payload"`
+}
+type WsResponse struct {
+	Message string      `bson:"message"`
+	Payload interface{} `bson:"payload"`
+}
+
+type MultisigMsg struct {
 	UserID      string `bson:"userid"`
 	Address     string `bson:"address"`
 	InviteCode  string `bson:"invitecode"`

@@ -61,7 +61,7 @@ func createWallet(currencyID, networkID int, address string, addressIndex int, w
 		},
 	}
 }
-func createMultisig(currencyID, networkID, addressIndex, walletIndex, confirmations, ownerscount int, userid, address, walletName, invitecode string) store.Multisig {
+func createMultisig(currencyID, networkID, addressIndex, walletIndex, signaturesRequired, ownerscount int, userid, address, walletName, invitecode string) store.Multisig {
 	return store.Multisig{
 		CurrencyID:     currencyID,
 		NetworkID:      networkID,
@@ -69,7 +69,7 @@ func createMultisig(currencyID, networkID, addressIndex, walletIndex, confirmati
 		LastActionTime: time.Now().Unix(),
 		DateOfCreation: time.Now().Unix(),
 		Status:         store.WalletStatusOK,
-		Confirmations:  confirmations,
+		Confirmations:  signaturesRequired,
 		OwnersCount:    ownerscount,
 		Owners: []store.AddressExtended{
 			store.AddressExtended{

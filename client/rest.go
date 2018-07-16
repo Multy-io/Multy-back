@@ -166,10 +166,10 @@ type WalletParams struct {
 }
 
 type MultisigWallet struct {
-	IsMultisig    bool   `json:"ismultisig"`
-	Confirmations int    `json:"confirmations"`
-	OwnersCount   int    `json:"ownerscount"`
-	InviteCode    string `json:"invitecode"`
+	IsMultisig         bool   `json:"isMultisig"`
+	SignaturesRequired int    `json:"signaturesRequired"`
+	OwnersCount        int    `json:"ownersCount"`
+	InviteCode         string `json:"inviteCode"`
 }
 
 type SelectWallet struct {
@@ -277,7 +277,7 @@ func createCustomMultisig(wp WalletParams, token string, restClient *RestClient,
 	}
 
 	sel := bson.M{"devices.JWT": token}
-	multisg := createMultisig(wp.CurrencyID, wp.NetworkID, wp.AddressIndex, wp.WalletIndex, wp.Multisig.Confirmations, wp.Multisig.OwnersCount, user.UserID, wp.Address, wp.WalletName, wp.Multisig.InviteCode)
+	multisg := createMultisig(wp.CurrencyID, wp.NetworkID, wp.AddressIndex, wp.WalletIndex, wp.Multisig.SignaturesRequired, wp.Multisig.OwnersCount, user.UserID, wp.Address, wp.WalletName, wp.Multisig.InviteCode)
 	update := bson.M{"$push": bson.M{"multisig": multisg}}
 	err = restClient.userStore.Update(sel, update)
 	if err != nil {
@@ -461,12 +461,21 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 			return
 		}
 		// Create multisig
-		if wp.Multisig.IsMultisig {
+		if wp.Multisig.IsMultisig && restClient.userStore.CheckInviteCode(wp.Multisig.InviteCode) {
 			err = createCustomMultisig(wp, token, restClient, c)
 			if err != nil {
+				restClient.log.Errorf("addWallet: createCustomMultisig: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 				c.JSON(http.StatusBadRequest, gin.H{
 					"code":    http.StatusBadRequest,
 					"message": err.Error(),
+				})
+				return
+			}
+			if restClient.userStore.CheckInviteCode(wp.Multisig.InviteCode) {
+				restClient.log.Errorf("addWallet: createCustomMultisig: already existed invite code \t[addr=%s]", c.Request.RemoteAddr)
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": "already existed invite code",
 				})
 				return
 			}
