@@ -64,7 +64,6 @@ func (c *Client) RunProcess() error {
 		log.Errorf("NewClient:EthNewPendingTransactionFilter: %s", err.Error())
 		return err
 	}
-
 	// client, err := rpc.Dial("ws://" + c.config.Address + c.config.WsPort)
 	client, err := rpc.Dial("ws://" + c.config.Address + c.config.WsPort)
 

@@ -16,8 +16,6 @@ func (c *Client) FactoryContract(hash string) {
 		fmt.Printf("FactoryContract:c.Rpc.TraceTransaction %v", err.Error())
 	}
 
-	isFailed := m["failed"].(bool)
-
 	rawTx, err := c.Rpc.EthGetTransactionByHash(hash)
 	if err != nil {
 		log.Errorf("FactoryContract:Get TX Err: %s", err.Error())
@@ -34,25 +32,17 @@ func (c *Client) FactoryContract(hash string) {
 
 	fi.TxOfCreation = hash
 	fi.FactoryAddress = c.Multisig.FactoryAddress
-	fi.IsFailed = isFailed
+	fi.DeployStatus = !m["failed"].(bool)
 
 	// Add to local contract store
 
 	c.Multisig.M.Lock()
-	// if c.Multisig.UsersContracts == nil {
-	// 	c.Multisig.UsersContracts = map[string]string{
-	// 		fi.Contract: fi.FactoryAddress,
-	// 	}
-	// } else {
-	// 	c.Multisig.UsersContracts[fi.Contract] = fi.FactoryAddress
-	// }
 
 	c.Multisig.UsersContracts[fi.Contract] = fi.FactoryAddress
 
 	c.Multisig.M.Unlock()
 
 	c.NewMultisig <- *fi
-	// fmt.Println("\nfi ", fi)
 
 }
 
