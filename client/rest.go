@@ -1357,6 +1357,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 
 		switch currencyId {
 		case currencies.Bitcoin:
+			var issyncing bool
 			code = http.StatusOK
 			message = http.StatusText(http.StatusOK)
 			var av []AddressVerbose
@@ -1395,6 +1396,9 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 				}
 				// TODO:
 				_, sync := restClient.BTC.Resync.Load(address.Address)
+				if sync {
+					issyncing = true
+				}
 
 				av = append(av, AddressVerbose{
 					LastActionTime: address.LastActionTime,
@@ -1402,7 +1406,6 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					AddressIndex:   address.AddressIndex,
 					Amount:         int64(checkBTCAddressbalance(address.Address, currencyId, networkId, restClient)),
 					SpendableOuts:  spOuts,
-					IsSyncing:      sync,
 				})
 			}
 			wv = append(wv, WalletVerbose{
@@ -1414,6 +1417,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 				DateOfCreation: wallet.DateOfCreation,
 				VerboseAddress: av,
 				Pending:        pending,
+				IsSyncing: 		issyncing,
 			})
 			av = []AddressVerbose{}
 
@@ -1646,6 +1650,7 @@ type WalletVerbose struct {
 	DateOfCreation int64            `json:"dateofcreation"`
 	VerboseAddress []AddressVerbose `json:"addresses"`
 	Pending        bool             `json:"pending"`
+	IsSyncing      bool             `json:"issyncing"`
 }
 
 type WalletVerboseETH struct {
@@ -1670,7 +1675,6 @@ type AddressVerbose struct {
 	Amount         int64                    `json:"amount"`
 	SpendableOuts  []store.SpendableOutputs `json:"spendableoutputs,omitempty"`
 	Nonce          int64                    `json:"nonce,omitempty"`
-	IsSyncing      bool                     `json:"issyncing"`
 }
 
 type ETHAddressVerbose struct {
@@ -1773,6 +1777,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 			case currencies.Bitcoin:
 				var av []AddressVerbose
 				var pending bool
+				var issyncing bool
 				for _, address := range wallet.Adresses {
 					spOuts := getBTCAddressSpendableOutputs(address.Address, wallet.CurrencyID, wallet.NetworkID, restClient)
 
@@ -1796,7 +1801,9 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					// re := *restClient.BTC.Resync
 					// restClient.BTC.ResyncM.Unlock()
 					_, sync := restClient.BTC.Resync.Load(address.Address)
-
+					if sync {
+						issyncing = true
+					}
 					// sync := re[address.Address]
 
 					av = append(av, AddressVerbose{
@@ -1805,7 +1812,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 						AddressIndex:   address.AddressIndex,
 						Amount:         int64(checkBTCAddressbalance(address.Address, wallet.CurrencyID, wallet.NetworkID, restClient)),
 						SpendableOuts:  spOuts,
-						IsSyncing:      sync,
 					})
 
 				}
@@ -1819,6 +1825,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					DateOfCreation: wallet.DateOfCreation,
 					VerboseAddress: av,
 					Pending:        pending,
+					IsSyncing: 		issyncing,
 				})
 				av = []AddressVerbose{}
 				userTxs = []store.MultyTX{}
