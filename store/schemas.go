@@ -440,10 +440,11 @@ type WsResponse struct {
 }
 
 type MultisigMsg struct {
-	UserID      string `bson:"userid"`
-	Address     string `bson:"address"`
-	InviteCode  string `bson:"invitecode"`
-	WalletIndex int    `bson:"walletindex"`
-	CurrencyID  int    `bson:"currencyid"`
-	NetworkID   int    `bson:"networkid"`
+	UserID       string `json:"userid"`
+	Address      string `json:"address"`
+	InviteCode   string `json:"invitecode"`
+	AddressToKik string `json:"networkid"`
+	WalletIndex  int    `json:"walletindex"`
+	CurrencyID   int    `json:"currencyid"`
+	NetworkID    int    `json:"networkid"`
 }

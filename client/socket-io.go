@@ -60,6 +60,11 @@ const (
 	joinMultisig   = "join:multisig"
 	leaveMultisig  = "leave:multisig"
 	deleteMultisig = "delete:multisig"
+	kikMultisig    = "kik:multisig"
+
+	updateMultisig = "update:multisig"
+	okMultisig     = "ok:multisig"
+	errMultisig    = "err:multisig"
 
 	msgSend    = "message:send"
 	msgRecieve = "message:recieve"
@@ -299,21 +304,6 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 
 	})
 
-	server.On("ack:check", func(c *gosocketio.Channel, req string) string {
-		fmt.Printf("-------ack:check %v \n", req)
-		return "ok " + req
-	})
-
-	server.On("forward:ack:check", func(c *gosocketio.Channel, req string) string {
-		pool.log.Warnf("forward:ack:check")
-		s := time.Duration(20) * time.Second
-		go func() {
-			str, err := c.Ack("forward:ack:check", "sobaka", s)
-			pool.log.Warnf(" str %v  err %v", str, err)
-		}()
-		return "ok"
-	})
-
 	server.On(msgSend, func(c *gosocketio.Channel, msg store.WsMessage) interface{} {
 		switch msg.Type {
 		case joinMultisig:
@@ -321,10 +311,10 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			if ok {
 				if ratesDB.CheckInviteCode(msgMultisig.InviteCode) {
 					// check current multisig for able to joining
-					multisig, err := ratesDB.FindMultisig(msgMultisig)
+					multisig, msg, err := getMultisig(ratesDB, msgMultisig)
 					if err != nil {
 						pool.log.Errorf("server.On:msgSend:joinMultisig %v", err.Error())
-						return "can't join multisig: " + err.Error()
+						return msg
 					}
 
 					joined := len(multisig.Owners)
@@ -351,162 +341,233 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						if err != nil {
 							//db err
 							pool.log.Errorf("server.On:MultisigMsgratesDB.MultisigMsg: %v", err.Error())
-							return store.WsResponse{
-								Message: joinMultisig + "can't join multisig: " + err.Error(),
-								Payload: "",
-							}
-
+							return makeErr(msgMultisig.UserID, "can't join multisig: "+err.Error())
 						}
 
 						users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
-						for _, owner := range multisig.Owners {
-							owner.UserID = ""
-							owner.WalletIndex = 0
-							owner.AddressIndex = 0
-							owner.Associated = false
-						}
-						//TODO: send new multisig entitiy to all owners by ws
+
+						// send new multisig entitiy to all owners by ws
 						for _, user := range users {
+							userMultisig, err := updateUserOwners(user, *multisig, ratesDB)
+							if err != nil {
+								//db err
+								pool.log.Errorf("server.On:MultisigMsgratesDB.MultisigMsg: %v", err.Error())
+							}
+
 							_, online := pool.users[user.UserID]
 							if online {
-								userMultisig := multisig
-								for _, wallet := range user.Wallets {
-									for _, address := range wallet.Adresses {
-										for _, owner := range userMultisig.Owners {
-											if owner.Address == address.Address {
-												owner.AddressIndex = address.AddressIndex
-												owner.WalletIndex = wallet.WalletIndex
-												owner.UserID = user.UserID
-												owner.Associated = true
-												break
-											}
-										}
-									}
+								msg := store.WsMessage{
+									Type:    updateMultisig,
+									To:      user.UserID,
+									Date:    time.Now().Unix(),
+									Payload: userMultisig,
 								}
-								// msg := store.WsMessage{
-								// 	Type
-								// }
-								server.BroadcastTo("message", msgRecieve+":"+user.UserID, userMultisig)
+								server.BroadcastTo("message", msgRecieve+":"+user.UserID, msg)
 							}
 						}
-						return store.WsResponse{
-							Message: joinMultisig + ":ok",
-							Payload: owners,
+
+						return store.WsMessage{
+							Type:    okMultisig,
+							To:      msgMultisig.UserID,
+							Date:    time.Now().Unix(),
+							Payload: joinMultisig + ":ok",
+						}
+					}
+
+				}
+			}
+			return makeErr("", "wrong request payload: "+err.Error())
+		case leaveMultisig:
+			msgMultisig, ok := msg.Payload.(store.MultisigMsg)
+			if ok {
+				if ratesDB.CheckInviteCode(msgMultisig.InviteCode) {
+					multisig, msg, err := getMultisig(ratesDB, msgMultisig)
+					if err != nil {
+						pool.log.Errorf("server.On:msgSend:joinMultisig %v", err.Error())
+						return msg
+					}
+					exists := false
+					for _, owner := range multisig.Owners {
+						if owner.Address == msgMultisig.Address {
+							exists = true
+							if owner.Creator {
+								pool.log.Errorf("server.On:leaveMultisig: can't leave multisig if you are creator you need delete it")
+								return makeErr(msgMultisig.UserID, "can't leave multisig if you are creator you need delete it ")
+							}
+						}
+					}
+
+					owners := []store.AddressExtended{}
+					if exists {
+						//delete multisig from user
+						err := ratesDB.LeaveMultisig(msgMultisig.UserID, msgMultisig.InviteCode)
+						if err != nil {
+							pool.log.Errorf("server.On:leaveMultisig:ratesDB.LeaveMultisig : %v", err.Error())
+							return makeErr(msgMultisig.UserID, "can't leave multisig: "+err.Error())
+						}
+
+						users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
+
+						//delete owner from owners list
+						for _, owner := range multisig.Owners {
+							if owner.Address != msgMultisig.Address {
+								owners = append(owners, owner)
+							}
+						}
+						multisig.Owners = owners
+
+						for _, user := range users {
+							userMultisig, err := updateUserOwners(user, *multisig, ratesDB)
+							if err != nil {
+								//db err
+								pool.log.Errorf("server.On:MultisigMsgratesDB.MultisigMsg: %v", err.Error())
+							}
+
+							_, online := pool.users[user.UserID]
+							if online {
+								msg := store.WsMessage{
+									Type:    updateMultisig,
+									To:      user.UserID,
+									Date:    time.Now().Unix(),
+									Payload: userMultisig,
+								}
+								server.BroadcastTo("message", msgRecieve+":"+user.UserID, msg)
+							}
+						}
+
+						return store.WsMessage{
+							Type:    okMultisig,
+							To:      msgMultisig.UserID,
+							Date:    time.Now().Unix(),
+							Payload: leaveMultisig + ":ok",
+						}
+
+					}
+
+					if !exists {
+						pool.log.Errorf("server.On:leaveMultisig: can't leave multisig if you are not a owner")
+						return makeErr(msgMultisig.UserID, "can't leave multisig if you are not a owner")
+					}
+
+				}
+			}
+			return makeErr("", "wrong request payload: "+err.Error())
+		case kikMultisig:
+			msgMultisig, ok := msg.Payload.(store.MultisigMsg)
+			if ok {
+				if ratesDB.CheckInviteCode(msgMultisig.InviteCode) {
+					multisig, msg, err := getMultisig(ratesDB, msgMultisig)
+					if err != nil {
+						pool.log.Errorf("server.On:msgSend:joinMultisig %v", err.Error())
+						return msg
+					}
+
+					admin := false
+					for _, owner := range multisig.Owners {
+						if owner.Address == msgMultisig.Address {
+							if owner.Creator {
+								admin = true
+							}
+						}
+					}
+
+					owners := []store.AddressExtended{}
+					if admin {
+						//delete multisig from user
+						err := ratesDB.KikMultisig(msgMultisig.AddressToKik, msgMultisig.InviteCode)
+						if err != nil {
+							pool.log.Errorf("server.On:kikMultisig:ratesDB.KikMultisig: %v", err.Error())
+							return makeErr(msgMultisig.UserID, "can't kik from multisig: "+err.Error())
+						}
+
+						users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
+
+						//delete owner from owners list
+						for _, owner := range multisig.Owners {
+							if owner.Address != msgMultisig.AddressToKik {
+								owners = append(owners, owner)
+							}
+						}
+						multisig.Owners = owners
+
+						for _, user := range users {
+							userMultisig, err := updateUserOwners(user, *multisig, ratesDB)
+							if err != nil {
+								//db err
+								pool.log.Errorf("server.On:kikMultisig:updateUserOwners: %v", err.Error())
+							}
+
+							_, online := pool.users[user.UserID]
+							if online {
+								msg := store.WsMessage{
+									Type:    updateMultisig,
+									To:      user.UserID,
+									Date:    time.Now().Unix(),
+									Payload: userMultisig,
+								}
+								server.BroadcastTo("message", msgRecieve+":"+user.UserID, msg)
+							}
+						}
+
+						return store.WsMessage{
+							Type:    okMultisig,
+							To:      msgMultisig.UserID,
+							Date:    time.Now().Unix(),
+							Payload: kikMultisig + ":ok",
 						}
 
 					}
 
 				}
+
 			}
 
-		case leaveMultisig:
-			return ""
+			return makeErr("", "wrong request payload: "+err.Error())
 		case deleteMultisig:
-			return ""
+			msgMultisig, ok := msg.Payload.(store.MultisigMsg)
+			if ok {
+				if ratesDB.CheckInviteCode(msgMultisig.InviteCode) {
+					multisig, msg, err := getMultisig(ratesDB, msgMultisig)
+					if err != nil {
+						pool.log.Errorf("server.On:msgSend:joinMultisig %v", err.Error())
+						return msg
+					}
+
+					admin := false
+					for _, owner := range multisig.Owners {
+						if owner.Address == msgMultisig.Address {
+							if owner.Creator {
+								admin = true
+							}
+						}
+					}
+
+					if admin {
+						err := ratesDB.DeleteMultisig(msgMultisig.InviteCode)
+						if err != nil {
+							pool.log.Errorf("server.On:deleteMultisig:DeleteMultisig %v", err.Error())
+							return makeErr(msgMultisig.UserID, "server.On:deleteMultisig:DeleteMultisig "+err.Error())
+						}
+						return store.WsMessage{
+							Type:    okMultisig,
+							To:      msgMultisig.UserID,
+							Date:    time.Now().Unix(),
+							Payload: deleteMultisig + ":ok",
+						}
+					}
+
+					if !admin {
+						pool.log.Errorf("server.On:deleteMultisig: can't delete multisig if you are not a creator")
+						return makeErr(msgMultisig.UserID, "can't delete multisig if you are not a creator")
+					}
+				}
+			}
+			return makeErr("", "wrong request payload: "+err.Error())
 		}
-		return ""
+		return makeErr("", "wrong request message type: "+err.Error())
 	})
 
 	server.On(msgRecieve, func(c *gosocketio.Channel, msg store.WsMessage) string {
-		return ""
-	})
-
-	// off chain multisig logic
-	server.On(joinMultisig, func(c *gosocketio.Channel, jm store.MultisigMsg) string {
-		//TODO: check current multisig for able to joining
-		multisig, err := ratesDB.FindMultisig(jm)
-		if err != nil {
-			pool.log.Errorf("server.On:MultisigMsg: %v", err.Error())
-			return "can't join multisig: " + err.Error()
-		}
-
-		joined := len(multisig.Owners)
-		if multisig.OwnersCount < joined {
-			err = ratesDB.JoinMultisig(jm.UserID, multisig)
-			if err != nil {
-				//db err
-				pool.log.Errorf("server.On:MultisigMsgratesDB.MultisigMsg: %v", err.Error())
-				return "can't join multisig: " + err.Error()
-			}
-			return joinMultisig + ":ok"
-		}
-
-		if multisig.OwnersCount == joined {
-			pool.log.Errorf("server.On:MultisigMsg: can't join multisig: sufficient number of owners")
-			return "can't join multisig: sufficient number of owners"
-		}
-		return ""
-	})
-
-	server.On(leaveMultisig, func(c *gosocketio.Channel, jm store.MultisigMsg) string {
-		multisig, err := ratesDB.FindMultisig(jm)
-		if err != nil {
-			pool.log.Errorf("server.On:MultisigMsg : %v", err.Error())
-			return "can't join multisig: " + err.Error()
-		}
-		exists := false
-		for _, owner := range multisig.Owners {
-			if owner.Address == jm.Address {
-				exists = true
-				if owner.Creator {
-					pool.log.Errorf("server.On:leaveMultisig: can't leave multisig if you are creator you need delete it")
-					return "can't leave multisig if you are creator you need delete it "
-				}
-			}
-		}
-
-		owners := []store.AddressExtended{}
-		if exists {
-			//delete multisig from user
-			err := ratesDB.LeaveMultisig(jm)
-			if err != nil {
-				pool.log.Errorf("server.On:leaveMultisig:ratesDB.LeaveMultisig : %v", err.Error())
-				return "can't leave multisig: " + err.Error()
-			}
-
-			//delete owner from owners list
-			for _, owner := range multisig.Owners {
-				if owner.Address != jm.Address {
-					owners = append(owners, owner)
-				}
-			}
-			ratesDB.CleanOwnerList(jm, multisig, owners)
-
-			return leaveMultisig + ":ok"
-
-		}
-
-		if !exists {
-			pool.log.Errorf("server.On:leaveMultisig: can't leave multisig if you are not a owner")
-			return "can't leave multisig if you are not a owner"
-		}
-		return ""
-	})
-
-	//TODO:
-	//TODO:
-	//TODO:
-	server.On(deleteMultisig, func(c *gosocketio.Channel, jm store.MultisigMsg) string {
-		//TODO: check current multisig for able to joining
-		multisig, err := ratesDB.FindMultisig(jm)
-		if err != nil {
-			pool.log.Errorf("server.On:MultisigMsg : %v", err.Error())
-			return "can't join multisig: " + err.Error()
-		}
-		owner := false
-		for _, owner := range multisig.Owners {
-			if owner.Address == jm.Address {
-				if owner.Creator {
-
-					//delete
-				}
-			}
-		}
-
-		if !owner {
-			pool.log.Errorf("server.On:leaveMultisig: can't delete multisig if you are not a creator")
-			return "can't delete multisig if you are not a creator"
-		}
 		return ""
 	})
 
@@ -518,4 +579,59 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 		pool.log.Panicf("%s", http.ListenAndServe(address, serveMux))
 	}()
 	return pool, nil
+}
+
+func getMultisig(uStore store.UserStore, msgMultisig store.MultisigMsg) (*store.Multisig, store.WsMessage, error) {
+	msg := store.WsMessage{}
+	multisig, err := uStore.FindMultisig(msgMultisig)
+	if err != nil {
+		msg = store.WsMessage{
+			Type:    errMultisig,
+			To:      msgMultisig.UserID,
+			Date:    time.Now().Unix(),
+			Payload: "can't join multisig: " + err.Error(),
+		}
+	}
+	return multisig, msg, err
+}
+
+func makeErr(userid, errorStr string) store.WsMessage {
+	return store.WsMessage{
+		Type:    errMultisig,
+		To:      userid,
+		Date:    time.Now().Unix(),
+		Payload: errorStr,
+	}
+}
+
+func updateUserOwners(user store.User, multisig store.Multisig, uStore store.UserStore) (store.Multisig, error) {
+	// Clean addttion tags
+	for _, owner := range multisig.Owners {
+		owner.UserID = ""
+		owner.WalletIndex = 0
+		owner.AddressIndex = 0
+		owner.Associated = false
+	}
+
+	owners := []store.AddressExtended{}
+	for _, wallet := range user.Wallets {
+		for _, address := range wallet.Adresses {
+			for _, owner := range multisig.Owners {
+				if owner.Address == address.Address {
+					owners = append(owners, store.AddressExtended{
+						AddressIndex: address.AddressIndex,
+						WalletIndex:  wallet.WalletIndex,
+						UserID:       user.UserID,
+						Associated:   true,
+					})
+				} else {
+					owners = append(owners, owner)
+				}
+			}
+		}
+	}
+	multisig.Owners = owners
+	err := uStore.UpdateMultisigOwners(user.UserID, multisig.InviteCode, owners)
+	return multisig, err
+
 }
