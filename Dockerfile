@@ -19,8 +19,8 @@ RUN cd $GOPATH/src/github.com/Multy-io && \
     go get github.com/swaggo/gin-swagger && \
     cd Multy-back && \
     git checkout release_1.2-test && \
-    git pull origin release_1.2-test
-    #rm -r ./vendor/github.com/golang/protobuf/proto && \
+    git pull origin release_1.2-test && \
+    rm -r ./vendor/github.com/golang/protobuf/proto
 
 RUN cd $GOPATH/src/github.com/Multy-io/Multy-back && \ 
     make all-with-deps 
