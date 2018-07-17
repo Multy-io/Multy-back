@@ -5,8 +5,8 @@ RUN mkdir $GOPATH/src/github.com && \
     cd $GOPATH/src/github.com/Multy-io && \ 
     git clone https://github.com/Multy-io/Multy-back.git && \ 
     cd Multy-back && \ 
-    git checkout release_1.1 && \  
-    git pull origin release_1.1 && \
+    git checkout release_1.2 && \  
+    git pull origin release_1.2 && \
     rm -r ./vendor/github.com/golang/protobuf/proto && \
     go get firebase.google.com/go   && \ 
     go get firebase.google.com/go/messaging  && \ 
@@ -27,8 +27,8 @@ RUN cd $GOPATH/src/github.com/Multy-io && \
     go get github.com/ethereum/go-ethereum/rpc
     
 RUN cd $GOPATH/src/github.com/Multy-io/Multy-ETH-node-service && \
-    git checkout release_1.1 && \
-    git pull origin release_1.1 && \
+    git checkout release_1.2 && \
+    git pull origin release_1.2 && \
     make all-with-deps && \
     rm -r $GOPATH/src/github.com/Multy-io/Multy-back 
 
