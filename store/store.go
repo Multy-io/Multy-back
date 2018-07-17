@@ -94,10 +94,12 @@ type UserStore interface {
 
 	FindMultisig(jm MultisigMsg) (*Multisig, error)
 	JoinMultisig(userid string, multisig *Multisig) error
-	LeaveMultisig(jm MultisigMsg) error
-	CleanOwnerList(jm MultisigMsg, multisig *Multisig, owners []AddressExtended) error
+	LeaveMultisig(userid, invitecode string) error
+	KikMultisig(address, invitecode string) error
+	DeleteMultisig(invitecode string) error
 	CheckInviteCode(invitecode string) bool
 	FindMultisigUsers(invitecode string) []User
+	UpdateMultisigOwners(userid, invitecode string, owners []AddressExtended) error
 
 	DeleteHistory(CurrencyID, NetworkID int, Address string) error
 
@@ -517,8 +519,8 @@ func (mStore *MongoUserStore) JoinMultisig(userid string, multisig *Multisig) er
 	update := bson.M{"$push": bson.M{"multisig": multisig}}
 	return mStore.usersData.Update(sel, update)
 }
-func (mStore *MongoUserStore) LeaveMultisig(jm MultisigMsg) error {
-	sel := bson.M{"userID": jm.UserID}
+func (mStore *MongoUserStore) LeaveMultisig(userid, invitecode string) error {
+	sel := bson.M{"userID": userid}
 	user := User{}
 
 	multisigs := []Multisig{}
@@ -527,7 +529,24 @@ func (mStore *MongoUserStore) LeaveMultisig(jm MultisigMsg) error {
 		return err
 	}
 	for _, multisig := range user.Multisigs {
-		if multisig.InviteCode != jm.InviteCode {
+		if multisig.InviteCode != invitecode {
+			multisigs = append(multisigs, multisig)
+		}
+	}
+	update := bson.M{"$set": bson.M{"multisig": multisigs}}
+	return mStore.usersData.Update(sel, update)
+}
+func (mStore *MongoUserStore) KikMultisig(address, invitecode string) error {
+	sel := bson.M{"wallets.addresses.address": address}
+	user := User{}
+
+	multisigs := []Multisig{}
+	err := mStore.usersData.Find(sel).One(&user)
+	if err != nil {
+		return err
+	}
+	for _, multisig := range user.Multisigs {
+		if multisig.InviteCode != invitecode {
 			multisigs = append(multisigs, multisig)
 		}
 	}
@@ -535,19 +554,24 @@ func (mStore *MongoUserStore) LeaveMultisig(jm MultisigMsg) error {
 	return mStore.usersData.Update(sel, update)
 }
 
-func (mStore *MongoUserStore) CleanOwnerList(jm MultisigMsg, multisig *Multisig, owners []AddressExtended) error {
-	sel := bson.M{"invitecode": jm.InviteCode}
+func (mStore *MongoUserStore) DeleteMultisig(invitecode string) error {
+	sel := bson.M{"invitecode": invitecode}
 	users := []User{}
-	err := mStore.usersData.Find(sel).All(&users)
-	if err != nil {
-		return err
-	}
+	mStore.usersData.Find(sel).All(&users)
+	var err error
 	for _, user := range users {
-		sel := bson.M{"userID": user.UserID, "invitecode": jm.InviteCode}
-		update := bson.M{"$set": bson.M{"multisig.$.owners": owners}}
-		mStore.usersData.Update(sel, update)
+		okMultisigs := []Multisig{}
+		for _, multisig := range user.Multisigs {
+			if multisig.InviteCode != invitecode {
+				okMultisigs = append(okMultisigs, multisig)
+			}
+		}
+		sel = bson.M{"userID": user.UserID}
+		update := bson.M{"$set": bson.M{"multisig": okMultisigs}}
+		err = mStore.usersData.Update(sel, update)
+
 	}
-	return nil
+	return err
 }
 
 func (mStore *MongoUserStore) CheckInviteCode(invitecode string) bool {
@@ -564,6 +588,11 @@ func (mStore *MongoUserStore) FindMultisigUsers(invitecode string) []User {
 	users := []User{}
 	mStore.usersData.Find(sel).All(&users)
 	return users
+}
+func (mStore *MongoUserStore) UpdateMultisigOwners(userid, invitecode string, owners []AddressExtended) error {
+	sel := bson.M{"userID": userid, "invitecode": invitecode}
+	update := bson.M{"$set": bson.M{"multisig.$.owners": owners}}
+	return mStore.usersData.Update(sel, update)
 }
 
 func (mStore *MongoUserStore) Close() error {
