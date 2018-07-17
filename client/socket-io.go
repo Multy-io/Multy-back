@@ -62,9 +62,10 @@ const (
 	deleteMultisig = "delete:multisig"
 	kikMultisig    = "kik:multisig"
 
-	updateMultisig = "update:multisig"
-	okMultisig     = "ok:multisig"
-	errMultisig    = "err:multisig"
+	updateMultisig  = "update:multisig"
+	deletedMultisig = "deleted:multisig"
+	okMultisig      = "ok:multisig"
+	errMultisig     = "err:multisig"
 
 	msgSend    = "message:send"
 	msgRecieve = "message:recieve"
@@ -547,6 +548,21 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						if err != nil {
 							pool.log.Errorf("server.On:deleteMultisig:DeleteMultisig %v", err.Error())
 							return makeErr(msgMultisig.UserID, "server.On:deleteMultisig:DeleteMultisig "+err.Error())
+						}
+
+						users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
+
+						for _, user := range users {
+							_, online := pool.users[user.UserID]
+							if online {
+								msg := store.WsMessage{
+									Type:    deletedMultisig,
+									To:      user.UserID,
+									Date:    time.Now().Unix(),
+									Payload: msgMultisig.InviteCode,
+								}
+								server.BroadcastTo("message", msgRecieve+":"+user.UserID, msg)
+							}
 						}
 						return store.WsMessage{
 							Type:    okMultisig,

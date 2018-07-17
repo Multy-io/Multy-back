@@ -427,12 +427,12 @@ type LastState struct {
 }
 
 type WsMessage struct {
-	Type    string      `bson:"type"`
-	From    string      `bson:"from"`
-	To      string      `bson:"to"`
-	Date    int64       `bson:"date"`
-	Status  int         `bson:"status"`
-	Payload interface{} `bson:"payload"`
+	Type    string      `json:"type"`
+	From    string      `json:"from"`
+	To      string      `json:"to"`
+	Date    int64       `json:"date"`
+	Status  int         `json:"status"`
+	Payload interface{} `json:"payload"`
 }
 type WsResponse struct {
 	Message string      `bson:"message"`
@@ -443,7 +443,7 @@ type MultisigMsg struct {
 	UserID       string `json:"userid"`
 	Address      string `json:"address"`
 	InviteCode   string `json:"invitecode"`
-	AddressToKik string `json:"networkid"`
+	AddressToKik string `json:"addresstokik"`
 	WalletIndex  int    `json:"walletindex"`
 	CurrencyID   int    `json:"currencyid"`
 	NetworkID    int    `json:"networkid"`
