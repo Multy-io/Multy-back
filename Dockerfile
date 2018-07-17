@@ -10,8 +10,8 @@ RUN cd $GOPATH/src/github.com/Multy-io && \
     rm -rf Multy-back && \ 
     git clone https://github.com/Multy-io/Multy-back.git && \ 
     cd Multy-back && \
-    git checkout release_1.1 && \
-    git pull origin release_1.1
+    git checkout release_1.2 && \
+    git pull origin release_1.2
 
 
 RUN cd $GOPATH/src/github.com/Multy-io/Multy-back && \ 

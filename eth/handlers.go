@@ -192,23 +192,23 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			tx := generatedTxDataToStore(gTx)
 			setExchangeRates(&tx, gTx.Resync, tx.BlockTime)
 
-			if !gTx.GetMultisig() {
-				err = saveTransaction(tx, networtkID, gTx.Resync)
-				updateWalletAndAddressDate(tx, networtkID)
-				if err != nil {
-					log.Errorf("initGrpcClient: saveMultyTransaction: %s", err)
-				}
-
-				if !gTx.GetResync() {
-					sendNotifyToClients(tx, nsqProducer, networtkID)
-				}
-				return
-			}
-
-			err = processMultisig(&tx, networtkID, nsqProducer)
+			// if !gTx.GetMultisig() {
+			err = saveTransaction(tx, networtkID, gTx.Resync)
+			updateWalletAndAddressDate(tx, networtkID)
 			if err != nil {
-				log.Errorf("initGrpcClient: processMultisig: %s", err.Error())
+				log.Errorf("initGrpcClient: saveMultyTransaction: %s", err)
 			}
+
+			if !gTx.GetResync() {
+				sendNotifyToClients(tx, nsqProducer, networtkID)
+			}
+			// return
+			// }
+
+			// err = processMultisig(&tx, networtkID, nsqProducer)
+			// if err != nil {
+			// 	log.Errorf("initGrpcClient: processMultisig: %s", err.Error())
+			// }
 
 		}
 	}()

@@ -744,7 +744,7 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 				})
 			}
 			if networkid == currencies.ETHTest {
-				restClient.ETH.CliTest.EventGetAdressBalance(context.Background(), &ethpb.AddressToResync{
+				balance, err = restClient.ETH.CliTest.EventGetAdressBalance(context.Background(), &ethpb.AddressToResync{
 					Address: address,
 				})
 			}
@@ -955,60 +955,36 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 			})
 		case currencies.Ether:
 			//TODO: make eth feerate
-			//var rate *ethpb.GasPrice
+			var rate *ethpb.GasPrice
 			var err error
-			// switch networkid {
-			// case currencies.ETHMain:
-			// 	rate, err = restClient.ETH.CliMain.EventGetGasPrice(context.Background(), &ethpb.Empty{})
-			// case currencies.ETHTest:
-			// 	rate, err = restClient.ETH.CliTest.EventGetGasPrice(context.Background(), &ethpb.Empty{})
-			// default:
-			// 	restClient.log.Errorf("getFeeRate:currencies.Ether: no such networkid")
-			// }
+			switch networkid {
+			case currencies.ETHMain:
+				rate, err = restClient.ETH.CliMain.EventGetGasPrice(context.Background(), &ethpb.Empty{})
+			case currencies.ETHTest:
+				rate, err = restClient.ETH.CliTest.EventGetGasPrice(context.Background(), &ethpb.Empty{})
+			default:
+				restClient.log.Errorf("getFeeRate:currencies.Ether: no such networkid")
+			}
 
 			if err != nil {
 				restClient.log.Errorf("getFeeRate:currencies.Ether:restClient.ETH.Cli: %v ", err.Error())
 			}
-			//speed, _ := strconv.Atoi(rate.GetGas())
+			speed, _ := strconv.Atoi(rate.GetGas())
 			switch networkid {
 			case currencies.ETHMain:
-				// c.JSON(http.StatusOK, gin.H{
-				// 	"speeds": EstimationSpeeds{
-				// 		VerySlow: speed / 2,
-				// 		Slow:     speed,
-				// 		Medium:   speed * 15 / 10,
-				// 		Fast:     speed * 2,
-				// 		VeryFast: speed * 25 / 10,
-				// 	},
-				// 	"code":    http.StatusOK,
-				// 	"message": http.StatusText(http.StatusOK),
-				// })
-
 				c.JSON(http.StatusOK, gin.H{
 					"speeds": EstimationSpeeds{
-						VerySlow: 9 * 1000000000,
-						Slow:     10 * 1000000000,
-						Medium:   14 * 1000000000,
-						Fast:     20 * 1000000000,
-						VeryFast: 25 * 1000000000,
-					},
-					"code":    http.StatusOK,
-					"message": http.StatusText(http.StatusOK),
-				})
-			case 3:
-				c.JSON(http.StatusOK, gin.H{
-					"speeds": EstimationSpeeds{
-						VerySlow: 1000000000,
-						Slow:     2000000000,
-						Medium:   3000000000,
-						Fast:     4000000000,
-						VeryFast: 5000000000,
+						VerySlow: speed * 60 / 100,
+						Slow:     speed * 80 / 100,
+						Medium:   speed,
+						Fast:     speed * 145 / 100,
+						VeryFast: speed * 195 / 100,
 					},
 					"code":    http.StatusOK,
 					"message": http.StatusText(http.StatusOK),
 				})
 
-			case 4:
+			default:
 				c.JSON(http.StatusOK, gin.H{
 					"speeds": EstimationSpeeds{
 						VerySlow: 1000000000,
@@ -1021,8 +997,6 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 					"message": http.StatusText(http.StatusOK),
 				})
 			}
-
-		default:
 
 		}
 
@@ -2175,7 +2149,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 			case currencies.ETHMain:
 				resp, err := restClient.ETH.CliMain.EventGetBlockHeight(context.Background(), &ethpb.Empty{})
 				if err != nil {
-					restClient.log.Errorf("getWalletTransactionsHistory: restClient.BTC.CliTest.EventGetBlockHeight %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					restClient.log.Errorf("getWalletTransactionsHistory: restClient.BTC.CliMain.EventGetBlockHeight %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 					c.JSON(http.StatusInternalServerError, gin.H{
 						"code":    http.StatusInternalServerError,
 						"message": http.StatusText(http.StatusInternalServerError),
