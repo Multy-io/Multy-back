@@ -23,6 +23,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/graarh/golang-socketio"
 	"github.com/graarh/golang-socketio/transport"
+	_ "github.com/jekabolt/slflog"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -326,12 +327,15 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 				}
 
 				joined := len(multisig.Owners)
+
 				if multisig.OwnersCount > joined {
+
 					multisigToJoin := multisig
 					owners := []store.AddressExtended{}
 					for _, owner := range multisigToJoin.Owners {
 						owners = append(owners, store.AddressExtended{
 							Address: owner.Address,
+							Creator: owner.Creator,
 						})
 					}
 
@@ -650,6 +654,7 @@ func updateUserOwners(user store.User, multisig *store.Multisig, uStore store.Us
 	for _, owner := range multisig.Owners {
 		owners = append(owners, store.AddressExtended{
 			Address: owner.Address,
+			Creator: owner.Creator,
 		})
 	}
 
