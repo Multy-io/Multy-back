@@ -12,8 +12,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
+	"math/big"
 	"net/http"
 	"sort"
 	"strconv"
@@ -1381,7 +1381,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			var pending bool
 			var totalBalance string
 			var pendingBalance string
-			var pendingAmount string
+			// var pendingAmount string
 			var waletNonce int64
 			for _, address := range wallet.Adresses {
 				amount := &ethpb.Balance{}
@@ -1417,8 +1417,6 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 
 				p, _ := strconv.Atoi(amount.GetPendingBalance())
 				b, _ := strconv.Atoi(amount.GetBalance())
-				// pendingBalance = strconv.Itoa(p - b)
-				// pendingAmount = strconv.Itoa(p - b)
 
 				if p != b {
 					pending = true
@@ -1429,20 +1427,39 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					pendingBalance = "0"
 				}
 
-				userTxs := []store.TransactionETH{}
-				err = restClient.userStore.GetAllWalletEthTransactions(user.UserID, wallet.CurrencyID, wallet.NetworkID, &userTxs)
+				// Check for transaction status from transaction history in case of that geth take a lot of time to procces address balances in inner
+				// its a HACK we put a pending flag in case if we have pending txs in out txs history. In this case ballance will be callculated partly from tx hisotry.
+				// NOT FROM NODE
+				// pendingBalanceBig, _ := new(big.Int).SetString(pendingBalance, 10)
 
-				history := []store.TransactionETH{}
-				for _, tx := range userTxs {
+				pendingBalanceBig := int64(p)
+
+				walletHistory := []store.TransactionETH{}
+				err = restClient.userStore.GetAllWalletEthTransactions(user.UserID, wallet.CurrencyID, wallet.NetworkID, &walletHistory)
+				for _, tx := range walletHistory {
 					if tx.WalletIndex == wallet.WalletIndex {
-						history = append(history, tx)
-					}
-				}
-
-				for _, tx := range userTxs {
-					if (tx.Status == store.TxStatusAppearedInMempoolIncoming || tx.Status == store.TxStatusAppearedInMempoolOutcoming) && (tx.From == address.Address || tx.To == address.Address) {
-						pending = true
-						break
+						if (tx.Status == store.TxStatusAppearedInMempoolIncoming || tx.Status == store.TxStatusAppearedInMempoolOutcoming) && (tx.From == address.Address || tx.To == address.Address) {
+							if tx.Status == store.TxStatusAppearedInMempoolIncoming && p == b {
+								inTxAmount, _ := new(big.Int).SetString(tx.Amount, 10)
+								in := inTxAmount.Int64()
+								pendingBalanceBig += in
+								pendingBalance = strconv.Itoa(int(pendingBalanceBig))
+								// restClient.log.Warnf("\n Incoming Wallet name %v pending fake balance %v", wallet.WalletName, pendingBalance)
+								// restClient.log.Warnf("\n Incoming node balance %v node pending balance %v", b, p)
+							}
+							if tx.Status == store.TxStatusAppearedInMempoolOutcoming && p == b {
+								// oldPending := pendingBalanceBig
+								outTxAmount, _ := new(big.Int).SetString(tx.Amount, 10)
+								out := outTxAmount.Int64()
+								pendingBalanceBig -= out
+								fee := tx.GasLimit * tx.GasPrice
+								pendingBalanceBig -= fee
+								pendingBalance = big.NewInt(pendingBalanceBig).String()
+								// restClient.log.Warnf("\n Outcoming Wallet name %v pending fake balance %v", wallet.WalletName, pendingBalance)
+								// restClient.log.Warnf("\n Outcoming node balance %v node pending balance %v", b, p)
+							}
+							pending = true
+						}
 					}
 				}
 
@@ -1468,12 +1485,9 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 				Nonce:          waletNonce,
 				Balance:        totalBalance,
 				PendingBalance: pendingBalance,
-				PendingAmount:  pendingAmount,
 				VerboseAddress: av,
 				Pending:        pending,
 			})
-
-			fmt.Println("PendingBalance: ", pendingBalance, "PendingAmount: ", pendingAmount, "IsPending: ", pending, "Balance: ", totalBalance, "WalletName: ", wallet.WalletName, "\n\n")
 
 			av = []ETHAddressVerbose{}
 		default:
@@ -1512,7 +1526,6 @@ type WalletVerboseETH struct {
 	DateOfCreation int64               `json:"dateofcreation"`
 	Nonce          int64               `json:"nonce"`
 	PendingBalance string              `json:"pendingbalance"`
-	PendingAmount  string              `json:"pendingamount"`
 	Balance        string              `json:"balance"`
 	VerboseAddress []ETHAddressVerbose `json:"addresses"`
 	Pending        bool                `json:"pending"`
@@ -1678,7 +1691,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 				var totalBalance string
 				var pendingBalance string
-				var pendingAmount string
+				// var pendingAmount string
 
 				for _, address := range wallet.Adresses {
 					amount := &ethpb.Balance{}
@@ -1755,6 +1768,37 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					// 	pendingBalance = "0"
 					// }
 
+					pendingBalanceBig := int64(p)
+
+					walletHistory := []store.TransactionETH{}
+					err = restClient.userStore.GetAllWalletEthTransactions(user.UserID, wallet.CurrencyID, wallet.NetworkID, &walletHistory)
+					for _, tx := range walletHistory {
+						if tx.WalletIndex == wallet.WalletIndex {
+							if (tx.Status == store.TxStatusAppearedInMempoolIncoming || tx.Status == store.TxStatusAppearedInMempoolOutcoming) && (tx.From == address.Address || tx.To == address.Address) {
+								if tx.Status == store.TxStatusAppearedInMempoolIncoming && p == b {
+									inTxAmount, _ := new(big.Int).SetString(tx.Amount, 10)
+									in := inTxAmount.Int64()
+									pendingBalanceBig += in
+									pendingBalance = strconv.Itoa(int(pendingBalanceBig))
+									// restClient.log.Warnf("\n Incoming Wallet name %v pending fake balance %v", wallet.WalletName, pendingBalance)
+									// restClient.log.Warnf("\n Incoming node balance %v node pending balance %v", b, p)
+								}
+								if tx.Status == store.TxStatusAppearedInMempoolOutcoming && p == b {
+									// oldPending := pendingBalanceBig
+									outTxAmount, _ := new(big.Int).SetString(tx.Amount, 10)
+									out := outTxAmount.Int64()
+									pendingBalanceBig -= out
+									fee := tx.GasLimit * tx.GasPrice
+									pendingBalanceBig -= fee
+									pendingBalance = big.NewInt(pendingBalanceBig).String()
+									// restClient.log.Warnf("\n Outcoming Wallet name %v pending fake balance %v", wallet.WalletName, pendingBalance)
+									// restClient.log.Warnf("\n Outcoming node balance %v node pending balance %v", b, p)
+								}
+								pending = true
+							}
+						}
+					}
+
 					walletNonce = nonce.GetNonce()
 
 					av = append(av, ETHAddressVerbose{
@@ -1771,7 +1815,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					NetworkID:      wallet.NetworkID,
 					Balance:        totalBalance,
 					PendingBalance: pendingBalance,
-					PendingAmount:  pendingAmount,
 					Nonce:          walletNonce,
 					WalletName:     wallet.WalletName,
 					LastActionTime: wallet.LastActionTime,
