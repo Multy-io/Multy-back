@@ -12,6 +12,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -28,8 +29,7 @@ import (
 	btcpb "github.com/Multy-io/Multy-back/node-streamer/btc"
 	ethpb "github.com/Multy-io/Multy-back/node-streamer/eth"
 	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/gin-gonic/gin" // gin-swagger middleware
-	// swagger embed files
+	"github.com/gin-gonic/gin"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -125,6 +125,19 @@ func SetRestHandlers(
 		v1.POST("/resync/wallet/:currencyid/:networkid/:walletindex", restClient.resyncWallet())
 		v1.GET("/exchange/changelly/list", restClient.changellyListCurrencies())
 	}
+	// go func() {
+	// 	for {
+	// 		time.Sleep(time.Second * 2)
+	// 		adr := ethpb.AddressToResync{
+	// 			Address: "0x55ae4774e2b9c8eacc8b367e7d48779fdd6cd30d",
+	// 		}
+	// 		amount, _ := restClient.ETH.CliTest.EventGetAdressBalance(context.Background(), &adr)
+	// 		restClient.log.Warnf("amount.Balance = %v", amount.Balance)
+	// 		restClient.log.Warnf("amount.PendingBalance = %v", amount.PendingBalance)
+	// 		fmt.Println("")
+	// 	}
+
+	// }()
 	return restClient, nil
 }
 
@@ -461,7 +474,15 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 			return
 		}
 		// Create multisig
-		if wp.Multisig.IsMultisig && restClient.userStore.CheckInviteCode(wp.Multisig.InviteCode) {
+		if wp.Multisig.IsMultisig {
+			if !restClient.userStore.CheckInviteCode(wp.Multisig.InviteCode) {
+				restClient.log.Errorf("addWallet: createCustomMultisig: already existed invite code \t[addr=%s]", c.Request.RemoteAddr)
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": "already existed invite code",
+				})
+				return
+			}
 			err = createCustomMultisig(wp, token, restClient, c)
 			if err != nil {
 				restClient.log.Errorf("addWallet: createCustomMultisig: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
@@ -471,14 +492,13 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 				})
 				return
 			}
-			if restClient.userStore.CheckInviteCode(wp.Multisig.InviteCode) {
-				restClient.log.Errorf("addWallet: createCustomMultisig: already existed invite code \t[addr=%s]", c.Request.RemoteAddr)
-				c.JSON(http.StatusBadRequest, gin.H{
-					"code":    http.StatusBadRequest,
-					"message": "already existed invite code",
-				})
-				return
-			}
+			c.JSON(http.StatusCreated, gin.H{
+				"code":    code,
+				"time":    time.Now().Unix(),
+				"message": message,
+			})
+			return
+
 		}
 
 		// Create wallet
@@ -1817,14 +1837,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 							}
 						}
 					}
-
-					// restClient.BTC.ResyncM.Lock()
-					// re := *restClient.BTC.Resync
-					// restClient.BTC.ResyncM.Unlock()
 					_, sync := restClient.BTC.Resync.Load(address.Address)
-
-					// sync := re[address.Address]
-
 					av = append(av, AddressVerbose{
 						LastActionTime: address.LastActionTime,
 						Address:        address.Address,
@@ -1928,12 +1941,14 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 			}
 
 		}
+
 		for _, multisig := range user.Multisigs {
 			var av []ETHAddressVerbose
 			var pending bool
 
-			var totalBalance string
+			var totalBalance string = "0"
 			var pendingBalance string
+			fmt.Println(av, pending, totalBalance, pendingBalance)
 
 			amount := &ethpb.Balance{}
 			nonce := &ethpb.Nonce{}
@@ -1979,7 +1994,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 				LastActionTime: multisig.LastActionTime,
 				Address:        multisig.ContractAddress,
 				Amount:         totalBalance,
-				Nonce:          nonce.Nonce,
+				Nonce:          waletNonce,
 			})
 
 			wv = append(wv, WalletVerboseETH{

@@ -6,6 +6,9 @@ See LICENSE for details
 package store
 
 import (
+	"errors"
+	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/graarh/golang-socketio"
@@ -95,20 +98,20 @@ type Wallet struct {
 }
 
 type Multisig struct {
-	CurrencyID      int               `bson:"currencyid"`
-	NetworkID       int               `bson:"networkid"`
-	Confirmations   int               `bson:"confirmations"`
-	WalletName      string            `bson:"walletname"`
-	FactoryAddress  string            `bson:"factoryaddress"`
-	ContractAddress string            `bson:"contractaddress"`
-	TxOfCreation    string            `bson:"txofcreation"`
-	LastActionTime  int64             `bson:"lastactiontime"`
-	DateOfCreation  int64             `bson:"dateofcreation"`
-	Owners          []AddressExtended `bson:"owners"`
-	DeployStatus    bool              `bson:"deploystatus"`
-	Status          string            `bson:"status"`
-	InviteCode      string            `bson:"invitecode"`
-	OwnersCount     int               `bson:"ownerscount"`
+	CurrencyID      int               `bson:"currencyid" json:"currencyid"`
+	NetworkID       int               `bson:"networkid" json:"networkid"`
+	Confirmations   int               `bson:"confirmations" json:"confirmations"`
+	WalletName      string            `bson:"walletName" json:"walletName"`
+	FactoryAddress  string            `bson:"factoryAddress" json:"factoryAddress"`
+	ContractAddress string            `bson:"contractAddress" json:"contractAddress"`
+	TxOfCreation    string            `bson:"txOfCreation" json:"txOfCreation"`
+	LastActionTime  int64             `bson:"lastActionTime" json:"lastActionTime"`
+	DateOfCreation  int64             `bson:"dateOfCreation" json:"dateOfCreation"`
+	Owners          []AddressExtended `bson:"owners" json:"owners"`
+	DeployStatus    bool              `bson:"deployStatus" json:"deployStatus"`
+	Status          string            `bson:"status" json:"status"`
+	InviteCode      string            `bson:"inviteCode" json:"inviteCode"`
+	OwnersCount     int               `bson:"ownersCount" json:"ownersCount"`
 }
 
 type RatesRecord struct {
@@ -329,12 +332,12 @@ type DonationInfo struct {
 }
 
 type AddressExtended struct {
-	UserID       string
-	Address      string // etereum asociated to contract address
-	Associated   bool   // is associated
-	Creator      bool
-	WalletIndex  int
-	AddressIndex int
+	UserID       string `bson:"userid" json:"userid"`
+	Address      string `bson:"address" json:"address"`       // etereum asociated to contract address
+	Associated   bool   `bson:"associated" json:"associated"` // is associated
+	Creator      bool   `bson:"creator" json:"creator"`
+	WalletIndex  int    `bson:"walletIndex" json:"walletIndex"`
+	AddressIndex int    `bson:"addressIndex" json:"addressIndex"`
 }
 
 type ServerConfig struct {
@@ -447,4 +450,36 @@ type MultisigMsg struct {
 	WalletIndex  int    `json:"walletindex"`
 	CurrencyID   int    `json:"currencyid"`
 	NetworkID    int    `json:"networkid"`
+}
+
+func (s *MultisigMsg) FillStruct(m map[string]interface{}) error {
+	for k, v := range m {
+		err := SetField(s, k, v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func SetField(obj interface{}, name string, value interface{}) error {
+	structValue := reflect.ValueOf(obj).Elem()
+	structFieldValue := structValue.FieldByName(name)
+
+	if !structFieldValue.IsValid() {
+		return fmt.Errorf("No such field: %s in obj", name)
+	}
+
+	if !structFieldValue.CanSet() {
+		return fmt.Errorf("Cannot set %s field value", name)
+	}
+
+	structFieldType := structFieldValue.Type()
+	val := reflect.ValueOf(value)
+	if structFieldType != val.Type() {
+		return errors.New("Provided value type didn't match obj field type")
+	}
+
+	structFieldValue.Set(val)
+	return nil
 }
