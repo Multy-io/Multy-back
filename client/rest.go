@@ -12,6 +12,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -424,6 +425,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 
 		c.JSON(http.StatusCreated, gin.H{
 			"code":    code,
+			"time":    time.Now().Unix(),
 			"message": message,
 		})
 		return
@@ -510,7 +512,7 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 			},
 			"version": restClient.MultyVerison,
 			"ios": map[string]int{
-				"soft": 49,
+				"soft": 53,
 				"hard": 49,
 			},
 			"donate": restClient.donationAddresses,
@@ -1427,6 +1429,23 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					pendingBalance = "0"
 				}
 
+				userTxs := []store.TransactionETH{}
+				err = restClient.userStore.GetAllWalletEthTransactions(user.UserID, wallet.CurrencyID, wallet.NetworkID, &userTxs)
+
+				history := []store.TransactionETH{}
+				for _, tx := range userTxs {
+					if tx.WalletIndex == wallet.WalletIndex {
+						history = append(history, tx)
+					}
+				}
+
+				for _, tx := range userTxs {
+					if (tx.Status == store.TxStatusAppearedInMempoolIncoming || tx.Status == store.TxStatusAppearedInMempoolOutcoming) && (tx.From == address.Address || tx.To == address.Address) {
+						pending = true
+						break
+					}
+				}
+
 				waletNonce = nonce.GetNonce()
 
 				av = append(av, ETHAddressVerbose{
@@ -1453,8 +1472,10 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 				VerboseAddress: av,
 				Pending:        pending,
 			})
-			av = []ETHAddressVerbose{}
 
+			fmt.Println("PendingBalance: ", pendingBalance, "PendingAmount: ", pendingAmount, "IsPending: ", pending, "Balance: ", totalBalance, "WalletName: ", wallet.WalletName, "\n\n")
+
+			av = []ETHAddressVerbose{}
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
@@ -1662,6 +1683,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 				for _, address := range wallet.Adresses {
 					amount := &ethpb.Balance{}
 					nonce := &ethpb.Nonce{}
+					// blockHeight := &ethpb.BlockHeight{}
 
 					var err error
 					adr := ethpb.AddressToResync{
@@ -1672,9 +1694,11 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					case currencies.ETHTest:
 						nonce, err = restClient.ETH.CliTest.EventGetAdressNonce(context.Background(), &adr)
 						amount, err = restClient.ETH.CliTest.EventGetAdressBalance(context.Background(), &adr)
+						// blockHeight, err = restClient.ETH.CliMain.EventGetBlockHeight(context.Background(), &adr)
 					case currencies.ETHMain:
 						nonce, err = restClient.ETH.CliMain.EventGetAdressNonce(context.Background(), &adr)
 						amount, err = restClient.ETH.CliMain.EventGetAdressBalance(context.Background(), &adr)
+						// blockHeight, err = restClient.ETH.CliMain.EventGetBlockHeight(context.Background())
 					default:
 						c.JSON(code, gin.H{
 							"code":    http.StatusBadRequest,
@@ -1696,12 +1720,29 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					// pendingBalance = strconv.Itoa(p - b)
 					// pendingAmount = strconv.Itoa(p - b)
 
+					userTxs := []store.TransactionETH{}
+					err = restClient.userStore.GetAllWalletEthTransactions(user.UserID, wallet.CurrencyID, wallet.NetworkID, &userTxs)
+
+					history := []store.TransactionETH{}
+					for _, tx := range userTxs {
+						if tx.WalletIndex == wallet.WalletIndex {
+							history = append(history, tx)
+						}
+					}
+
 					if p != b {
 						pending = true
 					}
 
 					if p == b {
 						pendingBalance = "0"
+					}
+
+					for _, tx := range userTxs {
+						if (tx.Status == store.TxStatusAppearedInMempoolIncoming || tx.Status == store.TxStatusAppearedInMempoolOutcoming) && (tx.From == address.Address || tx.To == address.Address) {
+							pending = true
+							break
+						}
 					}
 
 					//incoming
@@ -1723,9 +1764,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 						Amount:         totalBalance,
 						Nonce:          nonce.Nonce,
 					})
-
 				}
-
 				wv = append(wv, WalletVerboseETH{
 					WalletIndex:    wallet.WalletIndex,
 					CurrencyID:     wallet.CurrencyID,

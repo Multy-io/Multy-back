@@ -167,10 +167,14 @@ func sendNotifyToClients(tx store.MultyTX, nsqProducer *nsq.Producer, netid int)
 				Amount:          strconv.Itoa(int(tx.TxOutAmount)),
 				TxID:            tx.TxID,
 				TransactionType: tx.TxStatus,
+				From:            walletOutput.Address.Address,
+				To:              tx.TxAddress[0],
 				WalletIndex:     walletOutput.WalletIndex,
 			},
 		}
-		sendNotify(&txMsq, nsqProducer)
+		if walletOutput.Address.Address != tx.TxAddress[0] {
+			sendNotify(&txMsq, nsqProducer)
+		}
 	}
 
 	for _, walletInput := range tx.WalletsInput {
@@ -184,11 +188,35 @@ func sendNotifyToClients(tx store.MultyTX, nsqProducer *nsq.Producer, netid int)
 				TxID:            tx.TxID,
 				TransactionType: tx.TxStatus,
 				WalletIndex:     walletInput.WalletIndex,
+				From:            walletInput.Address.Address,
+				To:              tx.TxAddress[0],
 			},
 		}
-
-		sendNotify(&txMsq, nsqProducer)
+		if walletInput.Address.Address != tx.TxAddress[0] {
+			sendNotify(&txMsq, nsqProducer)
+		}
 	}
+
+	for _, txInputs := range tx.TxInputs {
+		txMsq := store.TransactionWithUserID{
+			UserID: tx.UserId,
+			NotificationMsg: &store.WsTxNotify{
+				CurrencyID:      currencies.Bitcoin,
+				NetworkID:       netid,
+				Address:         tx.TxAddress[0],
+				Amount:          strconv.Itoa(int(tx.TxOutAmount)),
+				TxID:            tx.TxID,
+				TransactionType: tx.TxStatus,
+				WalletIndex:     100,
+				To:              tx.TxAddress[0],
+				From:            txInputs.Address,
+			},
+		}
+		if tx.TxAddress[0] != txInputs.Address {
+			sendNotify(&txMsq, nsqProducer)
+		}
+	}
+
 }
 
 func sendNotify(txMsq *store.TransactionWithUserID, nsqProducer *nsq.Producer) {
