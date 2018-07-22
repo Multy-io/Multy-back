@@ -245,10 +245,10 @@ func (mStore *MongoUserStore) DeleteHistory(CurrencyID, NetworkID int, Address s
 			return mStore.BTCTestTxsData.Remove(sel)
 		}
 	case currencies.Ether:
-		if NetworkID == currencies.Main {
+		if NetworkID == currencies.ETHMain {
 
 		}
-		if NetworkID == currencies.Test {
+		if NetworkID == currencies.ETHTest {
 
 		}
 	}

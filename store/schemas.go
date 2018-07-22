@@ -177,6 +177,8 @@ type WsTxNotify struct {
 	TxID            string `json:"txid"`
 	TransactionType int    `json:"transactionType"`
 	WalletIndex     int    `json:"walletindex"`
+	From            string `json:"from"`
+	To              string `json:"to"`
 }
 
 type TransactionWithUserID struct {

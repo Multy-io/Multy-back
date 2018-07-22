@@ -164,6 +164,8 @@ func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer, net
 				TxID:            tx.Hash,
 				TransactionType: tx.Status,
 				WalletIndex:     tx.WalletIndex,
+				From:            tx.From,
+				To:              tx.To,
 			},
 		}
 		sendNotify(&txMsq, nsqProducer)
@@ -180,6 +182,8 @@ func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer, net
 				TxID:            tx.Hash,
 				TransactionType: tx.Status,
 				WalletIndex:     tx.WalletIndex,
+				From:            tx.From,
+				To:              tx.To,
 			},
 		}
 		sendNotify(&txMsq, nsqProducer)
@@ -225,9 +229,9 @@ func saveTransaction(tx store.TransactionETH, networtkID int, resync bool) error
 
 	txStore := &mgo.Collection{}
 	switch networtkID {
-	case currencies.Main:
+	case currencies.ETHMain:
 		txStore = txsData
-	case currencies.Test:
+	case currencies.ETHTest:
 		txStore = txsDataTest
 	default:
 		return errors.New("saveMultyTransaction: wrong networkID")
