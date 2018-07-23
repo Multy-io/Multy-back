@@ -426,6 +426,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 		c.JSON(http.StatusCreated, gin.H{
 			"code":    code,
 			"message": message,
+			"time":    time.Now().Unix(),
 		})
 		return
 	}
