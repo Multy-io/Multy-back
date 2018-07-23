@@ -92,7 +92,7 @@ type UserStore interface {
 
 	DeleteHistory(CurrencyID, NetworkID int, Address string) error
 
-	FethLastSyncBlockState(networkid, currencyid int) (int64, error)
+	FethLastSyncBlockState(networkid, currencyid int) ([]LastState, error)
 
 	CheckTx(tx string) bool
 }
@@ -255,11 +255,10 @@ func (mStore *MongoUserStore) DeleteHistory(CurrencyID, NetworkID int, Address s
 	return nil
 }
 
-func (mStore *MongoUserStore) FethLastSyncBlockState(networkid, currencyid int) (int64, error) {
-	ls := LastState{}
-	sel := bson.M{"networkid": networkid, "currencyid": currencyid}
-	err := mStore.RestoreState.Find(sel).Sort("blockheight").One(&ls)
-	return ls.BlockHeight, err
+func (mStore *MongoUserStore) FethLastSyncBlockState(networkid, currencyid int) ([]LastState, error) {
+	ls := []LastState{}
+	err := mStore.RestoreState.Find(nil).All(&ls)
+	return ls, err
 }
 
 func (mStore *MongoUserStore) FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error) {
