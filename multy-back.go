@@ -188,23 +188,30 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 			}
 
 			//TODO: Re State
-			// h, err := m.userStore.FethLastSyncBlockState(conCred.СurrencyID, conCred.NetworkID)
+			// var height int64
+			// states, err := m.userStore.FethLastSyncBlockState(conCred.СurrencyID, conCred.NetworkID)
+			// for _, state := range states {
+			// 	if state.CurrencyID == conCred.СurrencyID && state.NetworkID == conCred.NetworkID {
+			// 		height = state.BlockHeight
+			// 	}
+			// }
+			// bh, _ := cli.EventGetBlockHeight(context.Background(), &ethpb.Empty{})
 			// if err != nil {
 			// 	log.Errorf("SetUserData:  btcCli.CliMain.cli.FethLastSyncBlockState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
-			// 	// return servicesInfo, fmt.Errorf("SetUserData:  btcCli.CliMain.FethLastSyncBlockState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
-			// }
-			// log.Errorf("ETH ++++++++++ %v", h)
-			// rp, err := cli.SyncState(context.Background(), &ethpb.BlockHeight{
-			// 	Height: h,
-			// })
-			// if err != nil {
-			// 	log.Errorf("SetUserData:  btcCli.CliMain.cli.SyncState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
-			// 	// return servicesInfo, fmt.Errorf("SetUserData:  btcCli.CliMain.cli.SyncState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			// 	height = bh.GetHeight()
 			// }
 
-			// if strings.Contains("err:", rp.GetMessage()) {
-			// 	log.Errorf("SetUserData:  Contains err : curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
-			// 	// return servicesInfo, fmt.Errorf("SetUserData:  Contains err : curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+			// log.Warnf("ETH Re state last stored block = %v current block height = %v", height, bh.GetHeight())
+			// if height == 0 {
+			// 	height = bh.GetHeight()
+			// 	log.Errorf("SetUserData:  btcCli.CliMain.cli.FethLastSyncBlockState:no such record in db curID :%d netID :%d", conCred.СurrencyID, conCred.NetworkID)
+			// }
+			// _, err = cli.SyncState(context.Background(), &ethpb.BlockHeight{
+			// 	Height: height,
+			// })
+
+			// if err != nil {
+			// 	log.Errorf("SetUserData:  btcCli.CliMain.cli.SyncState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
 			// }
 
 			genUd := ethpb.UsersData{
