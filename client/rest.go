@@ -425,8 +425,8 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 
 		c.JSON(http.StatusCreated, gin.H{
 			"code":    code,
-			"message": message,
 			"time":    time.Now().Unix(),
+			"message": message,
 		})
 		return
 	}
@@ -512,7 +512,7 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 			},
 			"version": restClient.MultyVerison,
 			"ios": map[string]int{
-				"soft": 49,
+				"soft": 53,
 				"hard": 49,
 			},
 			"donate": restClient.donationAddresses,
@@ -1520,7 +1520,6 @@ type WalletVerboseETH struct {
 	DateOfCreation int64               `json:"dateofcreation"`
 	Nonce          int64               `json:"nonce"`
 	PendingBalance string              `json:"pendingbalance"`
-	PendingAmount  string              `json:"pendingamount"`
 	Balance        string              `json:"balance"`
 	VerboseAddress []ETHAddressVerbose `json:"addresses"`
 	Pending        bool                `json:"pending"`
