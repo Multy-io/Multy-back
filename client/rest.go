@@ -1390,7 +1390,6 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			var pending bool
 			var totalBalance string
 			var pendingBalance string
-			// var pendingAmount string
 			var waletNonce int64
 			for _, address := range wallet.Adresses {
 				amount := &ethpb.Balance{}
@@ -1431,26 +1430,9 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 				}
 
 				waletNonce = nonce.GetNonce()
-				nonceFromDB := int64(0)
 				userTxs := []store.TransactionETH{}
 				err = restClient.userStore.GetAllWalletEthTransactions(user.UserID, currencyId, networkId, &userTxs)
-				for _, tx := range userTxs {
-					// if tx.Status == store.TxStatusAppearedInMempoolIncoming {
-					// 	if totalBalance != pendingBalance {
-					// 		address.LastActionTime = time.Now().Unix()
-					// 		pending = true
-					// 	}
-					// }
-					if int64(tx.Nonce) > nonceFromDB && tx.Status == store.TxStatusAppearedInBlockOutcoming || tx.Status == store.TxStatusAppearedInMempoolOutcoming {
-						nonceFromDB = int64(tx.Nonce) + 1
-					}
-				}
-
-				if nonce.GetNonce() < nonceFromDB {
-					restClient.log.Warnf("nonceFromDB")
-					waletNonce = nonceFromDB + 2
-				}
-				restClient.log.Warnf("nonceFromDB n %v ndb %v nonce to user %v", nonce.GetNonce(), nonceFromDB+1, waletNonce)
+				
 
 				// Check for transaction status from transaction history in case of that geth take a lot of time to procces address balances in inner
 				// its a HACK we put a pending flag in case if we have pending txs in out txs history. In this case ballance will be callculated partly from tx hisotry.
@@ -1489,7 +1471,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					Address:        address.Address,
 					AddressIndex:   address.AddressIndex,
 					Amount:         totalBalance,
-					Nonce:          waletNonce,
+					Nonce:           nonce.GetNonce(),
 				})
 
 			}
@@ -1764,25 +1746,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					}
 
 					walletNonce = nonce.GetNonce()
-					nonceFromDB := int64(0)
-					for _, tx := range userTxs {
-						// if tx.Status == store.TxStatusAppearedInMempoolIncoming {
-						// 	if totalBalance != pendingBalance {
-						// 		restClient.log.Warnf(" perding true Incoming")
-						// 		pending = true
-						// 	}
-						// }
-						if int64(tx.Nonce) > nonceFromDB && tx.Status == store.TxStatusAppearedInBlockOutcoming || tx.Status == store.TxStatusAppearedInMempoolOutcoming {
-							nonceFromDB = int64(tx.Nonce) + 1
-						}
-					}
-					restClient.log.Warnf("nonceFromDB n %v ndb %v nonce to user %v", nonce.GetNonce(), nonceFromDB+1, walletNonce)
-
-					if nonce.GetNonce() < nonceFromDB {
-						restClient.log.Warnf("nonceFromDB")
-						walletNonce = nonceFromDB + 2
-					}
-					restClient.log.Warnf("nonceFromDB n %v ndb %v nonce to user %v", nonce.GetNonce(), nonceFromDB+1, walletNonce)
+					
 
 					pendingBalanceBig, _ := new(big.Int).SetString(amount.GetPendingBalance(), 10)
 					walletHistory := []store.TransactionETH{}
@@ -1819,7 +1783,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 						Address:        address.Address,
 						AddressIndex:   address.AddressIndex,
 						Amount:         totalBalance,
-						Nonce:          walletNonce,
+						Nonce:          nonce.GetNonce(),
 					})
 				}
 				wv = append(wv, WalletVerboseETH{
