@@ -1390,7 +1390,8 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			var pending bool
 			var totalBalance string
 			var pendingBalance string
-			pTxs := PendingTransactions{}
+			var in int64
+			var out int64
 			// var pendingAmount string
 			var waletNonce int64
 			for _, address := range wallet.Adresses {
@@ -1468,7 +1469,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 								pendingBalance = pendingBalanceBig.String()
 								restClient.log.Warnf("\n Incoming Wallet name %v pending fake balance %v", wallet.WalletName, pendingBalance)
 								pending = true
-								pTxs.In++
+								in++
 							}
 							if tx.Status == store.TxStatusAppearedInMempoolOutcoming && amount.GetBalance() == amount.GetPendingBalance() {
 								pendingBalanceBigOld := pendingBalanceBig
@@ -1481,7 +1482,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 								pendingBalance = pendingBalanceBig.String()
 								restClient.log.Warnf("%v - %v - %v = %v", pendingBalanceBigOld, outTxAmount, fee, pendingBalanceBig)
 								restClient.log.Warnf("\n Outcoming Wallet name %v pending fake balance %v", wallet.WalletName, pendingBalance)
-								pTxs.Out++
+								out++
 							}
 							pending = true
 						}
@@ -1499,18 +1500,19 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			}
 
 			wv = append(wv, WalletVerboseETH{
-				WalletIndex:         wallet.WalletIndex,
-				CurrencyID:          wallet.CurrencyID,
-				NetworkID:           wallet.NetworkID,
-				WalletName:          wallet.WalletName,
-				LastActionTime:      wallet.LastActionTime,
-				DateOfCreation:      wallet.DateOfCreation,
-				Nonce:               waletNonce,
-				Balance:             totalBalance,
-				PendingBalance:      pendingBalance,
-				VerboseAddress:      av,
-				PendingTransactions: pTxs,
-				Pending:             pending,
+				WalletIndex:    wallet.WalletIndex,
+				CurrencyID:     wallet.CurrencyID,
+				NetworkID:      wallet.NetworkID,
+				WalletName:     wallet.WalletName,
+				LastActionTime: wallet.LastActionTime,
+				DateOfCreation: wallet.DateOfCreation,
+				Nonce:          waletNonce,
+				Balance:        totalBalance,
+				PendingBalance: pendingBalance,
+				VerboseAddress: av,
+				In:             in,
+				Out:            out,
+				Pending:        pending,
 			})
 
 			av = []ETHAddressVerbose{}
@@ -1542,23 +1544,19 @@ type WalletVerbose struct {
 }
 
 type WalletVerboseETH struct {
-	CurrencyID          int                 `json:"currencyid"`
-	NetworkID           int                 `json:"networkid"`
-	WalletIndex         int                 `json:"walletindex"`
-	WalletName          string              `json:"walletname"`
-	LastActionTime      int64               `json:"lastactiontime"`
-	DateOfCreation      int64               `json:"dateofcreation"`
-	Nonce               int64               `json:"nonce"`
-	PendingBalance      string              `json:"pendingbalance"`
-	Balance             string              `json:"balance"`
-	VerboseAddress      []ETHAddressVerbose `json:"addresses"`
-	PendingTransactions PendingTransactions `json:"pendingtransactions"`
-	Pending             bool                `json:"pending"`
-}
-
-type PendingTransactions struct {
-	In  int64 `json:"in"`
-	Out int64 `json:"out"`
+	CurrencyID     int                 `json:"currencyid"`
+	NetworkID      int                 `json:"networkid"`
+	WalletIndex    int                 `json:"walletindex"`
+	WalletName     string              `json:"walletname"`
+	LastActionTime int64               `json:"lastactiontime"`
+	DateOfCreation int64               `json:"dateofcreation"`
+	Nonce          int64               `json:"nonce"`
+	PendingBalance string              `json:"pendingbalance"`
+	Balance        string              `json:"balance"`
+	VerboseAddress []ETHAddressVerbose `json:"addresses"`
+	In             int64               `json:"in"`
+	Out            int64               `json:"out"`
+	Pending        bool                `json:"pending"`
 }
 
 type AddressVerbose struct {
@@ -1721,7 +1719,8 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 				var totalBalance string
 				var pendingBalance string
-				pTxs := PendingTransactions{}
+				var in int64
+				var out int64
 				// var pendingAmount string
 
 				for _, address := range wallet.Adresses {
@@ -1788,11 +1787,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 							nonceFromDB = int64(tx.Nonce) + 1
 						}
 					}
-
-					if nonce.GetNonce() < nonceFromDB {
-						restClient.log.Warnf("nonceFromDB")
-						walletNonce = nonceFromDB + 2
-					}
 					restClient.log.Warnf("nonceFromDB n %v ndb %v nonce to user %v", nonce.GetNonce(), nonceFromDB+1, walletNonce)
 
 					if nonce.GetNonce() < nonceFromDB {
@@ -1814,7 +1808,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 									pendingBalance = pendingBalanceBig.String()
 									restClient.log.Warnf("\n Incoming Wallet name %v pending fake balance %v", wallet.WalletName, pendingBalance)
 									pending = true
-									pTxs.In++
+									in++
 								}
 								if tx.Status == store.TxStatusAppearedInMempoolOutcoming && amount.GetBalance() == amount.GetPendingBalance() {
 									pendingBalanceBigOld := pendingBalanceBig
@@ -1827,7 +1821,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 									pendingBalance = pendingBalanceBig.String()
 									restClient.log.Warnf("%v - %v - %v = %v", pendingBalanceBigOld, outTxAmount, fee, pendingBalanceBig)
 									restClient.log.Warnf("\n Outcoming Wallet name %v pending fake balance %v", wallet.WalletName, pendingBalance)
-									pTxs.Out++
+									out++
 								}
 								pending = true
 							}
@@ -1843,18 +1837,19 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					})
 				}
 				wv = append(wv, WalletVerboseETH{
-					WalletIndex:         wallet.WalletIndex,
-					CurrencyID:          wallet.CurrencyID,
-					NetworkID:           wallet.NetworkID,
-					Balance:             totalBalance,
-					PendingBalance:      pendingBalance,
-					Nonce:               walletNonce,
-					WalletName:          wallet.WalletName,
-					LastActionTime:      wallet.LastActionTime,
-					DateOfCreation:      wallet.DateOfCreation,
-					VerboseAddress:      av,
-					PendingTransactions: pTxs,
-					Pending:             pending,
+					WalletIndex:    wallet.WalletIndex,
+					CurrencyID:     wallet.CurrencyID,
+					NetworkID:      wallet.NetworkID,
+					Balance:        totalBalance,
+					PendingBalance: pendingBalance,
+					Nonce:          walletNonce,
+					WalletName:     wallet.WalletName,
+					LastActionTime: wallet.LastActionTime,
+					DateOfCreation: wallet.DateOfCreation,
+					VerboseAddress: av,
+					In:             in,
+					Out:            out,
+					Pending:        pending,
 				})
 				av = []ETHAddressVerbose{}
 			default:
