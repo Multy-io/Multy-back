@@ -196,24 +196,47 @@ func sendNotifyToClients(tx store.MultyTX, nsqProducer *nsq.Producer, netid int)
 			sendNotify(&txMsq, nsqProducer)
 		}
 	}
-
-	for _, txInputs := range tx.TxInputs {
-		txMsq := store.TransactionWithUserID{
-			UserID: tx.UserId,
-			NotificationMsg: &store.WsTxNotify{
-				CurrencyID:      currencies.Bitcoin,
-				NetworkID:       netid,
-				Address:         tx.TxAddress[0],
-				Amount:          strconv.Itoa(int(tx.TxOutAmount)),
-				TxID:            tx.TxID,
-				TransactionType: tx.TxStatus,
-				WalletIndex:     tx.WalletsOutput[0].WalletIndex,
-				To:              tx.TxAddress[0],
-				From:            txInputs.Address,
-			},
+	if len(tx.WalletsOutput) > 0 {
+		for _, txInputs := range tx.TxInputs {
+			txMsq := store.TransactionWithUserID{
+				UserID: tx.UserId,
+				NotificationMsg: &store.WsTxNotify{
+					CurrencyID:      currencies.Bitcoin,
+					NetworkID:       netid,
+					Address:         tx.TxAddress[0],
+					Amount:          strconv.Itoa(int(tx.TxOutAmount)),
+					TxID:            tx.TxID,
+					TransactionType: tx.TxStatus,
+					WalletIndex:     tx.WalletsOutput[0].WalletIndex,
+					To:              tx.TxAddress[0],
+					From:            txInputs.Address,
+				},
+			}
+			if tx.TxAddress[0] != txInputs.Address {
+				sendNotify(&txMsq, nsqProducer)
+			}
 		}
-		if tx.TxAddress[0] != txInputs.Address {
-			sendNotify(&txMsq, nsqProducer)
+	}
+
+	if len(tx.WalletsInput) > 0 {
+		for _, txInputs := range tx.TxInputs {
+			txMsq := store.TransactionWithUserID{
+				UserID: tx.UserId,
+				NotificationMsg: &store.WsTxNotify{
+					CurrencyID:      currencies.Bitcoin,
+					NetworkID:       netid,
+					Address:         tx.TxAddress[0],
+					Amount:          strconv.Itoa(int(tx.TxOutAmount)),
+					TxID:            tx.TxID,
+					TransactionType: tx.TxStatus,
+					WalletIndex:     tx.WalletsInput[0].WalletIndex,
+					To:              tx.TxAddress[0],
+					From:            txInputs.Address,
+				},
+			}
+			if tx.TxAddress[0] != txInputs.Address {
+				sendNotify(&txMsq, nsqProducer)
+			}
 		}
 	}
 
