@@ -1364,11 +1364,11 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			return
 		}
 
-		var multisigAddress string
+		var invitecode string
 		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
 		restClient.log.Debugf("getWalletVerbose [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
 		if err != nil {
-			multisigAddress = c.Param("walletindex")
+			invitecode = c.Param("walletindex")
 		}
 
 		currencyId, err := strconv.Atoi(c.Param("currencyid"))
@@ -1483,14 +1483,14 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			multisig := store.Multisig{}
 
 			// multisig verbose
-			if multisigAddress != "" {
+			if invitecode != "" {
 				for _, m := range user.Multisigs {
-					if m.NetworkID == networkId && m.CurrencyID == currencyId && m.ContractAddress == multisigAddress {
+					if m.NetworkID == networkId && m.CurrencyID == currencyId && m.InviteCode == invitecode {
 						multisig = m
 						break
 					}
 				}
-				if len(multisig.ContractAddress) == 0 {
+				if len(multisig.Owners) == 0 {
 					restClient.log.Errorf("getAllWalletsVerbose: len(multisig.ContractAddress) == 0:\t[addr=%s]", c.Request.RemoteAddr)
 					c.JSON(code, gin.H{
 						"code":    http.StatusBadRequest,
@@ -1549,7 +1549,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					LastActionTime: multisig.LastActionTime,
 					Address:        multisig.ContractAddress,
 					Amount:         totalBalance,
-					Nonce:          nonce.Nonce,
+					Nonce:          waletNonce,
 				})
 				wv = append(wv, WalletVerboseETH{
 					CurrencyID:     multisig.CurrencyID,
@@ -1574,7 +1574,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			}
 
 			// wallet verbose
-			if multisigAddress == "" {
+			if invitecode == "" {
 				for _, w := range user.Wallets {
 					if w.NetworkID == networkId && w.CurrencyID == currencyId && w.WalletIndex == walletIndex {
 						wallet = w
@@ -1626,8 +1626,6 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 
 					p, _ := strconv.Atoi(amount.GetPendingBalance())
 					b, _ := strconv.Atoi(amount.GetBalance())
-					// pendingBalance = strconv.Itoa(p - b)
-					// pendingAmount = strconv.Itoa(p - b)
 
 					if p != b {
 						pending = true
@@ -1664,7 +1662,6 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					Pending:        pending,
 				})
 				av = []ETHAddressVerbose{}
-
 			}
 
 		default:
