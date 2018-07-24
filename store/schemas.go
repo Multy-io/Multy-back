@@ -318,6 +318,16 @@ type ServerConfig struct {
 	Tag        string `json:"tag"`
 }
 
+type DeviceVersion struct {
+	Hard int `json:"hard"`
+	Soft int `json:"soft"`
+}
+
+type Versions struct {
+	Android DeviceVersion `json:"android"`
+	IOS     DeviceVersion `json:"ios"`
+}
+
 // Donation Statuses
 // 0 - Pending
 // 1 - Active

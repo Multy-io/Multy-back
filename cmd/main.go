@@ -53,6 +53,7 @@ func main() {
 	config.ReadGlobalConfig(&globalOpt, "multy configuration")
 
 	log.Error("--------------------------------new multy back server session")
+
 	log.Infof("CONFIGURATION=%+v", globalOpt)
 
 	log.Infof("branch: %s", branch)

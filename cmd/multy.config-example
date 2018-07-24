@@ -15,8 +15,8 @@
     "Database": {
         "Address": "localhost:27000",
 
-        "Username": "a",
-        "Password": "4",
+        "Username": "username",
+        "Password": "password",
 
         "TableUsers": "UserCollection",
         "DBUsers": "userDB",
@@ -40,10 +40,20 @@
     "NSQAddress": "0.0.0.0:1150",
     "RestAddress": "0.0.0.0:6778",
     "SocketioAddr": "0.0.0.0:6780",
-    "Secretkey": "secret key",
+    "Secretkey": "your_key",
     "Firebase": {
         "ServerKey": "4"
     },
+    "DeviceVersions": {
+		"Android": {
+			"Soft": 7,
+			"Hard": 7
+		},
+		"iOS": {
+			"Soft": 49,
+			"Hard": 49
+		}
+	},
     "ExchangerConfiguration": {
         "TargetCurrencies": ["BTC", "ETH", "GOLOS", "BTS", "STEEM", "WAVES", "LTC", "BCH", "ETC", "DASH", "EOS"],
         "ReferenceCurrencies": ["USDT", "BTC"],

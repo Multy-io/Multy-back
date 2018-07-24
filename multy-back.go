@@ -265,6 +265,7 @@ func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 		multy.ETH,
 		conf.MultyVerison,
 		conf.Secretkey,
+		conf.DeviceVersions,
 	)
 	if err != nil {
 		return err

@@ -229,9 +229,9 @@ func saveTransaction(tx store.TransactionETH, networtkID int, resync bool) error
 
 	txStore := &mgo.Collection{}
 	switch networtkID {
-	case currencies.Main:
+	case currencies.ETHMain:
 		txStore = txsData
-	case currencies.Test:
+	case currencies.ETHTest:
 		txStore = txsDataTest
 	default:
 		return errors.New("saveMultyTransaction: wrong networkID")

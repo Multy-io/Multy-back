@@ -207,7 +207,7 @@ func sendNotifyToClients(tx store.MultyTX, nsqProducer *nsq.Producer, netid int)
 				Amount:          strconv.Itoa(int(tx.TxOutAmount)),
 				TxID:            tx.TxID,
 				TransactionType: tx.TxStatus,
-				WalletIndex:     100,
+				WalletIndex:     tx.WalletsOutput[0].WalletIndex,
 				To:              tx.TxAddress[0],
 				From:            txInputs.Address,
 			},
