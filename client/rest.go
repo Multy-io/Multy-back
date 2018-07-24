@@ -1545,8 +1545,8 @@ type WalletVerboseETH struct {
 }
 
 type PendingTransactions struct {
-	In  int64 `json:"In"`
-	Out int64 `json:"Out"`
+	In  int64 `json:"in"`
+	Out int64 `json:"out"`
 }
 
 type AddressVerbose struct {
