@@ -278,7 +278,7 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 	return nil
 }
 
-func createCustomMultisig(wp WalletParams, token string, restClient *RestClient, c *gin.Context) error {
+func createCustomMultisig(wp WalletParams, token string, restClient *RestClient, c *gin.Context) (*store.Multisig, error) {
 	user := store.User{}
 	query := bson.M{"devices.JWT": token}
 
@@ -286,7 +286,7 @@ func createCustomMultisig(wp WalletParams, token string, restClient *RestClient,
 	if err != nil {
 		restClient.log.Errorf("createCustomMultisig: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 		err = errors.New(msgErrUserNotFound)
-		return err
+		return nil, err
 	}
 
 	sel := bson.M{"devices.JWT": token}
@@ -296,9 +296,9 @@ func createCustomMultisig(wp WalletParams, token string, restClient *RestClient,
 	if err != nil {
 		restClient.log.Errorf("createCustomMultisig: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 		err := errors.New(msgErrServerError)
-		return err
+		return nil, err
 	}
-	return nil
+	return &multisg, nil
 }
 
 func changeName(cn ChangeName, token string, restClient *RestClient, c *gin.Context) error {
@@ -483,7 +483,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 				})
 				return
 			}
-			err = createCustomMultisig(wp, token, restClient, c)
+			multusig, err := createCustomMultisig(wp, token, restClient, c)
 			if err != nil {
 				restClient.log.Errorf("addWallet: createCustomMultisig: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 				c.JSON(http.StatusBadRequest, gin.H{
@@ -495,7 +495,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 			c.JSON(http.StatusCreated, gin.H{
 				"code":    code,
 				"time":    time.Now().Unix(),
-				"message": message,
+				"message": multusig,
 			})
 			return
 

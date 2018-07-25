@@ -98,20 +98,20 @@ type Wallet struct {
 }
 
 type Multisig struct {
-	CurrencyID      int               `bson:"currencyid"`
-	NetworkID       int               `bson:"networkid"`
-	Confirmations   int               `bson:"confirmations"`
-	WalletName      string            `bson:"walletName"`
-	FactoryAddress  string            `bson:"factoryAddress"`
-	ContractAddress string            `bson:"contractAddress"`
-	TxOfCreation    string            `bson:"txOfCreation"`
-	LastActionTime  int64             `bson:"lastActionTime"`
-	DateOfCreation  int64             `bson:"dateOfCreation"`
-	Owners          []AddressExtended `bson:"owners"`
-	DeployStatus    bool              `bson:"deployStatus"`
-	Status          string            `bson:"status"`
-	InviteCode      string            `bson:"inviteCode"`
-	OwnersCount     int               `bson:"ownersCount"`
+	CurrencyID      int               `bson:"currencyid" json:"currencyid"`
+	NetworkID       int               `bson:"networkid" json:"networkid"`
+	Confirmations   int               `bson:"confirmations" json:"confirmations"`
+	WalletName      string            `bson:"walletName" json:"walletName"`
+	FactoryAddress  string            `bson:"factoryAddress" json:"factoryAddress"`
+	ContractAddress string            `bson:"contractAddress" json:"contractAddress"`
+	TxOfCreation    string            `bson:"txOfCreation" json:"txOfCreation"`
+	LastActionTime  int64             `bson:"lastActionTime" json:"lastActionTime"`
+	DateOfCreation  int64             `bson:"dateOfCreation" json:"dateOfCreation"`
+	Owners          []AddressExtended `bson:"owners" json:"owners"`
+	DeployStatus    bool              `bson:"deployStatus" json:"deployStatus"`
+	Status          string            `bson:"status" json:"status"`
+	InviteCode      string            `bson:"inviteCode" json:"inviteCode"`
+	OwnersCount     int               `bson:"ownersCount" json:"ownersCount"`
 }
 
 type RatesRecord struct {
