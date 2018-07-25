@@ -1568,6 +1568,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 						IsDeployed:     multisig.DeployStatus,
 						FactoryAddress: multisig.FactoryAddress,
 						TxOfCreation:   multisig.TxOfCreation,
+						InviteCode:     multisig.InviteCode,
 					},
 				})
 
@@ -1730,6 +1731,7 @@ type MultisigVerbose struct {
 	IsDeployed     bool                    `json:"isdeployed,omitempty"`
 	FactoryAddress string                  `json:"factoryaddress,omitempty"`
 	TxOfCreation   string                  `json:"txofcreation,omitempty"`
+	InviteCode     string                  `json:"inviteCode,omitempty"`
 }
 
 type StockExchangeRate struct {
@@ -2011,6 +2013,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					IsDeployed:     multisig.DeployStatus,
 					FactoryAddress: multisig.FactoryAddress,
 					TxOfCreation:   multisig.TxOfCreation,
+					InviteCode:     multisig.InviteCode,
 				},
 			})
 
