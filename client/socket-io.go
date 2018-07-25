@@ -649,7 +649,6 @@ func makeErr(userid, errorStr string) store.WsMessage {
 
 func updateUserOwners(user store.User, multisig *store.Multisig, uStore store.UserStore) (*store.Multisig, error) {
 	// Clean addttion tags
-
 	owners := []store.AddressExtended{}
 	for _, owner := range multisig.Owners {
 		owners = append(owners, store.AddressExtended{
@@ -657,18 +656,17 @@ func updateUserOwners(user store.User, multisig *store.Multisig, uStore store.Us
 			Creator: owner.Creator,
 		})
 	}
-
 	fetchedOwners := []store.AddressExtended{}
-
 	for _, wallet := range user.Wallets {
 		for _, address := range wallet.Adresses {
-
 			for _, owner := range owners {
 				if owner.Address == address.Address {
 					fetchedOwners = append(fetchedOwners, store.AddressExtended{
+						Address:      address.Address,
 						AddressIndex: address.AddressIndex,
 						WalletIndex:  wallet.WalletIndex,
 						UserID:       user.UserID,
+						Creator:      owner.Creator,
 						Associated:   true,
 					})
 				} else {

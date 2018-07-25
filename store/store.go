@@ -489,15 +489,15 @@ func (mStore *MongoUserStore) FindMultisig(userid, invitecode string) (*Multisig
 	users := []User{}
 	multisig := Multisig{}
 
-	// // only accept one address from one user in multisig
-	sel := bson.M{"userID": userid, "multisig.inviteCode": invitecode}
-	err := mStore.usersData.Find(sel).One(nil)
-	if err != mgo.ErrNotFound {
-		return &multisig, errors.New("User: " + userid + " don't have this multsig")
-	}
+	// // // only accept one address from one user in multisig
+	// sel := bson.M{"userID": userid, "multisig.inviteCode": invitecode}
+	// err := mStore.usersData.Find(sel).One(nil)
+	// if err == mgo.ErrNotFound {
+	// 	return &multisig, errors.New("User: " + userid + " don't have this multsig")
+	// }
 
-	sel = bson.M{"multisig.inviteCode": invitecode}
-	err = mStore.usersData.Find(sel).All(&users)
+	sel := bson.M{"multisig.inviteCode": invitecode}
+	err := mStore.usersData.Find(sel).All(&users)
 	if err != nil {
 		fmt.Println("No such multisigs with this invite code")
 		return &multisig, errors.New("No such multisigs with this invite code")
