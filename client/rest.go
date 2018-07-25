@@ -475,6 +475,13 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 		}
 		// Create multisig
 		if wp.Multisig.IsMultisig {
+			if wp.Multisig.OwnersCount < wp.Multisig.SignaturesRequired {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": "owners count should be less or equal than required signatures",
+				})
+				return
+			}
 			if !restClient.userStore.CheckInviteCode(wp.Multisig.InviteCode) {
 				restClient.log.Errorf("addWallet: createCustomMultisig: already existed invite code \t[addr=%s]", c.Request.RemoteAddr)
 				c.JSON(http.StatusBadRequest, gin.H{
@@ -1565,7 +1572,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					Multisig: &MultisigVerbose{
 						Owners:         multisig.Owners,
 						Confirmations:  multisig.Confirmations,
-						IsDeployed:     multisig.DeployStatus,
+						DeployStatus:   multisig.DeployStatus,
 						FactoryAddress: multisig.FactoryAddress,
 						TxOfCreation:   multisig.TxOfCreation,
 						InviteCode:     multisig.InviteCode,
@@ -1728,9 +1735,9 @@ type ETHAddressVerbose struct {
 type MultisigVerbose struct {
 	Owners         []store.AddressExtended `json:"owners,omitempty"`
 	Confirmations  int                     `json:"confirmations,omitempty"`
-	IsDeployed     bool                    `json:"isdeployed,omitempty"`
-	FactoryAddress string                  `json:"factoryaddress,omitempty"`
-	TxOfCreation   string                  `json:"txofcreation,omitempty"`
+	DeployStatus   int                     `json:"deployStatus,omitempty"`
+	FactoryAddress string                  `json:"factoryAddress,omitempty"`
+	TxOfCreation   string                  `json:"txOfCreation,omitempty"`
 	InviteCode     string                  `json:"inviteCode,omitempty"`
 }
 
@@ -2010,7 +2017,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 				Multisig: &MultisigVerbose{
 					Owners:         multisig.Owners,
 					Confirmations:  multisig.Confirmations,
-					IsDeployed:     multisig.DeployStatus,
+					DeployStatus:   multisig.DeployStatus,
 					FactoryAddress: multisig.FactoryAddress,
 					TxOfCreation:   multisig.TxOfCreation,
 					InviteCode:     multisig.InviteCode,

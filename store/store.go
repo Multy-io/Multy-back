@@ -102,7 +102,7 @@ type UserStore interface {
 	InviteCodeInfo(invitecode string) InviteCodeInfo
 
 	FindMultisigUsers(invitecode string) []User
-	UpdateMultisigOwners(userid, invitecode string, owners []AddressExtended) error
+	UpdateMultisigOwners(userid, invitecode string, owners []AddressExtended, deployStatus int) error
 
 	DeleteHistory(CurrencyID, NetworkID int, Address string) error
 
@@ -611,9 +611,12 @@ func (mStore *MongoUserStore) FindMultisigUsers(invitecode string) []User {
 	mStore.usersData.Find(sel).All(&users)
 	return users
 }
-func (mStore *MongoUserStore) UpdateMultisigOwners(userid, invitecode string, owners []AddressExtended) error {
+func (mStore *MongoUserStore) UpdateMultisigOwners(userid, invitecode string, owners []AddressExtended, deployStatus int) error {
 	sel := bson.M{"userID": userid, "multisig.inviteCode": invitecode}
-	update := bson.M{"$set": bson.M{"multisig.$.owners": owners}}
+	update := bson.M{"$set": bson.M{
+		"multisig.$.owners":       owners,
+		"multisig.$.deployStatus": deployStatus,
+	}}
 	return mStore.usersData.Update(sel, update)
 }
 

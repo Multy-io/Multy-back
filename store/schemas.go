@@ -24,6 +24,12 @@ const (
 	TxStatusInBlockConfirmedIncoming  = 5
 	TxStatusInBlockConfirmedOutcoming = 6
 
+	MultisigStatusWaitingForJoin = 1
+	MultisigStatusAllJoined      = 2
+	MultisigStatusDeployPending  = 3
+	MultisigStatusRejected       = 4
+	MultisigStatusDeployed       = 5
+
 	// ws notification topic
 	TopicTransaction = "TransactionUpdate"
 	TopicNewIncoming = "NewIncoming"
@@ -108,7 +114,7 @@ type Multisig struct {
 	LastActionTime  int64             `bson:"lastActionTime" json:"lastActionTime"`
 	DateOfCreation  int64             `bson:"dateOfCreation" json:"dateOfCreation"`
 	Owners          []AddressExtended `bson:"owners" json:"owners"`
-	DeployStatus    bool              `bson:"deployStatus" json:"deployStatus"`
+	DeployStatus    int               `bson:"deployStatus" json:"deployStatus"`
 	Status          string            `bson:"status" json:"status"`
 	InviteCode      string            `bson:"inviteCode" json:"inviteCode"`
 	OwnersCount     int               `bson:"ownersCount" json:"ownersCount"`

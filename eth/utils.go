@@ -712,8 +712,10 @@ func generatedMultisigTxToStore(mul *ethpb.Multisig) store.Multisig {
 		FactoryAddress:  mul.GetFactoryAddress(),
 		LastActionTime:  time.Now().Unix(),
 		DateOfCreation:  time.Now().Unix(),
-		DeployStatus:    mul.GetDeployStatus(),
-		Status:          store.WalletStatusOK,
+		//TODO:
+		//TODO:
+		// DeployStatus: mul.GetDeployStatus(),
+		Status: store.WalletStatusOK,
 	}
 }
 

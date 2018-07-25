@@ -349,6 +349,12 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						Associated:   true,
 					})
 
+					deployStatus := store.MultisigStatusWaitingForJoin
+					joined++
+					if joined == multisig.Confirmations {
+						multisigToJoin.DeployStatus = store.MultisigStatusAllJoined
+						deployStatus = store.MultisigStatusAllJoined
+					}
 					multisigToJoin.Owners = owners
 					users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
 					err = ratesDB.JoinMultisig(msgMultisig.UserID, multisigToJoin)
@@ -357,10 +363,9 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						pool.log.Errorf("server.On:MultisigMsgratesDB.MultisigMsg: %v", err.Error())
 						return makeErr(msgMultisig.UserID, "can't join multisig: "+err.Error())
 					}
-
 					// send new multisig entitiy to all online owners by ws
 					for _, user := range users {
-						userMultisig, err := updateUserOwners(user, multisig, ratesDB)
+						userMultisig, err := updateUserOwners(user, multisig, ratesDB, deployStatus)
 						if err != nil {
 							//db err
 							pool.log.Errorf("server.On:MultisigMsgratesDB.MultisigMsg: %v", err.Error())
@@ -430,9 +435,8 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						}
 					}
 					multisig.Owners = owners
-
 					for _, user := range users {
-						userMultisig, err := updateUserOwners(user, multisig, ratesDB)
+						userMultisig, err := updateUserOwners(user, multisig, ratesDB, store.MultisigStatusWaitingForJoin)
 						if err != nil {
 							//db err
 							pool.log.Errorf("server.On:MultisigMsgratesDB.MultisigMsg: %v", err.Error())
@@ -515,7 +519,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 					multisig.Owners = owners
 
 					for _, user := range users {
-						userMultisig, err := updateUserOwners(user, multisig, ratesDB)
+						userMultisig, err := updateUserOwners(user, multisig, ratesDB, store.MultisigStatusWaitingForJoin)
 						if err != nil {
 							//db err
 							pool.log.Errorf("server.On:kickMultisig:updateUserOwners: %v", err.Error())
@@ -566,10 +570,9 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 					}
 				}
 				if !admin {
-					pool.log.Errorf("server.On:deleteMultisig: only creator can kik form ms")
-					return makeErr(msgMultisig.UserID, "only creator can kik form ms")
+					pool.log.Errorf("server.On:deleteMultisig: only creator can delete ms")
+					return makeErr(msgMultisig.UserID, "only creator can delete ms")
 				}
-
 				if admin {
 					err := ratesDB.DeleteMultisig(msgMultisig.InviteCode)
 					if err != nil {
@@ -675,7 +678,7 @@ func makeErr(userid, errorStr string) store.WsMessage {
 	}
 }
 
-func updateUserOwners(user store.User, multisig *store.Multisig, uStore store.UserStore) (*store.Multisig, error) {
+func updateUserOwners(user store.User, multisig *store.Multisig, uStore store.UserStore, deployStatus int) (*store.Multisig, error) {
 	// Clean addttion tags
 	owners := []store.AddressExtended{}
 	for _, owner := range multisig.Owners {
@@ -703,7 +706,7 @@ func updateUserOwners(user store.User, multisig *store.Multisig, uStore store.Us
 			}
 		}
 	}
-	err := uStore.UpdateMultisigOwners(user.UserID, multisig.InviteCode, fetchedOwners)
+	err := uStore.UpdateMultisigOwners(user.UserID, multisig.InviteCode, fetchedOwners, deployStatus)
 	return multisig, err
 
 }
