@@ -396,7 +396,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			if !ratesDB.CheckInviteCode(msgMultisig.InviteCode) {
 				multisig, msg, err := getMultisig(ratesDB, msgMultisig)
 				if err != nil {
-					pool.log.Errorf("server.On:msgSend:joinMultisig %v", err.Error())
+					pool.log.Errorf("server.On:msgSend:leaveMultisigч %v", err.Error())
 					return msg
 				}
 				exists := false

@@ -489,12 +489,11 @@ func (mStore *MongoUserStore) FindMultisig(userid, invitecode string) (*Multisig
 	users := []User{}
 	multisig := Multisig{}
 
-	// only accept one address from one user in multisig
+	// // only accept one address from one user in multisig
 	sel := bson.M{"userID": userid, "multisig.inviteCode": invitecode}
 	err := mStore.usersData.Find(sel).One(nil)
 	if err != mgo.ErrNotFound {
-		fmt.Println("found")
-		return &multisig, errors.New("No such multisigs with this invite code")
+		return &multisig, errors.New("User: " + userid + " don't have this multsig")
 	}
 
 	sel = bson.M{"multisig.inviteCode": invitecode}
@@ -505,7 +504,6 @@ func (mStore *MongoUserStore) FindMultisig(userid, invitecode string) (*Multisig
 	}
 
 	if len(users) > 0 {
-		fmt.Println("users[0].Multisigs--------", users[0].Multisigs[0].InviteCode, " f")
 		for _, mu := range users[0].Multisigs {
 			if mu.InviteCode == invitecode {
 				return &mu, nil
@@ -515,21 +513,6 @@ func (mStore *MongoUserStore) FindMultisig(userid, invitecode string) (*Multisig
 	if len(users) == 0 {
 		return &multisig, errors.New("No such multisigs with this invite code")
 	}
-	// // feth creators multisig
-	// for _, user := range users {
-	// 	for _, userMultisig := range user.Multisigs {
-	// 		if userMultisig.InviteCode == invitecode {
-	// 			for _, owner := range userMultisig.Owners {
-	// 				if user.UserID == owner.UserID {
-	// 					multisig = userMultisig
-	// 					fmt.Println("userMultisig", userMultisig)
-
-	// 					break
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
 
 	return &multisig, nil
 }
