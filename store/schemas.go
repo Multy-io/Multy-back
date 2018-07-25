@@ -452,6 +452,12 @@ type MultisigMsg struct {
 	NetworkID     int    `json:"networkid"`
 }
 
+type InviteCodeInfo struct {
+	CurrencyID int  `json:"currencyid"`
+	NetworkID  int  `json:"networkid"`
+	Exists     bool `json:"exists"`
+}
+
 func (s *MultisigMsg) FillStruct(m map[string]interface{}) error {
 	for k, v := range m {
 		err := SetField(s, k, v)
