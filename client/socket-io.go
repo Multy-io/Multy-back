@@ -62,7 +62,7 @@ const (
 	joinMultisig   = "join:multisig"
 	leaveMultisig  = "leave:multisig"
 	deleteMultisig = "delete:multisig"
-	kickMultisig   = "kik:multisig"
+	kickMultisig   = "kick:multisig"
 
 	updateMultisig  = "update:multisig"
 	deletedMultisig = "deleted:multisig"
@@ -488,10 +488,15 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 					}
 				}
 
+				if !admin {
+					pool.log.Errorf("server.On:kickMultisig: only admin can kik form ms: %v", err.Error())
+					return makeErr(msgMultisig.UserID, "only admin can kik form ms")
+				}
+
 				owners := []store.AddressExtended{}
 				if admin {
 					//delete multisig from user
-					err := ratesDB.KickMultisig(msgMultisig.AddressToKik, msgMultisig.InviteCode)
+					err := ratesDB.KickMultisig(msgMultisig.AddressToKick, msgMultisig.InviteCode)
 					if err != nil {
 						pool.log.Errorf("server.On:kickMultisig:ratesDB.KickMultisig: %v", err.Error())
 						return makeErr(msgMultisig.UserID, "can't kik from multisig: "+err.Error())
@@ -501,7 +506,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 
 					//delete owner from owners list
 					for _, owner := range multisig.Owners {
-						if owner.Address != msgMultisig.AddressToKik {
+						if owner.Address != msgMultisig.AddressToKick {
 							owners = append(owners, owner)
 						}
 					}
@@ -542,7 +547,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			msgMultisig := &store.MultisigMsg{}
 			err := mapstructure.Decode(msg.Payload, msgMultisig)
 			if err != nil {
-				pool.log.Errorf("server.On:msgSend:kickMultisig:mapstructure.Decode %v", err.Error())
+				pool.log.Errorf("server.On:msgSend:deleteMultisig:mapstructure.Decode %v", err.Error())
 				return makeErr(msgMultisig.UserID, "can't kik from multisig: bad request: "+err.Error())
 			}
 			if !ratesDB.CheckInviteCode(msgMultisig.InviteCode) {
@@ -554,11 +559,13 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 
 				admin := false
 				for _, owner := range multisig.Owners {
-					if owner.Address == msgMultisig.Address {
-						if owner.Creator {
-							admin = true
-						}
+					if owner.Address == msgMultisig.Address && owner.Creator {
+						admin = true
 					}
+				}
+				if !admin {
+					pool.log.Errorf("server.On:deleteMultisig: only creator can kik form ms")
+					return makeErr(msgMultisig.UserID, "only creator can kik form ms")
 				}
 
 				if admin {

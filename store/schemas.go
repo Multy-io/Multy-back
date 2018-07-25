@@ -443,13 +443,13 @@ type WsResponse struct {
 }
 
 type MultisigMsg struct {
-	UserID       string `json:"userid"`
-	Address      string `json:"address"`
-	InviteCode   string `json:"invitecode"`
-	AddressToKik string `json:"addresstokik"`
-	WalletIndex  int    `json:"walletindex"`
-	CurrencyID   int    `json:"currencyid"`
-	NetworkID    int    `json:"networkid"`
+	UserID        string `json:"userid"`
+	Address       string `json:"address"`
+	InviteCode    string `json:"invitecode"`
+	AddressToKick string `json:"addresstokick"`
+	WalletIndex   int    `json:"walletindex"`
+	CurrencyID    int    `json:"currencyid"`
+	NetworkID     int    `json:"networkid"`
 }
 
 func (s *MultisigMsg) FillStruct(m map[string]interface{}) error {
