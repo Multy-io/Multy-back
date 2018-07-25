@@ -1562,7 +1562,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					PendingBalance: pendingBalance,
 					VerboseAddress: av,
 					Pending:        pending,
-					Multisig: MultisigVerbose{
+					Multisig: &MultisigVerbose{
 						Owners:         multisig.Owners,
 						Confirmations:  multisig.Confirmations,
 						IsDeployed:     multisig.DeployStatus,
@@ -1643,7 +1643,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 						Address:        address.Address,
 						AddressIndex:   address.AddressIndex,
 						Amount:         totalBalance,
-						Nonce:          nonce.Nonce,
+						Nonce:          waletNonce,
 					})
 
 				}
@@ -1703,7 +1703,7 @@ type WalletVerboseETH struct {
 	Balance        string              `json:"balance"`
 	VerboseAddress []ETHAddressVerbose `json:"addresses"`
 	Pending        bool                `json:"pending"`
-	Multisig       MultisigVerbose     `json:"multisig,omitempty"`
+	Multisig       *MultisigVerbose    `json:"multisig,omitempty"`
 }
 
 type AddressVerbose struct {
@@ -1725,11 +1725,11 @@ type ETHAddressVerbose struct {
 }
 
 type MultisigVerbose struct {
-	Owners         []store.AddressExtended `json:"owners"`
-	Confirmations  int                     `json:"Confirmations"`
-	IsDeployed     bool                    `json:"isdeployed"`
-	FactoryAddress string                  `json:"factoryaddress"`
-	TxOfCreation   string                  `json:"txofcreation"`
+	Owners         []store.AddressExtended `json:"owners,omitempty"`
+	Confirmations  int                     `json:"confirmations,omitempty"`
+	IsDeployed     bool                    `json:"isdeployed,omitempty"`
+	FactoryAddress string                  `json:"factoryaddress,omitempty"`
+	TxOfCreation   string                  `json:"txofcreation,omitempty"`
 }
 
 type StockExchangeRate struct {
@@ -2005,7 +2005,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 				PendingBalance: pendingBalance,
 				VerboseAddress: av,
 				Pending:        pending,
-				Multisig: MultisigVerbose{
+				Multisig: &MultisigVerbose{
 					Owners:         multisig.Owners,
 					Confirmations:  multisig.Confirmations,
 					IsDeployed:     multisig.DeployStatus,
