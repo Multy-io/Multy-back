@@ -1914,7 +1914,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 						Address:        address.Address,
 						AddressIndex:   address.AddressIndex,
 						Amount:         totalBalance,
-						Nonce:          nonce.Nonce,
+						Nonce:          walletNonce,
 					})
 
 				}
