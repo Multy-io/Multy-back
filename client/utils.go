@@ -81,7 +81,7 @@ func createMultisig(currencyID, networkID, addressIndex, walletIndex, signatures
 				Creator:      true,
 			},
 		},
-		DeployStatus: false,
+		DeployStatus: store.MultisigStatusWaitingForJoin,
 		InviteCode:   invitecode,
 	}
 }
