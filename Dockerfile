@@ -14,13 +14,12 @@ RUN apt-get update && \
     apt-get install -y protobuf-compiler
 
 RUN cd $GOPATH/src/github.com/Multy-io && \ 
-    rm -rf Multy-back && \ 
+    rm -r Multy-back && \
     git clone https://github.com/Multy-io/Multy-back.git && \ 
     go get github.com/swaggo/gin-swagger && \
-    cd Multy-back && \
+    cd $GOPATH/src/github.com/Multy-io/Multy-back && \
     git checkout dev && \
     git pull origin dev 
-  #  rm -r ./vendor/github.com/golang/protobuf/proto
 
 RUN cd $GOPATH/src/github.com/Multy-io/Multy-back && \ 
     make build
