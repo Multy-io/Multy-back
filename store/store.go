@@ -99,6 +99,8 @@ type UserStore interface {
 	KickMultisig(address, invitecode string) error
 	DeleteMultisig(invitecode string) error
 	CheckInviteCode(invitecode string) bool
+	InviteCodeInfo(invitecode string) InviteCodeInfo
+
 	FindMultisigUsers(invitecode string) []User
 	UpdateMultisigOwners(userid, invitecode string, owners []AddressExtended) error
 
@@ -584,6 +586,23 @@ func (mStore *MongoUserStore) CheckInviteCode(invitecode string) bool {
 		return true
 	}
 	return false
+}
+
+func (mStore *MongoUserStore) InviteCodeInfo(invitecode string) InviteCodeInfo {
+	sel := bson.M{"multisig.inviteCode": invitecode}
+	user := User{}
+	inCodeInfo := InviteCodeInfo{}
+	_ = mStore.usersData.Find(sel).One(user)
+	for _, multisig := range user.Multisigs {
+		if multisig.InviteCode == invitecode {
+			inCodeInfo = InviteCodeInfo{
+				CurrencyID: multisig.CurrencyID,
+				NetworkID:  multisig.NetworkID,
+				Exists:     true,
+			}
+		}
+	}
+	return inCodeInfo
 }
 
 func (mStore *MongoUserStore) FindMultisigUsers(invitecode string) []User {

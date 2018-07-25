@@ -63,11 +63,13 @@ const (
 	leaveMultisig  = "leave:multisig"
 	deleteMultisig = "delete:multisig"
 	kickMultisig   = "kick:multisig"
+	checkMultisig  = "check:multisig"
 
 	updateMultisig  = "update:multisig"
 	deletedMultisig = "deleted:multisig"
 	okMultisig      = "ok:multisig"
 	errMultisig     = "err:multisig"
+	inviteCodeInfo  = "invitecode:info"
 
 	msgSend    = "message:send"
 	msgRecieve = "message:recieve"
@@ -604,7 +606,26 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			}
 
 			return makeErr("", "wrong request payload: ")
+
+		case checkMultisig:
+			msgMultisig := &store.MultisigMsg{}
+			err := mapstructure.Decode(msg.Payload, msgMultisig)
+			if err != nil {
+				pool.log.Errorf("server.On:msgSend:deleteMultisig:mapstructure.Decode %v", err.Error())
+				return makeErr(msgMultisig.UserID, "can't kik from multisig: bad request: "+err.Error())
+			}
+			icInfo := ratesDB.InviteCodeInfo(msgMultisig.InviteCode)
+			msg := store.WsMessage{
+				Type:    inviteCodeInfo,
+				To:      msgMultisig.UserID,
+				Date:    time.Now().Unix(),
+				Payload: icInfo,
+			}
+
+			return msg
+
 		}
+
 		return makeErr("", "wrong request message type: ")
 	})
 
