@@ -903,15 +903,34 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 				restClient.log.Errorf("getFeeRate:currencies.Ether:restClient.ETH.Cli: %v ", err.Error())
 			}
 			speed, _ := strconv.Atoi(rate.GetGas())
+
+			verySlow := speed * 60 / 100
+			slow := speed * 80 / 100
+			medium := speed
+			fast := speed * 145 / 100
+			veryFast := speed * 195 / 100
+
+			if verySlow < 1000000000 {
+				verySlow = 1000000000
+			}
+
+			if slow < 1000000000 {
+				slow = 1000000000
+			}
+
+			if speed < 1000000000 {
+				medium = 1000000000
+			}
+
 			switch networkid {
 			case currencies.ETHMain:
 				c.JSON(http.StatusOK, gin.H{
 					"speeds": EstimationSpeeds{
-						VerySlow: speed * 60 / 100,
-						Slow:     speed * 80 / 100,
-						Medium:   speed,
-						Fast:     speed * 145 / 100,
-						VeryFast: speed * 195 / 100,
+						VerySlow: verySlow,
+						Slow:     slow,
+						Medium:   medium,
+						Fast:     fast,
+						VeryFast: veryFast,
 					},
 					"code":    http.StatusOK,
 					"message": http.StatusText(http.StatusOK),
@@ -1432,7 +1451,6 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 				waletNonce = nonce.GetNonce()
 				userTxs := []store.TransactionETH{}
 				err = restClient.userStore.GetAllWalletEthTransactions(user.UserID, currencyId, networkId, &userTxs)
-				
 
 				// Check for transaction status from transaction history in case of that geth take a lot of time to procces address balances in inner
 				// its a HACK we put a pending flag in case if we have pending txs in out txs history. In this case ballance will be callculated partly from tx hisotry.
@@ -1471,7 +1489,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					Address:        address.Address,
 					AddressIndex:   address.AddressIndex,
 					Amount:         totalBalance,
-					Nonce:           nonce.GetNonce(),
+					Nonce:          nonce.GetNonce(),
 				})
 
 			}
@@ -1746,7 +1764,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					}
 
 					walletNonce = nonce.GetNonce()
-					
 
 					pendingBalanceBig, _ := new(big.Int).SetString(amount.GetPendingBalance(), 10)
 					walletHistory := []store.TransactionETH{}

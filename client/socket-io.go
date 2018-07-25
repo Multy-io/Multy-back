@@ -247,7 +247,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 				return "success:" + h.GetMessage()
 			}
 			if raw.NetworkID == currencies.ETHTest {
-				h, err := restClient.ETH.CliMain.EventSendRawTx(context.Background(), &ethpb.RawTx{
+				h, err := restClient.ETH.CliTest.EventSendRawTx(context.Background(), &ethpb.RawTx{
 					Transaction: raw.Transaction,
 				})
 				if err != nil {
