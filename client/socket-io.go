@@ -316,6 +316,13 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			// if invite code exists
 			if !ratesDB.CheckInviteCode(msgMultisig.InviteCode) {
 				// check current multisig for able to joining
+				users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
+				for _, user := range users {
+					if user.UserID == msgMultisig.UserID {
+						pool.log.Errorf("server.On:msgSend:joinMultisig we not support multiple join from same userid")
+						return makeErr(msgMultisig.UserID, "we not support multiple join from same userid ", joinMultisig)
+					}
+				}
 				multisig, msg, err := getMultisig(ratesDB, msgMultisig, joinMultisig)
 				if err != nil {
 					pool.log.Errorf("server.On:msgSend:joinMultisig %v", err.Error())
