@@ -475,7 +475,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 		}
 		// Create multisig
 		if wp.Multisig.IsMultisig {
-			if wp.Multisig.OwnersCount < wp.Multisig.SignaturesRequired {
+			if wp.Multisig.OwnersCount < wp.Multisig.SignaturesRequired || wp.Multisig.OwnersCount < 2 {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"code":    http.StatusBadRequest,
 					"message": "owners count should be less or equal than required signatures",
@@ -603,7 +603,7 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 				"gdax":     []string{"eur_btc", "usd_btc", "eth_btc", "eth_usd", "eth_eur", "btc_usd"},
 			},
 			"servertime": time.Now().UTC().Unix(),
-			"api":        "0.01",
+			"api":        "1.2",
 			"android": map[string]int{
 				"soft": 7,
 				"hard": 7,
@@ -614,6 +614,10 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 				"hard": 49,
 			},
 			"donate": restClient.donationAddresses,
+			"multisigfactory": map[string]string{
+				"ethtestnet": "0x116ffa11dd8829524767f561da5d33d3d170e17d",
+				"ethmainnet": "",
+			},
 		}
 		c.JSON(http.StatusOK, resp)
 	}

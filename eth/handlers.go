@@ -135,7 +135,6 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			users := map[string]store.User{} // ms attached address to user
 			attachedAddress := ""
 			for _, address := range multisigTx.Addresses {
-				log.Debugf("range multisigTx.Addresses")
 				user := store.User{}
 				err := usersData.Find(bson.M{"wallets.addresses.address": strings.ToLower(address)}).One(&user)
 				if err != nil {
@@ -153,19 +152,21 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			if err != nil {
 				log.Errorf("cli.AddMultisig:stream.Recv:usersData.Find:can't find %v  %v", err.Error(), attachedAddress)
 			}
+			ownersCount := 0
 			for _, ms := range msUser.Multisigs {
-				ownersCount := 0
 				for _, owner := range ms.Owners {
-					for addres, _ := range users {
+					for addres := range users {
 						if addres == owner.Address {
 							ownersCount++
-							if ownersCount == multisig.OwnersCount {
+							log.Warnf("ownersCount %v", ownersCount)
+							if ownersCount == ms.OwnersCount {
 								invitecode = ms.InviteCode
 								break
 							}
 						}
 					}
 				}
+				ownersCount = 0
 			}
 
 			if invitecode == "" {
@@ -174,16 +175,17 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			}
 
 			for _, user := range users {
-				addrs, err := FethUserAddresses(currencies.Ether, multisig.NetworkID, user, multisigTx.Addresses)
-				if err != nil {
-					log.Errorf("createMultisig:FethUserAddresses: %v", err.Error())
-				}
+				//TODO:
+				// addrs, err := FethUserAddresses(currencies.Ether, multisig.NetworkID, user, multisigTx.Addresses)
+				// if err != nil {
+				// 	log.Errorf("createMultisig:FethUserAddresses: %v", err.Error())
+				// }
 
-				for _, addr := range addrs {
-					log.Warnf("addr :%v AddressIndex: %v Associated: %v UserID: %v \n", addr.Address, addr.AddressIndex, addr.Associated, addr.UserID)
-				}
+				// for _, addr := range addrs {
+				// 	log.Warnf("addr :%v AddressIndex: %v Associated: %v UserID: %v \n", addr.Address, addr.AddressIndex, addr.Associated, addr.UserID)
+				// }
 
-				multisig.Owners = addrs
+				// multisig.Owners = addrs
 
 				sel := bson.M{"userID": user.UserID, "multisig.inviteCode": invitecode}
 				update := bson.M{"$set": bson.M{

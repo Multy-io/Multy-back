@@ -612,6 +612,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 				return makeErr(msgMultisig.UserID, "can't kik from multisig: bad request: "+err.Error(), checkMultisig)
 			}
 			icInfo := ratesDB.InviteCodeInfo(msgMultisig.InviteCode)
+			restClient.log.Warnf("icInfo %v", icInfo)
 			msg := store.WsMessage{
 				Type:    checkMultisig,
 				To:      msgMultisig.UserID,
