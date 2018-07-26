@@ -592,7 +592,7 @@ func (mStore *MongoUserStore) InviteCodeInfo(invitecode string) InviteCodeInfo {
 	sel := bson.M{"multisig.inviteCode": invitecode}
 	user := User{}
 	inCodeInfo := InviteCodeInfo{}
-	_ = mStore.usersData.Find(sel).One(user)
+	_ = mStore.usersData.Find(sel).One(&user)
 	for _, multisig := range user.Multisigs {
 		if multisig.InviteCode == invitecode {
 			inCodeInfo = InviteCodeInfo{
