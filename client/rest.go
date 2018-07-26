@@ -1569,6 +1569,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					PendingBalance: pendingBalance,
 					VerboseAddress: av,
 					Pending:        pending,
+
 					Multisig: &MultisigVerbose{
 						Owners:         multisig.Owners,
 						Confirmations:  multisig.Confirmations,
@@ -1576,6 +1577,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 						FactoryAddress: multisig.FactoryAddress,
 						TxOfCreation:   multisig.TxOfCreation,
 						InviteCode:     multisig.InviteCode,
+						OwnersCount:    multisig.OwnersCount,
 					},
 				})
 
@@ -1739,6 +1741,7 @@ type MultisigVerbose struct {
 	FactoryAddress string                  `json:"factoryAddress,omitempty"`
 	TxOfCreation   string                  `json:"txOfCreation,omitempty"`
 	InviteCode     string                  `json:"inviteCode,omitempty"`
+	OwnersCount    int                     `json:"ownersCount,omitempty"`
 }
 
 type StockExchangeRate struct {
@@ -2021,6 +2024,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					FactoryAddress: multisig.FactoryAddress,
 					TxOfCreation:   multisig.TxOfCreation,
 					InviteCode:     multisig.InviteCode,
+					OwnersCount:    multisig.OwnersCount,
 				},
 			})
 

@@ -120,12 +120,9 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				log.Errorf("initGrpcClient: cli.AddMultisig:stream.Recv: %s", err.Error())
 			}
 			log.Debugf("initGrpcClient: cli.AddMultisig:stream.Recv:")
-			users := map[string]store.User{}
-			multisig := generatedMultisigTxToStore(multisigTx)
-			multisig.CurrencyID = currencies.Ether
 
+			multisig := generatedMultisigTxToStore(multisigTx, currencies.Ether, networtkID)
 			//TODO: fix problem with net id
-
 			if networtkID == 0 {
 				multisig.NetworkID = currencies.ETHMain
 			}
@@ -135,6 +132,8 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			}
 
 			// feth ussers included as owners in multisig
+			users := map[string]store.User{} // ms attached address to user
+			attachedAddress := ""
 			for _, address := range multisigTx.Addresses {
 				log.Debugf("range multisigTx.Addresses")
 				user := store.User{}
@@ -143,14 +142,38 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 					log.Errorf("cli.AddMultisig:stream.Recv:usersData.Find: not multy user in contrat %v  %v", err.Error(), address)
 					break
 				}
-				users[user.UserID] = user
+				attachedAddress = strings.ToLower(address)
+				users[strings.ToLower(address)] = user
 			}
 
-			for uid, _ := range users {
-				log.Warnf("\nuser :%v \n", uid)
+			// Fetch invite code from undeployed multisigs
+			invitecode := ""
+			msUser := store.User{}
+			err = usersData.Find(bson.M{"multisig.owners.address": attachedAddress}).One(&msUser)
+			if err != nil {
+				log.Errorf("cli.AddMultisig:stream.Recv:usersData.Find:can't find %v  %v", err.Error(), attachedAddress)
+			}
+			for _, ms := range msUser.Multisigs {
+				ownersCount := 0
+				for _, owner := range ms.Owners {
+					for addres, _ := range users {
+						if addres == owner.Address {
+							ownersCount++
+							if ownersCount == multisig.OwnersCount {
+								invitecode = ms.InviteCode
+								break
+							}
+						}
+					}
+				}
 			}
 
-			for userid, user := range users {
+			if invitecode == "" {
+				log.Errorf("cli.AddMultisig:stream.Recv:not found contract transaction %v", multisigTx.Addresses)
+				break
+			}
+
+			for _, user := range users {
 				addrs, err := FethUserAddresses(currencies.Ether, multisig.NetworkID, user, multisigTx.Addresses)
 				if err != nil {
 					log.Errorf("createMultisig:FethUserAddresses: %v", err.Error())
@@ -162,8 +185,15 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 				multisig.Owners = addrs
 
-				sel := bson.M{"userID": userid}
-				update := bson.M{"$push": bson.M{"multisig": multisig}}
+				sel := bson.M{"userID": user.UserID, "multisig.inviteCode": invitecode}
+				update := bson.M{"$set": bson.M{
+					"multisig.$.confirmations":   multisig.Confirmations,
+					"multisig.$.contractAddress": multisig.ContractAddress,
+					"multisig.$.txOfCreation":    multisig.TxOfCreation,
+					"multisig.$.factoryAddress":  multisig.FactoryAddress,
+					"multisig.$.lastActionTime":  multisig.LastActionTime,
+					"multisig.$.deployStatus":    multisig.DeployStatus,
+				}}
 
 				err = usersData.Update(sel, update)
 				if err != nil {
