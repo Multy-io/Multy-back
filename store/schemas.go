@@ -436,7 +436,7 @@ type LastState struct {
 }
 
 type WsMessage struct {
-	Type    string      `json:"type"`
+	Type    int         `json:"type"`
 	From    string      `json:"from"`
 	To      string      `json:"to"`
 	Date    int64       `json:"date"`
