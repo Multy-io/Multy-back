@@ -59,17 +59,11 @@ const (
 	stopSend    = "sender:stop"
 
 	// multisig
-	joinMultisig   = "join:multisig"
-	leaveMultisig  = "leave:multisig"
-	deleteMultisig = "delete:multisig"
-	kickMultisig   = "kick:multisig"
-	checkMultisig  = "check:multisig"
-
-	updateMultisig  = "update:multisig"
-	deletedMultisig = "deleted:multisig"
-	okMultisig      = "ok:multisig"
-	errMultisig     = "err:multisig"
-	inviteCodeInfo  = "invitecode:info"
+	joinMultisig   = 1
+	leaveMultisig  = 2
+	deleteMultisig = 3
+	kickMultisig   = 4
+	checkMultisig  = 5
 
 	msgSend    = "message:send"
 	msgRecieve = "message:recieve"
@@ -316,13 +310,13 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			err := mapstructure.Decode(msg.Payload, msgMultisig)
 			if err != nil {
 				pool.log.Errorf("server.On:msgSend:joinMultisig:mapstructure.Decode %v", err.Error())
-				return makeErr(msgMultisig.UserID, "can't join multisig: bad request: "+err.Error())
+				return makeErr(msgMultisig.UserID, "can't join multisig: bad request: "+err.Error(), joinMultisig)
 			}
 
 			// if invite code exists
 			if !ratesDB.CheckInviteCode(msgMultisig.InviteCode) {
 				// check current multisig for able to joining
-				multisig, msg, err := getMultisig(ratesDB, msgMultisig)
+				multisig, msg, err := getMultisig(ratesDB, msgMultisig, joinMultisig)
 				if err != nil {
 					pool.log.Errorf("server.On:msgSend:joinMultisig %v", err.Error())
 					return msg
@@ -361,7 +355,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 					if err != nil {
 						//db err
 						pool.log.Errorf("server.On:MultisigMsgratesDB.MultisigMsg: %v", err.Error())
-						return makeErr(msgMultisig.UserID, "can't join multisig: "+err.Error())
+						return makeErr(msgMultisig.UserID, "can't join multisig: "+err.Error(), joinMultisig)
 					}
 					// send new multisig entitiy to all online owners by ws
 					for _, user := range users {
@@ -373,7 +367,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						_, online := pool.users[user.UserID]
 						if online {
 							msg := store.WsMessage{
-								Type:    updateMultisig,
+								Type:    joinMultisig,
 								To:      user.UserID,
 								Date:    time.Now().Unix(),
 								Payload: userMultisig,
@@ -383,25 +377,25 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 					}
 
 					return store.WsMessage{
-						Type:    okMultisig,
+						Type:    joinMultisig,
 						To:      msgMultisig.UserID,
 						Date:    time.Now().Unix(),
-						Payload: joinMultisig + ":ok",
+						Payload: "ok",
 					}
 				}
 
 			}
 
-			return makeErr("", "wrong request payload")
+			return makeErr("", "wrong request payload", joinMultisig)
 		case leaveMultisig:
 			msgMultisig := &store.MultisigMsg{}
 			err := mapstructure.Decode(msg.Payload, msgMultisig)
 			if err != nil {
 				pool.log.Errorf("server.On:msgSend:leaveMultisig:mapstructure.Decode %v", err.Error())
-				return makeErr(msgMultisig.UserID, "can't leave multisig: bad request: "+err.Error())
+				return makeErr(msgMultisig.UserID, "can't leave multisig: bad request: "+err.Error(), leaveMultisig)
 			}
 			if !ratesDB.CheckInviteCode(msgMultisig.InviteCode) {
-				multisig, msg, err := getMultisig(ratesDB, msgMultisig)
+				multisig, msg, err := getMultisig(ratesDB, msgMultisig, leaveMultisig)
 				if err != nil {
 					pool.log.Errorf("server.On:msgSend:leaveMultisigч %v", err.Error())
 					return msg
@@ -412,7 +406,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						exists = true
 						if owner.Creator {
 							pool.log.Errorf("server.On:leaveMultisig: can't leave multisig if you are creator you need delete it")
-							return makeErr(msgMultisig.UserID, "can't leave multisig if you are creator you need delete it ")
+							return makeErr(msgMultisig.UserID, "can't leave multisig if you are creator you need delete it ", leaveMultisig)
 						}
 					}
 				}
@@ -423,7 +417,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 					err := ratesDB.LeaveMultisig(msgMultisig.UserID, msgMultisig.InviteCode)
 					if err != nil {
 						pool.log.Errorf("server.On:leaveMultisig:ratesDB.LeaveMultisig : %v", err.Error())
-						return makeErr(msgMultisig.UserID, "can't leave multisig: "+err.Error())
+						return makeErr(msgMultisig.UserID, "can't leave multisig: "+err.Error(), leaveMultisig)
 					}
 
 					users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
@@ -445,7 +439,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						_, online := pool.users[user.UserID]
 						if online {
 							msg := store.WsMessage{
-								Type:    updateMultisig,
+								Type:    leaveMultisig,
 								To:      user.UserID,
 								Date:    time.Now().Unix(),
 								Payload: userMultisig,
@@ -455,31 +449,31 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 					}
 
 					return store.WsMessage{
-						Type:    okMultisig,
+						Type:    leaveMultisig,
 						To:      msgMultisig.UserID,
 						Date:    time.Now().Unix(),
-						Payload: leaveMultisig + ":ok",
+						Payload: "ok",
 					}
 
 				}
 
 				if !exists {
 					pool.log.Errorf("server.On:leaveMultisig: can't leave multisig if you are not a owner")
-					return makeErr(msgMultisig.UserID, "can't leave multisig if you are not a owner")
+					return makeErr(msgMultisig.UserID, "can't leave multisig if you are not a owner", leaveMultisig)
 				}
 
 			}
 
-			return makeErr("", "wrong request payload: ")
+			return makeErr("", "wrong request payload: ", leaveMultisig)
 		case kickMultisig:
 			msgMultisig := &store.MultisigMsg{}
 			err := mapstructure.Decode(msg.Payload, msgMultisig)
 			if err != nil {
 				pool.log.Errorf("server.On:msgSend:kickMultisig:mapstructure.Decode %v", err.Error())
-				return makeErr(msgMultisig.UserID, "can't kik from multisig: bad request: "+err.Error())
+				return makeErr(msgMultisig.UserID, "can't kik from multisig: bad request: "+err.Error(), kickMultisig)
 			}
 			if !ratesDB.CheckInviteCode(msgMultisig.InviteCode) {
-				multisig, msg, err := getMultisig(ratesDB, msgMultisig)
+				multisig, msg, err := getMultisig(ratesDB, msgMultisig, kickMultisig)
 				if err != nil {
 					pool.log.Errorf("server.On:msgSend:joinMultisig %v", err.Error())
 					return msg
@@ -496,7 +490,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 
 				if !admin {
 					pool.log.Errorf("server.On:kickMultisig: only admin can kik form ms: %v", err.Error())
-					return makeErr(msgMultisig.UserID, "only admin can kik form ms")
+					return makeErr(msgMultisig.UserID, "only admin can kik form ms", kickMultisig)
 				}
 
 				owners := []store.AddressExtended{}
@@ -505,7 +499,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 					err := ratesDB.KickMultisig(msgMultisig.AddressToKick, msgMultisig.InviteCode)
 					if err != nil {
 						pool.log.Errorf("server.On:kickMultisig:ratesDB.KickMultisig: %v", err.Error())
-						return makeErr(msgMultisig.UserID, "can't kik from multisig: "+err.Error())
+						return makeErr(msgMultisig.UserID, "can't kik from multisig: "+err.Error(), kickMultisig)
 					}
 
 					users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
@@ -528,7 +522,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						_, online := pool.users[user.UserID]
 						if online {
 							msg := store.WsMessage{
-								Type:    updateMultisig,
+								Type:    kickMultisig,
 								To:      user.UserID,
 								Date:    time.Now().Unix(),
 								Payload: userMultisig,
@@ -538,26 +532,26 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 					}
 
 					return store.WsMessage{
-						Type:    okMultisig,
+						Type:    kickMultisig,
 						To:      msgMultisig.UserID,
 						Date:    time.Now().Unix(),
-						Payload: kickMultisig + ":ok",
+						Payload: "ok",
 					}
 
 				}
 
 			}
 
-			return makeErr("", "wrong request payload")
+			return makeErr("", "wrong request payload", kickMultisig)
 		case deleteMultisig:
 			msgMultisig := &store.MultisigMsg{}
 			err := mapstructure.Decode(msg.Payload, msgMultisig)
 			if err != nil {
 				pool.log.Errorf("server.On:msgSend:deleteMultisig:mapstructure.Decode %v", err.Error())
-				return makeErr(msgMultisig.UserID, "can't kik from multisig: bad request: "+err.Error())
+				return makeErr(msgMultisig.UserID, "can't kik from multisig: bad request: "+err.Error(), deleteMultisig)
 			}
 			if !ratesDB.CheckInviteCode(msgMultisig.InviteCode) {
-				multisig, msg, err := getMultisig(ratesDB, msgMultisig)
+				multisig, msg, err := getMultisig(ratesDB, msgMultisig, deleteMultisig)
 				if err != nil {
 					pool.log.Errorf("server.On:msgSend:joinMultisig %v", err.Error())
 					return msg
@@ -571,13 +565,13 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 				}
 				if !admin {
 					pool.log.Errorf("server.On:deleteMultisig: only creator can delete ms")
-					return makeErr(msgMultisig.UserID, "only creator can delete ms")
+					return makeErr(msgMultisig.UserID, "only creator can delete ms", deleteMultisig)
 				}
 				if admin {
 					err := ratesDB.DeleteMultisig(msgMultisig.InviteCode)
 					if err != nil {
 						pool.log.Errorf("server.On:deleteMultisig:DeleteMultisig %v", err.Error())
-						return makeErr(msgMultisig.UserID, "server.On:deleteMultisig:DeleteMultisig "+err.Error())
+						return makeErr(msgMultisig.UserID, "server.On:deleteMultisig:DeleteMultisig "+err.Error(), deleteMultisig)
 					}
 
 					users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
@@ -586,7 +580,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						_, online := pool.users[user.UserID]
 						if online {
 							msg := store.WsMessage{
-								Type:    deletedMultisig,
+								Type:    deleteMultisig,
 								To:      user.UserID,
 								Date:    time.Now().Unix(),
 								Payload: msgMultisig.InviteCode,
@@ -595,31 +589,31 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						}
 					}
 					return store.WsMessage{
-						Type:    okMultisig,
+						Type:    deleteMultisig,
 						To:      msgMultisig.UserID,
 						Date:    time.Now().Unix(),
-						Payload: deleteMultisig + ":ok",
+						Payload: "ok",
 					}
 				}
 
 				if !admin {
 					pool.log.Errorf("server.On:deleteMultisig: can't delete multisig if you are not a creator")
-					return makeErr(msgMultisig.UserID, "can't delete multisig if you are not a creator")
+					return makeErr(msgMultisig.UserID, "can't delete multisig if you are not a creator", deleteMultisig)
 				}
 			}
 
-			return makeErr("", "wrong request payload: ")
+			return makeErr("", "wrong request payload: ", deleteMultisig)
 
 		case checkMultisig:
 			msgMultisig := &store.MultisigMsg{}
 			err := mapstructure.Decode(msg.Payload, msgMultisig)
 			if err != nil {
 				pool.log.Errorf("server.On:msgSend:deleteMultisig:mapstructure.Decode %v", err.Error())
-				return makeErr(msgMultisig.UserID, "can't kik from multisig: bad request: "+err.Error())
+				return makeErr(msgMultisig.UserID, "can't kik from multisig: bad request: "+err.Error(), checkMultisig)
 			}
 			icInfo := ratesDB.InviteCodeInfo(msgMultisig.InviteCode)
 			msg := store.WsMessage{
-				Type:    inviteCodeInfo,
+				Type:    checkMultisig,
 				To:      msgMultisig.UserID,
 				Date:    time.Now().Unix(),
 				Payload: icInfo,
@@ -629,7 +623,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 
 		}
 
-		return makeErr("", "wrong request message type: ")
+		return makeErr("", "wrong request message type: ", 0)
 	})
 
 	server.On(msgRecieve, func(c *gosocketio.Channel, msg store.WsMessage) string {
@@ -655,12 +649,12 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 	return pool, nil
 }
 
-func getMultisig(uStore store.UserStore, msgMultisig *store.MultisigMsg) (*store.Multisig, store.WsMessage, error) {
+func getMultisig(uStore store.UserStore, msgMultisig *store.MultisigMsg, method int) (*store.Multisig, store.WsMessage, error) {
 	msg := store.WsMessage{}
 	multisig, err := uStore.FindMultisig(msgMultisig.UserID, msgMultisig.InviteCode)
 	if err != nil {
 		msg = store.WsMessage{
-			Type:    errMultisig,
+			Type:    method,
 			To:      msgMultisig.UserID,
 			Date:    time.Now().Unix(),
 			Payload: "can't join multisig: " + err.Error(),
@@ -669,9 +663,9 @@ func getMultisig(uStore store.UserStore, msgMultisig *store.MultisigMsg) (*store
 	return multisig, msg, err
 }
 
-func makeErr(userid, errorStr string) store.WsMessage {
+func makeErr(userid, errorStr string, method int) store.WsMessage {
 	return store.WsMessage{
-		Type:    errMultisig,
+		Type:    method,
 		To:      userid,
 		Date:    time.Now().Unix(),
 		Payload: errorStr,
