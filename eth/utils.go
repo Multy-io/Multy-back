@@ -704,18 +704,22 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 }
 
-func generatedMultisigTxToStore(mul *ethpb.Multisig) store.Multisig {
+func generatedMultisigTxToStore(mul *ethpb.Multisig, currenyid, networkid int) store.Multisig {
+	deployStatus := store.MultisigStatusDeployPending
+	if mul.GetDeployStatus() {
+		deployStatus = store.MultisigStatusDeployed
+	}
 	return store.Multisig{
+		CurrencyID:      currenyid,
+		NetworkID:       networkid,
 		Confirmations:   int(mul.GetConfirmations()),
 		ContractAddress: mul.GetContract(),
 		TxOfCreation:    mul.GetTxOfCreation(),
 		FactoryAddress:  mul.GetFactoryAddress(),
 		LastActionTime:  time.Now().Unix(),
 		DateOfCreation:  time.Now().Unix(),
-		//TODO:
-		//TODO:
-		// DeployStatus: mul.GetDeployStatus(),
-		Status: store.WalletStatusOK,
+		DeployStatus:    deployStatus,
+		Status:          store.WalletStatusOK,
 	}
 }
 
