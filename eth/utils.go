@@ -346,7 +346,6 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 		err := multisigStore.Find(sel).One(nil)
 		if err == mgo.ErrNotFound {
 			multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore, nsqProducer)
-			log.Warnf("multyTX.amount %v", multyTX.Amount)
 			err := multisigStore.Insert(multyTX)
 			return err
 		}
@@ -402,7 +401,6 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 			address, amount := parseSubmitInput(tx.Input)
 
 			tx.Amount = amount
-			log.Warnf("tx.Amount %v", tx.Amount)
 
 			// fakeit intrrnal transaction history
 			if contract.Confirmations == 1 {
@@ -590,7 +588,6 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 				// internal transaction contract to addres
 				sel := bson.M{"wallets.addresses.address": outputAddress}
 				_ = usersData.Find(sel).One(&user)
-				log.Warnf("found userid %v address %v", user.UserID)
 				for _, wallet := range user.Wallets {
 					for _, adr := range wallet.Adresses {
 						if adr.Address == outputAddress {

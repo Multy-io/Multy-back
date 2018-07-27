@@ -323,6 +323,17 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						return makeErr(msgMultisig.UserID, "we not support multiple join from same userid ", joinMultisig)
 					}
 				}
+
+				if !ratesDB.IsRelatedAddress(msgMultisig.UserID, msgMultisig.Address) {
+					pool.log.Errorf("server.On:msgSend:joinMultisig can't add addres with is not related userid ")
+					return makeErr(msgMultisig.UserID, "can't add addres with is not related userid ", joinMultisig)
+				}
+
+				if !ratesDB.CheckMultisigCurrency(msgMultisig.InviteCode, msgMultisig.CurrencyID, msgMultisig.NetworkID) {
+					pool.log.Errorf("server.On:msgSend:joinMultisig this invitecode accotiated with different currency/network  ")
+					return makeErr(msgMultisig.UserID, "this invitecode accotiated with different currency/network", joinMultisig)
+				}
+
 				multisig, msg, err := getMultisig(ratesDB, msgMultisig, joinMultisig)
 				if err != nil {
 					pool.log.Errorf("server.On:msgSend:joinMultisig %v", err.Error())
@@ -337,8 +348,10 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 					owners := []store.AddressExtended{}
 					for _, owner := range multisigToJoin.Owners {
 						owners = append(owners, store.AddressExtended{
-							Address: owner.Address,
-							Creator: owner.Creator,
+							Address:      owner.Address,
+							Creator:      owner.Creator,
+							WalletIndex:  owner.WalletIndex,
+							AddressIndex: owner.AddressIndex,
 						})
 					}
 
@@ -352,7 +365,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 
 					deployStatus := store.MultisigStatusWaitingForJoin
 					joined++
-					if joined == multisig.Confirmations {
+					if joined == multisig.OwnersCount {
 						multisigToJoin.DeployStatus = store.MultisigStatusAllJoined
 						deployStatus = store.MultisigStatusAllJoined
 					}
@@ -364,6 +377,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						pool.log.Errorf("server.On:MultisigMsgratesDB.MultisigMsg: %v", err.Error())
 						return makeErr(msgMultisig.UserID, "can't join multisig: "+err.Error(), joinMultisig)
 					}
+					pool.log.Debugf("user %v joined %v multisig", msgMultisig.UserID, multisig.WalletName)
 					// send new multisig entitiy to all online owners by ws
 					for _, user := range users {
 						userMultisig, err := updateUserOwners(user, multisig, ratesDB, deployStatus)
@@ -426,7 +440,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						pool.log.Errorf("server.On:leaveMultisig:ratesDB.LeaveMultisig : %v", err.Error())
 						return makeErr(msgMultisig.UserID, "can't leave multisig: "+err.Error(), leaveMultisig)
 					}
-
+					pool.log.Debugf("user %v leave %v multisig", msgMultisig.UserID, multisig.WalletName)
 					users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
 
 					//delete owner from owners list
@@ -509,6 +523,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						return makeErr(msgMultisig.UserID, "can't kik from multisig: "+err.Error(), kickMultisig)
 					}
 
+					pool.log.Debugf("user %v kicked from %v multisig", msgMultisig.UserID, multisig.WalletName)
 					users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
 
 					//delete owner from owners list
@@ -580,9 +595,9 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						pool.log.Errorf("server.On:deleteMultisig:DeleteMultisig %v", err.Error())
 						return makeErr(msgMultisig.UserID, "server.On:deleteMultisig:DeleteMultisig "+err.Error(), deleteMultisig)
 					}
+					pool.log.Debugf("user %v delete %v multisig", msgMultisig.UserID, multisig.WalletName)
 
 					users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
-
 					for _, user := range users {
 						_, online := pool.users[user.UserID]
 						if online {
@@ -619,7 +634,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 				return makeErr(msgMultisig.UserID, "can't kik from multisig: bad request: "+err.Error(), checkMultisig)
 			}
 			icInfo := ratesDB.InviteCodeInfo(msgMultisig.InviteCode)
-			restClient.log.Warnf("icInfo %v", icInfo)
+			pool.log.Debugf("user %v check multisig", msgMultisig.UserID)
 			msg := store.WsMessage{
 				Type:    checkMultisig,
 				To:      msgMultisig.UserID,
@@ -682,33 +697,39 @@ func makeErr(userid, errorStr string, method int) store.WsMessage {
 
 func updateUserOwners(user store.User, multisig *store.Multisig, uStore store.UserStore, deployStatus int) (*store.Multisig, error) {
 	// Clean addttion tags
-	owners := []store.AddressExtended{}
+	owners := map[string]store.AddressExtended{}
 	for _, owner := range multisig.Owners {
-		owners = append(owners, store.AddressExtended{
-			Address: owner.Address,
-			Creator: owner.Creator,
-		})
-	}
-	fetchedOwners := []store.AddressExtended{}
-	for _, wallet := range user.Wallets {
-		for _, address := range wallet.Adresses {
-			for _, owner := range owners {
-				if owner.Address == address.Address {
-					fetchedOwners = append(fetchedOwners, store.AddressExtended{
-						Address:      address.Address,
-						AddressIndex: address.AddressIndex,
-						WalletIndex:  wallet.WalletIndex,
-						UserID:       user.UserID,
-						Creator:      owner.Creator,
-						Associated:   true,
-					})
-				} else {
-					fetchedOwners = append(fetchedOwners, owner)
-				}
-			}
+		owners[owner.Address] = store.AddressExtended{
+			Address:      owner.Address,
+			Creator:      owner.Creator,
+			WalletIndex:  owner.WalletIndex,
+			AddressIndex: owner.AddressIndex,
 		}
 	}
-	err := uStore.UpdateMultisigOwners(user.UserID, multisig.InviteCode, fetchedOwners, deployStatus)
+
+	for _, wallet := range user.Wallets {
+		for _, address := range wallet.Adresses {
+			owner, ok := owners[address.Address]
+			if ok {
+				owners[address.Address] = store.AddressExtended{
+					Address:      address.Address,
+					AddressIndex: address.AddressIndex,
+					WalletIndex:  wallet.WalletIndex,
+					UserID:       user.UserID,
+					Creator:      owner.Creator,
+					Associated:   true,
+				}
+			}
+			break
+		}
+	}
+
+	fo := []store.AddressExtended{}
+	for _, owner := range owners {
+		fo = append(fo, owner)
+	}
+
+	err := uStore.UpdateMultisigOwners(user.UserID, multisig.InviteCode, fo, deployStatus)
 	return multisig, err
 
 }
