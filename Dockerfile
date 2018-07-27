@@ -19,7 +19,7 @@ RUN cd $GOPATH/src/github.com/Multy-io && \
     go get github.com/swaggo/gin-swagger && \
     cd $GOPATH/src/github.com/Multy-io/Multy-back && \
     git checkout dev && \
-    git pull origin dev 
+    git pull origin dev
 
 RUN cd $GOPATH/src/github.com/Multy-io/Multy-back && \ 
     make build
