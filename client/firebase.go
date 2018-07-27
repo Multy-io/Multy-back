@@ -111,21 +111,17 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 				Topic: topic,
 			}
 
-			fClient.log.Errorf("\n\n msg %v \n", msg)
-			fClient.log.Errorf("\n\n MessageToSend : %v\n\n", messageToSend)
-
 			ctx := context.Background()
 			client, err := service.Messaging(ctx)
 			if err != nil {
 				fClient.log.Errorf("service.Messaging: %v", err.Error())
 			}
 
-			response, err := client.Send(ctx, messageToSend)
+			_, err = client.Send(ctx, messageToSend)
 			if err != nil {
 				fClient.log.Errorf("client.Send : %v", err.Error())
 			}
-
-			fClient.log.Errorf("\n\nFirebase push resp : %v\n\n", response)
+			fClient.log.Debugf("push to user: %v", msg.UserID)
 		}
 
 		return nil

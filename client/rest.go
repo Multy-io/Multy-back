@@ -1441,7 +1441,6 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 
 				totalBalance = amount.GetBalance()
 				pendingBalance = amount.GetPendingBalance()
-				restClient.log.Warnf("\n Incoming node balance %v node pending balance %v", totalBalance, pendingBalance)
 
 				if totalBalance == pendingBalance {
 					pendingBalance = "0"
@@ -1465,10 +1464,8 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 								inTxAmount, _ := new(big.Int).SetString(tx.Amount, 10)
 								pendingBalanceBig := pendingBalanceBig.Add(pendingBalanceBig, inTxAmount)
 								pendingBalance = pendingBalanceBig.String()
-								restClient.log.Warnf("\n Incoming Wallet name %v pending fake balance %v", wallet.WalletName, pendingBalance)
 							}
 							if tx.Status == store.TxStatusAppearedInMempoolOutcoming && amount.GetBalance() == amount.GetPendingBalance() {
-								pendingBalanceBigOld := pendingBalanceBig
 								outTxAmount, _ := new(big.Int).SetString(tx.Amount, 10)
 								pendingBalanceBig := pendingBalanceBig.Sub(pendingBalanceBig, outTxAmount)
 								gasLimit := big.NewInt(tx.GasLimit)
@@ -1476,8 +1473,6 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 								fee := new(big.Int).Mul(gasLimit, gasPrice)
 								pendingBalanceBig = pendingBalanceBig.Sub(pendingBalanceBig, fee)
 								pendingBalance = pendingBalanceBig.String()
-								restClient.log.Warnf("%v - %v - %v = %v", pendingBalanceBigOld, outTxAmount, fee, pendingBalanceBig)
-								restClient.log.Warnf("\n Outcoming Wallet name %v pending fake balance %v", wallet.WalletName, pendingBalance)
 							}
 							pending = true
 						}
@@ -1756,11 +1751,9 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 							history = append(history, tx)
 						}
 					}
-					restClient.log.Warnf("\n Incoming node balance %v node pending balance %v", totalBalance, pendingBalance)
 
 					if totalBalance == pendingBalance {
 						pendingBalance = "0"
-						restClient.log.Warnf("\n ==")
 					}
 
 					walletNonce = nonce.GetNonce()
@@ -1776,10 +1769,8 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 									inTxAmount, _ := new(big.Int).SetString(tx.Amount, 10)
 									pendingBalanceBig := pendingBalanceBig.Add(pendingBalanceBig, inTxAmount)
 									pendingBalance = pendingBalanceBig.String()
-									restClient.log.Warnf("\n Incoming Wallet name %v pending fake balance %v", wallet.WalletName, pendingBalance)
 								}
 								if tx.Status == store.TxStatusAppearedInMempoolOutcoming && amount.GetBalance() == amount.GetPendingBalance() {
-									pendingBalanceBigOld := pendingBalanceBig
 									outTxAmount, _ := new(big.Int).SetString(tx.Amount, 10)
 									pendingBalanceBig := pendingBalanceBig.Sub(pendingBalanceBig, outTxAmount)
 									gasLimit := big.NewInt(tx.GasLimit)
@@ -1787,8 +1778,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 									fee := new(big.Int).Mul(gasLimit, gasPrice)
 									pendingBalanceBig = pendingBalanceBig.Sub(pendingBalanceBig, fee)
 									pendingBalance = pendingBalanceBig.String()
-									restClient.log.Warnf("%v - %v - %v = %v", pendingBalanceBigOld, outTxAmount, fee, pendingBalanceBig)
-									restClient.log.Warnf("\n Outcoming Wallet name %v pending fake balance %v", wallet.WalletName, pendingBalance)
 								}
 								pending = true
 							}
