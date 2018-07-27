@@ -290,7 +290,7 @@ func createCustomMultisig(wp WalletParams, token string, restClient *RestClient,
 	}
 
 	sel := bson.M{"devices.JWT": token}
-	multisg := createMultisig(wp.CurrencyID, wp.NetworkID, wp.AddressIndex, wp.WalletIndex, wp.Multisig.SignaturesRequired, wp.Multisig.OwnersCount, user.UserID, wp.Address, wp.WalletName, wp.Multisig.InviteCode)
+	multisg := createMultisig(wp.CurrencyID, wp.NetworkID, wp.AddressIndex, wp.WalletIndex, wp.Multisig.SignaturesRequired, wp.Multisig.OwnersCount, user.UserID, strings.ToLower(wp.Address), wp.WalletName, wp.Multisig.InviteCode)
 	update := bson.M{"$push": bson.M{"multisig": multisg}}
 	err = restClient.userStore.Update(sel, update)
 	if err != nil {

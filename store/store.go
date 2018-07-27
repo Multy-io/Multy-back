@@ -100,6 +100,8 @@ type UserStore interface {
 	DeleteMultisig(invitecode string) error
 	CheckInviteCode(invitecode string) bool
 	InviteCodeInfo(invitecode string) InviteCodeInfo
+	IsRelatedAddress(userid, address string) bool
+	CheckMultisigCurrency(invitecode string, currencyid, networkid int) bool
 
 	FindMultisigUsers(invitecode string) []User
 	UpdateMultisigOwners(userid, invitecode string, owners []AddressExtended, deployStatus int) error
@@ -603,6 +605,36 @@ func (mStore *MongoUserStore) InviteCodeInfo(invitecode string) InviteCodeInfo {
 		}
 	}
 	return inCodeInfo
+}
+
+func (mStore *MongoUserStore) CheckMultisigCurrency(invitecode string, currencyid, networkid int) bool {
+	sel := bson.M{"multisig.inviteCode": invitecode}
+	user := User{}
+	inCodeInfo := InviteCodeInfo{}
+	_ = mStore.usersData.Find(sel).One(&user)
+	for _, multisig := range user.Multisigs {
+		if multisig.InviteCode == invitecode {
+			inCodeInfo = InviteCodeInfo{
+				CurrencyID: multisig.CurrencyID,
+				NetworkID:  multisig.NetworkID,
+				Exists:     true,
+			}
+		}
+	}
+
+	if inCodeInfo.Exists && inCodeInfo.NetworkID == networkid && inCodeInfo.CurrencyID == currencyid {
+		return true
+	}
+	return false
+}
+
+func (mStore *MongoUserStore) IsRelatedAddress(userid, address string) bool {
+	sel := bson.M{"userID": userid, "wallets.addresses.address": address}
+	err := mStore.usersData.Find(sel).One(nil)
+	if err == mgo.ErrNotFound {
+		return false
+	}
+	return true
 }
 
 func (mStore *MongoUserStore) FindMultisigUsers(invitecode string) []User {

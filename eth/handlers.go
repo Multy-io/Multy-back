@@ -176,16 +176,16 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 			for _, user := range users {
 				//TODO:
-				// addrs, err := FethUserAddresses(currencies.Ether, multisig.NetworkID, user, multisigTx.Addresses)
-				// if err != nil {
-				// 	log.Errorf("createMultisig:FethUserAddresses: %v", err.Error())
-				// }
+				addrs, err := FethUserAddresses(currencies.Ether, multisig.NetworkID, user, multisigTx.Addresses)
+				if err != nil {
+					log.Errorf("createMultisig:FethUserAddresses: %v", err.Error())
+				}
 
-				// for _, addr := range addrs {
-				// 	log.Warnf("addr :%v AddressIndex: %v Associated: %v UserID: %v \n", addr.Address, addr.AddressIndex, addr.Associated, addr.UserID)
-				// }
+				for _, addr := range addrs {
+					log.Warnf("addr :%v AddressIndex: %v Associated: %v UserID: %v \n", addr.Address, addr.AddressIndex, addr.Associated, addr.UserID)
+				}
 
-				// multisig.Owners = addrs
+				multisig.Owners = addrs
 
 				sel := bson.M{"userID": user.UserID, "multisig.inviteCode": invitecode}
 				update := bson.M{"$set": bson.M{
@@ -236,7 +236,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				}
 				return
 			}
-
+			// process multisig txs
 			if gTx.GetMultisig() {
 				err = processMultisig(&tx, networtkID, nsqProducer)
 				if err != nil {
