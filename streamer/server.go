@@ -11,19 +11,19 @@ import (
 	"sync"
 	"time"
 
+	"github.com/KristinaEtc/slf"
+	_ "github.com/KristinaEtc/slflog"
 	"github.com/Multy-io/Multy-ETH-node-service/eth"
 	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
 	"github.com/Multy-io/Multy-back/store"
-	"github.com/KristinaEtc/slf"
-	_ "github.com/KristinaEtc/slflog"
 )
 
 var log = slf.WithContext("streamer")
 
 // Server implements streamer interface and is a gRPC server
 type Server struct {
-	UsersData *map[string]store.AddressExtended
-	M         *sync.Mutex
+	UsersData *sync.Map
+	M         *sync.Map
 	EthCli    *eth.Client
 	Info      *store.ServiceInfo
 }
@@ -50,17 +50,16 @@ func (s *Server) EventGetGasPrice(ctx context.Context, in *pb.Empty) (*pb.GasPri
 func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.ReplyInfo, error) {
 	log.Debugf("EventInitialAdd - %v", ud.Map)
 
-	udMap := map[string]store.AddressExtended{}
+	udMap := sync.Map{}
 	for addr, ex := range ud.GetMap() {
-		udMap[strings.ToLower(addr)] = store.AddressExtended{
+		udMap.Store(strings.ToLower(addr), store.AddressExtended{
 			UserID:       ex.GetUserID(),
 			WalletIndex:  int(ex.GetWalletIndex()),
 			AddressIndex: int(ex.GetAddressIndex()),
-		}
+		})
 	}
-	s.EthCli.UserDataM.Lock()
+
 	*s.UsersData = udMap
-	s.EthCli.UserDataM.Unlock()
 
 	log.Debugf("EventInitialAdd - %v", udMap)
 
@@ -71,27 +70,23 @@ func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.Reply
 
 // EventAddNewAddress us used to add new watch address to existing pairs
 func (s *Server) EventAddNewAddress(c context.Context, wa *pb.WatchAddress) (*pb.ReplyInfo, error) {
-	s.EthCli.UserDataM.Lock()
 	newMap := *s.UsersData
-	s.EthCli.UserDataM.Unlock()
-	if newMap == nil {
-		newMap = map[string]store.AddressExtended{}
-	}
-	_, ok := newMap[wa.Address]
+	// if newMap == nil {
+	// 	newMap = sync.Map{}
+	// }
+	_, ok := newMap.Load(wa.Address)
 	if ok {
 		return &pb.ReplyInfo{
 			Message: "err: Address already binded",
 		}, nil
 	}
-	newMap[strings.ToLower(wa.Address)] = store.AddressExtended{
+	newMap.Store(strings.ToLower(wa.Address), store.AddressExtended{
 		UserID:       wa.UserID,
 		WalletIndex:  int(wa.WalletIndex),
 		AddressIndex: int(wa.AddressIndex),
-	}
+	})
 
-	s.EthCli.UserDataM.Lock()
 	*s.UsersData = newMap
-	s.EthCli.UserDataM.Unlock()
 
 	log.Debugf("EventAddNewAddress - %v", newMap)
 
@@ -170,13 +165,14 @@ func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyIn
 	}
 
 	log.Debugf("currentH %v lastH %v", currentH, in.GetHeight())
-
-	for lastH := int(in.GetHeight()); lastH < currentH; lastH++ {
-		b, err := s.EthCli.Rpc.EthGetBlockByNumber(lastH, false)
-		if err != nil {
-			log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
+	if int64(currentH) > in.GetHeight() {
+		for lastH := int(in.GetHeight()); lastH < currentH; lastH++ {
+			b, err := s.EthCli.Rpc.EthGetBlockByNumber(lastH, false)
+			if err != nil {
+				log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
+			}
+			go s.EthCli.BlockTransaction(b.Hash)
 		}
-		go s.EthCli.BlockTransaction(b.Hash)
 	}
 
 	return &pb.ReplyInfo{
@@ -206,6 +202,35 @@ func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_E
 	return nil
 }
 
+// func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventGetAllMempoolServer) error {
+// 	mp, err := s.EthCli.GetAllTxPool()
+// 	fmt.Println("==========================\n\n\n")
+// 	fmt.Println("%s\n", mp)
+// 	fmt.Println("==========================\n\n\n")
+// 	if err != nil {
+// 		return err
+// 	}
+// 	// for key, value := range mp {
+// 	// 	fmt.Printf("%T ============== %s\n", value, key)
+
+// 	// }
+
+// 	// for _, txs := range mp["result"].(map[string]interface{}) {
+// 	// 	for _, tx := range txs.(map[string]interface{}) {
+// 	// 		gas, err := strconv.ParseInt(tx.(map[string]interface{})["gas"].(string), 0, 64)
+// 	// 		if err != nil {
+// 	// 			log.Errorf("EventGetAllMempool:strconv.ParseInt")
+// 	// 		}
+// 	// 		hash := tx.(map[string]interface{})["hash"].(string)
+// 	// 		stream.Send(&pb.MempoolRecord{
+// 	// 			Category: int32(gas),
+// 	// 			HashTX:   hash,
+// 	// 		})
+// 	// 	}
+// 	// }
+// 	return nil
+// }
+
 type resyncTx struct {
 	Message string `json:"message"`
 	Result  []struct {
@@ -216,7 +241,7 @@ type resyncTx struct {
 func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResync) (*pb.ReplyInfo, error) {
 	log.Debugf("EventResyncAddress")
 	addr := address.GetAddress()
-	url := "http://api-rinkeby.etherscan.io/api?sort=asc&endblock=99999999&startblock=0&address=" + addr + "&action=txlist&module=account"
+	url := "http://api.etherscan.io/api?sort=asc&endblock=99999999&startblock=0&address=" + addr + "&action=txlist&module=account"
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

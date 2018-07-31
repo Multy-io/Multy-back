@@ -10,12 +10,12 @@ import (
 	"net"
 	"sync"
 
+	"github.com/KristinaEtc/slf"
+	_ "github.com/KristinaEtc/slflog"
 	"github.com/Multy-io/Multy-ETH-node-service/eth"
 	"github.com/Multy-io/Multy-ETH-node-service/streamer"
 	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
 	"github.com/Multy-io/Multy-back/store"
-	"github.com/KristinaEtc/slf"
-	_ "github.com/KristinaEtc/slflog"
 	"google.golang.org/grpc"
 )
 
@@ -28,7 +28,7 @@ type NodeClient struct {
 	Config     *Configuration
 	Instance   *eth.Client
 	GRPCserver *streamer.Server
-	Clients    *map[string]store.AddressExtended // address to userid
+	Clients    *sync.Map // address to userid
 	// BtcApi     *gobcy.API
 }
 
@@ -38,13 +38,14 @@ func Init(conf *Configuration) (*NodeClient, error) {
 		Config: conf,
 	}
 
-	var usersData = map[string]store.AddressExtended{
-		"address": store.AddressExtended{
-			UserID:       "kek",
-			WalletIndex:  1,
-			AddressIndex: 2,
-		},
-	}
+	var usersData sync.Map
+
+	usersData.Store("address", store.AddressExtended{
+		UserID:       "kek",
+		WalletIndex:  1,
+		AddressIndex: 2,
+	})
+
 	// initail initialization of clients data
 	cli.Clients = &usersData
 	log.Infof("Users data initialization done")
@@ -56,7 +57,7 @@ func Init(conf *Configuration) (*NodeClient, error) {
 	}
 	// Creates a new gRPC server
 
-	ethCli := eth.NewClient(&conf.EthConf, cli.Clients, conf.MultisigFactory)
+	ethCli := eth.NewClient(&conf.EthConf, cli.Clients)
 	if err != nil {
 		return nil, fmt.Errorf("eth.NewClient initialization: %s", err.Error())
 	}
@@ -67,7 +68,7 @@ func Init(conf *Configuration) (*NodeClient, error) {
 	s := grpc.NewServer()
 	srv := streamer.Server{
 		UsersData: cli.Clients,
-		M:         &sync.Mutex{},
+		M:         &sync.Map{},
 		EthCli:    cli.Instance,
 		Info:      &conf.ServiceInfo,
 	}

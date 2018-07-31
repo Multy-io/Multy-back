@@ -1,6 +1,7 @@
 package eth
 
 import (
+	_ "github.com/KristinaEtc/slflog"
 	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
 	"github.com/onrik/ethrpc"
 )
@@ -11,7 +12,6 @@ func (c *Client) BlockTransaction(hash string) {
 		log.Errorf("Get Block Err:%s", err.Error())
 		return
 	}
-	log.Debugf("new block number = %v", block.Number)
 	c.Block <- pb.BlockHeight{
 		Height: int64(block.Number),
 	}
@@ -23,14 +23,12 @@ func (c *Client) BlockTransaction(hash string) {
 		return
 	}
 
+	log.Debugf("New block -  lenght = %d", len(txs))
+
 	for _, rawTx := range txs {
 		c.parseETHTransaction(rawTx, int64(*rawTx.BlockNumber), false)
 		c.DeleteMempool <- pb.MempoolToDelete{
 			Hash: rawTx.Hash,
 		}
-		// if strings.ToLower(rawTx.To) == strings.ToLower("0x116FfA11DD8829524767f561da5d33D3D170E17d") {
-		// 	// fmt.Println("\n\ntx.to \n\n", tx.To)
-		// 	c.FactoryContract(rawTx.Hash)
-		// }
 	}
 }

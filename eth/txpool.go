@@ -13,7 +13,7 @@ func (c *Client) txpoolTransaction(txHash string) {
 	// rawTX, err := rpc.EthGetTransactionByHash(txHash)
 	rawTx, err := c.Rpc.EthGetTransactionByHash(txHash)
 	if err != nil {
-		log.Errorf("Get TX Err: %s", err.Error())
+		log.Errorf("Get TX Err: %s hash:%s", err.Error(), txHash)
 	}
 	c.parseETHTransaction(*rawTx, -1, false)
 	// log.Debugf("new txpool tx %v", rawTx.Hash)
