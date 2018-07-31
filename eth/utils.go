@@ -320,10 +320,10 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 	multisigStore := &mgo.Collection{}
 	txStore := &mgo.Collection{}
 	switch networtkID {
-	case currencies.Main:
+	case currencies.ETHMain:
 		multisigStore = multisigData
 		txStore = txsData
-	case currencies.Test:
+	case currencies.ETHTest:
 		multisigStore = multisigDataTest
 		txStore = txsDataTest
 	default:
@@ -791,14 +791,14 @@ func fethMultisig(users []store.User, contract string) (*store.Multisig, error) 
 		}
 	}
 
-	return nil, errors.New("fethMultisig: contract have no multy users :" + contract)
+	return &store.Multisig{}, errors.New("fethMultisig: contract have no multy users :" + contract)
 }
 
-func findContractOwners(contract string) []store.User {
+func findContractOwners(contractAddress string) []store.User {
 	users := []store.User{}
-	err := usersData.Find(bson.M{"multisig.contractaddress": strings.ToLower(contract)}).All(&users)
+	err := usersData.Find(bson.M{"multisig.contractaddress": strings.ToLower(contractAddress)}).All(&users)
 	if err != nil {
-		log.Errorf("cli.AddMultisig:stream.Recv:usersData.Find: not multy user in contrat %v  %v", err.Error(), contract)
+		log.Errorf("cli.AddMultisig:stream.Recv:usersData.Find: not multy user in contrat %v  %v", err.Error(), contractAddress)
 	}
 	return users
 }
