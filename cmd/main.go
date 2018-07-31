@@ -16,8 +16,6 @@ import (
 	multy "github.com/Multy-io/Multy-back"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/jekabolt/slf"
-	_ "github.com/swaggo/gin-swagger"              // gin-swagger middleware
-	_ "github.com/swaggo/gin-swagger/swaggerFiles" // swagger embed files
 )
 
 var (
@@ -55,6 +53,7 @@ func main() {
 	config.ReadGlobalConfig(&globalOpt, "multy configuration")
 
 	log.Error("--------------------------------new multy back server session")
+
 	log.Infof("CONFIGURATION=%+v", globalOpt)
 
 	log.Infof("branch: %s", branch)

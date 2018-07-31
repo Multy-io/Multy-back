@@ -6,17 +6,23 @@ RUN go get google.golang.org/grpc && go get firebase.google.com/go && go get goo
 RUN go get github.com/Multy-io/Multy-back
 RUN go get github.com/satori/go.uuid
 
-RUN cd $GOPATH/src/github.com/Multy-io && \ 
-    rm -rf Multy-back && \ 
-    git clone https://github.com/Multy-io/Multy-back.git && \ 
-    cd Multy-back && \
-    git checkout release_1.1 && \
-    git pull origin release_1.1
+RUN go get -u github.com/golang/protobuf/proto && \
+    cd $GOPATH/src/github.com/golang/protobuf && \
+    make all
 
+RUN apt-get update && \
+    apt-get install -y protobuf-compiler
+
+RUN cd $GOPATH/src/github.com/Multy-io && \ 
+    rm -r Multy-back && \
+    git clone https://github.com/Multy-io/Multy-back.git && \ 
+    go get github.com/swaggo/gin-swagger && \
+    cd $GOPATH/src/github.com/Multy-io/Multy-back && \
+    git checkout dev && \
+    git pull origin dev
 
 RUN cd $GOPATH/src/github.com/Multy-io/Multy-back && \ 
-    make all-with-deps 
-# make all-docker 
+    make build
 
 WORKDIR /go/src/github.com/Multy-io/Multy-back/cmd
 

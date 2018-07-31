@@ -44,13 +44,14 @@ func createDevice(deviceid, ip, jwt, pushToken, appVersion string, deviceType in
 }
 
 func createWallet(currencyID, networkID int, address string, addressIndex int, walletIndex int, walletName string) store.Wallet {
+
 	return store.Wallet{
 		CurrencyID:     currencyID,
 		NetworkID:      networkID,
 		WalletIndex:    walletIndex,
 		WalletName:     walletName,
 		LastActionTime: time.Now().Unix(),
-		DateOfCreation: time.Now().Unix(),
+		DateOfCreation: time.Now().UnixNano(),
 		Status:         store.WalletStatusOK,
 		Adresses: []store.Address{
 			store.Address{
@@ -62,6 +63,19 @@ func createWallet(currencyID, networkID int, address string, addressIndex int, w
 	}
 
 }
+
+// func createMultisig(currencyID, networkID, addressIndex int, userid, walletName, contractAddress, txOfCreation string, owners []string) store.Multisig {
+// 	return store.Multisig{
+// 		CurrencyID:      currencyID,
+// 		NetworkID:       networkID,
+// 		WalletName:      walletName,
+// 		ContractAddress: contractAddress,
+// 		TxOfCreation:    txOfCreation,
+// 		LastActionTime:  time.Now().Unix(),
+// 		DateOfCreation:  time.Now().Unix(),
+// 		Status:          store.WalletStatusOK,
+// 	}
+// }
 
 func newEmptyTx(userID string) store.TxRecord {
 	return store.TxRecord{

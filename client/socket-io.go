@@ -143,8 +143,8 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			UserCode:   data.UserCode,
 			CurrencyID: data.CurrencyID,
 			NetworkID:  data.NetworkID,
-			Amount:     data.Amount,
 			Address:    data.Address,
+			Amount:     data.Amount,
 			Socket:     c,
 		}
 
@@ -247,7 +247,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 				return "success:" + h.GetMessage()
 			}
 			if raw.NetworkID == currencies.ETHTest {
-				h, err := restClient.ETH.CliMain.EventSendRawTx(context.Background(), &ethpb.RawTx{
+				h, err := restClient.ETH.CliTest.EventSendRawTx(context.Background(), &ethpb.RawTx{
 					Transaction: raw.Transaction,
 				})
 				if err != nil {
@@ -275,14 +275,12 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 				continue
 			}
 		}
-		pool.log.Infof("Got messeage Senders ...........:", senders)
 		for i, sender := range senders {
 			if sender.Socket.Id() == c.Id() {
 				senders = append(senders[:i], senders[i+1:]...)
 				continue
 			}
 		}
-		pool.log.Infof("Done Senders ...........:", senders)
 	})
 
 	server.On(stopReceive, func(c *gosocketio.Channel) string {
