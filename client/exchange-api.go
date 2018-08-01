@@ -46,7 +46,7 @@ type GDAXSocketEvent struct {
 func (eChart *exchangeChart) newGdaxAPI(log slf.StructuredLogger) (*GdaxAPI, error) {
 	gdaxAPI := &GdaxAPI{rates: eChart.rates.exchangeGdax, log: log.WithField("api", "gdax")}
 
-	c, err := newWebSocketConn(gdaxAPIAddr)
+	c, err := newWebSocketConn(gdaxAPIAddr, log)
 	if err != nil {
 		eChart.log.Errorf("new gdax connection: %s", err.Error())
 		c, err = reconnectWebSocketConn(gdaxAPIAddr, log)
@@ -139,7 +139,7 @@ type PoloniexSocketEvent struct {
 func (eChart *exchangeChart) newPoloniexAPI(log slf.StructuredLogger) (*PoloniexAPI, error) {
 	poloniexAPI := &PoloniexAPI{rates: eChart.rates.exchangePoloniex, log: log.WithField("api", "poloniex")}
 
-	c, err := newWebSocketConn(poloniexAPIAddr)
+	c, err := newWebSocketConn(poloniexAPIAddr, log)
 	if err != nil {
 		eChart.log.Errorf("new poloniex connection: %s", err.Error())
 		c, err = reconnectWebSocketConn(gdaxAPIAddr, log)

@@ -47,7 +47,7 @@ func round(val float64) int {
 func (eChart *exchangeChart) newBitfinexAPI(log slf.StructuredLogger) (*BitfinexAPI, error) {
 	bitfinexAPI := &BitfinexAPI{rates: eChart.rates.exchangeBitfinex, log: log.WithField("api", "bitfinex")}
 
-	c, err := newWebSocketConn(bitfinexAPIAddr)
+	c, err := newWebSocketConn(bitfinexAPIAddr, log)
 	if err != nil {
 		eChart.log.Errorf("new Bitfinex connection: %s", err.Error())
 		c, err = reconnectWebSocketConn(gdaxAPIAddr, log)
