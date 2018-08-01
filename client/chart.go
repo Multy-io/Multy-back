@@ -41,12 +41,14 @@ type Rates struct {
 
 	exchangeGdax     *StockRate
 	exchangePoloniex *StockRate
+	exchangeBitfinex *StockRate
 }
 
 type exchangeChart struct {
 	rates        *Rates
 	gdaxConn     *GdaxAPI
 	poloniexConn *PoloniexAPI
+	bitfinexConn *BitfinexAPI
 
 	db  store.UserStore
 	log slf.StructuredLogger
@@ -55,6 +57,10 @@ type exchangeChart struct {
 func newExchangeChart(db store.UserStore) (*exchangeChart, error) {
 	chart := &exchangeChart{
 		rates: &Rates{
+			exchangeBitfinex: &StockRate{
+				exchange: &store.ExchangeRates{},
+				m:        &sync.Mutex{},
+			},
 			exchangeGdax: &StockRate{
 				exchange: &store.ExchangeRates{},
 				m:        &sync.Mutex{},
@@ -87,6 +93,12 @@ func newExchangeChart(db store.UserStore) (*exchangeChart, error) {
 	}
 	chart.poloniexConn = poloniexConn
 
+	bitfinexConn, err := chart.newBitfinexAPI(chart.log)
+	if err != nil {
+		return nil, fmt.Errorf("initGdaxAPI: %s", err)
+	}
+	chart.bitfinexConn = bitfinexConn
+
 	go chart.run()
 
 	return chart, nil
@@ -96,9 +108,12 @@ func (eChart *exchangeChart) run() error {
 	tickerSaveToDB := time.NewTicker(saveToDBInterval)
 
 	go eChart.gdaxConn.listen()
-	//TODO: fix poloniex
+
 	go eChart.poloniexConn.listen()
 
+	go eChart.bitfinexConn.listen()
+
+	eChart.bitfinexConn.subscribe()
 	eChart.gdaxConn.subscribe()
 	eChart.poloniexConn.subscribe()
 
@@ -119,6 +134,10 @@ func (eChart *exchangeChart) saveToDB() {
 	eChart.rates.exchangePoloniex.m.Lock()
 	eChart.db.InsertExchangeRate(*eChart.rates.exchangePoloniex.exchange, exchangePoloniex)
 	eChart.rates.exchangePoloniex.m.Unlock()
+
+	eChart.rates.exchangeBitfinex.m.Lock()
+	eChart.db.InsertExchangeRate(*eChart.rates.exchangeBitfinex.exchange, exchangeBitfinex)
+	eChart.rates.exchangeBitfinex.m.Unlock()
 }
 
 func (eChart *exchangeChart) updateDayRates() {
@@ -194,4 +213,10 @@ func (eChart *exchangeChart) getExchangePoloniex() *store.ExchangeRates {
 	defer eChart.rates.exchangePoloniex.m.Unlock()
 
 	return eChart.rates.exchangePoloniex.exchange
+}
+
+func (eChart *exchangeChart) getExchangeBitfinex() *store.ExchangeRates {
+	eChart.rates.exchangeBitfinex.m.Lock()
+	defer eChart.rates.exchangeBitfinex.m.Unlock()
+	return eChart.rates.exchangeBitfinex.exchange
 }

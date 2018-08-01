@@ -34,6 +34,7 @@ const (
 	topicExchangeDay      = "exchangeDay"
 	topicExchangeGdax     = "exchangeGdax"
 	topicExchangePoloniex = "exchangePoloniex"
+	topicExchangeBitfinex = "exchangeBitfinex"
 )
 
 const (

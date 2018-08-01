@@ -214,6 +214,7 @@ type ExchangeRates struct {
 	ETHtoEUR float64 `json:"eth_eur"`
 
 	BTCtoUSD float64 `json:"btc_usd"`
+	EOStoUSD float64 `json:"eos_usd"`
 }
 
 type RatesAPIBitstamp struct {

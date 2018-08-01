@@ -11,13 +11,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/jekabolt/slf"
 	"github.com/gorilla/websocket"
+	"github.com/jekabolt/slf"
 )
 
 const (
 	exchangeDdax     = "Gdax"
 	exchangePoloniex = "Poloniex"
+	exchangeBitfinex = "Bitfinex"
 
 	backOffLimit = time.Duration(time.Second * 600) // reconnection stop
 )
@@ -25,6 +26,7 @@ const (
 const (
 	poloniexAPIAddr = "wss://api.hitbtc.com/api/2/ws"
 	gdaxAPIAddr     = "wss://ws-feed.gdax.com"
+	bitfinexAPIAddr = "wss://api.bitfinex.com/ws"
 )
 
 // GdaxAPI wraps websocket connection for GdaxAPI
