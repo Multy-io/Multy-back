@@ -8,6 +8,7 @@ package eth
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"regexp"
 	"strconv"
@@ -389,6 +390,8 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		log.Errorf("ParseMultisigInput:fethMultisig: %v", err.Error())
 	}
 
+	fmt.Println("-------------------------- ", owners)
+
 	switch tx.MethodInvoked {
 	case submitTransaction: // "c6427474": "submitTransaction(address,uint256,bytes)"
 		// Feth contract owners, send notfy to owners about transation. status: waiting for confirmations
@@ -444,7 +447,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 					}
 					isOurUser = false
 
-					sel = bson.M{"multisig.contractaddress": address}
+					sel = bson.M{"multisig.contractAddress": address}
 					usersData.Find(sel).One(&user)
 					// internal tansaction to multisig
 					for _, multisig := range user.Multisigs {
@@ -615,7 +618,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 				// contract to contract history
 				isOurUser = false
-				sel = bson.M{"multisig.contractaddress": outputAddress}
+				sel = bson.M{"multisig.contractAddress": outputAddress}
 				usersData.Find(sel).One(&user)
 				// internal tansaction to multisig
 				for _, multisig := range user.Multisigs {
@@ -755,7 +758,7 @@ func FethUserAddresses(currencyID, networkID int, user store.User, addreses []st
 func FethContractOwners(currencyID, networkID int, contractaddress string) ([]store.OwnerHistory, error) {
 	oh := []store.OwnerHistory{}
 
-	sel := bson.M{"multisig.contractaddress": contractaddress}
+	sel := bson.M{"multisig.contractAddress": contractaddress}
 	user := store.User{}
 	_ = usersData.Find(sel).One(&user)
 
@@ -796,7 +799,7 @@ func fethMultisig(users []store.User, contract string) (*store.Multisig, error) 
 
 func findContractOwners(contractAddress string) []store.User {
 	users := []store.User{}
-	err := usersData.Find(bson.M{"multisig.contractaddress": strings.ToLower(contractAddress)}).All(&users)
+	err := usersData.Find(bson.M{"multisig.contractAddress": strings.ToLower(contractAddress)}).All(&users)
 	if err != nil {
 		log.Errorf("cli.AddMultisig:stream.Recv:usersData.Find: not multy user in contrat %v  %v", err.Error(), contractAddress)
 	}

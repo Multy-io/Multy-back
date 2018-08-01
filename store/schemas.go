@@ -452,10 +452,11 @@ type MultisigMsg struct {
 	UserID        string `json:"userid"`
 	Address       string `json:"address"`
 	InviteCode    string `json:"invitecode"`
-	AddressToKick string `json:"addresstokick"`
+	AddressToKick string `json:"addresstokick,omitempty"`
 	WalletIndex   int    `json:"walletindex"`
 	CurrencyID    int    `json:"currencyid"`
 	NetworkID     int    `json:"networkid"`
+	TxID          string `json:"txid,omitempty"`
 }
 
 type InviteCodeInfo struct {
