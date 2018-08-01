@@ -59,11 +59,12 @@ const (
 	stopSend    = "sender:stop"
 
 	// multisig
-	joinMultisig   = 1
-	leaveMultisig  = 2
-	deleteMultisig = 3
-	kickMultisig   = 4
-	checkMultisig  = 5
+	joinMultisig    = 1
+	leaveMultisig   = 2
+	deleteMultisig  = 3
+	kickMultisig    = 4
+	checkMultisig   = 5
+	viewTransaction = 6
 
 	msgSend    = "message:send"
 	msgRecieve = "message:recieve"
@@ -630,7 +631,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			msgMultisig := &store.MultisigMsg{}
 			err := mapstructure.Decode(msg.Payload, msgMultisig)
 			if err != nil {
-				pool.log.Errorf("server.On:msgSend:deleteMultisig:mapstructure.Decode %v", err.Error())
+				pool.log.Errorf("server.On:msgSend:checkMultisig:mapstructure.Decode %v", err.Error())
 				return makeErr(msgMultisig.UserID, "can't kik from multisig: bad request: "+err.Error(), checkMultisig)
 			}
 			icInfo := ratesDB.InviteCodeInfo(msgMultisig.InviteCode)
@@ -643,6 +644,17 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			}
 
 			return msg
+		case viewTransaction:
+			msgMultisig := &store.MultisigMsg{}
+			err := mapstructure.Decode(msg.Payload, msgMultisig)
+			if err != nil {
+				pool.log.Errorf("server.On:msgSend:viewTransaction:mapstructure.Decode %v", err.Error())
+				return makeErr(msgMultisig.UserID, "can't kik from multisig: bad request: "+err.Error(), checkMultisig)
+			}
+			err = ratesDB.ViewTransaction(msgMultisig.TxID, msgMultisig.Address, msgMultisig.CurrencyID, msgMultisig.NetworkID)
+			if err != nil {
+				pool.log.Errorf("server.On:msgSend:viewTransaction:ViewTransaction %v", err.Error())
+			}
 
 		}
 
