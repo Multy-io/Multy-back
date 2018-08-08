@@ -394,7 +394,8 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 								Date:    time.Now().Unix(),
 								Payload: userMultisig,
 							}
-							server.BroadcastTo("message", msgRecieve+":"+user.UserID, msg)
+							pool.log.Warnf("--------------------- msg %v", msg)
+							server.BroadcastToAll(msgRecieve+":"+user.UserID, msg)
 						}
 					}
 
