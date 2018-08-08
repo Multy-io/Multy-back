@@ -30,6 +30,12 @@ const (
 	confirmTransaction = "0xc01a8c84"
 	revokeConfirmation = "0x20ea8d86"
 	executeTransaction = "0xee22610b"
+	// GasLimit           = map[string]string{
+	// 	submitTransaction:  "7039920",
+	// 	revokeConfirmation: "7039920",
+	// 	confirmTransaction: "7039920",
+	// 	executeTransaction: "7039920",
+	// }
 )
 
 var (
