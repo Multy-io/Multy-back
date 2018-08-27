@@ -6,18 +6,13 @@ See LICENSE for details
 package client
 
 import (
-	"context"
 	"fmt"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/Multy-io/Multy-back/btc"
-	"github.com/Multy-io/Multy-back/currencies"
 	"github.com/Multy-io/Multy-back/eth"
-	btcpb "github.com/Multy-io/Multy-back/node-streamer/btc"
-	ethpb "github.com/Multy-io/Multy-back/node-streamer/eth"
 	"github.com/Multy-io/Multy-back/store"
 
 	"github.com/gin-gonic/gin"
@@ -182,84 +177,6 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 		return nearReceivers
 	})
 
-	server.On(SendRaw, func(c *gosocketio.Channel, raw store.RawHDTx) string {
-		switch raw.CurrencyID {
-		case currencies.Bitcoin:
-			var resp *btcpb.ReplyInfo
-
-			if raw.NetworkID == currencies.Test {
-				resp, err = BTC.CliTest.EventSendRawTx(context.Background(), &btcpb.RawTx{
-					Transaction: raw.Transaction,
-				})
-			}
-			if raw.NetworkID == currencies.Main {
-				resp, err = BTC.CliMain.EventSendRawTx(context.Background(), &btcpb.RawTx{
-					Transaction: raw.Transaction,
-				})
-			}
-
-			if err != nil {
-				pool.log.Errorf("sendRawHDTransaction: restClient.BTC.CliMain.EventSendRawTx: %s", err.Error())
-				c.Emit(SendRaw, err.Error())
-				return err.Error()
-			}
-
-			if strings.Contains("err:", resp.GetMessage()) {
-				pool.log.Errorf("sendRawHDTransaction: restClient.BTC.CliMain.EventSendRawTx:resp err %s", err.Error())
-				c.Emit(SendRaw, resp.GetMessage())
-				return err.Error()
-			}
-
-			if raw.IsHD && !strings.Contains("err:", resp.GetMessage()) {
-				err = addAddressToWallet(raw.Address, raw.JWT, raw.CurrencyID, raw.NetworkID, raw.WalletIndex, raw.AddressIndex, restClient, nil)
-				if err != nil {
-					pool.log.Errorf("addAddressToWallet: %v", err.Error())
-				}
-				c.Emit(SendRaw, resp.GetMessage())
-				receiversM.Lock()
-				res := receivers[raw.UserCode]
-				receiversM.Unlock()
-				res.Socket.Emit(PaymentReceived, raw)
-			}
-
-			return "success:" + resp.GetMessage()
-
-		case currencies.Ether:
-			if raw.NetworkID == currencies.ETHMain {
-				h, err := restClient.ETH.CliMain.EventSendRawTx(context.Background(), &ethpb.RawTx{
-					Transaction: raw.Transaction,
-				})
-				if err != nil {
-					pool.log.Errorf("sendRawHDTransaction:eth.SendRawTransaction %s", err.Error())
-					return err.Error()
-				}
-
-				if strings.Contains("err:", h.GetMessage()) {
-					pool.log.Errorf("sendRawHDTransaction: strings.Contains err: %s", err.Error())
-					return err.Error()
-				}
-				return "success:" + h.GetMessage()
-			}
-			if raw.NetworkID == currencies.ETHTest {
-				h, err := restClient.ETH.CliMain.EventSendRawTx(context.Background(), &ethpb.RawTx{
-					Transaction: raw.Transaction,
-				})
-				if err != nil {
-					pool.log.Errorf("sendRawHDTransaction:eth.SendRawTransaction %s", err.Error())
-					return err.Error()
-				}
-
-				if strings.Contains("err:", h.GetMessage()) {
-					pool.log.Errorf("sendRawHDTransaction: strings.Contains err: %s", err.Error())
-					return err.Error()
-				}
-				return "success:" + h.GetMessage()
-			}
-
-		}
-		return "err: no such curid or netid"
-	})
-
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
 		pool.log.Infof("Disconnected %s", c.Id())
 		pool.removeUserConn(c.Id())
@@ -394,7 +311,6 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 								Date:    time.Now().Unix(),
 								Payload: userMultisig,
 							}
-							pool.log.Warnf("--------------------- msg %v", msg)
 							server.BroadcastToAll(msgRecieve+":"+user.UserID, msg)
 						}
 					}
@@ -467,7 +383,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 								Date:    time.Now().Unix(),
 								Payload: userMultisig,
 							}
-							server.BroadcastTo("message", msgRecieve+":"+user.UserID, msg)
+							server.BroadcastToAll(msgRecieve+":"+user.UserID, msg)
 						}
 					}
 
@@ -551,7 +467,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 								Date:    time.Now().Unix(),
 								Payload: userMultisig,
 							}
-							server.BroadcastTo("message", msgRecieve+":"+user.UserID, msg)
+							server.BroadcastToAll(msgRecieve+":"+user.UserID, msg)
 						}
 					}
 
@@ -609,7 +525,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 								Date:    time.Now().Unix(),
 								Payload: msgMultisig.InviteCode,
 							}
-							server.BroadcastTo("message", msgRecieve+":"+user.UserID, msg)
+							server.BroadcastToAll(msgRecieve+":"+user.UserID, msg)
 						}
 					}
 					return store.WsMessage{
@@ -618,11 +534,6 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 						Date:    time.Now().Unix(),
 						Payload: "ok",
 					}
-				}
-
-				if !admin {
-					pool.log.Errorf("server.On:deleteMultisig: can't delete multisig if you are not a creator")
-					return makeErr(msgMultisig.UserID, "can't delete multisig if you are not a creator", deleteMultisig)
 				}
 			}
 
