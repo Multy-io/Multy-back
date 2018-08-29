@@ -434,6 +434,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 
 				owners := []store.AddressExtended{}
 				if admin {
+					users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
 					//delete multisig from user
 					err := ratesDB.KickMultisig(msgMultisig.AddressToKick, msgMultisig.InviteCode)
 					if err != nil {
@@ -442,7 +443,6 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 					}
 
 					pool.log.Debugf("user %v kicked from %v multisig", msgMultisig.UserID, multisig.WalletName)
-					users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
 
 					//delete owner from owners list
 					for _, owner := range multisig.Owners {
@@ -508,14 +508,13 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 					return makeErr(msgMultisig.UserID, "only creator can delete ms", deleteMultisig)
 				}
 				if admin {
+					users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
 					err := ratesDB.DeleteMultisig(msgMultisig.InviteCode)
 					if err != nil {
 						pool.log.Errorf("server.On:deleteMultisig:DeleteMultisig %v", err.Error())
 						return makeErr(msgMultisig.UserID, "server.On:deleteMultisig:DeleteMultisig "+err.Error(), deleteMultisig)
 					}
 					pool.log.Debugf("user %v delete %v multisig", msgMultisig.UserID, multisig.WalletName)
-
-					users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
 					for _, user := range users {
 						_, online := pool.users[user.UserID]
 						if online {
