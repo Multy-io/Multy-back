@@ -120,6 +120,11 @@ type Multisig struct {
 	OwnersCount     int               `bson:"ownersCount" json:"ownersCount"`
 }
 
+type MultisigExtended struct {
+	Multisig      Multisig `json:"multisig" bson:"multisig"`
+	KickedAddress string   `json:"kickedAddress" bson:"kickedAddress"`
+}
+
 type RatesRecord struct {
 	Category int    `json:"category" bson:"category"`
 	TxHash   string `json:"txHash" bson:"txHash"`

@@ -458,14 +458,17 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 							//db err
 							pool.log.Errorf("server.On:kickMultisig:updateUserOwners: %v", err.Error())
 						}
-
+						msUpd := store.MultisigExtended{
+							Multisig:      *userMultisig,
+							KickedAddress: msgMultisig.AddressToKick,
+						}
 						_, online := pool.users[user.UserID]
 						if online {
 							msg := store.WsMessage{
 								Type:    kickMultisig,
 								To:      user.UserID,
 								Date:    time.Now().Unix(),
-								Payload: userMultisig,
+								Payload: msUpd,
 							}
 							server.BroadcastToAll(msgRecieve+":"+user.UserID, msg)
 						}
