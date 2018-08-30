@@ -133,7 +133,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 			// feth ussers included as owners in multisig
 			users := map[string]store.User{} // ms attached address to user
-			attachedAddress := ""
+			// attachedAddress := ""
 			for _, address := range multisigTx.Addresses {
 				user := store.User{}
 				err := usersData.Find(bson.M{"wallets.addresses.address": strings.ToLower(address)}).One(&user)
@@ -141,32 +141,35 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 					log.Errorf("cli.AddMultisig:stream.Recv:usersData.Find: not multy user in contrat %v  %v", err.Error(), address)
 					break
 				}
-				attachedAddress = strings.ToLower(address)
+				// attachedAddress = strings.ToLower(address)
 				users[strings.ToLower(address)] = user
 			}
 
+			log.Warnf("\nusers %v", users)
 			// Fetch invite code from undeployed multisigs
 			invitecode := ""
-			msUser := store.User{}
-			err = usersData.Find(bson.M{"multisig.owners.address": attachedAddress}).One(&msUser)
-			if err != nil {
-				log.Errorf("cli.AddMultisig:stream.Recv:usersData.Find:can't find %v  %v", err.Error(), attachedAddress)
-			}
+			// msUser := store.User{}
+			// err = usersData.Find(bson.M{"multisig.owners.address": attachedAddress}).One(&msUser)
+			// if err != nil {
+			// 	log.Errorf("cli.AddMultisig:stream.Recv:usersData.Find:can't find %v  %v", err.Error(), attachedAddress)
+			// }
 			ownersCount := 0
-			for _, ms := range msUser.Multisigs {
-				for _, owner := range ms.Owners {
-					for addres := range users {
-						if addres == owner.Address {
-							ownersCount++
-							log.Warnf("ownersCount %v", ownersCount)
-							if ownersCount == ms.OwnersCount {
-								invitecode = ms.InviteCode
-								break
+			for _, msUser := range users {
+				for _, ms := range msUser.Multisigs {
+					for _, owner := range ms.Owners {
+						for addres := range users {
+							if addres == owner.Address {
+								ownersCount++
+								log.Warnf("ownersCount %v", ownersCount)
+								if ownersCount == ms.OwnersCount {
+									invitecode = ms.InviteCode
+									break
+								}
 							}
 						}
 					}
+					ownersCount = 0
 				}
-				ownersCount = 0
 			}
 
 			if invitecode == "" {
