@@ -124,6 +124,7 @@ func SetRestHandlers(
 		v1.POST("/wallet/name", restClient.changeWalletName())
 		v1.POST("/resync/wallet/:currencyid/:networkid/:walletindex", restClient.resyncWallet())
 		v1.GET("/exchange/changelly/list", restClient.changellyListCurrencies())
+		v1.GET("/multisig/estimate/:contractaddress", restClient.estimateMultisig())
 	}
 	// go func() {
 	// 	for {
@@ -2420,6 +2421,21 @@ func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 			if networkID == currencies.ETHTest {
 
 			}
+		}
+
+	}
+}
+func (restClient *RestClient) estimateMultisig() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		contractAddress := c.Param("contractaddress")
+		if len(contractAddress) > 0 {
+			c.JSON(http.StatusOK, gin.H{
+				"submitTransaction":  400000,
+				"confirmTransaction": 400000,
+				"revokeConfirmation": 400000,
+				"deployMultisig":     5000000,
+				"priceOfCreation":    100000000000000000,
+			})
 		}
 
 	}

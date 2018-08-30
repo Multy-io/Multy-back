@@ -54,12 +54,13 @@ const (
 	stopSend    = "sender:stop"
 
 	// multisig
-	joinMultisig    = 1
-	leaveMultisig   = 2
-	deleteMultisig  = 3
-	kickMultisig    = 4
-	checkMultisig   = 5
-	viewTransaction = 6
+	joinMultisig       = 1
+	leaveMultisig      = 2
+	deleteMultisig     = 3
+	kickMultisig       = 4
+	checkMultisig      = 5
+	viewTransaction    = 6
+	declineTransaction = 7
 
 	msgSend    = "message:send"
 	msgRecieve = "message:recieve"
@@ -558,6 +559,17 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			}
 
 			return msg
+		case declineTransaction:
+			msgMultisig := &store.MultisigMsg{}
+			err := mapstructure.Decode(msg.Payload, msgMultisig)
+			if err != nil {
+				pool.log.Errorf("server.On:msgSend:DeclineTransaction:mapstructure.Decode %v", err.Error())
+				return makeErr(msgMultisig.UserID, "can't kik from multisig: bad request: "+err.Error(), checkMultisig)
+			}
+			err = ratesDB.DeclineTransaction(msgMultisig.TxID, msgMultisig.Address, msgMultisig.CurrencyID, msgMultisig.NetworkID)
+			if err != nil {
+				pool.log.Errorf("server.On:msgSend:declineTransaction:DeclineTransaction %v", err.Error())
+			}
 		case viewTransaction:
 			msgMultisig := &store.MultisigMsg{}
 			err := mapstructure.Decode(msg.Payload, msgMultisig)

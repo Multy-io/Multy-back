@@ -490,12 +490,11 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		for _, ownerHistory := range tx.Owners {
 			if ownerHistory.Address == tx.From {
 				ownerHistorys = append(ownerHistorys, store.OwnerHistory{
-					Address:          tx.From,
-					ConfirmationTX:   tx.Hash,
-					Confirmed:        true,
-					Seen:             true,
-					ConfirmationTime: time.Now().Unix(),
-					SeenTime:         time.Now().Unix(),
+					Address:            tx.From,
+					ConfirmationTX:     tx.Hash,
+					ConfirmationStatus: store.MultisigOwnerStatusConfirmed,
+					ConfirmationTime:   time.Now().Unix(),
+					SeenTime:           time.Now().Unix(),
 				})
 			} else {
 				ownerHistorys = append(ownerHistorys, ownerHistory)
@@ -532,12 +531,11 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		for _, ownerHistory := range originTx.Owners {
 			if ownerHistory.Address == tx.From {
 				ownerHistorys = append(ownerHistorys, store.OwnerHistory{
-					Address:          tx.From,
-					ConfirmationTX:   tx.Hash,
-					Confirmed:        true,
-					Seen:             true,
-					ConfirmationTime: time.Now().Unix(),
-					SeenTime:         time.Now().Unix(),
+					Address:            tx.From,
+					ConfirmationTX:     tx.Hash,
+					ConfirmationStatus: store.MultisigOwnerStatusConfirmed,
+					ConfirmationTime:   time.Now().Unix(),
+					SeenTime:           time.Now().Unix(),
 				})
 			} else {
 				ownerHistorys = append(ownerHistorys, ownerHistory)
@@ -560,7 +558,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 		confirmations := 0
 		for _, oh := range ownerHistorys {
-			if oh.Confirmed {
+			if oh.ConfirmationStatus == store.MultisigOwnerStatusConfirmed {
 				confirmations++
 			}
 		}
@@ -673,11 +671,10 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		for _, ownerHistory := range tx.Owners {
 			if ownerHistory.Address == originTx.From {
 				ownerHistorys = append(ownerHistorys, store.OwnerHistory{
-					Address:          tx.From,
-					Confirmed:        false,
-					Seen:             true,
-					ConfirmationTime: time.Now().Unix(),
-					SeenTime:         time.Now().Unix(),
+					Address:            tx.From,
+					ConfirmationStatus: store.MultisigOwnerStatusDeclined,
+					ConfirmationTime:   time.Now().Unix(),
+					SeenTime:           time.Now().Unix(),
 				})
 			}
 			ownerHistorys = append(ownerHistorys, ownerHistory)
