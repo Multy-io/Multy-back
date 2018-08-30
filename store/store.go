@@ -103,6 +103,7 @@ type UserStore interface {
 	IsRelatedAddress(userid, address string) bool
 	CheckMultisigCurrency(invitecode string, currencyid, networkid int) bool
 	ViewTransaction(txid, address string, currencyid, networkid int) error
+	DeclineTransaction(txid, address string, currencyid, networkid int) error
 
 	FindMultisigUsers(invitecode string) []User
 	UpdateMultisigOwners(userid, invitecode string, owners []AddressExtended, deployStatus int) error
@@ -635,8 +636,28 @@ func (mStore *MongoUserStore) ViewTransaction(txid, address string, currencyid, 
 		sel := bson.M{"hash": txid, "owners.address": address}
 		fmt.Println(sel)
 		update := bson.M{"$set": bson.M{
-			"owners.$.seen":     true,
-			"owners.$.seentime": time.Now().Unix(),
+			"owners.$.confirmationStatus": MultisigOwnerStatusSeen,
+			"owners.$.seentime":           time.Now().Unix(),
+		}}
+		if networkid == currencies.ETHMain {
+			err := mStore.ETHMainMultisigTxsData.Update(sel, update)
+			return err
+		}
+		if networkid == currencies.ETHTest {
+			err := mStore.ETHTestMultisigTxsData.Update(sel, update)
+			return err
+		}
+	}
+	return nil
+}
+
+func (mStore *MongoUserStore) DeclineTransaction(txid, address string, currencyid, networkid int) error {
+	switch currencyid {
+	case currencies.Ether:
+		sel := bson.M{"hash": txid, "owners.address": address}
+		fmt.Println(sel)
+		update := bson.M{"$set": bson.M{
+			"owners.$.confirmationStatus": MultisigOwnerStatusDeclined,
 		}}
 		if networkid == currencies.ETHMain {
 			err := mStore.ETHMainMultisigTxsData.Update(sel, update)

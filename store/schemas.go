@@ -30,6 +30,11 @@ const (
 	MultisigStatusRejected       = 4
 	MultisigStatusDeployed       = 5
 
+	MultisigOwnerStatusWaiting   = 1
+	MultisigOwnerStatusSeen      = 2
+	MultisigOwnerStatusConfirmed = 3
+	MultisigOwnerStatusDeclined  = 4
+
 	// ws notification topic
 	TopicTransaction = "TransactionUpdate"
 	TopicNewIncoming = "NewIncoming"
@@ -312,12 +317,11 @@ type TransactionETH struct {
 }
 
 type OwnerHistory struct {
-	Address          string `json:"address"`
-	ConfirmationTX   string `json:"confirmationtx"`
-	Confirmed        bool   `json:"confirmed"`
-	Seen             bool   `json:"seen"`
-	ConfirmationTime int64  `json:"confirmationTime"`
-	SeenTime         int64  `json:"seenTime"`
+	Address            string `json:"address"`
+	ConfirmationTX     string `json:"confirmationtx"`
+	ConfirmationStatus int    `json:"confirmationStatus"`
+	ConfirmationTime   int64  `json:"confirmationTime"`
+	SeenTime           int64  `json:"seenTime"`
 }
 
 type CoinType struct {
