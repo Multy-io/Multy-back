@@ -441,7 +441,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 								txToUser.AddressIndex = adr.AddressIndex
 								txToUser.Amount = amount
 								txToUser.Hash = tx.Hash
-								txToUser.Status = store.TxStatusInBlockConfirmedIncoming
+								txToUser.Status = store.TxStatusInBlockConfirmedOutcoming
 								txToUser.IsInternal = true
 								break
 							}

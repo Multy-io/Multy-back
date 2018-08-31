@@ -30,10 +30,10 @@ const (
 	MultisigStatusRejected       = 4
 	MultisigStatusDeployed       = 5
 
-	MultisigOwnerStatusWaiting   = 1
-	MultisigOwnerStatusSeen      = 2
-	MultisigOwnerStatusConfirmed = 3
-	MultisigOwnerStatusDeclined  = 4
+	MultisigOwnerStatusWaiting   = 0
+	MultisigOwnerStatusSeen      = 1
+	MultisigOwnerStatusConfirmed = 2
+	MultisigOwnerStatusDeclined  = 3
 
 	// ws notification topic
 	TopicTransaction = "TransactionUpdate"

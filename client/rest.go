@@ -2427,16 +2427,15 @@ func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 }
 func (restClient *RestClient) estimateMultisig() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		contractAddress := c.Param("contractaddress")
-		if len(contractAddress) > 0 {
-			c.JSON(http.StatusOK, gin.H{
-				"submitTransaction":  400000,
-				"confirmTransaction": 400000,
-				"revokeConfirmation": 400000,
-				"deployMultisig":     5000000,
-				"priceOfCreation":    100000000000000000,
-			})
-		}
+		// contractAddress := c.Param("contractaddress")
+
+		c.JSON(http.StatusOK, gin.H{
+			"submitTransaction":  400000,
+			"confirmTransaction": 400000,
+			"revokeConfirmation": 400000,
+			"deployMultisig":     5000000,
+			"priceOfCreation":    100000000000000000,
+		})
 
 	}
 }
