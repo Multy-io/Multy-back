@@ -499,6 +499,7 @@ func (restClient *RestClient) donations() gin.HandlerFunc {
 }
 
 func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
+	restClient.BTC.CliMain.ServiceInfo(context.Background(), &btcpb.Empty{})
 	return func(c *gin.Context) {
 		resp := map[string]interface{}{
 			"stockexchanges": map[string][]string{
@@ -511,6 +512,16 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 			"version":    restClient.MultyVerison,
 			"ios":        restClient.DeviceVersions.IOS,
 			"donate":     restClient.donationAddresses,
+			"nsversion": map[string]map[string]store.NodeVersion{
+				"btc": map[string]store.NodeVersion{
+					"main": restClient.BTC.VersionMain,
+					"test": restClient.BTC.VersionTest,
+				},
+				"eth": map[string]store.NodeVersion{
+					"main": restClient.ETH.VersionMain,
+					"test": restClient.ETH.VersionTest,
+				},
+			},
 		}
 		c.JSON(http.StatusOK, resp)
 	}

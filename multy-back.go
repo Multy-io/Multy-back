@@ -76,18 +76,52 @@ func Init(conf *Configuration) (*Multy, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Init: btc.InitHandlers: %s", err.Error())
 	}
-	btcVer, err := btcCli.CliMain.ServiceInfo(context.Background(), &btcpb.Empty{})
+
+	//BTC Main ver
+	btcMainVer, err := btcCli.CliMain.ServiceInfo(context.Background(), &btcpb.Empty{})
 	multy.BTC = btcCli
-	log.Infof(" BTC initialization done on %v √", btcVer)
+	log.Infof(" BTC mainnet initialization done on %v √", btcMainVer)
+
+	multy.BTC.VersionMain = store.NodeVersion{
+		Branch: btcMainVer.Branch,
+		Commit: btcMainVer.Commit,
+	}
+
+	//BTC Test ver
+	btcTestVer, err := btcCli.CliTest.ServiceInfo(context.Background(), &btcpb.Empty{})
+	log.Infof(" BTC testnet initialization done on %v √", btcTestVer)
+
+	multy.BTC.VersionTest = store.NodeVersion{
+		Branch: btcTestVer.Branch,
+		Commit: btcTestVer.Commit,
+	}
 
 	// ETH
 	ethCli, err := eth.InitHandlers(&conf.Database, conf.SupportedNodes, conf.NSQAddress)
 	if err != nil {
 		return nil, fmt.Errorf("Init: btc.InitHandlers: %s", err.Error())
 	}
-	ethVer, err := ethCli.CliMain.ServiceInfo(context.Background(), &ethpb.Empty{})
+
+	//ETH Main ver
+	ethMainVer, err := ethCli.CliMain.ServiceInfo(context.Background(), &ethpb.Empty{})
 	multy.ETH = ethCli
-	log.Infof(" ETH initialization done on %v √", ethVer)
+
+	log.Infof(" ETH mainnet initialization done on %v √", ethMainVer)
+
+	multy.ETH.VersionMain = store.NodeVersion{
+		Branch: ethMainVer.Branch,
+		Commit: ethMainVer.Commit,
+	}
+
+	//ETH Test ver
+	ethTestVer, err := ethCli.CliTest.ServiceInfo(context.Background(), &ethpb.Empty{})
+	multy.ETH = ethCli
+	log.Infof(" ETH testnet initialization done on %v √", ethTestVer)
+
+	multy.ETH.VersionTest = store.NodeVersion{
+		Branch: ethTestVer.Branch,
+		Commit: ethTestVer.Commit,
+	}
 
 	//users data set
 	sv, err := multy.SetUserData(multy.userStore, conf.SupportedNodes)

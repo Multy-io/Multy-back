@@ -27,4 +27,5 @@ type Configuration struct {
 	Secretkey      string
 	SupportedNodes []store.CoinType
 	DeviceVersions store.Versions
+	NSVersions     store.NodeVersion
 }

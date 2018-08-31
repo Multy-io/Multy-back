@@ -32,6 +32,9 @@ type ETHConn struct {
 	Mempool     sync.Map
 	MempoolTest sync.Map
 
+	VersionMain store.NodeVersion
+	VersionTest store.NodeVersion
+
 	// M     *sync.Mutex
 	// MTest *sync.Mutex
 }
