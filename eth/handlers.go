@@ -110,6 +110,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			log.Errorf("setGRPCHandlers: cli.AddMultisig: %s", err.Error())
 		}
 
+	Loop:
 		for {
 			multisigTx, err := stream.Recv()
 			if err == io.EOF {
@@ -175,6 +176,17 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			if invitecode == "" {
 				log.Errorf("cli.AddMultisig:stream.Recv:not found contract transaction %v", multisigTx.Addresses)
 				break
+			}
+
+			msUser := store.User{}
+			err = usersData.Find(bson.M{"multisig.inviteCode": invitecode}).One(&msUser)
+			for _, checkMs := range msUser.Multisigs {
+				if checkMs.InviteCode == invitecode {
+					if checkMs.ContractAddress != "" {
+						log.Errorf("cli.AddMultisig:stream.Recv:usersData.Find: can't add one more multisig %v", checkMs.ContractAddress)
+						break Loop
+					}
+				}
 			}
 
 			for _, user := range users {
