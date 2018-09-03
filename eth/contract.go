@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
+	"github.com/Multy-io/Multy-back/store"
 )
 
 func (c *Client) FactoryContract(hash string) {
@@ -32,7 +33,11 @@ func (c *Client) FactoryContract(hash string) {
 
 	fi.TxOfCreation = hash
 	fi.FactoryAddress = c.Multisig.FactoryAddress
-	fi.DeployStatus = !m["failed"].(bool)
+	deployStatus := int64(store.MultisigStatusRejected)
+	if !m["failed"].(bool) {
+		deployStatus = store.MultisigStatusDeployed
+	}
+	fi.DeployStatus = deployStatus
 
 	// Add to local contract store
 

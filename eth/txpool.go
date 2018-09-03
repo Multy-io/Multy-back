@@ -6,7 +6,10 @@ See LICENSE for details
 package eth
 
 import (
+	"strings"
+
 	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
+	"github.com/Multy-io/Multy-back/store"
 )
 
 func (c *Client) txpoolTransaction(txHash string) {
@@ -25,4 +28,18 @@ func (c *Client) txpoolTransaction(txHash string) {
 		Category: int32(rawTx.Gas),
 		HashTX:   rawTx.Hash,
 	}
+	if strings.ToLower(rawTx.To) == strings.ToLower(c.Multisig.FactoryAddress) {
+
+		go func() {
+			fi, err := parseFactoryInput(rawTx.Input)
+			if err != nil {
+				log.Errorf("FactoryContract:parseInput: %s", err.Error())
+			}
+			fi.TxOfCreation = txHash
+			fi.FactoryAddress = c.Multisig.FactoryAddress
+			fi.DeployStatus = int64(store.MultisigStatusDeployPending)
+			c.NewMultisig <- *fi
+		}()
+	}
+
 }

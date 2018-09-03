@@ -163,9 +163,7 @@ func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommuunications_EventN
 }
 
 func (s *Server) AddMultisig(_ *pb.Empty, stream pb.NodeCommuunications_AddMultisigServer) error {
-	n := 1
 	for m := range s.EthCli.NewMultisig {
-
 		log.Infof("AddMultisig new contract address - %v", m.GetContract())
 		err := stream.Send(&m)
 		if err != nil {
@@ -183,8 +181,6 @@ func (s *Server) AddMultisig(_ *pb.Empty, stream pb.NodeCommuunications_AddMulti
 					break
 				}
 			}
-			log.Errorf("rrrrrrrrrrrrrr   %v", n)
-			n++
 		}
 	}
 	return nil
