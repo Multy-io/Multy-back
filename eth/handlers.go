@@ -254,7 +254,24 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			}
 			// process multisig txs
 			if gTx.Multisig {
-				err = processMultisig(&tx, networtkID, nsqProducer)
+				methodInvoked, err := processMultisig(&tx, networtkID, nsqProducer)
+
+				// ws notify about all kinds of ms transactions
+
+				sel := bson.M{"multisig.contractAddress": tx.To}
+				users := []store.User{}
+				usersData.Find(sel).All(&users)
+
+				for _, user := range users {
+					msg := store.WsMessage{
+						Type:    signatuteToStatus(methodInvoked),
+						To:      user.UserID,
+						Date:    time.Now().Unix(),
+						Payload: gTx,
+					}
+					ethcli.WsServer.BroadcastToAll(store.MsgRecieve+":"+user.UserID, msg)
+				}
+
 				if err != nil {
 					log.Errorf("initGrpcClient: processMultisig: %s", err.Error())
 				}

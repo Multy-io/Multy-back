@@ -50,6 +50,10 @@ const (
 	viewTransaction    = 6
 	declineTransaction = 7
 	NotifyDeploy       = 8
+	NotifyPaymentReq   = 9
+	NotifyIncomingTx   = 10
+	NotifyConfirmTx    = 11
+	NotifyRevokeTx     = 12
 )
 
 // User represents a single app user
