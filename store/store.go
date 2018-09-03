@@ -477,7 +477,7 @@ func (mStore *MongoUserStore) GetAllWalletEthTransactions(userid string, currenc
 func (mStore *MongoUserStore) GetAllMultisigEthTransactions(contractAddress string, currencyID, networkID int, multisigTxs *[]TransactionETH) error {
 	switch currencyID {
 	case currencies.Ether:
-		query := bson.M{"contract": contractAddress}
+		query := bson.M{"multisig.contract": contractAddress}
 		if networkID == currencies.ETHMain {
 			return mStore.ETHMainMultisigTxsData.Find(query).All(multisigTxs)
 		}

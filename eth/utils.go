@@ -182,7 +182,7 @@ func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer, net
 				WalletIndex:     tx.WalletIndex,
 				From:            tx.From,
 				To:              tx.To,
-				Multisig:        tx.Contract,
+				Multisig:        tx.Multisig.Contract,
 			},
 		}
 		if len(userid) > 0 {
@@ -204,7 +204,7 @@ func sendNotifyToClients(tx store.TransactionETH, nsqProducer *nsq.Producer, net
 				WalletIndex:     tx.WalletIndex,
 				From:            tx.From,
 				To:              tx.To,
-				Multisig:        tx.Contract,
+				Multisig:        tx.Multisig.Contract,
 			},
 		}
 		sendNotify(&txMsq, nsqProducer)
@@ -228,25 +228,32 @@ func sendNotify(txMsq *store.TransactionWithUserID, nsqProducer *nsq.Producer) {
 
 func generatedTxDataToStore(tx *ethpb.ETHTransaction) store.TransactionETH {
 	return store.TransactionETH{
-		UserID:           tx.GetUserID(),
-		WalletIndex:      int(tx.GetWalletIndex()),
-		AddressIndex:     int(tx.GetAddressIndex()),
-		Hash:             tx.GetHash(),
-		From:             tx.GetFrom(),
-		To:               tx.GetTo(),
-		Amount:           tx.GetAmount(),
-		GasPrice:         tx.GetGasPrice(),
-		GasLimit:         tx.GetGasLimit(),
-		Nonce:            int(tx.GetNonce()),
-		Status:           int(tx.GetStatus()),
-		BlockTime:        tx.GetBlockTime(),
-		PoolTime:         tx.GetTxpoolTime(),
-		BlockHeight:      tx.GetBlockHeight(),
-		Contract:         tx.GetContract(),
-		MethodInvoked:    tx.GetMethodInvoked(),
-		InvocationStatus: tx.GetInvocationStatus(),
-		Return:           tx.GetReturn(),
-		Input:            tx.GetInput(),
+		UserID:       tx.GetUserID(),
+		WalletIndex:  int(tx.GetWalletIndex()),
+		AddressIndex: int(tx.GetAddressIndex()),
+		Hash:         tx.GetHash(),
+		From:         tx.GetFrom(),
+		To:           tx.GetTo(),
+		Amount:       tx.GetAmount(),
+		GasPrice:     tx.GetGasPrice(),
+		GasLimit:     tx.GetGasLimit(),
+		Nonce:        int(tx.GetNonce()),
+		Status:       int(tx.GetStatus()),
+		BlockTime:    tx.GetBlockTime(),
+		PoolTime:     tx.GetTxpoolTime(),
+		BlockHeight:  tx.GetBlockHeight(),
+		Multisig: &store.MultisigTx{
+			Contract:         tx.GetContract(),
+			MethodInvoked:    tx.GetMethodInvoked(),
+			InvocationStatus: tx.GetInvocationStatus(),
+			Return:           tx.GetReturn(),
+			Input:            tx.GetInput(),
+		},
+		// Contract:         tx.GetContract(),
+		// MethodInvoked:    tx.GetMethodInvoked(),
+		// InvocationStatus: tx.GetInvocationStatus(),
+		// Return:           tx.GetReturn(),
+		// Input:            tx.GetInput(),
 	}
 }
 
@@ -345,7 +352,7 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 		networtkID = currencies.ETHTest
 	}
 
-	tx.Contract = tx.To
+	tx.Multisig.Contract = tx.To
 	multyTX := &store.TransactionETH{}
 	if tx.Status == store.TxStatusAppearedInBlockIncoming || tx.Status == store.TxStatusAppearedInMempoolIncoming || tx.Status == store.TxStatusInBlockConfirmedIncoming {
 		log.Debugf("saveTransaction new incoming tx to %v", tx.To)
@@ -366,14 +373,14 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 
 		update := bson.M{
 			"$set": bson.M{
-				"txstatus":         tx.Status,
-				"blockheight":      tx.BlockHeight,
-				"blocktime":        tx.BlockTime,
-				"index":            multyTX.Index,
-				"return":           tx.Return,
-				"invocationstatus": tx.InvocationStatus,
-				"confirmed":        tx.Confirmed,
-				"amount":           tx.Amount,
+				"txstatus":                  tx.Status,
+				"blockheight":               tx.BlockHeight,
+				"blocktime":                 tx.BlockTime,
+				"amount":                    tx.Amount,
+				"multisig.index":            multyTX.Multisig.Index,
+				"multisig.return":           tx.Multisig.Return,
+				"multisig.invocationstatus": tx.Multisig.InvocationStatus,
+				"multisig.confirmed":        tx.Multisig.Confirmed,
 			},
 		}
 
@@ -386,9 +393,9 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 
 func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore, txStore *mgo.Collection, nsqProducer *nsq.Producer) *store.TransactionETH { // method
 
-	owners, _ := FethContractOwners(currencies.Ether, networtkID, tx.Contract)
-	tx.Owners = owners
-	tx.MethodInvoked = fethMethod(tx.Input)
+	owners, _ := FethContractOwners(currencies.Ether, networtkID, tx.Multisig.Contract)
+	tx.Multisig.Owners = owners
+	tx.Multisig.MethodInvoked = fethMethod(tx.Multisig.Input)
 
 	users := findContractOwners(tx.To)
 	contract, err := fethMultisig(users, tx.To)
@@ -398,22 +405,22 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 	fmt.Println("-------------------------- ", owners)
 
-	switch tx.MethodInvoked {
+	switch tx.Multisig.MethodInvoked {
 	case submitTransaction: // "c6427474": "submitTransaction(address,uint256,bytes)"
 		// Feth contract owners, send notfy to owners about transation. status: waiting for confirmations
 		// find in db if one one confirmation needed DONE internal transaction
-		log.Debugf("submitTransaction:  Input :%v Return :%v ", tx.Input, tx.Return)
+		log.Debugf("submitTransaction:  Input :%v Return :%v ", tx.Multisig.Input, tx.Multisig.Return)
 		if tx.BlockTime != 0 {
-			i, _ := new(big.Int).SetString(tx.Return, 16)
-			tx.Index = i.Int64()
+			i, _ := new(big.Int).SetString(tx.Multisig.Return, 16)
+			tx.Multisig.Index = i.Int64()
 
-			address, amount := parseSubmitInput(tx.Input)
+			address, amount := parseSubmitInput(tx.Multisig.Input)
 
 			tx.Amount = amount
 
 			// fakeit intrrnal transaction history
 			if contract.Confirmations == 1 {
-				tx.Confirmed = true
+				tx.Multisig.Confirmed = true
 				sel := bson.M{"txhash": tx.Hash}
 				err := txStore.Find(sel).One(nil)
 				if err == mgo.ErrNotFound {
@@ -434,7 +441,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 								txToUser.From = contract.ContractAddress
 								txToUser.To = adr.Address
 								txToUser.PoolTime = time.Now().Unix()
-								txToUser.MethodInvoked = executeTransaction
+								txToUser.Multisig.MethodInvoked = executeTransaction
 								isOurUser = true
 								txToUser.UserID = user.UserID
 								txToUser.WalletIndex = wallet.WalletIndex
@@ -461,7 +468,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 							txToUser.From = contract.ContractAddress
 							txToUser.To = multisig.ContractAddress
 							txToUser.PoolTime = time.Now().Unix()
-							txToUser.MethodInvoked = executeTransaction
+							txToUser.Multisig.MethodInvoked = executeTransaction
 							isOurUser = true
 							txToUser.Amount = amount
 							txToUser.Hash = tx.Hash
@@ -487,7 +494,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 		// update confirmations history
 		ownerHistorys := []store.OwnerHistory{}
-		for _, ownerHistory := range tx.Owners {
+		for _, ownerHistory := range tx.Multisig.Owners {
 			if ownerHistory.Address == tx.From {
 				ownerHistorys = append(ownerHistorys, store.OwnerHistory{
 					Address:            tx.From,
@@ -501,7 +508,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 			}
 		}
 
-		tx.Owners = ownerHistorys
+		tx.Multisig.Owners = ownerHistorys
 
 		//TODO: notifications
 		// //notify users
@@ -515,9 +522,9 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		//TODO: send notfy to owners about +1 confirmation. store confiramtions id db
 
 		//TODO: outcoming tranastions for multisig
-		log.Debugf("confirmTransaction: %v", tx.Input)
-		i, _ := new(big.Int).SetString(tx.Input[10:], 16)
-		sel := bson.M{"index": i.Int64(), "contract": tx.Contract}
+		log.Debugf("confirmTransaction: %v", tx.Multisig.Input)
+		i, _ := new(big.Int).SetString(tx.Multisig.Input[10:], 16)
+		sel := bson.M{"multisig.index": i.Int64(), "multisig.contract": tx.Multisig.Contract}
 
 		originTx := store.TransactionETH{}
 		err := multisigStore.Find(sel).One(&originTx)
@@ -528,7 +535,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		//todo update only on block and exec true
 		ownerHistorys := []store.OwnerHistory{}
 
-		for _, ownerHistory := range originTx.Owners {
+		for _, ownerHistory := range originTx.Multisig.Owners {
 			if ownerHistory.Address == tx.From {
 				ownerHistorys = append(ownerHistorys, store.OwnerHistory{
 					Address:            tx.From,
@@ -544,17 +551,17 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 		update := bson.M{
 			"$set": bson.M{
-				"owners": ownerHistorys,
+				"multisig.owners": ownerHistorys,
 			},
 		}
 
 		// update confirmations history
 		err = multisigStore.Update(sel, update)
 		if err != nil {
-			log.Errorf("ParseMultisigInput:confirmTransaction:multisigStore.Update %v index:%v  contract:%v ", err.Error(), originTx.Index, contract.ContractAddress)
+			log.Errorf("ParseMultisigInput:confirmTransaction:multisigStore.Update %v index:%v  contract:%v ", err.Error(), originTx.Multisig.Index, contract.ContractAddress)
 		}
 
-		tx.Owners = []store.OwnerHistory{}
+		tx.Multisig.Owners = []store.OwnerHistory{}
 
 		confirmations := 0
 		for _, oh := range ownerHistorys {
@@ -565,13 +572,13 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 		// Internal transaction contract to user
 		if contract.Confirmations <= confirmations && tx.BlockTime != 0 {
-			tx.Confirmed = true
+			tx.Multisig.Confirmed = true
 			//update owners history
 			sel := bson.M{"hash": originTx.Hash}
 			update := bson.M{
 				"$set": bson.M{
-					"owners":    ownerHistorys,
-					"confirmed": true,
+					"multisig.owners":    ownerHistorys,
+					"multisig.confirmed": true,
 				},
 			}
 			err = multisigStore.Update(sel, update)
@@ -590,7 +597,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 				isOurUser := false
 
 				user := store.User{}
-				outputAddress, amount := parseSubmitInput(originTx.Input)
+				outputAddress, amount := parseSubmitInput(originTx.Multisig.Input)
 
 				// internal transaction contract to addres
 				sel := bson.M{"wallets.addresses.address": outputAddress}
@@ -601,7 +608,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 							txToUser.From = contract.ContractAddress
 							txToUser.To = adr.Address
 							txToUser.PoolTime = time.Now().Unix()
-							txToUser.MethodInvoked = executeTransaction
+							txToUser.Multisig.MethodInvoked = executeTransaction
 							isOurUser = true
 							txToUser.UserID = user.UserID
 							txToUser.WalletIndex = wallet.WalletIndex
@@ -630,7 +637,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 						txToUser.From = contract.ContractAddress
 						txToUser.To = multisig.ContractAddress
 						txToUser.PoolTime = time.Now().Unix()
-						txToUser.MethodInvoked = executeTransaction
+						txToUser.Multisig.MethodInvoked = executeTransaction
 						isOurUser = true
 						txToUser.Amount = amount
 						txToUser.Hash = tx.Hash
@@ -655,12 +662,12 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 	case revokeConfirmation: // "20ea8d86": "revokeConfirmation(uint256)"
 		// TODO: send notfy to owners about -1 confirmation. store confirmations in db
 
-		tx.Owners = []store.OwnerHistory{}
+		tx.Multisig.Owners = []store.OwnerHistory{}
 
-		log.Debugf("revokeConfirmation: %v", tx.Input)
-		i, _ := new(big.Int).SetString(tx.Input, 16)
+		log.Debugf("revokeConfirmation: %v", tx.Multisig.Input)
+		i, _ := new(big.Int).SetString(tx.Multisig.Input, 16)
 
-		sel := bson.M{"index": i.Int64(), "contract": contract.ContractAddress}
+		sel := bson.M{"multisig.index": i.Int64(), "multisig.contract": contract.ContractAddress}
 
 		originTx := store.TransactionETH{}
 		err := multisigStore.Find(sel).One(&originTx)
@@ -668,7 +675,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 			log.Errorf("ParseMultisigInput:revokeConfirmation:multisigStore.Find %v index:%v  contract:%v ", err.Error(), i.Int64(), contract.ContractAddress)
 		}
 		ownerHistorys := []store.OwnerHistory{}
-		for _, ownerHistory := range tx.Owners {
+		for _, ownerHistory := range tx.Multisig.Owners {
 			if ownerHistory.Address == originTx.From {
 				ownerHistorys = append(ownerHistorys, store.OwnerHistory{
 					Address:            tx.From,
@@ -682,7 +689,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 		update := bson.M{
 			"$set": bson.M{
-				"owners": ownerHistorys,
+				"multisig.owners": ownerHistorys,
 			},
 		}
 
@@ -694,11 +701,11 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		return tx
 	case "0x": // incoming transaction
 		// TODO: notify owners about new transation
-		log.Debugf("incoming transaction: %v", tx.Input)
+		log.Debugf("incoming transaction: %v", tx.Multisig.Input)
 		return tx
 
 	default:
-		log.Errorf("wrong method: ", tx.Input)
+		log.Errorf("wrong method: ", tx.Multisig.Input)
 		return tx
 		// wrong method
 	}
