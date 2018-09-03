@@ -2270,7 +2270,11 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 					} else {
 						userTxs[i].Confirmations = int(blockHeight-userTxs[i].BlockHeight) + 1
 					}
-					if userTxs[i].Multisig.MethodInvoked == "0xc6427474" || userTxs[i].Multisig.MethodInvoked == "0x" {
+					if userTxs[i].Multisig.MethodInvoked == "0xc6427474" {
+						fethedHistory = append(fethedHistory, userTxs[i])
+					}
+					if userTxs[i].Multisig.MethodInvoked == "0x" {
+						userTxs[i].Multisig = nil
 						fethedHistory = append(fethedHistory, userTxs[i])
 					}
 				}
