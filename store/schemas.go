@@ -38,6 +38,18 @@ const (
 	// ws notification topic
 	TopicTransaction = "TransactionUpdate"
 	TopicNewIncoming = "NewIncoming"
+
+	MsgSend    = "message:send"
+	MsgRecieve = "message:recieve"
+
+	joinMultisig       = 1
+	leaveMultisig      = 2
+	deleteMultisig     = 3
+	kickMultisig       = 4
+	checkMultisig      = 5
+	viewTransaction    = 6
+	declineTransaction = 7
+	NotifyDeploy       = 8
 )
 
 // User represents a single app user

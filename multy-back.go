@@ -280,6 +280,7 @@ func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 		return err
 	}
 	multy.clientPool = socketIOPool
+	multy.ETH.WsServer = multy.clientPool.Server
 
 	firebaseClient, err := client.InitFirebaseConn(&conf.Firebase, multy.route, conf.NSQAddress)
 	if err != nil {

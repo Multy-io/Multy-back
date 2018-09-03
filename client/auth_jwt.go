@@ -302,6 +302,7 @@ func (mw *GinJWTMiddleware) jwtFromCookie(c *gin.Context, key string) (string, e
 func (mw *GinJWTMiddleware) parseToken(c *gin.Context) (*jwt.Token, error) {
 	var token string
 	var err error
+
 	fmt.Println("[HEADERS] - parseToken : ", c.Request.Header)
 	parts := strings.Split(mw.TokenLookup, ":")
 	switch parts[0] {

@@ -61,6 +61,7 @@ const (
 	checkMultisig      = 5
 	viewTransaction    = 6
 	declineTransaction = 7
+	NotifyDeploy       = 8
 
 	msgSend    = "message:send"
 	msgRecieve = "message:recieve"
@@ -95,6 +96,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 	if err != nil {
 		return nil, fmt.Errorf("connection pool initialization: %s", err.Error())
 	}
+	pool.Server = server
 
 	chart, err := newExchangeChart(ratesDB)
 	if err != nil {
@@ -205,7 +207,6 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 		}
 
 		receiversM.Lock()
-		fmt.Println("stopReceive", receivers)
 		receiversM.Unlock()
 		return stopReceive + ":ok"
 	})
@@ -603,15 +604,6 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 
 	server.On(msgRecieve, func(c *gosocketio.Channel, msg store.WsMessage) string {
 		return ""
-	})
-
-	server.On("kek", func(c *gosocketio.Channel, msg string) string {
-		fmt.Println("msg:", msg)
-		return "ok:" + msg
-	})
-
-	server.On("kek1", func(c *gosocketio.Channel) string {
-		return "ok"
 	})
 
 	serveMux := http.NewServeMux()

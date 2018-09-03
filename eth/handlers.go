@@ -10,6 +10,7 @@ import (
 	"io"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/Multy-io/Multy-back/currencies"
 	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
@@ -19,11 +20,11 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress, mempool sync.Map) {
+func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress, mempool sync.Map, ethcli *ETHConn) {
 
 	mempoolCh := make(chan interface{})
-	log.Errorf("\n\n\nnetwortkIDnetwortkIDnetwortkIDnetwortkIDnetwortkID %v\n\n\n ", networtkID)
 	// initial fill mempool respectively network id
+
 	go func() {
 		stream, err := cli.EventGetAllMempool(context.Background(), &pb.Empty{})
 		if err != nil {
@@ -212,6 +213,14 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				if err != nil {
 					log.Errorf("cli.AddMultisig:stream.Recv:userStore.Update: %s", err.Error())
 				}
+
+				msg := store.WsMessage{
+					Type:    store.NotifyDeploy,
+					To:      user.UserID,
+					Date:    time.Now().Unix(),
+					Payload: multisig,
+				}
+				ethcli.WsServer.BroadcastToAll(store.MsgRecieve+":"+user.UserID, msg)
 			}
 		}
 	}()
