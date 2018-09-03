@@ -132,6 +132,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				multisig.NetworkID = currencies.ETHTest
 			}
 
+			log.Warnf("\n\n\n\n\n multisigTx.DeployStatus = %v", multisigTx.DeployStatus)
 			// feth ussers included as owners in multisig
 			users := map[string]store.User{} // ms attached address to user
 			// attachedAddress := ""
@@ -149,11 +150,6 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			log.Warnf("\nusers %v", users)
 			// Fetch invite code from undeployed multisigs
 			invitecode := ""
-			// msUser := store.User{}
-			// err = usersData.Find(bson.M{"multisig.owners.address": attachedAddress}).One(&msUser)
-			// if err != nil {
-			// 	log.Errorf("cli.AddMultisig:stream.Recv:usersData.Find:can't find %v  %v", err.Error(), attachedAddress)
-			// }
 			ownersCount := 0
 			for _, msUser := range users {
 				for _, ms := range msUser.Multisigs {
@@ -279,7 +275,6 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 					"blockheight": h.GetHeight(),
 				},
 			}
-
 			err = restoreState.Update(query, update)
 			if err == mgo.ErrNotFound {
 				restoreState.Insert(store.LastState{
