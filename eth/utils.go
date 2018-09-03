@@ -328,7 +328,7 @@ func saveTransaction(tx store.TransactionETH, networtkID int, resync bool) error
 	return nil
 }
 
-func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.Producer) error {
+func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.Producer) (string, error) {
 
 	multisigStore := &mgo.Collection{}
 	txStore := &mgo.Collection{}
@@ -340,7 +340,7 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 		multisigStore = multisigDataTest
 		txStore = txsDataTest
 	default:
-		return errors.New("processMultisig: wrong networkID")
+		return "", errors.New("processMultisig: wrong networkID")
 	}
 
 	//TODO: fix netids
@@ -360,7 +360,7 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 		if err == mgo.ErrNotFound {
 			multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore, nsqProducer)
 			err := multisigStore.Insert(multyTX)
-			return err
+			return "", err
 		}
 
 		multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore, nsqProducer)
@@ -370,7 +370,7 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 
 		if err != nil && err != mgo.ErrNotFound {
 			// database error
-			return err
+			return "", err
 		}
 
 		update := bson.M{
@@ -388,9 +388,9 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 
 		err = multisigStore.Update(sel, update)
 
-		return err
+		return tx.Multisig.MethodInvoked, err
 	}
-	return nil
+	return "", nil
 }
 
 func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore, txStore *mgo.Collection, nsqProducer *nsq.Producer) *store.TransactionETH { // method
@@ -828,4 +828,22 @@ func parseSubmitInput(input string) (string, string) {
 	}
 
 	return address, amount
+}
+
+func signatuteToStatus(signature string) int {
+	switch signature {
+	case submitTransaction: // "c6427474": "submitTransaction(address,uint256,bytes)"
+		return store.NotifyPaymentReq
+	case confirmTransaction: // "c01a8c84": "confirmTransaction(uint256)"
+		return store.NotifyConfirmTx
+
+	case revokeConfirmation: // "20ea8d86": "revokeConfirmation(uint256)"
+		return store.NotifyRevokeTx
+
+	case "0x": // incoming transaction
+		return store.NotifyIncomingTx
+
+	default:
+		return store.NotifyPaymentReq
+	}
 }

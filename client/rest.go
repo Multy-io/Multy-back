@@ -12,7 +12,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -1962,7 +1961,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 			var totalBalance string = "0"
 			var pendingBalance string
-			fmt.Println(av, pending, totalBalance, pendingBalance)
 
 			amount := &ethpb.Balance{}
 			nonce := &ethpb.Nonce{}
