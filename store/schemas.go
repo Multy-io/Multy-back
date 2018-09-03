@@ -300,11 +300,11 @@ type MultisigTx struct {
 	Contract         string         `json:"contract,omitempty"`
 	MethodInvoked    string         `json:"methodinvoked,omitempty"`
 	Input            string         `json:"input"`
-	InvocationStatus bool           `json:"invocationstatus,omitempty"`
+	InvocationStatus bool           `json:"invocationstatus"`
 	Index            int64          `json:"index,omitempty"`
 	Return           string         `json:"return,omitempty"`
 	Owners           []OwnerHistory `json:"owners,omitempty"`
-	Confirmed        bool           `json:"confirmed,omitempty"`
+	Confirmed        bool           `json:"confirmed"`
 }
 
 type Multisig struct {
