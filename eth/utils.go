@@ -706,10 +706,6 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 }
 
 func generatedMultisigTxToStore(mul *ethpb.Multisig, currenyid, networkid int) store.Multisig {
-	deployStatus := store.MultisigStatusDeployPending
-	if mul.GetDeployStatus() {
-		deployStatus = store.MultisigStatusDeployed
-	}
 	return store.Multisig{
 		CurrencyID:      currenyid,
 		NetworkID:       networkid,
@@ -719,7 +715,7 @@ func generatedMultisigTxToStore(mul *ethpb.Multisig, currenyid, networkid int) s
 		FactoryAddress:  mul.GetFactoryAddress(),
 		LastActionTime:  time.Now().Unix(),
 		DateOfCreation:  time.Now().Unix(),
-		DeployStatus:    deployStatus,
+		DeployStatus:    int(mul.GetDeployStatus()),
 		Status:          store.WalletStatusOK,
 	}
 }
