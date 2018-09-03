@@ -365,6 +365,9 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 		}
 
 		multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore, nsqProducer)
+		if multyTX.Multisig.MethodInvoked == "0xc6427474" && multyTX.Status == store.TxStatusAppearedInBlockIncoming {
+			multyTX.Status = store.TxStatusInBlockConfirmedOutcoming
+		}
 
 		if err != nil && err != mgo.ErrNotFound {
 			// database error
