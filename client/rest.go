@@ -2263,19 +2263,22 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 					})
 					return
 				}
-
+				fethedHistory := []store.TransactionETH{}
 				for i := 0; i < len(userTxs); i++ {
 					if userTxs[i].BlockHeight == -1 {
 						userTxs[i].Confirmations = 0
 					} else {
 						userTxs[i].Confirmations = int(blockHeight-userTxs[i].BlockHeight) + 1
 					}
+					if userTxs[i].Multisig.MethodInvoked == "0xc6427474" || userTxs[i].Multisig.MethodInvoked == "0x" {
+						fethedHistory = append(fethedHistory, userTxs[i])
+					}
 				}
 
 				c.JSON(http.StatusOK, gin.H{
 					"code":    http.StatusOK,
 					"message": http.StatusText(http.StatusOK),
-					"history": userTxs,
+					"history": fethedHistory,
 				})
 				return
 

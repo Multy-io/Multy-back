@@ -108,28 +108,6 @@ type Wallet struct {
 	Status string `bson:"status"`
 }
 
-type Multisig struct {
-	CurrencyID      int               `bson:"currencyid" json:"currencyid"`
-	NetworkID       int               `bson:"networkid" json:"networkid"`
-	Confirmations   int               `bson:"confirmations" json:"confirmations"`
-	WalletName      string            `bson:"walletName" json:"walletName"`
-	FactoryAddress  string            `bson:"factoryAddress" json:"factoryAddress"`
-	ContractAddress string            `bson:"contractAddress" json:"contractAddress"`
-	TxOfCreation    string            `bson:"txOfCreation" json:"txOfCreation"`
-	LastActionTime  int64             `bson:"lastActionTime" json:"lastActionTime"`
-	DateOfCreation  int64             `bson:"dateOfCreation" json:"dateOfCreation"`
-	Owners          []AddressExtended `bson:"owners" json:"owners"`
-	DeployStatus    int               `bson:"deployStatus" json:"deployStatus"`
-	Status          string            `bson:"status" json:"status"`
-	InviteCode      string            `bson:"inviteCode" json:"inviteCode"`
-	OwnersCount     int               `bson:"ownersCount" json:"ownersCount"`
-}
-
-type MultisigExtended struct {
-	Multisig      Multisig `json:"multisig" bson:"multisig"`
-	KickedAddress string   `json:"kickedAddress" bson:"kickedAddress"`
-}
-
 type RatesRecord struct {
 	Category int    `json:"category" bson:"category"`
 	TxHash   string `json:"txHash" bson:"txHash"`
@@ -289,31 +267,66 @@ type WalletETH struct {
 }
 
 type TransactionETH struct {
-	UserID            string                `json:"userid,omitempty"`
-	WalletIndex       int                   `json:"walletindex,omitempty"`
-	AddressIndex      int                   `json:"addressindex,omitempty"`
-	Hash              string                `json:"txhash"`
-	From              string                `json:"from"`
-	To                string                `json:"to"`
-	Amount            string                `json:"txoutamount"`
-	Input             string                `json:"input"`
-	GasPrice          int64                 `json:"gasprice"`
-	GasLimit          int64                 `json:"gaslimit"`
-	Nonce             int                   `json:"nonce"`
-	Status            int                   `json:"txstatus" bson:"txstatus"`
-	BlockTime         int64                 `json:"blocktime"`
-	PoolTime          int64                 `json:"mempooltime"`
-	BlockHeight       int64                 `json:"blockheight"`
-	Confirmations     int                   `json:"confirmations"`
-	Contract          string                `json:"contract,omitempty"`
-	Index             int64                 `json:"index,omitempty"`
-	MethodInvoked     string                `json:"methodinvoked,omitempty"`
-	InvocationStatus  bool                  `json:"invocationstatus,omitempty"`
-	Return            string                `json:"return,omitempty"`
-	Owners            []OwnerHistory        `json:"owners,omitempty"`
-	Confirmed         bool                  `json:"confirmed,omitempty"`
-	IsInternal        bool                  `json:"isinternal,omitempty"`
+	UserID        string      `json:"userid,omitempty"`
+	WalletIndex   int         `json:"walletindex,omitempty"`
+	AddressIndex  int         `json:"addressindex,omitempty"`
+	Hash          string      `json:"txhash"`
+	From          string      `json:"from"`
+	To            string      `json:"to"`
+	Amount        string      `json:"txoutamount"`
+	GasPrice      int64       `json:"gasprice"`
+	GasLimit      int64       `json:"gaslimit"`
+	Nonce         int         `json:"nonce"`
+	Status        int         `json:"txstatus" bson:"txstatus"`
+	BlockTime     int64       `json:"blocktime"`
+	PoolTime      int64       `json:"mempooltime"`
+	BlockHeight   int64       `json:"blockheight"`
+	Confirmations int         `json:"confirmations"`
+	IsInternal    bool        `json:"isinternal,omitempty"`
+	Multisig      *MultisigTx `json:"multisig,omitempty"`
+	// Input         string      `json:"input"`
+	// Contract          string                `json:"contract,omitempty"`
+	// Index             int64                 `json:"index,omitempty"`
+	// MethodInvoked     string                `json:"methodinvoked,omitempty"`
+	// InvocationStatus  bool                  `json:"invocationstatus,omitempty"`
+	// Return            string                `json:"return,omitempty"`
+	// Owners            []OwnerHistory        `json:"owners,omitempty"`
+	// Confirmed         bool                  `json:"confirmed,omitempty"`
+
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
+}
+
+type MultisigTx struct {
+	Contract         string         `json:"contract,omitempty"`
+	MethodInvoked    string         `json:"methodinvoked,omitempty"`
+	Input            string         `json:"input"`
+	InvocationStatus bool           `json:"invocationstatus,omitempty"`
+	Index            int64          `json:"index,omitempty"`
+	Return           string         `json:"return,omitempty"`
+	Owners           []OwnerHistory `json:"owners,omitempty"`
+	Confirmed        bool           `json:"confirmed,omitempty"`
+}
+
+type Multisig struct {
+	CurrencyID      int               `bson:"currencyid" json:"currencyid"`
+	NetworkID       int               `bson:"networkid" json:"networkid"`
+	Confirmations   int               `bson:"confirmations" json:"confirmations"`
+	WalletName      string            `bson:"walletName" json:"walletName"`
+	FactoryAddress  string            `bson:"factoryAddress" json:"factoryAddress"`
+	ContractAddress string            `bson:"contractAddress" json:"contractAddress"`
+	TxOfCreation    string            `bson:"txOfCreation" json:"txOfCreation"`
+	LastActionTime  int64             `bson:"lastActionTime" json:"lastActionTime"`
+	DateOfCreation  int64             `bson:"dateOfCreation" json:"dateOfCreation"`
+	Owners          []AddressExtended `bson:"owners" json:"owners"`
+	DeployStatus    int               `bson:"deployStatus" json:"deployStatus"`
+	Status          string            `bson:"status" json:"status"`
+	InviteCode      string            `bson:"inviteCode" json:"inviteCode"`
+	OwnersCount     int               `bson:"ownersCount" json:"ownersCount"`
+}
+
+type MultisigExtended struct {
+	Multisig      Multisig `json:"multisig" bson:"multisig"`
+	KickedAddress string   `json:"kickedAddress" bson:"kickedAddress"`
 }
 
 type OwnerHistory struct {

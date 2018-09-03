@@ -570,6 +570,14 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			if err != nil {
 				pool.log.Errorf("server.On:msgSend:declineTransaction:DeclineTransaction %v", err.Error())
 			}
+			msg := store.WsMessage{
+				Type:    declineTransaction,
+				To:      msgMultisig.UserID,
+				Date:    time.Now().Unix(),
+				Payload: "declined",
+			}
+
+			return msg
 		case viewTransaction:
 			msgMultisig := &store.MultisigMsg{}
 			err := mapstructure.Decode(msg.Payload, msgMultisig)
@@ -581,7 +589,13 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			if err != nil {
 				pool.log.Errorf("server.On:msgSend:viewTransaction:ViewTransaction %v", err.Error())
 			}
-
+			msg := store.WsMessage{
+				Type:    viewTransaction,
+				To:      msgMultisig.UserID,
+				Date:    time.Now().Unix(),
+				Payload: "viewed",
+			}
+			return msg
 		}
 
 		return makeErr("", "wrong request message type: ", 0)
