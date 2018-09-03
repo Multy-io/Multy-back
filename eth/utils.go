@@ -8,7 +8,6 @@ package eth
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math/big"
 	"regexp"
 	"strconv"
@@ -368,9 +367,6 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 		if multyTX.Multisig.MethodInvoked == "0xc6427474" && multyTX.Status == store.TxStatusAppearedInBlockIncoming {
 			multyTX.Status = store.TxStatusInBlockConfirmedOutcoming
 		}
-		if multyTX.Multisig.MethodInvoked != "0xc6427474" {
-			multyTX.Multisig = nil
-		}
 
 		if err != nil && err != mgo.ErrNotFound {
 			// database error
@@ -383,7 +379,7 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 				"blockheight":               tx.BlockHeight,
 				"blocktime":                 tx.BlockTime,
 				"amount":                    tx.Amount,
-				"multisig.index":            multyTX.Multisig.Index,
+				"multisig.index":            tx.Multisig.Index,
 				"multisig.return":           tx.Multisig.Return,
 				"multisig.invocationstatus": tx.Multisig.InvocationStatus,
 				"multisig.confirmed":        tx.Multisig.Confirmed,
@@ -408,8 +404,6 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 	if err != nil {
 		log.Errorf("ParseMultisigInput:fethMultisig: %v", err.Error())
 	}
-
-	fmt.Println("-------------------------- ", owners)
 
 	switch tx.Multisig.MethodInvoked {
 	case submitTransaction: // "c6427474": "submitTransaction(address,uint256,bytes)"

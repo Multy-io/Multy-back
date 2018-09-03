@@ -16,6 +16,7 @@ import (
 	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
 	"github.com/Multy-io/Multy-back/store"
 	nsq "github.com/bitly/go-nsq"
+	"github.com/graarh/golang-socketio"
 	"github.com/jekabolt/slf"
 )
 
@@ -31,6 +32,8 @@ type ETHConn struct {
 
 	Mempool     sync.Map
 	MempoolTest sync.Map
+
+	WsServer *gosocketio.Server
 
 	// M     *sync.Mutex
 	// MTest *sync.Mutex
@@ -97,7 +100,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
-	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.ETHMain, cli.WatchAddressMain, cli.Mempool)
+	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.ETHMain, cli.WatchAddressMain, cli.Mempool, cli)
 
 	cli.CliMain = cliMain
 	log.Infof("InitHandlers: initGrpcClient: Main: √")
@@ -111,7 +114,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
-	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.ETHTest, cli.WatchAddressTest, cli.MempoolTest)
+	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.ETHTest, cli.WatchAddressTest, cli.MempoolTest, cli)
 
 	cli.CliTest = cliTest
 	log.Infof("InitHandlers: initGrpcClient: Test: √")

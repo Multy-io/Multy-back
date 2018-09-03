@@ -15,6 +15,7 @@ import (
 	"github.com/Multy-io/Multy-back/store"
 	nsq "github.com/bitly/go-nsq"
 	"github.com/graarh/golang-socketio"
+
 	"github.com/jekabolt/slf"
 )
 
@@ -32,7 +33,7 @@ type SocketIOConnectedPool struct {
 	db store.UserStore // TODO: fix store name
 
 	chart  *exchangeChart
-	server *gosocketio.Server
+	Server *gosocketio.Server
 	log    slf.StructuredLogger
 }
 
