@@ -298,7 +298,7 @@ type TransactionETH struct {
 	PoolTime      int64       `json:"mempooltime"`
 	BlockHeight   int64       `json:"blockheight"`
 	Confirmations int         `json:"confirmations"`
-	IsInternal    bool        `json:"isinternal,omitempty"`
+	IsInternal    bool        `json:"isinternal"`
 	Multisig      *MultisigTx `json:"multisig,omitempty"`
 	// Input         string      `json:"input"`
 	// Contract          string                `json:"contract,omitempty"`

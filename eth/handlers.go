@@ -213,7 +213,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				if err != nil {
 					log.Errorf("cli.AddMultisig:stream.Recv:userStore.Update: %s", err.Error())
 				}
-
+				multisig.InviteCode = invitecode
 				msg := store.WsMessage{
 					Type:    store.NotifyDeploy,
 					To:      user.UserID,
