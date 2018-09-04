@@ -355,6 +355,7 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 	multyTX := &store.TransactionETH{}
 	if tx.Status == store.TxStatusAppearedInBlockIncoming || tx.Status == store.TxStatusAppearedInMempoolIncoming || tx.Status == store.TxStatusInBlockConfirmedIncoming {
 		log.Debugf("saveTransaction new incoming tx to %v", tx.To)
+
 		sel := bson.M{"hash": tx.Hash}
 		err := multisigStore.Find(sel).One(nil)
 		if err == mgo.ErrNotFound {
@@ -456,6 +457,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 					}
 
 					if isOurUser {
+						tx.Multisig = nil
 						_ = txStore.Insert(tx)
 					}
 					isOurUser = false
@@ -770,7 +772,7 @@ func FethContractOwners(currencyID, networkID int, contractaddress string) ([]st
 
 	for _, multisig := range user.Multisigs {
 		for _, owner := range multisig.Owners {
-			if multisig.CurrencyID == currencyID && multisig.NetworkID == networkID {
+			if multisig.CurrencyID == currencyID && multisig.NetworkID == networkID && multisig.ContractAddress == contractaddress {
 				oh = append(oh, store.OwnerHistory{
 					Address: owner.Address,
 				})
