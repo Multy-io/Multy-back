@@ -2233,6 +2233,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 					} else {
 						userTxs[i].Confirmations = int(blockHeight-userTxs[i].BlockHeight) + 1
 					}
+					userTxs[i].Multisig = nil
 				}
 
 				history := []store.TransactionETH{}
