@@ -410,3 +410,8 @@ type LastState struct {
 	CurrencyID  int   `bson:"currencyid"`
 	NetworkID   int   `bson:"networkid"`
 }
+
+type NodeVersion struct {
+	Branch string `json:"branch"`
+	Commit string `json:"commit"`
+}

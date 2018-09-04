@@ -30,6 +30,9 @@ type BTCConn struct {
 	BtcMempool     sync.Map
 	BtcMempoolTest sync.Map
 
+	VersionMain store.NodeVersion
+	VersionTest store.NodeVersion
+
 	Resync sync.Map
 }
 
