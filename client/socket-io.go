@@ -589,6 +589,13 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			err = ratesDB.ViewTransaction(msgMultisig.TxID, msgMultisig.Address, msgMultisig.CurrencyID, msgMultisig.NetworkID)
 			if err != nil {
 				pool.log.Errorf("server.On:msgSend:viewTransaction:ViewTransaction %v", err.Error())
+				msg := store.WsMessage{
+					Type:    viewTransaction,
+					To:      msgMultisig.UserID,
+					Date:    time.Now().Unix(),
+					Payload: "not viewed",
+				}
+				return msg
 			}
 			msg := store.WsMessage{
 				Type:    viewTransaction,
