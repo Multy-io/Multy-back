@@ -653,7 +653,7 @@ func (mStore *MongoUserStore) ViewTransaction(txid, address string, currencyid, 
 func (mStore *MongoUserStore) DeclineTransaction(txid, address string, currencyid, networkid int) error {
 	switch currencyid {
 	case currencies.Ether:
-		sel := bson.M{"hash": txid, "owners.address": address}
+		sel := bson.M{"hash": txid, "multisig.owners.address": address}
 		fmt.Println(sel)
 		update := bson.M{"$set": bson.M{
 			"multisig.owners.$.confirmationStatus": MultisigOwnerStatusDeclined,
