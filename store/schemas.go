@@ -346,11 +346,11 @@ type MultisigExtended struct {
 }
 
 type OwnerHistory struct {
-	Address            string `json:"address"`
-	ConfirmationTX     string `json:"confirmationtx"`
-	ConfirmationStatus int    `json:"confirmationStatus"`
-	ConfirmationTime   int64  `json:"confirmationTime"`
-	SeenTime           int64  `json:"seenTime"`
+	Address            string `bson:"address" json:"address"`
+	ConfirmationTX     string `bson:"confirmationtx" json:"confirmationtx"`
+	ConfirmationStatus int    `bson:"confirmationStatus" json:"confirmationStatus"`
+	ConfirmationTime   int64  `bson:"confirmationTime" json:"confirmationTime"`
+	SeenTime           int64  `bson:"seenTime" json:"seenTime"`
 }
 
 type CoinType struct {
