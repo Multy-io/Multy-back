@@ -430,7 +430,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 				}
 
 				if !admin {
-					pool.log.Errorf("server.On:kickMultisig: only admin can kik form ms: %v", err.Error())
+					pool.log.Errorf("server.On:kickMultisig: only admin can kik form ms")
 					return makeErr(msgMultisig.UserID, "only admin can kik form ms", kickMultisig)
 				}
 

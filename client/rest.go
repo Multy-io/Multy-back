@@ -12,6 +12,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -2276,6 +2277,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 						userTxs[i].Multisig = nil
 						fethedHistory = append(fethedHistory, userTxs[i])
 					}
+					fmt.Printf("\nuserTxs[i].Multisig.Owners %v\n", userTxs[i].Multisig.Owners)
 				}
 
 				c.JSON(http.StatusOK, gin.H{
