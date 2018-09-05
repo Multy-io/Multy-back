@@ -482,8 +482,6 @@ func (mStore *MongoUserStore) GetAllMultisigEthTransactions(contractAddress stri
 		}
 		if networkID == currencies.ETHTest {
 			err := mStore.ETHTestMultisigTxsData.Find(query).All(multisigTxs)
-			m := *multisigTxs
-			fmt.Println("--------,", m[0].Multisig.Owners)
 			return err
 		}
 
