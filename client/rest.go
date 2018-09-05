@@ -615,7 +615,7 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 			},
 			"donate": restClient.donationAddresses,
 			"multisigfactory": map[string]string{
-				"ethtestnet": "0x116ffa11dd8829524767f561da5d33d3d170e17d",
+				"ethtestnet": "0x04f68589f53cfdf408025cd7cea8a40dbf488e49",
 				"ethmainnet": "",
 			},
 		}
