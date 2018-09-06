@@ -521,9 +521,6 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		return tx
 
 	case confirmTransaction: // "c01a8c84": "confirmTransaction(uint256)"
-		//TODO: send notfy to owners about +1 confirmation. store confiramtions id db
-
-		//TODO: outcoming tranastions for multisig
 		log.Debugf("confirmTransaction: %v", tx.Multisig.Input)
 		i, _ := new(big.Int).SetString(tx.Multisig.Input[10:], 16)
 		sel := bson.M{"multisig.index": i.Int64(), "multisig.contract": tx.Multisig.Contract}
@@ -532,10 +529,13 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		err := multisigStore.Find(sel).One(&originTx)
 		if err != nil {
 			log.Errorf("ParseMultisigInput:confirmTransaction:multisigStore.Find %v index:%v  contract:%v ", err.Error(), i.Int64(), contract.ContractAddress)
+			return tx
 		}
 
 		//todo update only on block and exec true
 		ownerHistorys := []store.OwnerHistory{}
+
+		log.Warnf("-----------%v---  %v", tx.From, tx)
 
 		for _, ownerHistory := range originTx.Multisig.Owners {
 			if ownerHistory.Address == tx.From {
