@@ -1307,41 +1307,42 @@ func (restClient *RestClient) sendRawHDTransaction() gin.HandlerFunc {
 				hash, err := restClient.ETH.CliMain.EventSendRawTx(context.Background(), &ethpb.RawTx{
 					Transaction: rawTx.Transaction,
 				})
+
 				if err != nil {
-					restClient.log.Errorf("sendRawHDTransaction:eth.SendRawTransaction %s", err.Error())
-					c.JSON(http.StatusInternalServerError, gin.H{
-						"code":    http.StatusInternalServerError,
+					restClient.log.Errorf("sendRawHDTransaction:eth.SendRawTransaction %s \n raw tx = %v ", err.Error(), rawTx.Transaction)
+					c.JSON(http.StatusNotAcceptable, gin.H{
+						"code":    http.StatusNotAcceptable,
 						"message": err.Error(),
 					})
 					return
 				}
-				// TODO: Make a wallet
 
 				c.JSON(http.StatusOK, gin.H{
 					"code":    http.StatusOK,
 					"message": hash,
 				})
+
 				return
 			}
 			if rawTx.NetworkID == currencies.ETHTest {
+
 				hash, err := restClient.ETH.CliTest.EventSendRawTx(context.Background(), &ethpb.RawTx{
 					Transaction: rawTx.Transaction,
 				})
 				if err != nil {
-					restClient.log.Errorf("sendRawHDTransaction:eth.SendRawTransaction %s", err.Error())
-					c.JSON(http.StatusInternalServerError, gin.H{
-						"code":    http.StatusInternalServerError,
+					restClient.log.Errorf("sendRawHDTransaction:eth.SendRawTransaction %s \n raw tx = %v ", err.Error(), rawTx.Transaction)
+					c.JSON(http.StatusNotAcceptable, gin.H{
+						"code":    http.StatusNotAcceptable,
 						"message": err.Error(),
 					})
 					return
 				}
 
-				// TODO: Make a wallet
-
 				c.JSON(http.StatusOK, gin.H{
 					"code":    http.StatusOK,
 					"message": hash,
 				})
+
 				return
 			}
 

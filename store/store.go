@@ -636,7 +636,7 @@ func (mStore *MongoUserStore) ViewTransaction(txid, address string, currencyid, 
 		fmt.Println(sel)
 		update := bson.M{"$set": bson.M{
 			"multisig.owners.$.confirmationStatus": MultisigOwnerStatusSeen,
-			"multisig.owners.$.seentime":           time.Now().Unix(),
+			"multisig.owners.$.seenTime":           time.Now().Unix(),
 		}}
 		if networkid == currencies.ETHMain {
 			err := mStore.ETHMainMultisigTxsData.Update(sel, update)
