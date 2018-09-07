@@ -564,21 +564,41 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			msgMultisig := &store.MultisigMsg{}
 			err := mapstructure.Decode(msg.Payload, msgMultisig)
 			if err != nil {
-				pool.log.Errorf("server.On:msgSend:DeclineTransaction:mapstructure.Decode %v", err.Error())
-				return makeErr(msgMultisig.UserID, "can't kik from multisig: bad request: "+err.Error(), checkMultisig)
+				pool.log.Errorf("server.On:msgSend:deleteMultisig:mapstructure.Decode %v", err.Error())
+				return makeErr(msgMultisig.UserID, "can't kik from multisig: bad request: "+err.Error(), deleteMultisig)
 			}
-			err = ratesDB.DeclineTransaction(msgMultisig.TxID, msgMultisig.Address, msgMultisig.CurrencyID, msgMultisig.NetworkID)
-			if err != nil {
-				pool.log.Errorf("server.On:msgSend:declineTransaction:DeclineTransaction %v", err.Error())
-			}
-			msg := store.WsMessage{
-				Type:    declineTransaction,
-				To:      msgMultisig.UserID,
-				Date:    time.Now().Unix(),
-				Payload: "declined",
+			if !ratesDB.CheckInviteCode(msgMultisig.InviteCode) {
+
+				err = ratesDB.DeclineTransaction(msgMultisig.TxID, msgMultisig.Address, msgMultisig.CurrencyID, msgMultisig.NetworkID)
+				if err != nil {
+					pool.log.Errorf("server.On:msgSend:declineTransaction:DeclineTransaction %v", err.Error())
+				}
+				users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
+
+				for _, user := range users {
+					_, online := pool.users[user.UserID]
+					if online {
+						msg := store.WsMessage{
+							Type:    declineTransaction,
+							To:      user.UserID,
+							Date:    time.Now().Unix(),
+							Payload: msgMultisig.InviteCode,
+						}
+						server.BroadcastToAll(msgRecieve+":"+user.UserID, msg)
+					}
+				}
+
+				msgResp := store.WsMessage{
+					Type:    declineTransaction,
+					To:      msgMultisig.UserID,
+					Date:    time.Now().Unix(),
+					Payload: "declined",
+				}
+				return msgResp
 			}
 
-			return msg
+			return makeErr("", "wrong request payload: ", deleteMultisig)
+
 		case viewTransaction:
 			msgMultisig := &store.MultisigMsg{}
 			err := mapstructure.Decode(msg.Payload, msgMultisig)
