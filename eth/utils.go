@@ -380,7 +380,7 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 				"blockheight":               tx.BlockHeight,
 				"blocktime":                 tx.BlockTime,
 				"amount":                    tx.Amount,
-				"multisig.index":            tx.Multisig.Index,
+				"multisig.requestid":        tx.Multisig.RequestID,
 				"multisig.return":           tx.Multisig.Return,
 				"multisig.invocationstatus": tx.Multisig.InvocationStatus,
 				"multisig.confirmed":        tx.Multisig.Confirmed,
@@ -413,7 +413,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		log.Debugf("submitTransaction:  Input :%v Return :%v ", tx.Multisig.Input, tx.Multisig.Return)
 		if tx.BlockTime != 0 {
 			i, _ := new(big.Int).SetString(tx.Multisig.Return, 16)
-			tx.Multisig.Index = i.Int64()
+			tx.Multisig.RequestID = i.Int64()
 
 			address, amount := parseSubmitInput(tx.Multisig.Input)
 
@@ -523,12 +523,12 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 	case confirmTransaction: // "c01a8c84": "confirmTransaction(uint256)"
 		log.Debugf("confirmTransaction: %v", tx.Multisig.Input)
 		i, _ := new(big.Int).SetString(tx.Multisig.Input[10:], 16)
-		sel := bson.M{"multisig.index": i.Int64(), "multisig.contract": tx.Multisig.Contract}
+		sel := bson.M{"multisig.requestid": i.Int64(), "multisig.contract": tx.Multisig.Contract}
 
 		originTx := store.TransactionETH{}
 		err := multisigStore.Find(sel).One(&originTx)
 		if err != nil {
-			log.Errorf("ParseMultisigInput:confirmTransaction:multisigStore.Find %v index:%v  contract:%v ", err.Error(), i.Int64(), contract.ContractAddress)
+			log.Errorf("ParseMultisigInput:confirmTransaction:multisigStore.Find %v requestid:%v  contract:%v ", err.Error(), i.Int64(), contract.ContractAddress)
 			return tx
 		}
 
@@ -560,7 +560,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		// update confirmations history
 		err = multisigStore.Update(sel, update)
 		if err != nil {
-			log.Errorf("ParseMultisigInput:confirmTransaction:multisigStore.Update %v index:%v  contract:%v ", err.Error(), originTx.Multisig.Index, contract.ContractAddress)
+			log.Errorf("ParseMultisigInput:confirmTransaction:multisigStore.Update %v requestid:%v  contract:%v ", err.Error(), originTx.Multisig.RequestID, contract.ContractAddress)
 		}
 
 		tx.Multisig.Owners = []store.OwnerHistory{}
@@ -669,12 +669,12 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		log.Debugf("revokeConfirmation: %v", tx.Multisig.Input)
 		i, _ := new(big.Int).SetString(tx.Multisig.Input, 16)
 
-		sel := bson.M{"multisig.index": i.Int64(), "multisig.contract": contract.ContractAddress}
+		sel := bson.M{"multisig.requestid": i.Int64(), "multisig.contract": contract.ContractAddress}
 
 		originTx := store.TransactionETH{}
 		err := multisigStore.Find(sel).One(&originTx)
 		if err != nil {
-			log.Errorf("ParseMultisigInput:revokeConfirmation:multisigStore.Find %v index:%v  contract:%v ", err.Error(), i.Int64(), contract.ContractAddress)
+			log.Errorf("ParseMultisigInput:revokeConfirmation:multisigStore.Find %v requestid:%v  contract:%v ", err.Error(), i.Int64(), contract.ContractAddress)
 		}
 		ownerHistorys := []store.OwnerHistory{}
 		for _, ownerHistory := range tx.Multisig.Owners {
@@ -697,7 +697,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 		err = multisigStore.Update(sel, update)
 		if err != nil {
-			log.Errorf("ParseMultisigInput:revokeConfirmation:multisigStore.Update %v index:%v  contract:%v ", err.Error(), i.Int64(), contract.ContractAddress)
+			log.Errorf("ParseMultisigInput:revokeConfirmation:multisigStore.Update %v requestid:%v  contract:%v ", err.Error(), i.Int64(), contract.ContractAddress)
 		}
 
 		return tx
