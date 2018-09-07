@@ -655,11 +655,15 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 			return
 		}
 
-		var multisigAddress string
 		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
 		restClient.log.Debugf("getWalletVerbose [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
 		if err != nil {
-			multisigAddress = c.Param("walletindex")
+			restClient.log.Errorf("getWalletVerbose: non int wallet index:[%d] %s \t[addr=%s]", walletIndex, err.Error(), c.Request.RemoteAddr)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrDecodeWalletIndexErr,
+			})
+			return
 		}
 
 		currencyId, err := strconv.Atoi(c.Param("currencyid"))
@@ -727,7 +731,7 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 			}
 
 			if totalBalance == 0 {
-				err := restClient.userStore.DeleteWallet(user.UserID, "", walletIndex, currencyId, networkid)
+				err := restClient.userStore.DeleteWallet(user.UserID, walletIndex, currencyId, networkid)
 				if err != nil {
 					restClient.log.Errorf("deleteWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 					c.JSON(http.StatusBadRequest, gin.H{
@@ -752,18 +756,10 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 		case currencies.Ether:
 
 			var address string
-			// delete multisig
-			if multisigAddress != "" {
-				address = multisigAddress
-			}
-			// delete wallwt
-			if multisigAddress != "" {
-
-				for _, wallet := range user.Wallets {
-					if wallet.WalletIndex == walletIndex {
-						if len(wallet.Adresses) > 0 {
-							address = wallet.Adresses[0].Address
-						}
+			for _, wallet := range user.Wallets {
+				if wallet.WalletIndex == walletIndex {
+					if len(wallet.Adresses) > 0 {
+						address = wallet.Adresses[0].Address
 					}
 				}
 			}
@@ -781,7 +777,7 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 			}
 
 			if balance.Balance == "0" || balance.Balance == "" {
-				err := restClient.userStore.DeleteWallet(user.UserID, address, walletIndex, currencyId, networkid)
+				err := restClient.userStore.DeleteWallet(user.UserID, walletIndex, currencyId, networkid)
 				if err != nil {
 					restClient.log.Errorf("deleteWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 					c.JSON(http.StatusBadRequest, gin.H{

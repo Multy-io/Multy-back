@@ -84,7 +84,7 @@ type UserStore interface {
 
 	// GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs)
 	GetAddressSpendableOutputs(address string, currencyID, networkID int) ([]SpendableOutputs, error)
-	DeleteWallet(userid, multisigAddress string, walletindex, currencyID, networkID int) error
+	DeleteWallet(userid string, walletindex, currencyID, networkID int) error
 
 	FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error)
 	FindUserDataChain(CurrencyID, NetworkID int) (map[string]AddressExtended, error)
@@ -316,54 +316,27 @@ func (mStore *MongoUserStore) FindETHTransaction(sel bson.M) error {
 	return err
 }
 
-func (mStore *MongoUserStore) DeleteWallet(userid, multisigAddress string, walletindex, currencyID, networkID int) error {
-
+func (mStore *MongoUserStore) DeleteWallet(userid string, walletindex, currencyID, networkID int) error {
 	user := User{}
+	sel := bson.M{"userID": userid, "wallets.networkID": networkID, "wallets.currencyID": currencyID, "wallets.walletIndex": walletindex}
+	err := mStore.usersData.Find(bson.M{"userID": userid}).One(&user)
 	var position int
-
-	// delete multisig
-	if multisigAddress != "" {
-		err := mStore.usersData.Find(bson.M{"multisig.contractaddress": multisigAddress}).One(&user)
-		sel := bson.M{"userID": userid, "wallets.networkID": networkID, "wallets.currencyID": currencyID, "wallets.walletIndex": walletindex}
-
-		if err == nil {
-			for i, multisig := range user.Multisigs {
-				if multisig.NetworkID == networkID && multisig.CurrencyID == currencyID && multisig.ContractAddress == multisigAddress {
-					position = i
-					break
-				}
+	if err == nil {
+		for i, wallet := range user.Wallets {
+			if wallet.NetworkID == networkID && wallet.WalletIndex == walletindex && wallet.CurrencyID == currencyID {
+				position = i
+				break
 			}
-			update := bson.M{
-				"$set": bson.M{
-					"multisig." + strconv.Itoa(position) + ".status": WalletStatusDeleted,
-				},
-			}
-			return mStore.usersData.Update(sel, update)
 		}
-
-	}
-	// delete wallet
-	if multisigAddress != "" {
-		err := mStore.usersData.Find(bson.M{"userID": userid}).One(&user)
-		sel := bson.M{"userID": userid, "wallets.networkID": networkID, "wallets.currencyID": currencyID, "wallets.walletIndex": walletindex}
-
-		if err == nil {
-			for i, wallet := range user.Wallets {
-				if wallet.NetworkID == networkID && wallet.WalletIndex == walletindex && wallet.CurrencyID == currencyID {
-					position = i
-					break
-				}
-			}
-			update := bson.M{
-				"$set": bson.M{
-					"wallets." + strconv.Itoa(position) + ".status": WalletStatusDeleted,
-				},
-			}
-			return mStore.usersData.Update(sel, update)
+		update := bson.M{
+			"$set": bson.M{
+				"wallets." + strconv.Itoa(position) + ".status": WalletStatusDeleted,
+			},
 		}
+		return mStore.usersData.Update(sel, update)
 	}
 
-	return nil
+	return err
 
 }
 
