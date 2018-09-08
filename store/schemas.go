@@ -317,7 +317,7 @@ type MultisigTx struct {
 	MethodInvoked    string         `json:"methodinvoked,omitempty"`
 	Input            string         `json:"input"`
 	InvocationStatus bool           `json:"invocationstatus"`
-	RequestID        int64          `json:"requestid,omitempty"`
+	RequestID        int64          `json:"requestid"`
 	Return           string         `json:"return,omitempty"`
 	Owners           []OwnerHistory `json:"owners,omitempty"`
 	Confirmed        bool           `json:"confirmed"`
