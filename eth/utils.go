@@ -365,7 +365,7 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 		}
 
 		multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore, nsqProducer)
-		if multyTX.Multisig.MethodInvoked == "0xc6427474" && multyTX.Status == store.TxStatusAppearedInBlockIncoming {
+		if multyTX.Multisig.MethodInvoked == submitTransaction && multyTX.Status == store.TxStatusAppearedInBlockIncoming {
 			multyTX.Status = store.TxStatusInBlockConfirmedOutcoming
 		}
 
@@ -376,6 +376,8 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 
 		update := bson.M{
 			"$set": bson.M{
+				"from":                      tx.From,
+				"to":                        tx.To,
 				"txstatus":                  tx.Status,
 				"blockheight":               tx.BlockHeight,
 				"blocktime":                 tx.BlockTime,
@@ -413,6 +415,11 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		log.Debugf("submitTransaction:  Input :%v Return :%v ", tx.Multisig.Input, tx.Multisig.Return)
 		if tx.BlockTime != 0 {
 			i, _ := new(big.Int).SetString(tx.Multisig.Return, 16)
+			if i == nil || tx.Multisig.Return == "" {
+				log.Errorf("ParseMultisigInput:confirmTransaction:empty return from contract %v", tx.Hash)
+				tx.Multisig.InvocationStatus = false
+				return tx
+			}
 			tx.Multisig.RequestID = i.Int64()
 
 			address, amount := parseSubmitInput(tx.Multisig.Input)
@@ -512,11 +519,9 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 		tx.Multisig.Owners = ownerHistorys
 
-		//TODO: notifications
-		// //notify users
-		// for _, user := range users {
-		// 	sendNotifyToClients(*tx, nsqProducer, networtkID, user.UserID)
-		// }
+		address, _ := parseSubmitInput(tx.Multisig.Input)
+		tx.From = tx.To
+		tx.To = address
 
 		return tx
 
@@ -534,8 +539,6 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 		//todo update only on block and exec true
 		ownerHistorys := []store.OwnerHistory{}
-
-		log.Warnf("-----------%v---  %v", tx.From, tx)
 
 		for _, ownerHistory := range originTx.Multisig.Owners {
 			if ownerHistory.Address == tx.From {
