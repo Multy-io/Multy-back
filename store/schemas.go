@@ -54,6 +54,10 @@ const (
 	NotifyIncomingTx   = 10
 	NotifyConfirmTx    = 11
 	NotifyRevokeTx     = 12
+
+	AssetTypeMultyAddress    = 0
+	AssetTypeMultisig        = 1
+	AssetTypeImportedAddress = 2
 )
 
 // User represents a single app user
@@ -122,6 +126,8 @@ type Wallet struct {
 	Adresses []Address `bson:"addresses"`
 
 	Status string `bson:"status"`
+
+	IsImported bool `bson:"isImported"`
 }
 
 type RatesRecord struct {

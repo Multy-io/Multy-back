@@ -23,6 +23,9 @@ import (
 	"github.com/Multy-io/Multy-back/currencies"
 	"github.com/Multy-io/Multy-back/eth"
 	"github.com/Multy-io/Multy-back/store"
+	bind "github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/jekabolt/slf"
 
 	btcpb "github.com/Multy-io/Multy-back/node-streamer/btc"
@@ -39,6 +42,7 @@ const (
 	msgErrNoWallet              = "no such wallet"
 	msgErrWalletNonZeroBalance  = "can't delete non zero balance wallet"
 	msgErrWalletIndex           = "already existing wallet index"
+	msgErrKnownAddres           = "already existing wallet address"
 	msgErrTxHistory             = "not found any transaction history"
 	msgErrAddressIndex          = "already existing address index"
 	msgErrMethodNotImplennted   = "method is not implemented"
@@ -50,6 +54,7 @@ const (
 	msgErrRatesError            = "internal server error rates"
 	msgErrDecodeWalletIndexErr  = "wrong wallet index"
 	msgErrDecodeNetworkIDErr    = "wrong network id"
+	msgErrDecodeTypeErr         = "wrong type"
 	msgErrNoSpendableOuts       = "no spendable outputs"
 	msgErrDecodeCurIndexErr     = "wrong currency index"
 	msgErrDecodenetworkidErr    = "wrong networkid index"
@@ -117,8 +122,10 @@ func SetRestHandlers(
 		v1.GET("/transaction/feerate/:currencyid/:networkid", restClient.getFeeRate())
 		v1.GET("/outputs/spendable/:currencyid/:networkid/:addr", restClient.getSpendableOutputs())
 		v1.POST("/transaction/send", restClient.sendRawHDTransaction())
+		v1.GET("/wallet/:walletindex/verbose/:currencyid/:networkid/*type", restClient.getWalletVerbose())
 		v1.GET("/wallet/:walletindex/verbose/:currencyid/:networkid", restClient.getWalletVerbose())
 		v1.GET("/wallets/verbose", restClient.getAllWalletsVerbose())
+		v1.GET("/wallets/transactions/:currencyid/:networkid/:walletindex/*type", restClient.getWalletTransactionsHistory())
 		v1.GET("/wallets/transactions/:currencyid/:networkid/:walletindex", restClient.getWalletTransactionsHistory())
 		v1.POST("/wallet/name", restClient.changeWalletName())
 		v1.POST("/resync/wallet/:currencyid/:networkid/:walletindex", restClient.resyncWallet())
@@ -175,6 +182,7 @@ type WalletParams struct {
 	AddressIndex int            `json:"addressIndex"`
 	WalletIndex  int            `json:"walletIndex"`
 	WalletName   string         `json:"walletName"`
+	IsImported   bool           `json:"isImported"`
 	Multisig     MultisigWallet `json:"multisig"`
 }
 
@@ -183,6 +191,8 @@ type MultisigWallet struct {
 	SignaturesRequired int    `json:"signaturesRequired"`
 	OwnersCount        int    `json:"ownersCount"`
 	InviteCode         string `json:"inviteCode"`
+	IsImported         bool   `json:"isImported"`
+	ContractAddress    string `json:"contractAddress"`
 }
 
 type SelectWallet struct {
@@ -240,9 +250,9 @@ func getToken(c *gin.Context) (string, error) {
 }
 
 func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c *gin.Context) error {
+
 	user := store.User{}
 	query := bson.M{"devices.JWT": token}
-
 	err := restClient.userStore.FindUser(query, &user)
 	if err != nil {
 		restClient.log.Errorf("createCustomWallet: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
@@ -250,15 +260,32 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 		return err
 	}
 
-	for _, wallet := range user.Wallets {
-		if wallet.CurrencyID == wp.CurrencyID && wallet.NetworkID == wp.NetworkID && wallet.WalletIndex == wp.WalletIndex {
-			err = errors.New(msgErrWalletIndex)
-			return err
+	wallet := store.Wallet{}
+	//internal
+	if !wp.IsImported {
+		for _, wallet := range user.Wallets {
+			if wallet.CurrencyID == wp.CurrencyID && wallet.NetworkID == wp.NetworkID && wallet.WalletIndex == wp.WalletIndex {
+				err = errors.New(msgErrWalletIndex)
+				return err
+			}
 		}
+		wallet = createWallet(wp.CurrencyID, wp.NetworkID, wp.Address, wp.AddressIndex, wp.WalletIndex, wp.WalletName, wp.IsImported)
+	}
+
+	// imported wallet
+	if wp.IsImported {
+		for _, wallet := range user.Wallets {
+			if len(wallet.Adresses) > 0 {
+				if wallet.CurrencyID == wp.CurrencyID && wallet.NetworkID == wp.NetworkID && wallet.Adresses[0].Address == wp.Address {
+					err = errors.New(msgErrKnownAddres)
+					return err
+				}
+			}
+		}
+		wallet = createWallet(wp.CurrencyID, wp.NetworkID, wp.Address, -1, -1, wp.WalletName, wp.IsImported)
 	}
 
 	sel := bson.M{"devices.JWT": token}
-	wallet := createWallet(wp.CurrencyID, wp.NetworkID, wp.Address, wp.AddressIndex, wp.WalletIndex, wp.WalletName)
 	update := bson.M{"$push": bson.M{"wallets": wallet}}
 
 	err = restClient.userStore.Update(sel, update)
@@ -475,36 +502,134 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 		}
 		// Create multisig
 		if wp.Multisig.IsMultisig {
-			if wp.Multisig.OwnersCount < wp.Multisig.SignaturesRequired || wp.Multisig.OwnersCount < 2 {
-				c.JSON(http.StatusBadRequest, gin.H{
-					"code":    http.StatusBadRequest,
-					"message": "owners count should be less or equal than required signatures",
+			if !wp.Multisig.IsImported {
+				if wp.Multisig.OwnersCount < wp.Multisig.SignaturesRequired || wp.Multisig.OwnersCount < 2 {
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": "owners count should be less or equal than required signatures",
+					})
+					return
+				}
+				if !restClient.userStore.CheckInviteCode(wp.Multisig.InviteCode) {
+					restClient.log.Errorf("addWallet: createCustomMultisig: already existed invite code \t[addr=%s]", c.Request.RemoteAddr)
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": "already existed invite code",
+					})
+					return
+				}
+				multusig, err := createCustomMultisig(wp, token, restClient, c)
+				if err != nil {
+					restClient.log.Errorf("addWallet: createCustomMultisig: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": err.Error(),
+					})
+					return
+				}
+				c.JSON(http.StatusCreated, gin.H{
+					"code":    code,
+					"time":    time.Now().Unix(),
+					"message": multusig,
 				})
 				return
 			}
-			if !restClient.userStore.CheckInviteCode(wp.Multisig.InviteCode) {
-				restClient.log.Errorf("addWallet: createCustomMultisig: already existed invite code \t[addr=%s]", c.Request.RemoteAddr)
-				c.JSON(http.StatusBadRequest, gin.H{
-					"code":    http.StatusBadRequest,
-					"message": "already existed invite code",
-				})
-				return
+
+			//TODO: beautify
+			if wp.Multisig.IsImported {
+				conn, err := ethclient.Dial("https://rinkeby.infura.io")
+				if err != nil {
+					restClient.log.Errorf("addWallet: createCustomMultisig:ethclient.Dial %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": err.Error(),
+					})
+					return
+				}
+
+				contract, err := NewMultiSigWallet(common.HexToAddress(wp.Address), conn)
+				if err != nil {
+					restClient.log.Errorf("addWallet: createCustomMultisig:NewMultiSigWallet %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": err.Error(),
+					})
+					return
+				}
+
+				owners, err := contract.GetOwners(&bind.CallOpts{})
+				if err != nil {
+					restClient.log.Errorf("addWallet: createCustomMultisig:contract.GetOwners %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": err.Error(),
+					})
+					return
+				}
+
+				confirmations, err := contract.Required(&bind.CallOpts{})
+				if err != nil {
+					restClient.log.Errorf("addWallet: createCustomMultisig:contract.Required %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": err.Error(),
+					})
+					return
+				}
+
+				user := store.User{}
+				query := bson.M{"devices.JWT": token}
+				err = restClient.userStore.FindUser(query, &user)
+				if err != nil {
+					restClient.log.Errorf("addWallet: createCustomMultisig:restClient.userStore.FindUse %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": err.Error(),
+					})
+					return
+				}
+				msOwners := []store.AddressExtended{}
+
+				for _, owner := range owners {
+					if owner.String() == wp.Address {
+						msOwners = append(msOwners, store.AddressExtended{
+							Address:      owner.String(),
+							Associated:   true,
+							WalletIndex:  wp.WalletIndex,
+							AddressIndex: wp.AddressIndex,
+						})
+					} else {
+						msOwners = append(msOwners, store.AddressExtended{
+							Address: owner.String(),
+						})
+					}
+				}
+				ms := importMultisig(wp.CurrencyID, wp.NetworkID, int(confirmations.Int64()), len(owners), wp.Multisig.ContractAddress, wp.WalletName)
+				switch ms.NetworkID {
+				case currencies.ETHMain:
+					restClient.ETH.WatchAddressMain <- ethpb.WatchAddress{
+						Address: ms.ContractAddress,
+						UserID:  user.UserID,
+					}
+				case currencies.ETHTest:
+					restClient.ETH.WatchAddressTest <- ethpb.WatchAddress{
+						Address: ms.ContractAddress,
+						UserID:  user.UserID,
+					}
+				}
+
+				sel := bson.M{"devices.JWT": token}
+				update := bson.M{"$push": bson.M{"multisig": ms}}
+				err = restClient.userStore.Update(sel, update)
+				if err != nil {
+					restClient.log.Errorf("addWallet: createCustomMultisig:estClient.userStore.Update %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": err.Error(),
+					})
+				}
+
 			}
-			multusig, err := createCustomMultisig(wp, token, restClient, c)
-			if err != nil {
-				restClient.log.Errorf("addWallet: createCustomMultisig: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-				c.JSON(http.StatusBadRequest, gin.H{
-					"code":    http.StatusBadRequest,
-					"message": err.Error(),
-				})
-				return
-			}
-			c.JSON(http.StatusCreated, gin.H{
-				"code":    code,
-				"time":    time.Now().Unix(),
-				"message": multusig,
-			})
-			return
 
 		}
 
@@ -1372,11 +1497,11 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			return
 		}
 
-		var invitecode string
+		var derivationPath string
 		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
 		restClient.log.Debugf("getWalletVerbose [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
 		if err != nil {
-			invitecode = c.Param("walletindex")
+			derivationPath = strings.ToLower(c.Param("walletindex"))
 		}
 
 		currencyId, err := strconv.Atoi(c.Param("currencyid"))
@@ -1400,6 +1525,22 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 				"wallet":  wv,
 			})
 			return
+		}
+
+		//multy address
+		assetType := store.AssetTypeMultyAddress
+		if len(c.Param("type")) > 0 {
+			assetType, err = strconv.Atoi(c.Param("type")[1:])
+			restClient.log.Debugf("getWalletVerbose [%d] \t[networkID=%s]", networkId, c.Request.RemoteAddr)
+			if err != nil {
+				restClient.log.Errorf("getWalletVerbose: non int networkid:[%d] %s \t[addr=%s]", networkId, err.Error(), c.Request.RemoteAddr)
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": msgErrDecodeTypeErr,
+					"wallet":  wv,
+				})
+				return
+			}
 		}
 
 		var (
@@ -1490,10 +1631,103 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			wallet := store.Wallet{}
 			multisig := store.Multisig{}
 
+			if assetType == store.AssetTypeImportedAddress && derivationPath != "" {
+				for _, w := range user.Wallets {
+					if len(w.Adresses) > 0 {
+						if w.NetworkID == networkId && w.CurrencyID == currencyId && w.Adresses[0].Address == derivationPath && w.IsImported {
+							wallet = w
+							break
+						}
+					}
+				}
+
+				if len(wallet.Adresses) == 0 {
+					restClient.log.Errorf("getAllWalletsVerbose: len(wallet.Adresses) == 0:\t[addr=%s]", c.Request.RemoteAddr)
+					c.JSON(code, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": msgErrNoWallet,
+						"wallet":  wv,
+					})
+					return
+				}
+
+				for _, address := range wallet.Adresses {
+					amount := &ethpb.Balance{}
+					nonce := &ethpb.Nonce{}
+
+					var err error
+					adr := ethpb.AddressToResync{
+						Address: address.Address,
+					}
+
+					switch networkId {
+					case currencies.ETHTest:
+						nonce, err = restClient.ETH.CliTest.EventGetAdressNonce(context.Background(), &adr)
+						amount, err = restClient.ETH.CliTest.EventGetAdressBalance(context.Background(), &adr)
+					case currencies.ETHMain:
+						nonce, err = restClient.ETH.CliMain.EventGetAdressNonce(context.Background(), &adr)
+						amount, err = restClient.ETH.CliMain.EventGetAdressBalance(context.Background(), &adr)
+					default:
+						c.JSON(code, gin.H{
+							"code":    http.StatusBadRequest,
+							"message": msgErrMethodNotImplennted,
+							"wallet":  wv,
+						})
+						return
+					}
+
+					if err != nil {
+						restClient.log.Errorf("EventGetAdressNonce || EventGetAdressBalance: %v", err.Error())
+					}
+
+					totalBalance = amount.GetBalance()
+					pendingBalance = amount.GetPendingBalance()
+
+					p, _ := strconv.Atoi(amount.GetPendingBalance())
+					b, _ := strconv.Atoi(amount.GetBalance())
+
+					if p != b {
+						pending = true
+						address.LastActionTime = time.Now().Unix()
+					}
+
+					if p == b {
+						pendingBalance = "0"
+					}
+
+					waletNonce = nonce.GetNonce()
+
+					av = append(av, ETHAddressVerbose{
+						LastActionTime: address.LastActionTime,
+						Address:        address.Address,
+						AddressIndex:   address.AddressIndex,
+						Amount:         totalBalance,
+						Nonce:          waletNonce,
+					})
+
+				}
+
+				wv = append(wv, WalletVerboseETH{
+					WalletIndex:    wallet.WalletIndex,
+					CurrencyID:     wallet.CurrencyID,
+					NetworkID:      wallet.NetworkID,
+					WalletName:     wallet.WalletName,
+					LastActionTime: wallet.LastActionTime,
+					DateOfCreation: wallet.DateOfCreation,
+					Nonce:          waletNonce,
+					Balance:        totalBalance,
+					PendingBalance: pendingBalance,
+					VerboseAddress: av,
+					Pending:        pending,
+				})
+				av = []ETHAddressVerbose{}
+
+			}
+
 			// multisig verbose
-			if invitecode != "" {
+			if assetType == store.AssetTypeMultisig && derivationPath != "" {
 				for _, m := range user.Multisigs {
-					if m.NetworkID == networkId && m.CurrencyID == currencyId && m.InviteCode == invitecode {
+					if m.NetworkID == networkId && m.CurrencyID == currencyId && m.InviteCode == derivationPath {
 						multisig = m
 						break
 					}
@@ -1591,7 +1825,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			}
 
 			// wallet verbose
-			if invitecode == "" {
+			if assetType == store.AssetTypeMultyAddress {
 				for _, w := range user.Wallets {
 					if w.NetworkID == networkId && w.CurrencyID == currencyId && w.WalletIndex == walletIndex {
 						wallet = w
@@ -2060,11 +2294,11 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 			return
 		}
 
-		var multisig string
+		var derivationPath string
 		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
 		restClient.log.Debugf("getWalletVerbose [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
 		if err != nil {
-			multisig = c.Param("walletindex")
+			derivationPath = strings.ToLower(c.Param("walletindex"))
 		}
 
 		currencyId, err := strconv.Atoi(c.Param("currencyid"))
@@ -2087,6 +2321,20 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				"message": msgErrDecodenetworkidErr,
 			})
 			return
+		}
+
+		assetType := store.AssetTypeMultyAddress
+		if len(c.Param("type")) > 0 {
+			assetType, err = strconv.Atoi(c.Param("type")[1:])
+			restClient.log.Debugf("getWalletVerbose [%d] \t[networkID=%s]", assetType, c.Request.RemoteAddr)
+			if err != nil {
+				restClient.log.Errorf("getWalletVerbose: non int networkid:[%d] %s \t[addr=%s]", assetType, err.Error(), c.Request.RemoteAddr)
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": msgErrDecodeTypeErr,
+				})
+				return
+			}
 		}
 
 		user := store.User{}
@@ -2149,8 +2397,6 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 					}
 				}
 			}
-
-			// TODO: fix this logic same wallet to samewallet tx
 
 			for _, address := range walletAddresses {
 				for _, tx := range userTxs {
@@ -2221,7 +2467,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 
 			//history for ether wallet
 			userTxs := []store.TransactionETH{}
-			if multisig == "" {
+			if assetType == store.AssetTypeMultyAddress {
 				err = restClient.userStore.GetAllWalletEthTransactions(user.UserID, currencyId, networkid, &userTxs)
 				if err != nil {
 					c.JSON(http.StatusBadRequest, gin.H{
@@ -2257,8 +2503,8 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 			}
 
 			//history for ether multisig
-			if multisig != "" {
-				err = restClient.userStore.GetAllMultisigEthTransactions(multisig, currencyId, networkid, &userTxs)
+			if assetType == store.AssetTypeMultisig && derivationPath != "" {
+				err = restClient.userStore.GetAllMultisigEthTransactions(derivationPath, currencyId, networkid, &userTxs)
 				if err != nil {
 					c.JSON(http.StatusBadRequest, gin.H{
 						"code":    http.StatusBadRequest,
@@ -2292,6 +2538,40 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 
 			}
 
+			if assetType == store.AssetTypeImportedAddress && derivationPath != "" {
+				err = restClient.userStore.GetAllWalletEthTransactions(user.UserID, currencyId, networkid, &userTxs)
+				if err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": msgErrTxHistory,
+						"history": walletTxs,
+					})
+					return
+				}
+
+				for i := 0; i < len(userTxs); i++ {
+					if userTxs[i].BlockHeight == -1 {
+						userTxs[i].Confirmations = 0
+					} else {
+						userTxs[i].Confirmations = int(blockHeight-userTxs[i].BlockHeight) + 1
+					}
+					userTxs[i].Multisig = nil
+				}
+
+				history := []store.TransactionETH{}
+				for _, tx := range userTxs {
+					if tx.To == derivationPath {
+						history = append(history, tx)
+					}
+				}
+
+				c.JSON(http.StatusOK, gin.H{
+					"code":    http.StatusOK,
+					"message": http.StatusText(http.StatusOK),
+					"history": history,
+				})
+				return
+			}
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
