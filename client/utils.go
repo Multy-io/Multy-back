@@ -43,7 +43,7 @@ func createDevice(deviceid, ip, jwt, pushToken, appVersion string, deviceType in
 	}
 }
 
-func createWallet(currencyID, networkID int, address string, addressIndex int, walletIndex int, walletName string) store.Wallet {
+func createWallet(currencyID, networkID int, address string, addressIndex int, walletIndex int, walletName string, isImported bool) store.Wallet {
 	return store.Wallet{
 		CurrencyID:     currencyID,
 		NetworkID:      networkID,
@@ -52,6 +52,7 @@ func createWallet(currencyID, networkID int, address string, addressIndex int, w
 		LastActionTime: time.Now().Unix(),
 		DateOfCreation: time.Now().UnixNano(),
 		Status:         store.WalletStatusOK,
+		IsImported:     isImported,
 		Adresses: []store.Address{
 			store.Address{
 				Address:        address,
@@ -83,6 +84,21 @@ func createMultisig(currencyID, networkID, addressIndex, walletIndex, signatures
 		},
 		DeployStatus: store.MultisigStatusWaitingForJoin,
 		InviteCode:   invitecode,
+	}
+}
+
+func importMultisig(currencyID, networkID, signaturesRequired, ownerscount int, contractAddress, walletName string) store.Multisig {
+	return store.Multisig{
+		CurrencyID:      currencyID,
+		NetworkID:       networkID,
+		WalletName:      walletName,
+		LastActionTime:  time.Now().Unix(),
+		DateOfCreation:  time.Now().Unix(),
+		Status:          store.WalletStatusOK,
+		Confirmations:   signaturesRequired,
+		OwnersCount:     ownerscount,
+		ContractAddress: contractAddress,
+		DeployStatus:    store.MultisigStatusDeployed,
 	}
 }
 
