@@ -19,6 +19,9 @@ service NodeCommuunications {
     rpc EventGetBlockHeight (Empty) returns (BlockHeight){
     }
 
+    rpc EventGetCode (AddressToResync) returns (ReplyInfo){
+    }
+
     rpc EventGetAdressNonce (AddressToResync) returns (Nonce){
     }
 

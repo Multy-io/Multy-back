@@ -117,6 +117,7 @@ func SetRestHandlers(
 		v1.DELETE("/wallet/:currencyid/:networkid/:walletindex", restClient.deleteWallet())
 		v1.POST("/address", restClient.addAddress())
 		v1.GET("/transaction/feerate/:currencyid/:networkid", restClient.getFeeRate())
+		v1.GET("/transaction/feerate/:currencyid/:networkid/*address", restClient.getFeeRate())
 		v1.GET("/outputs/spendable/:currencyid/:networkid/:addr", restClient.getSpendableOutputs())
 		v1.POST("/transaction/send", restClient.sendRawHDTransaction())
 		v1.GET("/wallet/:walletindex/verbose/:currencyid/:networkid/*type", restClient.getWalletVerbose())
@@ -1000,6 +1001,20 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 			return
 		}
 
+		address := ""
+		if len(c.Param("address")) > 0 {
+			address = c.Param("address")[1:]
+			restClient.log.Debugf("getWalletVerbose [%d] \t[networkID=%s]", address, c.Request.RemoteAddr)
+			if err != nil {
+				restClient.log.Errorf("getWalletVerbose: non int networkid:[%d] %s \t[addr=%s]", address, err.Error(), c.Request.RemoteAddr)
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": msgErrDecodenetworkidErr,
+				})
+				return
+			}
+		}
+
 		switch currencyID {
 		case currencies.Bitcoin:
 
@@ -1104,6 +1119,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 				"message": http.StatusText(http.StatusOK),
 			})
 		case currencies.Ether:
+
 			//TODO: make eth feerate
 			//var rate *ethpb.GasPrice
 			var err error
@@ -1122,17 +1138,30 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 			//speed, _ := strconv.Atoi(rate.GetGas())
 			switch networkid {
 			case currencies.ETHMain:
-				// c.JSON(http.StatusOK, gin.H{
-				// 	"speeds": EstimationSpeeds{
-				// 		VerySlow: speed / 2,
-				// 		Slow:     speed,
-				// 		Medium:   speed * 15 / 10,
-				// 		Fast:     speed * 2,
-				// 		VeryFast: speed * 25 / 10,
-				// 	},
-				// 	"code":    http.StatusOK,
-				// 	"message": http.StatusText(http.StatusOK),
-				// })
+				if len(address) > 0 {
+					code, err := restClient.ETH.CliMain.EventGetCode(context.Background(), &ethpb.AddressToResync{
+						Address: address,
+					})
+					if err != nil {
+						restClient.log.Errorf("getFeeRate:restClient.ETH.CliMain.EventGetCode %v", err.Error())
+					}
+					restClient.log.Warnf("getFeeRate:restClient.ETH.CliMain.EventGetCode %v", code.GetMessage()[:10])
+					if len(code.GetMessage()) > 10 {
+						c.JSON(http.StatusOK, gin.H{
+							"speeds": EstimationSpeeds{
+								VerySlow: 9 * 1000000000,
+								Slow:     10 * 1000000000,
+								Medium:   14 * 1000000000,
+								Fast:     20 * 1000000000,
+								VeryFast: 25 * 1000000000,
+							},
+							"gaslimit": 40000,
+							"code":     http.StatusOK,
+							"message":  http.StatusText(http.StatusOK),
+						})
+						return
+					}
+				}
 
 				c.JSON(http.StatusOK, gin.H{
 					"speeds": EstimationSpeeds{
@@ -1159,6 +1188,31 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 				})
 
 			case 4:
+				if len(address) > 0 {
+					code, _ := restClient.ETH.CliTest.EventGetCode(context.Background(), &ethpb.AddressToResync{
+						Address: address,
+					})
+					if err != nil {
+						restClient.log.Errorf("getFeeRate:restClient.ETH.CliMain.EventGetCode %v", err.Error())
+					}
+					restClient.log.Warnf("getFeeRate:restClient.ETH.CliMain.EventGetCode %v", code.GetMessage()[:10])
+					if len(code.GetMessage()) > 10 {
+						c.JSON(http.StatusOK, gin.H{
+							"speeds": EstimationSpeeds{
+								VerySlow: 9 * 1000000000,
+								Slow:     10 * 1000000000,
+								Medium:   14 * 1000000000,
+								Fast:     20 * 1000000000,
+								VeryFast: 25 * 1000000000,
+							},
+							"gaslimit": 40000,
+							"code":     http.StatusOK,
+							"message":  http.StatusText(http.StatusOK),
+						})
+						return
+					}
+				}
+
 				c.JSON(http.StatusOK, gin.H{
 					"speeds": EstimationSpeeds{
 						VerySlow: 1000000000,

@@ -420,6 +420,17 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 				tx.Multisig.InvocationStatus = false
 				return tx
 			}
+
+			if !tx.Multisig.InvocationStatus {
+				tx.Status = store.TxStatusInBlockMethodInvocationFail
+				sel := bson.M{"txhash": tx.Hash}
+				update := bson.M{
+					"$set": bson.M{
+						"txstatus": store.TxStatusInBlockMethodInvocationFail,
+					},
+				}
+				txStore.Update(sel, update)
+			}
 			tx.Multisig.RequestID = i.Int64()
 
 			address, amount := parseSubmitInput(tx.Multisig.Input)
@@ -434,7 +445,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 				if err == mgo.ErrNotFound {
 					// initial insertion
 					user := store.User{}
-					txToUser := tx
+					txToUser := *tx
 					txToUser.From = contract.ContractAddress
 					txToUser.To = address
 
@@ -464,14 +475,14 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 					}
 
 					if isOurUser {
-						tx.Multisig = nil
-						_ = txStore.Insert(tx)
+						txToUser.Multisig = nil
+						_ = txStore.Insert(txToUser)
 					}
 					isOurUser = false
 
 					sel = bson.M{"multisig.contractAddress": address}
 					usersData.Find(sel).One(&user)
-					// internal tansaction to multisig
+					// internal transaction to multisig
 					for _, multisig := range user.Multisigs {
 						if multisig.ContractAddress == address {
 							txToUser.From = contract.ContractAddress
@@ -488,7 +499,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 					}
 
 					if isOurUser {
-						_ = multisigStore.Insert(tx)
+						_ = multisigStore.Insert(txToUser)
 					}
 
 				}
@@ -663,6 +674,17 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 			}
 		}
 
+		if tx.BlockTime != 0 && !tx.Multisig.InvocationStatus {
+			tx.Status = store.TxStatusInBlockMethodInvocationFail
+			sel := bson.M{"txhash": tx.Hash}
+			update := bson.M{
+				"$set": bson.M{
+					"txstatus": store.TxStatusInBlockMethodInvocationFail,
+				},
+			}
+			txStore.Update(sel, update)
+		}
+
 		return tx
 
 	case revokeConfirmation: // "20ea8d86": "revokeConfirmation(uint256)"
@@ -704,8 +726,29 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 			log.Errorf("ParseMultisigInput:revokeConfirmation:multisigStore.Update %v requestid:%v  contract:%v ", err.Error(), i.Int64(), contract.ContractAddress)
 		}
 
+		if tx.BlockTime != 0 && !tx.Multisig.InvocationStatus {
+			tx.Status = store.TxStatusInBlockMethodInvocationFail
+			sel := bson.M{"txhash": tx.Hash}
+			update := bson.M{
+				"$set": bson.M{
+					"txstatus": store.TxStatusInBlockMethodInvocationFail,
+				},
+			}
+			txStore.Update(sel, update)
+		}
+
 		return tx
 	case "0x": // incoming transaction
+		if tx.BlockTime != 0 && !tx.Multisig.InvocationStatus {
+			tx.Status = store.TxStatusInBlockMethodInvocationFail
+			sel := bson.M{"txhash": tx.Hash}
+			update := bson.M{
+				"$set": bson.M{
+					"txstatus": store.TxStatusInBlockMethodInvocationFail,
+				},
+			}
+			txStore.Update(sel, update)
+		}
 		// TODO: notify owners about new transation
 		log.Debugf("incoming transaction: %v", tx.Multisig.Input)
 		return tx
