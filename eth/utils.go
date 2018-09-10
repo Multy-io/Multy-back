@@ -526,9 +526,10 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		return tx
 
 	case confirmTransaction: // "c01a8c84": "confirmTransaction(uint256)"
-		log.Debugf("confirmTransaction: %v", tx.Multisig.Input)
+		log.Warnf("confirmTransaction: %v", tx.Multisig.Input)
 		i, _ := new(big.Int).SetString(tx.Multisig.Input[10:], 16)
-		sel := bson.M{"multisig.requestid": i.Int64(), "multisig.contract": tx.Multisig.Contract}
+		sel := bson.M{"multisig.requestid": i.Int64(), "multisig.contract": tx.Multisig.Contract, "multisig.methodinvoked": submitTransaction}
+		log.Warnf("confirmTransaction:sel %v", sel)
 
 		originTx := store.TransactionETH{}
 		err := multisigStore.Find(sel).One(&originTx)
