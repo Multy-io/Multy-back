@@ -221,10 +221,18 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 			}
 
 			for address, ex := range usersData {
-				genUd.Map[address] = &ethpb.AddressExtended{
-					UserID:       ex.UserID,
-					WalletIndex:  int32(ex.WalletIndex),
-					AddressIndex: int32(ex.AddressIndex),
+				if ex.WalletIndex == -1 {
+					genUd.Map[address] = &ethpb.AddressExtended{
+						UserID:       "exported",
+						WalletIndex:  int32(ex.WalletIndex),
+						AddressIndex: int32(ex.AddressIndex),
+					}
+				} else {
+					genUd.Map[address] = &ethpb.AddressExtended{
+						UserID:       ex.UserID,
+						WalletIndex:  int32(ex.WalletIndex),
+						AddressIndex: int32(ex.AddressIndex),
+					}
 				}
 			}
 			resp, err := cli.EventInitialAdd(context.Background(), &genUd)

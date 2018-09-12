@@ -80,6 +80,7 @@ type UserStore interface {
 	//TODo update this method by eth
 	GetAllWalletTransactions(userid string, currencyID, networkID int, walletTxs *[]MultyTX) error
 	GetAllWalletEthTransactions(userid string, currencyID, networkID int, walletTxs *[]TransactionETH) error
+	GetAllAddressTransactions(address string, currencyID, networkID int, walletTxs *[]TransactionETH) error
 	GetAllMultisigEthTransactions(contractAddress string, currencyID, networkID int, walletTxs *[]TransactionETH) error
 
 	// GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs)
@@ -446,6 +447,29 @@ func (mStore *MongoUserStore) GetAllWalletEthTransactions(userid string, currenc
 	return nil
 }
 
+func (mStore *MongoUserStore) GetAllAddressTransactions(address string, currencyID, networkID int, walletTxs *[]TransactionETH) error {
+	switch currencyID {
+	case currencies.Ether:
+		query := bson.M{
+			"$or": []bson.M{
+				bson.M{"to": address},
+				bson.M{"from": address},
+			},
+			"userid": "imported",
+		}
+
+		if networkID == currencies.ETHMain {
+			err := mStore.ETHMainTxsData.Find(query).All(walletTxs)
+			return err
+		}
+		if networkID == currencies.ETHTest {
+			err := mStore.ETHTestTxsData.Find(query).All(walletTxs)
+			return err
+		}
+	}
+	return nil
+}
+
 func (mStore *MongoUserStore) GetAllMultisigEthTransactions(contractAddress string, currencyID, networkID int, multisigTxs *[]TransactionETH) error {
 	switch currencyID {
 	case currencies.Ether:
@@ -605,18 +629,32 @@ func (mStore *MongoUserStore) CheckMultisigCurrency(invitecode string, currencyi
 func (mStore *MongoUserStore) ViewTransaction(txid, address string, currencyid, networkid int) error {
 	switch currencyid {
 	case currencies.Ether:
-		sel := bson.M{"hash": txid, "multisig.owners.address": address}
-		fmt.Println(sel)
 		update := bson.M{"$set": bson.M{
 			"multisig.owners.$.confirmationStatus": MultisigOwnerStatusSeen,
 			"multisig.owners.$.seenTime":           time.Now().Unix(),
 		}}
+		sel := bson.M{"hash": txid, "multisig.owners.address": address}
+		ms := TransactionETH{}
 		if networkid == currencies.ETHMain {
-			err := mStore.ETHMainMultisigTxsData.Update(sel, update)
+			err := mStore.ETHMainMultisigTxsData.Find(sel).One(&ms)
+			for _, owner := range ms.Multisig.Owners {
+				if owner.Address == address && owner.ConfirmationTime != 0 {
+					return errors.New("transaction already seen")
+				}
+			}
+
+			err = mStore.ETHMainMultisigTxsData.Update(sel, update)
 			return err
 		}
 		if networkid == currencies.ETHTest {
-			err := mStore.ETHTestMultisigTxsData.Update(sel, update)
+			err := mStore.ETHTestMultisigTxsData.Find(sel).One(&ms)
+			for _, owner := range ms.Multisig.Owners {
+				if owner.Address == address && owner.ConfirmationTime != 0 {
+					return errors.New("transaction already seen")
+				}
+			}
+
+			err = mStore.ETHTestMultisigTxsData.Update(sel, update)
 			return err
 		}
 	}

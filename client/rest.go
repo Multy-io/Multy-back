@@ -10,9 +10,12 @@ import (
 	"crypto/hmac"
 	"crypto/sha512"
 	"encoding/base64"
+	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"sort"
 	"strconv"
@@ -268,6 +271,12 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 			}
 		}
 		wallet = createWallet(wp.CurrencyID, wp.NetworkID, wp.Address, wp.AddressIndex, wp.WalletIndex, wp.WalletName, wp.IsImported)
+		err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, wp.WalletIndex, wp.AddressIndex, user.UserID, wp.Address, restClient)
+		if err != nil {
+			restClient.log.Errorf("createCustomWallet: AddWatchAndResync: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+			err := errors.New(msgErrServerError)
+			return err
+		}
 	}
 
 	// imported wallet
@@ -280,7 +289,22 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 				}
 			}
 		}
-		wallet = createWallet(wp.CurrencyID, wp.NetworkID, wp.Address, -1, -1, wp.WalletName, wp.IsImported)
+
+		// TODO: will be changed
+		bs, err := hex.DecodeString(wp.Address[2:])
+		if err != nil {
+			restClient.log.Errorf("addWallet: restClient.hex.DecodeString: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+		}
+		walletIndex := int(-int32(math.Abs(float64(binary.BigEndian.Uint32(bs[:4])))))
+
+		wallet = createWallet(wp.CurrencyID, wp.NetworkID, wp.Address, 0, walletIndex, wp.WalletName, wp.IsImported)
+
+		err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, walletIndex, 0, "imported", wp.Address, restClient)
+		if err != nil {
+			restClient.log.Errorf("createCustomWallet: AddWatchAndResync: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+			err := errors.New(msgErrServerError)
+			return err
+		}
 	}
 
 	sel := bson.M{"devices.JWT": token}
@@ -289,13 +313,6 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 	err = restClient.userStore.Update(sel, update)
 	if err != nil {
 		restClient.log.Errorf("addWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-		err := errors.New(msgErrServerError)
-		return err
-	}
-
-	err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, wp.WalletIndex, wp.AddressIndex, user.UserID, wp.Address, restClient)
-	if err != nil {
-		restClient.log.Errorf("createCustomWallet: AddWatchAndResync: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 		err := errors.New(msgErrServerError)
 		return err
 	}
@@ -315,7 +332,7 @@ func createCustomMultisig(wp WalletParams, token string, restClient *RestClient,
 	}
 
 	sel := bson.M{"devices.JWT": token}
-	multisg := createMultisig(wp.CurrencyID, wp.NetworkID, wp.AddressIndex, wp.WalletIndex, wp.Multisig.SignaturesRequired, wp.Multisig.OwnersCount, user.UserID, strings.ToLower(wp.Address), wp.WalletName, wp.Multisig.InviteCode)
+	multisg := createMultisig(wp.CurrencyID, wp.NetworkID, wp.AddressIndex, wp.WalletIndex, wp.Multisig.SignaturesRequired, wp.Multisig.OwnersCount, user.UserID, strings.ToLower(wp.Address), wp.WalletName, strings.ToLower(wp.Multisig.InviteCode))
 	update := bson.M{"$push": bson.M{"multisig": multisg}}
 	err = restClient.userStore.Update(sel, update)
 	if err != nil {
@@ -1145,7 +1162,6 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 					if err != nil {
 						restClient.log.Errorf("getFeeRate:restClient.ETH.CliMain.EventGetCode %v", err.Error())
 					}
-					restClient.log.Warnf("getFeeRate:restClient.ETH.CliMain.EventGetCode %v", code.GetMessage()[:10])
 					if len(code.GetMessage()) > 10 {
 						c.JSON(http.StatusOK, gin.H{
 							"speeds": EstimationSpeeds{
@@ -1155,7 +1171,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 								Fast:     20 * 1000000000,
 								VeryFast: 25 * 1000000000,
 							},
-							"gaslimit": 40000,
+							"gaslimit": "40000",
 							"code":     http.StatusOK,
 							"message":  http.StatusText(http.StatusOK),
 						})
@@ -1189,13 +1205,12 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 
 			case 4:
 				if len(address) > 0 {
-					code, _ := restClient.ETH.CliTest.EventGetCode(context.Background(), &ethpb.AddressToResync{
+					code, err := restClient.ETH.CliTest.EventGetCode(context.Background(), &ethpb.AddressToResync{
 						Address: address,
 					})
 					if err != nil {
 						restClient.log.Errorf("getFeeRate:restClient.ETH.CliMain.EventGetCode %v", err.Error())
 					}
-					restClient.log.Warnf("getFeeRate:restClient.ETH.CliMain.EventGetCode %v", code.GetMessage()[:10])
 					if len(code.GetMessage()) > 10 {
 						c.JSON(http.StatusOK, gin.H{
 							"speeds": EstimationSpeeds{
@@ -1205,7 +1220,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 								Fast:     20 * 1000000000,
 								VeryFast: 25 * 1000000000,
 							},
-							"gaslimit": 40000,
+							"gaslimit": "40000",
 							"code":     http.StatusOK,
 							"message":  http.StatusText(http.StatusOK),
 						})
@@ -1785,7 +1800,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					}
 				}
 				if len(multisig.Owners) == 0 {
-					restClient.log.Errorf("getAllWalletsVerbose: len(multisig.ContractAddress) == 0:\t[addr=%s]", c.Request.RemoteAddr)
+					restClient.log.Errorf("getWalletVerbose: len(multisig.ContractAddress) == 0:\t[addr=%s]", c.Request.RemoteAddr)
 					c.JSON(code, gin.H{
 						"code":    http.StatusBadRequest,
 						"message": msgErrNoWallet,
@@ -2591,7 +2606,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 			}
 
 			if assetType == store.AssetTypeImportedAddress && derivationPath != "" {
-				err = restClient.userStore.GetAllWalletEthTransactions(user.UserID, currencyId, networkid, &userTxs)
+				err = restClient.userStore.GetAllAddressTransactions(derivationPath, currencyId, networkid, &userTxs)
 				if err != nil {
 					c.JSON(http.StatusBadRequest, gin.H{
 						"code":    http.StatusBadRequest,
@@ -2610,17 +2625,10 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 					userTxs[i].Multisig = nil
 				}
 
-				history := []store.TransactionETH{}
-				for _, tx := range userTxs {
-					if tx.To == derivationPath {
-						history = append(history, tx)
-					}
-				}
-
 				c.JSON(http.StatusOK, gin.H{
 					"code":    http.StatusOK,
 					"message": http.StatusText(http.StatusOK),
-					"history": history,
+					"history": userTxs,
 				})
 				return
 			}
