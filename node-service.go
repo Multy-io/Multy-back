@@ -89,7 +89,6 @@ func Init(conf *Configuration) (*NodeClient, error) {
 
 	pb.RegisterNodeCommuunicationsServer(s, &srv)
 	go s.Serve(lis)
-
 	return cli, nil
 }
 

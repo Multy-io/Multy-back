@@ -112,6 +112,16 @@ func (s *Server) EventGetBlockHeight(ctx context.Context, in *pb.Empty) (*pb.Blo
 	}, nil
 }
 
+func (s *Server) EventGetCode(ctx context.Context, in *pb.AddressToResync) (*pb.ReplyInfo, error) {
+	code, err := s.EthCli.GetCode(in.Address)
+	if err != nil {
+		return &pb.ReplyInfo{}, err
+	}
+	return &pb.ReplyInfo{
+		Message: code,
+	}, nil
+}
+
 func (s *Server) EventGetAdressNonce(c context.Context, in *pb.AddressToResync) (*pb.Nonce, error) {
 	n, err := s.EthCli.GetAddressNonce(in.GetAddress())
 	if err != nil {

@@ -88,6 +88,10 @@ func (client *Client) GetBlockHeight() (int, error) {
 	return client.Rpc.EthBlockNumber()
 }
 
+func (client *Client) GetCode(address string) (string, error) {
+	return client.Rpc.EthGetCode(address, "latest")
+}
+
 func (client *Client) GetAddressNonce(address string) (int, error) {
 	return client.Rpc.EthGetTransactionCount(address, "latest")
 }
