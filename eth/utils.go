@@ -652,7 +652,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 				for _, multisig := range user.Multisigs {
 					if multisig.ContractAddress == outputAddress {
 						txToUser.From = contract.ContractAddress
-						txToUser.To = multisig.ContractAddress
+						txToUser.To = outputAddress
 						txToUser.PoolTime = time.Now().Unix()
 						txToUser.Multisig.MethodInvoked = executeTransaction
 						isOurUser = true
@@ -665,6 +665,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 				}
 
 				if isOurUser {
+					log.Warnf("-------- traatpp \n\n")
 					_ = multisigStore.Insert(tx)
 				}
 			}

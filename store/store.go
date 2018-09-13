@@ -473,7 +473,12 @@ func (mStore *MongoUserStore) GetAllAddressTransactions(address string, currency
 func (mStore *MongoUserStore) GetAllMultisigEthTransactions(contractAddress string, currencyID, networkID int, multisigTxs *[]TransactionETH) error {
 	switch currencyID {
 	case currencies.Ether:
-		query := bson.M{"multisig.contract": contractAddress}
+		query := bson.M{
+			"$or": []bson.M{
+				bson.M{"to": contractAddress},
+				bson.M{"from": contractAddress},
+			},
+		}
 		if networkID == currencies.ETHMain {
 			return mStore.ETHMainMultisigTxsData.Find(query).All(multisigTxs)
 		}
@@ -637,9 +642,11 @@ func (mStore *MongoUserStore) ViewTransaction(txid, address string, currencyid, 
 		ms := TransactionETH{}
 		if networkid == currencies.ETHMain {
 			err := mStore.ETHMainMultisigTxsData.Find(sel).One(&ms)
-			for _, owner := range ms.Multisig.Owners {
-				if owner.Address == address && owner.ConfirmationTime != 0 {
-					return errors.New("transaction already seen")
+			if ms.Multisig.Owners != nil {
+				for _, owner := range ms.Multisig.Owners {
+					if owner.Address == address && owner.ConfirmationTime != 0 {
+						return errors.New("transaction already seen")
+					}
 				}
 			}
 
@@ -648,12 +655,13 @@ func (mStore *MongoUserStore) ViewTransaction(txid, address string, currencyid, 
 		}
 		if networkid == currencies.ETHTest {
 			err := mStore.ETHTestMultisigTxsData.Find(sel).One(&ms)
-			for _, owner := range ms.Multisig.Owners {
-				if owner.Address == address && owner.ConfirmationTime != 0 {
-					return errors.New("transaction already seen")
+			if ms.Multisig.Owners != nil {
+				for _, owner := range ms.Multisig.Owners {
+					if owner.Address == address && owner.ConfirmationTime != 0 {
+						return errors.New("transaction already seen")
+					}
 				}
 			}
-
 			err = mStore.ETHTestMultisigTxsData.Update(sel, update)
 			return err
 		}

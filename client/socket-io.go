@@ -565,10 +565,9 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			err := mapstructure.Decode(msg.Payload, msgMultisig)
 			if err != nil {
 				pool.log.Errorf("server.On:msgSend:deleteMultisig:mapstructure.Decode %v", err.Error())
-				return makeErr(msgMultisig.UserID, "can't kik from multisig: bad request: "+err.Error(), deleteMultisig)
+				return makeErr(msgMultisig.UserID, "can't decline from multisig: bad request: "+err.Error(), declineTransaction)
 			}
 			if !ratesDB.CheckInviteCode(msgMultisig.InviteCode) {
-
 				err = ratesDB.DeclineTransaction(msgMultisig.TxID, msgMultisig.Address, msgMultisig.CurrencyID, msgMultisig.NetworkID)
 				if err != nil {
 					pool.log.Errorf("server.On:msgSend:declineTransaction:DeclineTransaction %v", err.Error())
@@ -597,7 +596,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 				return msgResp
 			}
 
-			return makeErr("", "wrong request payload: ", deleteMultisig)
+			return makeErr("", "wrong request payload: ", declineTransaction)
 
 		case viewTransaction:
 			msgMultisig := &store.MultisigMsg{}

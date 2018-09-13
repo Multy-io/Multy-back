@@ -258,7 +258,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 				// ws notify about all kinds of ms transactions
 
-				sel := bson.M{"multisig.contractAddress": tx.To}
+				sel := bson.M{"multisig.contractAddress": tx.Multisig.Contract}
 				users := []store.User{}
 				usersData.Find(sel).All(&users)
 
@@ -270,6 +270,9 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 						Payload: gTx,
 					}
 					ethcli.WsServer.BroadcastToAll(store.MsgRecieve+":"+user.UserID, msg)
+					if user.UserID == "00798aee2c353d1fa3264095e2f5f48dd2b9a8a295a3b3276b4cadcf242d9bfa55" {
+						log.Warnf("msg %v\n", msg)
+					}
 				}
 
 				if err != nil {
