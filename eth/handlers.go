@@ -260,7 +260,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 				sel := bson.M{"multisig.contractAddress": tx.Multisig.Contract}
 				users := []store.User{}
-				usersData.Find(sel).All(&users)
+				err := usersData.Find(sel).All(&users)
 
 				for _, user := range users {
 					msg := store.WsMessage{

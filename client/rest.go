@@ -270,6 +270,9 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 				return err
 			}
 		}
+		if wp.CurrencyID == currencies.Ether {
+			wp.Address = strings.ToLower(wp.Address)
+		}
 		wallet = createWallet(wp.CurrencyID, wp.NetworkID, wp.Address, wp.AddressIndex, wp.WalletIndex, wp.WalletName, wp.IsImported)
 		err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, wp.WalletIndex, wp.AddressIndex, user.UserID, wp.Address, restClient)
 		if err != nil {
@@ -297,7 +300,7 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 		}
 		walletIndex := int(-int32(math.Abs(float64(binary.BigEndian.Uint32(bs[:4])))))
 
-		wallet = createWallet(wp.CurrencyID, wp.NetworkID, wp.Address, 0, walletIndex, wp.WalletName, wp.IsImported)
+		wallet = createWallet(wp.CurrencyID, wp.NetworkID, strings.ToLower(wp.Address), 0, walletIndex, wp.WalletName, wp.IsImported)
 
 		err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, walletIndex, 0, "imported", wp.Address, restClient)
 		if err != nil {
