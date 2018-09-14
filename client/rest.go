@@ -2667,6 +2667,7 @@ type TxHistory struct {
 
 func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// :currencyid/:networkid/:walletindex
 		token, err := getToken(c)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -2738,44 +2739,74 @@ func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 		switch currencyID {
 		case currencies.Bitcoin:
 			if networkID == currencies.Main {
-				for _, address := range walletToResync.Adresses {
-					restClient.BTC.CliMain.EventResyncAddress(context.Background(), &btcpb.AddressToResync{
-						Address:      address.Address,
-						UserID:       user.UserID,
-						WalletIndex:  int32(walletIndex),
-						AddressIndex: int32(address.AddressIndex),
-					})
-					err := restClient.userStore.DeleteHistory(currencyID, networkID, address.Address)
-					if err != nil {
-						restClient.log.Errorf("resyncWallet case currencies.Bitcoin:Main: %v", err.Error())
+				go func() {
+					for _, address := range walletToResync.Adresses {
+						err := restClient.userStore.DeleteHistory(currencyID, networkID, address.Address)
+						if err != nil {
+							restClient.log.Errorf("resyncWallet case currencies.Bitcoin:Main: %v", err.Error())
+						}
+						restClient.BTC.CliMain.EventResyncAddress(context.Background(), &btcpb.AddressToResync{
+							Address:      address.Address,
+							UserID:       user.UserID,
+							WalletIndex:  int32(walletIndex),
+							AddressIndex: int32(address.AddressIndex),
+						})
 					}
-				}
+				}()
 			}
 
 			if networkID == currencies.Test {
-				for _, address := range walletToResync.Adresses {
-					restClient.BTC.CliTest.EventResyncAddress(context.Background(), &btcpb.AddressToResync{
-						Address:      address.Address,
-						UserID:       user.UserID,
-						WalletIndex:  int32(walletIndex),
-						AddressIndex: int32(address.AddressIndex),
-					})
-					err := restClient.userStore.DeleteHistory(currencyID, networkID, address.Address)
-					if err != nil {
-						restClient.log.Errorf("resyncWallet case currencies.Bitcoin:Test: %v", err.Error())
+
+				go func() {
+					for _, address := range walletToResync.Adresses {
+						err := restClient.userStore.DeleteHistory(currencyID, networkID, address.Address)
+						if err != nil {
+							restClient.log.Errorf("resyncWallet case currencies.Bitcoin:Test: %v", err.Error())
+						}
+						restClient.BTC.CliTest.EventResyncAddress(context.Background(), &btcpb.AddressToResync{
+							Address:      address.Address,
+							UserID:       user.UserID,
+							WalletIndex:  int32(walletIndex),
+							AddressIndex: int32(address.AddressIndex),
+						})
 					}
-				}
+				}()
 
 			}
 		case currencies.Ether:
 			if networkID == currencies.ETHMain {
-
+				go func() {
+					for _, address := range walletToResync.Adresses {
+						restClient.ETH.CliMain.EventResyncAddress(context.Background(), &ethpb.AddressToResync{
+							Address: address.Address,
+						})
+						// err := restClient.userStore.DeleteHistory(currencyID, networkID, address.Address)
+						if err != nil {
+							restClient.log.Errorf("resyncWallet case currencies.Ether:ETHMain: %v", err.Error())
+						}
+					}
+				}()
 			}
 
 			if networkID == currencies.ETHTest {
-
+				go func() {
+					for _, address := range walletToResync.Adresses {
+						restClient.ETH.CliTest.EventResyncAddress(context.Background(), &ethpb.AddressToResync{
+							Address: address.Address,
+						})
+						// err := restClient.userStore.DeleteHistory(currencyID, networkID, address.Address)
+						if err != nil {
+							restClient.log.Errorf("resyncWallet case currencies.Ether:ETHTest: %v", err.Error())
+						}
+					}
+				}()
 			}
 		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"code":    http.StatusOK,
+			"message": http.StatusText(http.StatusOK),
+		})
 
 	}
 }

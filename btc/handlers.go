@@ -272,7 +272,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 					break
 				}
 				i++
-				if i == 10 {
+				if i == 4 {
 					break
 				}
 				time.Sleep(time.Second * 3)
@@ -498,7 +498,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 						break
 					}
 					i++
-					if i == 10 {
+					if i == 4 {
 						break
 					}
 					time.Sleep(time.Second * 3)

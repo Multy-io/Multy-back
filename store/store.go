@@ -123,10 +123,12 @@ type MongoUserStore struct {
 	// btc main
 	BTCMainTxsData          *mgo.Collection
 	BTCMainSpendableOutputs *mgo.Collection
+	BTCMainSpentOutputs     *mgo.Collection
 
 	// btc test
 	BTCTestTxsData          *mgo.Collection
 	BTCTestSpendableOutputs *mgo.Collection
+	BTCTestSpentOutputs     *mgo.Collection
 
 	//eth main
 	// ETHMainRatesData *mgo.Collection
@@ -174,10 +176,12 @@ func InitUserStore(conf Conf) (UserStore, error) {
 	// BTC main
 	uStore.BTCMainTxsData = uStore.session.DB(conf.DBTx).C(conf.TableTxsDataBTCMain)
 	uStore.BTCMainSpendableOutputs = uStore.session.DB(conf.DBTx).C(conf.TableSpendableOutputsBTCMain)
+	uStore.BTCMainSpentOutputs = uStore.session.DB(conf.DBTx).C(conf.TableSpentOutputsBTCMain)
 
 	// BTC test
 	uStore.BTCTestTxsData = uStore.session.DB(conf.DBTx).C(conf.TableTxsDataBTCTest)
 	uStore.BTCTestSpendableOutputs = uStore.session.DB(conf.DBTx).C(conf.TableSpendableOutputsBTCTest)
+	uStore.BTCTestSpentOutputs = uStore.session.DB(conf.DBTx).C(conf.TableSpentOutputsBTCTest)
 
 	// ETH main
 	uStore.ETHMainTxsData = uStore.session.DB(conf.DBTx).C(conf.TableTxsDataETHMain)
@@ -280,14 +284,27 @@ func (mStore *MongoUserStore) FethUserAddresses(currencyID, networkID int, useri
 
 func (mStore *MongoUserStore) DeleteHistory(CurrencyID, NetworkID int, Address string) error {
 
-	sel := bson.M{"txaddress": Address}
 	switch CurrencyID {
 	case currencies.Bitcoin:
 		if NetworkID == currencies.Main {
-			return mStore.BTCMainTxsData.Remove(sel)
+			mStore.BTCMainTxsData.Remove(bson.M{"txaddress": Address})
+			mStore.BTCMainSpendableOutputs.RemoveAll(bson.M{
+				"address": Address,
+			})
+			mStore.BTCMainSpentOutputs.RemoveAll(bson.M{
+				"address": Address,
+			})
+			return nil
 		}
 		if NetworkID == currencies.Test {
-			return mStore.BTCTestTxsData.Remove(sel)
+			mStore.BTCTestTxsData.RemoveAll(bson.M{"txaddress": Address})
+			mStore.BTCTestSpendableOutputs.RemoveAll(bson.M{
+				"address": Address,
+			})
+			mStore.BTCTestSpentOutputs.RemoveAll(bson.M{
+				"address": Address,
+			})
+			return nil
 		}
 	case currencies.Ether:
 		if NetworkID == currencies.ETHMain {
