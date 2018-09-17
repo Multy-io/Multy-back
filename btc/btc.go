@@ -30,7 +30,7 @@ type BTCConn struct {
 	BtcMempool     sync.Map
 	BtcMempoolTest sync.Map
 
-	Resync sync.Map
+	Resync *sync.Map
 }
 
 var log = slf.WithContext("btc")
@@ -42,7 +42,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	cli := &BTCConn{
 		BtcMempool:     sync.Map{},
 		BtcMempoolTest: sync.Map{},
-		Resync:         sync.Map{},
+		Resync:         &sync.Map{},
 	}
 
 	cli.WatchAddressMain = make(chan pb.WatchAddress)

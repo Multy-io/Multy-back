@@ -2114,7 +2114,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 		)
 		user := store.User{}
 		query := bson.M{"devices.JWT": token}
-
 		if err := restClient.userStore.FindUser(query, &user); err != nil {
 			restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 			c.JSON(code, gin.H{
@@ -2745,6 +2744,7 @@ func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 						if err != nil {
 							restClient.log.Errorf("resyncWallet case currencies.Bitcoin:Main: %v", err.Error())
 						}
+						restClient.BTC.Resync.Store(address.Address, true)
 						restClient.BTC.CliMain.EventResyncAddress(context.Background(), &btcpb.AddressToResync{
 							Address:      address.Address,
 							UserID:       user.UserID,
@@ -2763,6 +2763,7 @@ func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 						if err != nil {
 							restClient.log.Errorf("resyncWallet case currencies.Bitcoin:Test: %v", err.Error())
 						}
+						restClient.BTC.Resync.Store(address.Address, true)
 						restClient.BTC.CliTest.EventResyncAddress(context.Background(), &btcpb.AddressToResync{
 							Address:      address.Address,
 							UserID:       user.UserID,
