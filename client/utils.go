@@ -87,18 +87,19 @@ func createMultisig(currencyID, networkID, addressIndex, walletIndex, signatures
 	}
 }
 
-func importMultisig(currencyID, networkID, signaturesRequired, ownerscount int, contractAddress, walletName string) store.Multisig {
+func importMultisig(currencyID, networkID, confirmationsRequired int, contractAddress, walletName string, owners []store.AddressExtended) store.Multisig {
 	return store.Multisig{
 		CurrencyID:      currencyID,
 		NetworkID:       networkID,
+		Confirmations:   confirmationsRequired,
 		WalletName:      walletName,
+		ContractAddress: contractAddress,
 		LastActionTime:  time.Now().Unix(),
 		DateOfCreation:  time.Now().Unix(),
-		Status:          store.WalletStatusOK,
-		Confirmations:   signaturesRequired,
-		OwnersCount:     ownerscount,
-		ContractAddress: contractAddress,
+		Owners:          owners,
 		DeployStatus:    store.MultisigStatusDeployed,
+		Status:          store.WalletStatusOK,
+		OwnersCount:     len(owners),
 	}
 }
 

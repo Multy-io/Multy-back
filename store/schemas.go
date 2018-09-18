@@ -291,32 +291,23 @@ type WalletETH struct {
 }
 
 type TransactionETH struct {
-	UserID        string      `json:"userid,omitempty"`
-	WalletIndex   int         `json:"walletindex,omitempty"`
-	AddressIndex  int         `json:"addressindex,omitempty"`
-	Hash          string      `json:"txhash"`
-	From          string      `json:"from"`
-	To            string      `json:"to"`
-	Amount        string      `json:"txoutamount"`
-	GasPrice      int64       `json:"gasprice"`
-	GasLimit      int64       `json:"gaslimit"`
-	Nonce         int         `json:"nonce"`
-	Status        int         `json:"txstatus" bson:"txstatus"`
-	BlockTime     int64       `json:"blocktime"`
-	PoolTime      int64       `json:"mempooltime"`
-	BlockHeight   int64       `json:"blockheight"`
-	Confirmations int         `json:"confirmations"`
-	IsInternal    bool        `json:"isinternal"`
-	Multisig      *MultisigTx `json:"multisig,omitempty"`
-	// Input         string      `json:"input"`
-	// Contract          string                `json:"contract,omitempty"`
-	// Index             int64                 `json:"index,omitempty"`
-	// MethodInvoked     string                `json:"methodinvoked,omitempty"`
-	// InvocationStatus  bool                  `json:"invocationstatus,omitempty"`
-	// Return            string                `json:"return,omitempty"`
-	// Owners            []OwnerHistory        `json:"owners,omitempty"`
-	// Confirmed         bool                  `json:"confirmed,omitempty"`
-
+	UserID            string                `json:"userid,omitempty"`
+	WalletIndex       int                   `json:"walletindex,omitempty"`
+	AddressIndex      int                   `json:"addressindex,omitempty"`
+	Hash              string                `json:"txhash"`
+	From              string                `json:"from"`
+	To                string                `json:"to"`
+	Amount            string                `json:"txoutamount"`
+	GasPrice          int64                 `json:"gasprice"`
+	GasLimit          int64                 `json:"gaslimit"`
+	Nonce             int                   `json:"nonce"`
+	Status            int                   `json:"txstatus" bson:"txstatus"`
+	BlockTime         int64                 `json:"blocktime"`
+	PoolTime          int64                 `json:"mempooltime"`
+	BlockHeight       int64                 `json:"blockheight"`
+	Confirmations     int                   `json:"confirmations"`
+	IsInternal        bool                  `json:"isinternal"`
+	Multisig          *MultisigTx           `json:"multisig,omitempty"`
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 }
 

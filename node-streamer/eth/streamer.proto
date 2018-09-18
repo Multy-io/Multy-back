@@ -15,6 +15,9 @@ service NodeCommuunications {
         
     rpc EventAddNewAddress (WatchAddress) returns (ReplyInfo){
     }
+    
+    rpc EventAddNewMultisig (WatchAddress) returns (ReplyInfo){
+    }
 
     rpc EventGetBlockHeight (Empty) returns (BlockHeight){
     }
@@ -56,6 +59,9 @@ service NodeCommuunications {
     rpc AddMultisig (Empty) returns (stream Multisig){
     }
 
+    rpc GetMultisigInfo (AddressToResync) returns (ContractInfo){
+    }
+
 }
 
 //  Multisig messages
@@ -80,6 +86,11 @@ message Nonce {
 message GasPrice {
     string Gas = 1;
 }
+
+message BlockHeight{
+    int64 height = 1;
+}
+
 
 message ETHTransaction {
     string UserID = 1;
@@ -106,7 +117,12 @@ message ETHTransaction {
 
 }
 
-message BlockHeight{
+message ContractInfo{
+    int64 ConfirmationsRequired = 1;
+    repeated string ContractOwners = 2;
+}
+
+message MultisigInfo{
     int64 height = 1 ;
 }
 

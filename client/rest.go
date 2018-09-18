@@ -555,100 +555,116 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 			}
 
 			// //TODO: beautify
-			// if wp.Multisig.IsImported {
-			// 	conn, err := ethclient.Dial("https://rinkeby.infura.io")
-			// 	if err != nil {
-			// 		restClient.log.Errorf("addWallet: createCustomMultisig:ethclient.Dial %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			// 		c.JSON(http.StatusBadRequest, gin.H{
-			// 			"code":    http.StatusBadRequest,
-			// 			"message": err.Error(),
-			// 		})
-			// 		return
-			// 	}
+			if wp.Multisig.IsImported {
 
-			// 	contract, err := NewMultiSigWallet(common.HexToAddress(wp.Address), conn)
-			// 	if err != nil {
-			// 		restClient.log.Errorf("addWallet: createCustomMultisig:NewMultiSigWallet %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			// 		c.JSON(http.StatusBadRequest, gin.H{
-			// 			"code":    http.StatusBadRequest,
-			// 			"message": err.Error(),
-			// 		})
-			// 		return
-			// 	}
+				msInfo := &ethpb.ContractInfo{}
+				var err error
+				address := &ethpb.AddressToResync{
+					Address: wp.Multisig.ContractAddress,
+				}
+				switch wp.NetworkID {
+				case currencies.ETHMain:
+					msInfo, err = restClient.ETH.CliMain.GetMultisigInfo(context.Background(), address)
+				case currencies.ETHTest:
+					msInfo, err = restClient.ETH.CliTest.GetMultisigInfo(context.Background(), address)
+				}
 
-			// 	owners, err := contract.GetOwners(&bind.CallOpts{})
-			// 	if err != nil {
-			// 		restClient.log.Errorf("addWallet: createCustomMultisig:contract.GetOwners %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			// 		c.JSON(http.StatusBadRequest, gin.H{
-			// 			"code":    http.StatusBadRequest,
-			// 			"message": err.Error(),
-			// 		})
-			// 		return
-			// 	}
+				if err != nil {
+					restClient.log.Errorf("addWallet:restClient.ETH.CliTest.GetMultisigInfo %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    code,
+						"message": err.Error(),
+					})
+					return
+				}
 
-			// 	confirmations, err := contract.Required(&bind.CallOpts{})
-			// 	if err != nil {
-			// 		restClient.log.Errorf("addWallet: createCustomMultisig:contract.Required %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			// 		c.JSON(http.StatusBadRequest, gin.H{
-			// 			"code":    http.StatusBadRequest,
-			// 			"message": err.Error(),
-			// 		})
-			// 		return
-			// 	}
+				user := store.User{}
+				query := bson.M{"devices.JWT": token}
+				err = restClient.userStore.FindUser(query, &user)
+				if err != nil {
+					restClient.log.Errorf("addWallet: createCustomMultisig:restClient.userStore.FindUse %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": err.Error(),
+					})
+					return
+				}
+				msOwners := []store.AddressExtended{}
 
-			// 	user := store.User{}
-			// 	query := bson.M{"devices.JWT": token}
-			// 	err = restClient.userStore.FindUser(query, &user)
-			// 	if err != nil {
-			// 		restClient.log.Errorf("addWallet: createCustomMultisig:restClient.userStore.FindUse %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			// 		c.JSON(http.StatusBadRequest, gin.H{
-			// 			"code":    http.StatusBadRequest,
-			// 			"message": err.Error(),
-			// 		})
-			// 		return
-			// 	}
-			// 	msOwners := []store.AddressExtended{}
+				existMultisig := false
+				for _, multisig := range user.Multisigs {
+					if multisig.ContractAddress == wp.Multisig.ContractAddress {
+						existMultisig = true
+					}
+				}
+				if !existMultisig {
+					restClient.log.Errorf("addWallet: createCustomMultisig: multisig already exist %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": "multisig already exist",
+					})
+					return
+				}
 
-			// 	for _, owner := range owners {
-			// 		if owner.String() == wp.Address {
-			// 			msOwners = append(msOwners, store.AddressExtended{
-			// 				Address:      owner.String(),
-			// 				Associated:   true,
-			// 				WalletIndex:  wp.WalletIndex,
-			// 				AddressIndex: wp.AddressIndex,
-			// 			})
-			// 		} else {
-			// 			msOwners = append(msOwners, store.AddressExtended{
-			// 				Address: owner.String(),
-			// 			})
-			// 		}
-			// 	}
-			// 	ms := importMultisig(wp.CurrencyID, wp.NetworkID, int(confirmations.Int64()), len(owners), wp.Multisig.ContractAddress, wp.WalletName)
-			// 	switch ms.NetworkID {
-			// 	case currencies.ETHMain:
-			// 		restClient.ETH.WatchAddressMain <- ethpb.WatchAddress{
-			// 			Address: ms.ContractAddress,
-			// 			UserID:  user.UserID,
-			// 		}
-			// 	case currencies.ETHTest:
-			// 		restClient.ETH.WatchAddressTest <- ethpb.WatchAddress{
-			// 			Address: ms.ContractAddress,
-			// 			UserID:  user.UserID,
-			// 		}
-			// 	}
+				existMember := false
+				for _, owner := range msInfo.GetContractOwners() {
+					if owner == wp.Address {
+						msOwners = append(msOwners, store.AddressExtended{
+							UserID:       user.UserID,
+							Address:      owner,
+							Associated:   true,
+							WalletIndex:  wp.WalletIndex,
+							AddressIndex: wp.AddressIndex,
+						})
+						existMember = true
+					} else {
+						msOwners = append(msOwners, store.AddressExtended{
+							Address: owner,
+						})
+					}
+				}
 
-			// 	sel := bson.M{"devices.JWT": token}
-			// 	update := bson.M{"$push": bson.M{"multisig": ms}}
-			// 	err = restClient.userStore.Update(sel, update)
-			// 	if err != nil {
-			// 		restClient.log.Errorf("addWallet: createCustomMultisig:estClient.userStore.Update %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			// 		c.JSON(http.StatusBadRequest, gin.H{
-			// 			"code":    http.StatusBadRequest,
-			// 			"message": err.Error(),
-			// 		})
-			// 	}
+				if !existMember {
+					restClient.log.Errorf("addWallet: createCustomMultisig: address are not member of multisig %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": "address are not member of multisig",
+					})
+					return
+				}
+				ms := importMultisig(wp.CurrencyID, wp.NetworkID, int(msInfo.GetConfirmationsRequired()), wp.Multisig.ContractAddress, wp.WalletName, msOwners)
+				switch ms.NetworkID {
+				case currencies.ETHMain:
+					_, err = restClient.ETH.CliMain.EventAddNewMultisig(context.Background(), &ethpb.WatchAddress{
+						Address: wp.Multisig.ContractAddress,
+					})
+				case currencies.ETHTest:
+					_, err = restClient.ETH.CliTest.EventAddNewMultisig(context.Background(), &ethpb.WatchAddress{
+						Address: wp.Multisig.ContractAddress,
+					})
+				}
+				if err != nil {
+					restClient.log.Errorf("addWallet: createCustomMultisig:importMultisig %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": err.Error(),
+					})
+					return
+				}
 
-			// }
+				sel := bson.M{"devices.JWT": token}
+				update := bson.M{"$push": bson.M{"multisig": ms}}
+				err = restClient.userStore.Update(sel, update)
+				if err != nil {
+					restClient.log.Errorf("addWallet: createCustomMultisig:estClient.userStore.Update %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": err.Error(),
+					})
+					return
+				}
+
+			}
 
 		}
 
@@ -656,6 +672,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 		if wp.Multisig.IsMultisig == false {
 			err = createCustomWallet(wp, token, restClient, c)
 			if err != nil {
+				restClient.log.Errorf("addWallet:createCustomWallet %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 				c.JSON(http.StatusBadRequest, gin.H{
 					"code":    http.StatusBadRequest,
 					"message": err.Error(),

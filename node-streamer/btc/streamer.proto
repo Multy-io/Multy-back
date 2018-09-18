@@ -104,7 +104,7 @@ message Resync {
 }
 
 message BlockHeight{
-    int64 height = 1 ;
+    int64 height = 1;
 }
 
 
