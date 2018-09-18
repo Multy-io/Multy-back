@@ -11,12 +11,11 @@ import (
 	"sync"
 	"time"
 
-	"gopkg.in/mgo.v2"
-
+	pb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
 	"github.com/Multy-io/Multy-back/currencies"
-	pb "github.com/Multy-io/Multy-back/node-streamer/btc"
 	"github.com/Multy-io/Multy-back/store"
 	nsq "github.com/bitly/go-nsq"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -183,6 +182,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 					log.Errorf("SetWsHandlers: cli.On newIncomingTx: %s", err)
 					return
 				}
+
 				spOut := generatedSpOutsToStore(gSpOut)
 
 				log.Infof("Add spendable output : %v", gSpOut.String())

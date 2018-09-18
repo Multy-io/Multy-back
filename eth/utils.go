@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
+	ethpb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
 	"github.com/Multy-io/Multy-back/currencies"
-	ethpb "github.com/Multy-io/Multy-back/node-streamer/eth"
 	"github.com/Multy-io/Multy-back/store"
 	nsq "github.com/bitly/go-nsq"
 	_ "github.com/jekabolt/slflog"
