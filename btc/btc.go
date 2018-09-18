@@ -11,7 +11,7 @@ import (
 
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"
-	pb "github.com/Multy-io/Multy-back/node-streamer/btc"
+	pb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"

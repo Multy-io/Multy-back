@@ -10,7 +10,7 @@ import (
 
 	"math"
 
-	pb "github.com/Multy-io/Multy-back/node-streamer/btc"
+	pb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"

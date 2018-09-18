@@ -10,7 +10,7 @@ import (
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"
 	"github.com/Multy-io/Multy-BTC-node-service/btc"
-	pb "github.com/Multy-io/Multy-back/node-streamer/btc"
+	pb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/blockcypher/gobcy"
 )
