@@ -11,8 +11,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/KristinaEtc/slf"
-	_ "github.com/KristinaEtc/slflog"
+	"github.com/jekabolt/slf"
+	_ "github.com/jekabolt/slflog"
 	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/onrik/ethrpc"

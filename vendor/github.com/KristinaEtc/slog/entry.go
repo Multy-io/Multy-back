@@ -4,7 +4,7 @@
 package slog
 
 import (
-	"github.com/KristinaEtc/slf"
+	"github.com/jekabolt/slf"
 	"time"
 )
 

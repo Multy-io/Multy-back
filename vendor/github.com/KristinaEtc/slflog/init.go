@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/KristinaEtc/config"
-	"github.com/KristinaEtc/slf"
-	"github.com/KristinaEtc/slog"
+	"github.com/jekabolt/config"
+	"github.com/jekabolt/slf"
+	"github.com/jekabolt/slog"
 	"github.com/kardianos/osext"
 )
 
@@ -163,7 +163,7 @@ func getLogLevel(lvl string) slf.Level {
 }
 
 //----------------------------------------------------------------------------------------//
-// Common utils for logger. Do not move it to another library (like KristinaEtc/utils c:),
+// Common utils for logger. Do not move it to another library (like jekabolt/utils c:),
 // because logger _must_ initialize first.
 //----------------------------------------------------------------------------------------//
 

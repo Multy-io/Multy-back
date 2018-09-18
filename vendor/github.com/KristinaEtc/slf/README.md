@@ -140,22 +140,22 @@ Copyright (c) 2016 Ventu.io, Oleg Sklyar, contributors.
 Distributed under a MIT style license found in the [LICENSE][license] file.
 
 
-[docs]: https://godoc.org/github.com/KristinaEtc/slf
+[docs]: https://godoc.org/github.com/jekabolt/slf
 [docsimage]: http://img.shields.io/badge/godoc-reference-blue.svg?style=flat
 
-[build]: https://travis-ci.org/KristinaEtc/slf
-[buildimage]: https://travis-ci.org/KristinaEtc/slf.svg?branch=master
+[build]: https://travis-ci.org/jekabolt/slf
+[buildimage]: https://travis-ci.org/jekabolt/slf.svg?branch=master
 
-[codecov]: https://codecov.io/github/KristinaEtc/slf?branch=master
-[codecovimage]: https://codecov.io/github/KristinaEtc/slf/coverage.svg?branch=master
+[codecov]: https://codecov.io/github/jekabolt/slf?branch=master
+[codecovimage]: https://codecov.io/github/jekabolt/slf/coverage.svg?branch=master
 
-[card]: http://goreportcard.com/report/KristinaEtc/slf
-[cardimage]: https://goreportcard.com/badge/github.com/KristinaEtc/slf
+[card]: http://goreportcard.com/report/jekabolt/slf
+[cardimage]: https://goreportcard.com/badge/github.com/jekabolt/slf
 
-[license]: https://github.com/KristinaEtc/slf/blob/master/LICENSE
+[license]: https://github.com/jekabolt/slf/blob/master/LICENSE
 
 [apexlog]: https://github.com/apex/log
 [logrus]: https://github.com/Sirupsen/logrus
-[slog]: https://github.com/KristinaEtc/slog
+[slog]: https://github.com/jekabolt/slog
 
 
