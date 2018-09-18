@@ -11,6 +11,10 @@ import (
 	"sync"
 	"time"
 
+	bind "github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"
 	"github.com/Multy-io/Multy-ETH-node-service/eth"
@@ -28,6 +32,7 @@ type Server struct {
 	Info      *store.ServiceInfo
 	NetworkID int
 	ResyncUrl string
+	ABIcli    *ethclient.Client
 }
 
 func (s *Server) ServiceInfo(c context.Context, in *pb.Empty) (*pb.ServiceVersion, error) {
@@ -47,6 +52,36 @@ func (s *Server) EventGetGasPrice(ctx context.Context, in *pb.Empty) (*pb.GasPri
 	return &pb.GasPrice{
 		Gas: gp.String(),
 	}, nil
+}
+
+func (s *Server) GetMultisigInfo(ctx context.Context, in *pb.AddressToResync) (*pb.ContractInfo, error) {
+
+	contract, err := NewMultiSigWallet(common.HexToAddress(in.GetAddress()), s.ABIcli)
+	if err != nil {
+		log.Errorf("GetMultisigInfo - %v", err)
+		return nil, err
+	}
+	contractOwners, err := contract.GetOwners(&bind.CallOpts{})
+	if err != nil {
+		log.Errorf("GetMultisigInfo contract.GetOwners - %v", err)
+		return nil, err
+	}
+	owners := []string{}
+	for _, owner := range contractOwners {
+		owners = append(owners, strings.ToLower(owner.String()))
+	}
+
+	required, err := contract.Required(&bind.CallOpts{})
+	if err != nil {
+		log.Errorf("GetMultisigInfo contract.Required - %v", err)
+		return nil, err
+	}
+
+	return &pb.ContractInfo{
+		ConfirmationsRequired: required.Int64(),
+		ContractOwners:        owners,
+	}, err
+
 }
 
 func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.ReplyInfo, error) {
@@ -95,6 +130,63 @@ func (s *Server) EventAddNewAddress(c context.Context, wa *pb.WatchAddress) (*pb
 	*s.UsersData = newMap
 
 	log.Debugf("EventAddNewAddress - %v", newMap)
+
+	return &pb.ReplyInfo{
+		Message: "ok",
+	}, nil
+
+}
+
+func (s *Server) EventAddNewMultisig(ctx context.Context, address *pb.WatchAddress) (*pb.ReplyInfo, error) {
+	log.Debugf("EventAddNewMultisig")
+
+	// store multisig adddress in map
+	s.Multisig.UsersContracts.Store(address.GetAddress(), "")
+
+	// resync multisig transacttions
+	addr := address.GetAddress()
+	url := s.ResyncUrl + addr + "&action=txlist&module=account"
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return &pb.ReplyInfo{
+			Message: fmt.Sprintf("EventResyncAddress: http.NewRequest = %s", err.Error()),
+		}, nil
+	}
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return &pb.ReplyInfo{
+			Message: fmt.Sprintf("EventResyncAddress: http.DefaultClient.Do = %s", err.Error()),
+		}, nil
+	}
+	defer res.Body.Close()
+
+	reTx := resyncTx{}
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return &pb.ReplyInfo{
+			Message: fmt.Sprintf("EventResyncAddress: ioutil.ReadAll = %s", err.Error()),
+		}, nil
+	}
+
+	if err := json.Unmarshal(body, &reTx); err != nil {
+		return &pb.ReplyInfo{
+			Message: fmt.Sprintf("EventResyncAddress: json.Unmarshal = %s", err.Error()),
+		}, nil
+	}
+
+	if !strings.Contains(reTx.Message, "OK") {
+		return &pb.ReplyInfo{
+			Message: fmt.Sprintf("EventResyncAddress: !strings.Contains OK a.k.a. bad response form 3-party"),
+		}, nil
+	}
+
+	log.Debugf("EventResyncAddress %d", len(reTx.Result))
+
+	for _, hash := range reTx.Result {
+		s.EthCli.ResyncMultisig(hash.Hash)
+	}
 
 	return &pb.ReplyInfo{
 		Message: "ok",

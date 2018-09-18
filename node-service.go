@@ -16,6 +16,7 @@ import (
 	"github.com/Multy-io/Multy-ETH-node-service/streamer"
 	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
 	"github.com/Multy-io/Multy-back/store"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"google.golang.org/grpc"
 )
 
@@ -77,6 +78,11 @@ func Init(conf *Configuration) (*NodeClient, error) {
 
 	cli.Instance = ethCli
 
+	ABIconn, err := ethclient.Dial(conf.AbiClientUrl)
+	if err != nil {
+		log.Fatalf("Failed to connect to infura %v", err)
+	}
+
 	s := grpc.NewServer()
 	srv := streamer.Server{
 		UsersData: cli.Clients,
@@ -85,6 +91,7 @@ func Init(conf *Configuration) (*NodeClient, error) {
 		Multisig:  cli.CliMultisig,
 		NetworkID: conf.NetworkID,
 		ResyncUrl: resyncUrl,
+		ABIcli:    ABIconn,
 	}
 
 	pb.RegisterNodeCommuunicationsServer(s, &srv)

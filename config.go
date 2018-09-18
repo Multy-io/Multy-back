@@ -19,4 +19,5 @@ type Configuration struct {
 	ServiceInfo     store.ServiceInfo
 	NetworkID       int
 	ResyncUrl       string
+	AbiClientUrl    string
 }

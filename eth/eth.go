@@ -9,6 +9,8 @@ import (
 	"context"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/ethclient"
+
 	"github.com/KristinaEtc/slf"
 	_ "github.com/KristinaEtc/slflog"
 	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
@@ -29,6 +31,7 @@ type Client struct {
 	UsersData      *sync.Map
 	NewMultisig    chan pb.Multisig
 	Multisig       *Multisig
+	AbiClient      *ethclient.Client
 }
 
 type Conf struct {
@@ -87,6 +90,11 @@ func (c *Client) RunProcess() error {
 		log.Errorf("Run: client.Subscribe: newPendingTransactions %s", err.Error())
 		return err
 	}
+
+	// conn, err := ethclient.Dial(c.config.AbiClientUrl)
+	// if err != nil {
+	// 	log.Fatalf("Failed to connect to infura %v", err)
+	// }
 
 	for {
 		switch v := (<-ch).(type) {

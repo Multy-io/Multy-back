@@ -105,6 +105,15 @@ func (client *Client) ResyncAddress(txid string) error {
 	return nil
 }
 
+func (client *Client) ResyncMultisig(txid string) error {
+	tx, err := client.Rpc.EthGetTransactionByHash(txid)
+	if err != nil {
+		return err
+	}
+	client.parseETHMultisig(*tx, int64(*tx.BlockNumber), true)
+	return nil
+}
+
 func (client *Client) parseETHTransaction(rawTX ethrpc.Transaction, blockHeight int64, isResync bool) {
 	var fromUser store.AddressExtended
 	var toUser store.AddressExtended
