@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	//
 	"github.com/Multy-io/Multy-back/btc"
 	"github.com/Multy-io/Multy-back/currencies"
 	"github.com/Multy-io/Multy-back/eth"
@@ -632,7 +633,87 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 					})
 					return
 				}
-				ms := importMultisig(wp.CurrencyID, wp.NetworkID, int(msInfo.GetConfirmationsRequired()), wp.Multisig.ContractAddress, wp.WalletName, msOwners)
+
+				sha512 := sha512.New()
+				sha512.Write([]byte(wp.Multisig.ContractAddress))
+				invitecode := hex.EncodeToString(sha512.Sum(nil))[:45]
+
+				sel := bson.M{"multisig.inviteCode": invitecode}
+				msUsers := restClient.userStore.FindMultisigUsers(invitecode)
+
+				multisig, err := restClient.userStore.FindMultisig(user.UserID, invitecode)
+				if err != nil {
+					restClient.log.Errorf("addWallet: createCustomMultisig:uStore.FindMultisig %v", err.Error())
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": err.Error(),
+					})
+					return
+				}
+
+				// join multisig
+				if len(msUsers) > 0 && multisig.Imported {
+					if !restClient.userStore.IsRelatedAddress(user.UserID, wp.Address) {
+						restClient.log.Errorf("addWallet: createCustomMultisig: address is not related to your account")
+						c.JSON(http.StatusBadRequest, gin.H{
+							"code":    http.StatusBadRequest,
+							"message": "address is not related to your account",
+						})
+						return
+					}
+
+					owners := []store.AddressExtended{}
+					for _, owner := range multisig.Owners {
+						owners = append(owners, store.AddressExtended{
+							Address:      owner.Address,
+							Creator:      owner.Creator,
+							WalletIndex:  owner.WalletIndex,
+							AddressIndex: owner.AddressIndex,
+						})
+					}
+
+					owners = append(owners, store.AddressExtended{
+						UserID:       user.UserID,
+						Address:      wp.Address,
+						WalletIndex:  wp.WalletIndex,
+						AddressIndex: 0,
+						Associated:   true,
+					})
+					multisig.Owners = owners
+
+					err = restClient.userStore.JoinMultisig(user.UserID, multisig)
+					if err != nil {
+						restClient.log.Errorf("addWallet: userStore.JoinMultisig %v", err.Error())
+						c.JSON(http.StatusBadRequest, gin.H{
+							"code":    http.StatusBadRequest,
+							"message": err.Error(),
+						})
+						return
+					}
+
+					for _, user := range msUsers {
+						userMultisig, err := updateUserOwners(user, multisig, restClient.userStore, store.MultisigStatusDeployed)
+						if err != nil {
+							restClient.log.Errorf("server.On:MultisigMsgratesDB.MultisigMsg: %v", err.Error())
+						}
+
+						msg := store.WsMessage{
+							Type:    joinMultisig,
+							To:      user.UserID,
+							Date:    time.Now().Unix(),
+							Payload: userMultisig,
+						}
+						restClient.ETH.WsServer.BroadcastToAll(msgRecieve+":"+user.UserID, msg)
+					}
+					c.JSON(http.StatusCreated, gin.H{
+						"code": http.StatusCreated,
+						"time": time.Now().Unix(),
+					})
+					return
+
+				}
+
+				ms := importMultisig(wp.CurrencyID, wp.NetworkID, int(msInfo.GetConfirmationsRequired()), invitecode, wp.Multisig.ContractAddress, wp.WalletName, msOwners)
 				switch ms.NetworkID {
 				case currencies.ETHMain:
 					_, err = restClient.ETH.CliMain.EventAddNewMultisig(context.Background(), &ethpb.WatchAddress{
@@ -652,7 +733,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 					return
 				}
 
-				sel := bson.M{"devices.JWT": token}
+				sel = bson.M{"devices.JWT": token}
 				update := bson.M{"$push": bson.M{"multisig": ms}}
 				err = restClient.userStore.Update(sel, update)
 				if err != nil {

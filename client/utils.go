@@ -87,7 +87,7 @@ func createMultisig(currencyID, networkID, addressIndex, walletIndex, signatures
 	}
 }
 
-func importMultisig(currencyID, networkID, confirmationsRequired int, contractAddress, walletName string, owners []store.AddressExtended) store.Multisig {
+func importMultisig(currencyID, networkID, confirmationsRequired int, invitecode, contractAddress, walletName string, owners []store.AddressExtended) store.Multisig {
 	return store.Multisig{
 		CurrencyID:      currencyID,
 		NetworkID:       networkID,
@@ -100,6 +100,8 @@ func importMultisig(currencyID, networkID, confirmationsRequired int, contractAd
 		DeployStatus:    store.MultisigStatusDeployed,
 		Status:          store.WalletStatusOK,
 		OwnersCount:     len(owners),
+		InviteCode:      invitecode,
+		Imported:        true,
 	}
 }
 

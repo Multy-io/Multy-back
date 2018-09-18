@@ -337,6 +337,7 @@ type Multisig struct {
 	Status          string            `bson:"status" json:"status"`
 	InviteCode      string            `bson:"inviteCode" json:"inviteCode"`
 	OwnersCount     int               `bson:"ownersCount" json:"ownersCount"`
+	Imported        bool              `bson:"imported" json:"imported"`
 }
 
 type MultisigExtended struct {

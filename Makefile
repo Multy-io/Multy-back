@@ -45,7 +45,7 @@ todo:
 .PHONY: todo
 
 dist:
-	cd node-streamer/eth && protoc --go_out=plugins=grpc:. *.proto &&cd ../../cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
+	cd ./cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
 
 test: dist
 	cd cmd && scp  multy multy@test.multy.io:/mnt/hdd/back && cd ..
@@ -53,5 +53,3 @@ test: dist
 stage:
 	cd cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o stage .
 
-proto:
-	cd node-streamer/btc && protoc --go_out=plugins=grpc:. *.proto && cd .. && cd eth/ && protoc --go_out=plugins=grpc:. *.proto
