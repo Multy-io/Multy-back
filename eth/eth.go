@@ -11,10 +11,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	pb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/jekabolt/slf"
 	_ "github.com/jekabolt/slflog"
-	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
-	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/onrik/ethrpc"
 )
 

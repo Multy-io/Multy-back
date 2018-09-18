@@ -3,7 +3,7 @@ package eth
 import (
 	"strings"
 
-	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
+	pb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
 
 	"github.com/onrik/ethrpc"
 )

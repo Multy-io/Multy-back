@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
+	pb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/onrik/ethrpc"
 	"gopkg.in/mgo.v2/bson"

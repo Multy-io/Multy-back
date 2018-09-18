@@ -41,3 +41,6 @@ test:
 
 stage:
 	cd cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o stage .
+	
+proto:
+	cd ./node-streamer && protoc --go_out=plugins=grpc:. *.proto 
