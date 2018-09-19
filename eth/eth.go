@@ -91,11 +91,6 @@ func (c *Client) RunProcess() error {
 		return err
 	}
 
-	// conn, err := ethclient.Dial(c.config.AbiClientUrl)
-	// if err != nil {
-	// 	log.Fatalf("Failed to connect to infura %v", err)
-	// }
-
 	for {
 		switch v := (<-ch).(type) {
 		default:

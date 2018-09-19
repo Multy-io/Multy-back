@@ -252,7 +252,6 @@ func (client *Client) parseETHMultisig(rawTX ethrpc.Transaction, blockHeight int
 		log.Debugf("wrong method:  %v", rawTX.Input)
 		// wrong method
 	}
-	// invocationStatus, returnValue := client.GetInvocationStatus(rawTX.Hash)
 
 	tx := rawToGenerated(rawTX)
 	tx.Resync = isResync
@@ -275,13 +274,17 @@ func (client *Client) parseETHMultisig(rawTX ethrpc.Transaction, blockHeight int
 	}
 
 	if blockHeight != -1 {
-		log.Errorf("GetInvocationStatus")
-		invocationStatus, returnValue := client.GetInvocationStatus(rawTX.Hash)
+		log.Debugf("GetInvocationStatus")
+		invocationStatus, returnValue, err := client.GetInvocationStatus(rawTX.Hash)
+		if err != nil {
+			log.Errorf("GetInvocationStatus: %v", err.Error())
+			return
+		}
 		tx.InvocationStatus = invocationStatus
 		tx.Return = returnValue
 	}
 
-	log.Errorf(`GetInvocationStatus invocationStatus:  %v  returnValue  "%v" `, tx.InvocationStatus, tx.Return)
+	log.Debugf(`GetInvocationStatus invocationStatus:  %v  returnValue  "%v" `, tx.InvocationStatus, tx.Return)
 	/*
 		Fetching tx status and send
 	*/

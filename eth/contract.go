@@ -84,15 +84,24 @@ func parseFactoryInput(in string) (*pb.Multisig, error) {
 	return fi, errors.New("Wrong method name")
 }
 
-func (c *Client) GetInvocationStatus(hash string) (bool, string) {
+func (c *Client) GetInvocationStatus(hash string) (bool, string, error) {
 	m, err := c.Rpc.TraceTransaction(hash)
 	if err != nil {
-		fmt.Printf("FactoryContract:c.Rpc.TraceTransaction %v", err.Error())
+		log.Errorf("FactoryContract:c.Rpc.TraceTransaction %v", err.Error())
+		return false, "", err
 	}
-	//TODO: send faled
-	isFailed := m["failed"].(bool)
 
-	return !isFailed, m["returnValue"].(string)
+	isFailed, ok := m["failed"].(bool)
+	if !ok {
+		return false, "", errors.New("Trace failed unavalible ")
+	}
+
+	returnValue, ok := m["returnValue"].(string)
+	if !ok {
+		return false, "", errors.New("Trace returnValue unavalible ")
+	}
+
+	return !isFailed, returnValue, nil
 	// if !isFailed {
 
 	// 	rawTx, err := c.Rpc.EthGetTransactionByHash(hash)
