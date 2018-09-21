@@ -16,6 +16,7 @@ import (
 	"github.com/Multy-io/Multy-back/currencies"
 	"github.com/Multy-io/Multy-back/store"
 	nsq "github.com/bitly/go-nsq"
+	"github.com/graarh/golang-socketio"
 	"github.com/jekabolt/slf"
 )
 
@@ -31,6 +32,8 @@ type BTCConn struct {
 	BtcMempoolTest sync.Map
 
 	Resync *sync.Map
+
+	WsServer *gosocketio.Server
 }
 
 var log = slf.WithContext("btc")
@@ -101,7 +104,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
 
-	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.Main, cli.WatchAddressMain, cli.BtcMempool, cli.Resync)
+	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.Main, cli.WatchAddressMain, cli.BtcMempool, cli.Resync, cli)
 
 	cli.CliMain = cliMain
 	log.Infof("InitHandlers: initGrpcClient: Main: √")
@@ -115,7 +118,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
-	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.Test, cli.WatchAddressTest, cli.BtcMempoolTest, cli.Resync)
+	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.Test, cli.WatchAddressTest, cli.BtcMempoolTest, cli.Resync, cli)
 
 	cli.CliTest = cliTest
 	log.Infof("InitHandlers: initGrpcClient: Test: √")

@@ -223,7 +223,7 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 			for address, ex := range usersData {
 				if ex.WalletIndex == -1 {
 					genUd.Map[address] = &ethpb.AddressExtended{
-						UserID:       "exported",
+						UserID:       "imported",
 						WalletIndex:  int32(ex.WalletIndex),
 						AddressIndex: int32(ex.AddressIndex),
 					}
@@ -289,6 +289,7 @@ func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 	}
 	multy.clientPool = socketIOPool
 	multy.ETH.WsServer = multy.clientPool.Server
+	multy.BTC.WsServer = multy.clientPool.Server
 
 	firebaseClient, err := client.InitFirebaseConn(&conf.Firebase, multy.route, conf.NSQAddress)
 	if err != nil {

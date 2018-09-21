@@ -19,7 +19,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress, mempool sync.Map, resync *sync.Map) {
+func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress, mempool sync.Map, resync *sync.Map, btcCli *BTCConn) {
 
 	mempoolCh := make(chan interface{})
 	// initial fill mempool respectively network id
@@ -507,6 +507,16 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			if len(rTxs.Txs) > 0 {
 				for _, spout := range rTxs.SpOuts {
 					resync.Delete(spout.Address)
+				}
+				if len(rTxs.SpOuts) > 0 {
+
+					msg := store.WsMessage{
+						Type:    store.NotifyResyncEnd,
+						To:      rTxs.SpOuts[0].UserID,
+						Date:    time.Now().Unix(),
+						Payload: "",
+					}
+					btcCli.WsServer.BroadcastToAll(store.MsgRecieve+":"+rTxs.SpOuts[0].UserID, msg)
 				}
 			}
 

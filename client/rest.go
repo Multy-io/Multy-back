@@ -117,7 +117,7 @@ func SetRestHandlers(
 	v1.Use(restClient.middlewareJWT.MiddlewareFunc())
 	{
 		v1.POST("/wallet", restClient.addWallet())
-		v1.DELETE("/wallet/:currencyid/:networkid/:walletindex", restClient.deleteWallet())
+		v1.DELETE("/wallet/:currencyid/:networkid/:walletindex/*type", restClient.deleteWallet())
 		v1.POST("/address", restClient.addAddress())
 		v1.GET("/transaction/feerate/:currencyid/:networkid", restClient.getFeeRate())
 		v1.GET("/transaction/feerate/:currencyid/:networkid/*address", restClient.getFeeRate())
@@ -129,7 +129,7 @@ func SetRestHandlers(
 		v1.GET("/wallets/transactions/:currencyid/:networkid/:walletindex/*type", restClient.getWalletTransactionsHistory())
 		v1.GET("/wallets/transactions/:currencyid/:networkid/:walletindex", restClient.getWalletTransactionsHistory())
 		v1.POST("/wallet/name", restClient.changeWalletName())
-		v1.POST("/resync/wallet/:currencyid/:networkid/:walletindex", restClient.resyncWallet())
+		v1.POST("/resync/wallet/:currencyid/:networkid/:walletindex/*type", restClient.resyncWallet())
 		v1.GET("/exchange/changelly/list", restClient.changellyListCurrencies())
 		v1.GET("/multisig/estimate/:contractaddress", restClient.estimateMultisig())
 	}
@@ -450,7 +450,7 @@ func AddWatchAndResync(currencyID, networkid, walletIndex, addressIndex int, use
 func NewAddressNode(address, userid string, currencyID, networkID, walletIndex, addressIndex int, restClient *RestClient) error {
 
 	//add new re-sync to map
-	restClient.BTC.Resync.Store(address, true)
+	// restClient.BTC.Resync.Store(address, true)
 
 	switch currencyID {
 	case currencies.Bitcoin:
@@ -726,7 +726,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 						}
 
 						msg := store.WsMessage{
-							Type:    joinMultisig,
+							Type:    store.JoinMultisig,
 							To:      user.UserID,
 							Date:    time.Now().Unix(),
 							Payload: userMultisig,
@@ -926,16 +926,25 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 			})
 			return
 		}
-
+		var derivationPath string
 		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
-		restClient.log.Debugf("getWalletVerbose [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
+		restClient.log.Debugf("resyncWallet [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
 		if err != nil {
-			restClient.log.Errorf("getWalletVerbose: non int wallet index:[%d] %s \t[addr=%s]", walletIndex, err.Error(), c.Request.RemoteAddr)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrDecodeWalletIndexErr,
-			})
-			return
+			derivationPath = strings.ToLower(c.Param("walletindex"))
+		}
+
+		assetType := store.AssetTypeMultyAddress
+		if len(c.Param("type")) > 0 {
+			assetType, err = strconv.Atoi(c.Param("type")[1:])
+			restClient.log.Debugf("resyncWallet [%d] \t[networkID=%s]", assetType, c.Request.RemoteAddr)
+			if err != nil {
+				restClient.log.Errorf("resyncWallet: non int asset type:[%d] %s \t[addr=%s]", assetType, err.Error(), c.Request.RemoteAddr)
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": msgErrDecodeTypeErr,
+				})
+				return
+			}
 		}
 
 		currencyId, err := strconv.Atoi(c.Param("currencyid"))
@@ -982,7 +991,6 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 
 		switch currencyId {
 		case currencies.Bitcoin:
-
 			if networkid == currencies.Main {
 				for _, wallet := range user.Wallets {
 					if wallet.WalletIndex == walletIndex {
@@ -1003,7 +1011,7 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 			}
 
 			if totalBalance == 0 {
-				err := restClient.userStore.DeleteWallet(user.UserID, walletIndex, currencyId, networkid)
+				err := restClient.userStore.DeleteWallet(user.UserID, "", walletIndex, currencyId, networkid, store.AssetTypeMultyAddress)
 				if err != nil {
 					restClient.log.Errorf("deleteWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 					c.JSON(http.StatusBadRequest, gin.H{
@@ -1049,7 +1057,7 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 			}
 
 			if balance.Balance == "0" || balance.Balance == "" {
-				err := restClient.userStore.DeleteWallet(user.UserID, walletIndex, currencyId, networkid)
+				err := restClient.userStore.DeleteWallet(user.UserID, derivationPath, walletIndex, currencyId, networkid, assetType)
 				if err != nil {
 					restClient.log.Errorf("deleteWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 					c.JSON(http.StatusBadRequest, gin.H{
@@ -2812,15 +2820,29 @@ func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 			return
 		}
 
-		// var derivationPath string
+		var derivationPath string
 		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
-		restClient.log.Debugf("getWalletVerbose [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
+		restClient.log.Debugf("resyncWallet [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
 		if err != nil {
-			// derivationPath = strings.ToLower(c.Param("walletindex"))
+			derivationPath = strings.ToLower(c.Param("walletindex"))
+		}
+
+		assetType := store.AssetTypeMultyAddress
+		if len(c.Param("type")) > 0 {
+			assetType, err = strconv.Atoi(c.Param("type")[1:])
+			restClient.log.Debugf("resyncWallet [%d] \t[networkID=%s]", assetType, c.Request.RemoteAddr)
+			if err != nil {
+				restClient.log.Errorf("resyncWallet: non int asset type:[%d] %s \t[addr=%s]", assetType, err.Error(), c.Request.RemoteAddr)
+				c.JSON(http.StatusBadRequest, gin.H{
+					"code":    http.StatusBadRequest,
+					"message": msgErrDecodeTypeErr,
+				})
+				return
+			}
 		}
 
 		currencyID, err := strconv.Atoi(c.Param("currencyid"))
-		restClient.log.Debugf("getWalletVerbose [%d] \t[currencyId=%s]", currencyID, c.Request.RemoteAddr)
+		restClient.log.Debugf("resyncWallet [%d] \t[currencyId=%s]", currencyID, c.Request.RemoteAddr)
 		if err != nil {
 			restClient.log.Errorf("resyncWallet: non int currency id:[%d] %s \t[addr=%s]", currencyID, err.Error(), c.Request.RemoteAddr)
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -2831,7 +2853,7 @@ func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 		}
 
 		networkID, err := strconv.Atoi(c.Param("networkid"))
-		restClient.log.Debugf("getWalletVerbose [%d] \t[networkid=%s]", networkID, c.Request.RemoteAddr)
+		restClient.log.Debugf("resyncWallet [%d] \t[networkid=%s]", networkID, c.Request.RemoteAddr)
 		if err != nil {
 			restClient.log.Errorf("resyncWallet: non int networkid index:[%d] %s \t[addr=%s]", networkID, err.Error(), c.Request.RemoteAddr)
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -2859,7 +2881,7 @@ func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 			}
 		}
 
-		if len(walletToResync.Adresses) == 0 {
+		if len(walletToResync.Adresses) == 0 && len(derivationPath) == 0 {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
 				"message": msgErrUserHaveNoTxs,
@@ -2907,33 +2929,39 @@ func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 
 			}
 		case currencies.Ether:
+			var resync ethpb.NodeCommuunicationsClient
 			if networkID == currencies.ETHMain {
+				resync = restClient.ETH.CliMain
+			}
+			if networkID == currencies.ETHTest {
+				resync = restClient.ETH.CliTest
+			}
+
+			switch assetType {
+			case store.AssetTypeMultyAddress:
 				go func() {
 					for _, address := range walletToResync.Adresses {
-						restClient.ETH.CliMain.EventResyncAddress(context.Background(), &ethpb.AddressToResync{
+						resync.EventResyncAddress(context.Background(), &ethpb.AddressToResync{
 							Address: address.Address,
 						})
-						// err := restClient.userStore.DeleteHistory(currencyID, networkID, address.Address)
 						if err != nil {
 							restClient.log.Errorf("resyncWallet case currencies.Ether:ETHMain: %v", err.Error())
 						}
 					}
 				}()
-			}
-
-			if networkID == currencies.ETHTest {
+			case store.AssetTypeImportedAddress:
 				go func() {
-					for _, address := range walletToResync.Adresses {
-						restClient.ETH.CliTest.EventResyncAddress(context.Background(), &ethpb.AddressToResync{
-							Address: address.Address,
-						})
-						// err := restClient.userStore.DeleteHistory(currencyID, networkID, address.Address)
-						if err != nil {
-							restClient.log.Errorf("resyncWallet case currencies.Ether:ETHTest: %v", err.Error())
-						}
+					resync.EventResyncAddress(context.Background(), &ethpb.AddressToResync{
+						Address: derivationPath,
+					})
+					if err != nil {
+						restClient.log.Errorf("resyncWallet case currencies.Ether:ETHMain: %v", err.Error())
 					}
 				}()
+			case store.AssetTypeMultisig:
+				//TODO:
 			}
+
 		}
 
 		c.JSON(http.StatusOK, gin.H{

@@ -44,18 +44,19 @@ const (
 	MsgSend    = "message:send"
 	MsgRecieve = "message:recieve"
 
-	joinMultisig       = 1
-	leaveMultisig      = 2
-	deleteMultisig     = 3
-	kickMultisig       = 4
-	checkMultisig      = 5
-	viewTransaction    = 6
-	declineTransaction = 7
+	JoinMultisig       = 1
+	LeaveMultisig      = 2
+	DeleteMultisig     = 3
+	KickMultisig       = 4
+	CheckMultisig      = 5
+	ViewTransaction    = 6
+	DeclineTransaction = 7
 	NotifyDeploy       = 8
 	NotifyPaymentReq   = 9
 	NotifyIncomingTx   = 10
 	NotifyConfirmTx    = 11
 	NotifyRevokeTx     = 12
+	NotifyResyncEnd    = 13
 
 	AssetTypeMultyAddress    = 0
 	AssetTypeMultisig        = 1

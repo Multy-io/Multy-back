@@ -85,7 +85,7 @@ type UserStore interface {
 
 	// GetAllSpendableOutputs(query bson.M) (error, []SpendableOutputs)
 	GetAddressSpendableOutputs(address string, currencyID, networkID int) ([]SpendableOutputs, error)
-	DeleteWallet(userid string, walletindex, currencyID, networkID int) error
+	DeleteWallet(userid, address string, walletindex, currencyID, networkID, assetType int) error
 
 	FindAllUserETHTransactions(sel bson.M) ([]TransactionETH, error)
 	FindUserDataChain(CurrencyID, NetworkID int) (map[string]AddressExtended, error)
@@ -334,24 +334,42 @@ func (mStore *MongoUserStore) FindETHTransaction(sel bson.M) error {
 	return err
 }
 
-func (mStore *MongoUserStore) DeleteWallet(userid string, walletindex, currencyID, networkID int) error {
-	user := User{}
-	sel := bson.M{"userID": userid, "wallets.networkID": networkID, "wallets.currencyID": currencyID, "wallets.walletIndex": walletindex}
-	err := mStore.usersData.Find(bson.M{"userID": userid}).One(&user)
-	var position int
-	if err == nil {
-		for i, wallet := range user.Wallets {
-			if wallet.NetworkID == networkID && wallet.WalletIndex == walletindex && wallet.CurrencyID == currencyID {
-				position = i
-				break
+func (mStore *MongoUserStore) DeleteWallet(userid, address string, walletindex, currencyID, networkID, assetType int) error {
+	var err error
+	switch assetType {
+	case AssetTypeMultyAddress:
+		user := User{}
+		sel := bson.M{"userID": userid, "wallets.networkID": networkID, "wallets.currencyID": currencyID, "wallets.walletIndex": walletindex}
+		err = mStore.usersData.Find(bson.M{"userID": userid}).One(&user)
+		var position int
+		if err == nil {
+			for i, wallet := range user.Wallets {
+				if wallet.NetworkID == networkID && wallet.WalletIndex == walletindex && wallet.CurrencyID == currencyID {
+					position = i
+					break
+				}
 			}
+			update := bson.M{
+				"$set": bson.M{
+					"wallets." + strconv.Itoa(position) + ".status": WalletStatusDeleted,
+				},
+			}
+			return mStore.usersData.Update(sel, update)
 		}
+	case AssetTypeImportedAddress:
+		query := bson.M{"userID": userid, "wallets.addresses.address": address, "true": true}
 		update := bson.M{
 			"$set": bson.M{
-				"wallets." + strconv.Itoa(position) + ".status": WalletStatusDeleted,
+				"wallets.$.status": WalletStatusDeleted,
 			},
 		}
-		return mStore.usersData.Update(sel, update)
+		err := mStore.usersData.Update(query, update)
+		if err != nil {
+			return errors.New("DeleteWallet:restClient.userStore.Update:AssetTypeImportedAddress " + err.Error())
+		}
+		return err
+	case AssetTypeMultisig:
+
 	}
 
 	return err
