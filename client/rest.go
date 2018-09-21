@@ -10,12 +10,10 @@ import (
 	"crypto/hmac"
 	"crypto/sha512"
 	"encoding/base64"
-	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"math"
 	"net/http"
 	"sort"
 	"strconv"
@@ -44,6 +42,7 @@ const (
 	msgErrWalletNonZeroBalance  = "can't delete non zero balance wallet"
 	msgErrWalletIndex           = "already existing wallet index"
 	msgErrKnownAddres           = "already existing wallet address"
+	msgErrWrongBadAddress       = "bad address"
 	msgErrTxHistory             = "not found any transaction history"
 	msgErrAddressIndex          = "already existing address index"
 	msgErrMethodNotImplennted   = "method is not implemented"
@@ -134,19 +133,6 @@ func SetRestHandlers(
 		v1.GET("/exchange/changelly/list", restClient.changellyListCurrencies())
 		v1.GET("/multisig/estimate/:contractaddress", restClient.estimateMultisig())
 	}
-	// go func() {
-	// 	for {
-	// 		time.Sleep(time.Second * 2)
-	// 		adr := ethpb.AddressToResync{
-	// 			Address: "0x55ae4774e2b9c8eacc8b367e7d48779fdd6cd30d",
-	// 		}
-	// 		amount, _ := restClient.ETH.CliTest.EventGetAdressBalance(context.Background(), &adr)
-	// 		restClient.log.Warnf("amount.Balance = %v", amount.Balance)
-	// 		restClient.log.Warnf("amount.PendingBalance = %v", amount.PendingBalance)
-	// 		fmt.Println("")
-	// 	}
-
-	// }()
 	return restClient, nil
 }
 
@@ -258,8 +244,7 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 	err := restClient.userStore.FindUser(query, &user)
 	if err != nil {
 		restClient.log.Errorf("createCustomWallet: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-		err = errors.New(msgErrUserNotFound)
-		return err
+		return errors.New(msgErrUserNotFound)
 	}
 
 	wallet := store.Wallet{}
@@ -288,22 +273,23 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 		for _, wallet := range user.Wallets {
 			if len(wallet.Adresses) > 0 {
 				if wallet.CurrencyID == wp.CurrencyID && wallet.NetworkID == wp.NetworkID && wallet.Adresses[0].Address == wp.Address {
-					err = errors.New(msgErrKnownAddres)
-					return err
+					return errors.New(msgErrKnownAddres)
 				}
 			}
 		}
-
-		// TODO: will be changed
-		bs, err := hex.DecodeString(wp.Address[2:])
-		if err != nil {
-			restClient.log.Errorf("addWallet: restClient.hex.DecodeString: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+		if len(wp.Address) < 2 {
+			return errors.New(msgErrWrongBadAddress)
 		}
-		walletIndex := int(-int32(math.Abs(float64(binary.BigEndian.Uint32(bs[:4])))))
+		// TODO: will be changed
+		// bs, err := hex.DecodeString(wp.Address[2:])
+		// if err != nil {
+		// 	restClient.log.Errorf("addWallet: restClient.hex.DecodeString: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+		// }
+		// walletIndex := int(-int32(math.Abs(float64(binary.BigEndian.Uint32(bs[:4])))))
 
-		wallet = createWallet(wp.CurrencyID, wp.NetworkID, strings.ToLower(wp.Address), 0, walletIndex, wp.WalletName, wp.IsImported)
+		wallet = createWallet(wp.CurrencyID, wp.NetworkID, strings.ToLower(wp.Address), 0, -1, wp.WalletName, wp.IsImported)
 
-		err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, walletIndex, 0, "imported", wp.Address, restClient)
+		err = AddWatchAndResync(wp.CurrencyID, wp.NetworkID, -1, 0, "imported", wp.Address, restClient)
 		if err != nil {
 			restClient.log.Errorf("createCustomWallet: AddWatchAndResync: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 			err := errors.New(msgErrServerError)
@@ -317,8 +303,7 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 	err = restClient.userStore.Update(sel, update)
 	if err != nil {
 		restClient.log.Errorf("addWallet: restClient.userStore.Update: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-		err := errors.New(msgErrServerError)
-		return err
+		return errors.New(msgErrServerError)
 	}
 
 	return nil
@@ -358,22 +343,8 @@ func changeName(cn ChangeName, token string, restClient *RestClient, c *gin.Cont
 	}
 	var position int
 
-	// change multisig name
-	if cn.Address != "" {
-		query := bson.M{"userID": user.UserID, "multisig.contractaddress": cn.Address}
-		update := bson.M{
-			"$set": bson.M{
-				"multisig.$.walletname": cn.WalletName,
-			},
-		}
-
-		err := restClient.userStore.Update(query, update)
-		return err
-	}
-
-	// change wallet name
-	if cn.Address == "" {
-
+	switch cn.Type {
+	case store.AssetTypeMultyAddress:
 		for i, wallet := range user.Wallets {
 			if wallet.NetworkID == cn.NetworkID && wallet.WalletIndex == cn.WalletIndex && wallet.CurrencyID == cn.CurrencyID {
 				position = i
@@ -386,7 +357,38 @@ func changeName(cn ChangeName, token string, restClient *RestClient, c *gin.Cont
 				"wallets." + strconv.Itoa(position) + ".walletName": cn.WalletName,
 			},
 		}
-		return restClient.userStore.Update(sel, update)
+		err := restClient.userStore.Update(sel, update)
+		if err != nil {
+			return errors.New("changeName:restClient.userStore.Update:AssetTypeMultyAddress " + err.Error())
+		}
+		return err
+
+	case store.AssetTypeImportedAddress:
+		query := bson.M{"userID": user.UserID, "wallets.addresses.address": cn.Address}
+		update := bson.M{
+			"$set": bson.M{
+				"wallets.$.walletName": cn.WalletName,
+			},
+		}
+		err := restClient.userStore.Update(query, update)
+		if err != nil {
+			return errors.New("changeName:restClient.userStore.Update:AssetTypeImportedAddress " + err.Error())
+		}
+		return err
+
+	case store.AssetTypeMultisig:
+		query := bson.M{"userID": user.UserID, "multisig.contractaddress": cn.Address}
+		update := bson.M{
+			"$set": bson.M{
+				"multisig.$.walletname": cn.WalletName,
+			},
+		}
+		err := restClient.userStore.Update(query, update)
+		if err != nil {
+			return errors.New("changeName:restClient.userStore.Update:AssetTypeMultisig " + err.Error())
+		}
+		return err
+
 	}
 
 	return errors.New(msgErrNoWallet)
@@ -555,7 +557,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 				return
 			}
 
-			// //TODO: beautify
+			//TODO: beautify
 			if wp.Multisig.IsImported {
 
 				msInfo := &ethpb.ContractInfo{}
@@ -592,14 +594,36 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 				}
 				msOwners := []store.AddressExtended{}
 
+				walletIndex := 0
+				isRelatedAddres := false
+				// feth owner address wallet index
+				for _, wallet := range user.Wallets {
+					if len(wallet.Adresses) > 0 {
+						if wallet.Adresses[0].Address == wp.Address {
+							walletIndex = wallet.WalletIndex
+							isRelatedAddres = true
+						}
+					}
+				}
+
+				if !isRelatedAddres {
+					restClient.log.Errorf("addWallet: createCustomMultisig: you have no such addres owner\t[addr=%s]", c.Request.RemoteAddr)
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": "no such addres owner",
+					})
+					return
+				}
+
+				// one user can't be multiple owner of one multisig
 				existMultisig := false
 				for _, multisig := range user.Multisigs {
 					if multisig.ContractAddress == wp.Multisig.ContractAddress {
 						existMultisig = true
 					}
 				}
-				if !existMultisig {
-					restClient.log.Errorf("addWallet: createCustomMultisig: multisig already exist %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+				if existMultisig {
+					restClient.log.Errorf("addWallet: createCustomMultisig: user already have this multisig\t[addr=%s]", c.Request.RemoteAddr)
 					c.JSON(http.StatusBadRequest, gin.H{
 						"code":    http.StatusBadRequest,
 						"message": "multisig already exist",
@@ -607,6 +631,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 					return
 				}
 
+				// check for user address relation to multisig
 				existMember := false
 				for _, owner := range msInfo.GetContractOwners() {
 					if owner == wp.Address {
@@ -614,7 +639,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 							UserID:       user.UserID,
 							Address:      owner,
 							Associated:   true,
-							WalletIndex:  wp.WalletIndex,
+							WalletIndex:  walletIndex,
 							AddressIndex: wp.AddressIndex,
 						})
 						existMember = true
@@ -634,6 +659,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 					return
 				}
 
+				// creating invitecode for multisig
 				sha512 := sha512.New()
 				sha512.Write([]byte(wp.Multisig.ContractAddress))
 				invitecode := hex.EncodeToString(sha512.Sum(nil))[:45]
@@ -641,44 +667,46 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 				sel := bson.M{"multisig.inviteCode": invitecode}
 				msUsers := restClient.userStore.FindMultisigUsers(invitecode)
 
-				multisig, err := restClient.userStore.FindMultisig(user.UserID, invitecode)
-				if err != nil {
-					restClient.log.Errorf("addWallet: createCustomMultisig:uStore.FindMultisig %v", err.Error())
-					c.JSON(http.StatusBadRequest, gin.H{
-						"code":    http.StatusBadRequest,
-						"message": err.Error(),
-					})
-					return
-				}
-
 				// join multisig
-				if len(msUsers) > 0 && multisig.Imported {
-					if !restClient.userStore.IsRelatedAddress(user.UserID, wp.Address) {
-						restClient.log.Errorf("addWallet: createCustomMultisig: address is not related to your account")
+				if len(msUsers) > 0 {
+					multisig, err := restClient.userStore.FindMultisig(msUsers[0].UserID, invitecode)
+					if err != nil {
+						restClient.log.Errorf("addWallet: createCustomMultisig:uStore.FindMultisig %v", err.Error())
 						c.JSON(http.StatusBadRequest, gin.H{
 							"code":    http.StatusBadRequest,
-							"message": "address is not related to your account",
+							"message": err.Error(),
+						})
+						return
+					}
+
+					// can't join to multy multsig
+					if !multisig.Imported {
+						restClient.log.Errorf("addWallet: createCustomMultisig: you can't join multy multisig")
+						c.JSON(http.StatusBadRequest, gin.H{
+							"code":    http.StatusBadRequest,
+							"message": "you can't join multy multisig",
 						})
 						return
 					}
 
 					owners := []store.AddressExtended{}
 					for _, owner := range multisig.Owners {
-						owners = append(owners, store.AddressExtended{
-							Address:      owner.Address,
-							Creator:      owner.Creator,
-							WalletIndex:  owner.WalletIndex,
-							AddressIndex: owner.AddressIndex,
-						})
+						if wp.Address == owner.Address {
+							owners = append(owners, store.AddressExtended{
+								UserID:       user.UserID,
+								Address:      owner.Address,
+								WalletIndex:  walletIndex,
+								AddressIndex: wp.AddressIndex,
+								Associated:   true,
+							})
+						} else {
+							owners = append(owners, store.AddressExtended{
+								Address: owner.Address,
+							})
+						}
+
 					}
 
-					owners = append(owners, store.AddressExtended{
-						UserID:       user.UserID,
-						Address:      wp.Address,
-						WalletIndex:  wp.WalletIndex,
-						AddressIndex: 0,
-						Associated:   true,
-					})
 					multisig.Owners = owners
 
 					err = restClient.userStore.JoinMultisig(user.UserID, multisig)
@@ -777,6 +805,7 @@ type ChangeName struct {
 	WalletIndex int    `json:"walletIndex"`
 	NetworkID   int    `json:"networkId"`
 	Address     string `json:"address"`
+	Type        int    `json:"type"`
 }
 
 func (restClient *RestClient) changeWalletName() gin.HandlerFunc {
@@ -802,9 +831,10 @@ func (restClient *RestClient) changeWalletName() gin.HandlerFunc {
 		}
 		err = changeName(cn, token, restClient, c)
 		if err != nil {
+			restClient.log.Errorf("changeWalletName: %v", err.Error())
 			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
-				"message": err.Error(),
+				"message": http.StatusText(http.StatusBadRequest),
 			})
 			return
 		}
@@ -858,7 +888,7 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 			"donate": restClient.donationAddresses,
 			"multisigfactory": map[string]string{
 				"ethtestnet": "0x04f68589f53cfdf408025cd7cea8a40dbf488e49",
-				"ethmainnet": "",
+				"ethmainnet": "0xc2cbdd9b58502cff1db5f9cce48ac17a9a550185",
 			},
 		}
 		c.JSON(http.StatusOK, resp)
@@ -2108,6 +2138,7 @@ type WalletVerbose struct {
 	DateOfCreation int64            `json:"dateofcreation"`
 	VerboseAddress []AddressVerbose `json:"addresses"`
 	Pending        bool             `json:"pending"`
+	Syncing        bool             `json:"issyncing"`
 }
 
 type WalletVerboseETH struct {
@@ -2122,6 +2153,7 @@ type WalletVerboseETH struct {
 	Balance        string              `json:"balance"`
 	VerboseAddress []ETHAddressVerbose `json:"addresses"`
 	Pending        bool                `json:"pending"`
+	Syncing        bool                `json:"issyncing"`
 	Multisig       *MultisigVerbose    `json:"multisig,omitempty"`
 }
 
@@ -2236,6 +2268,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 			case currencies.Bitcoin:
 				var av []AddressVerbose
 				var pending bool
+				var walletSync bool
 				for _, address := range wallet.Adresses {
 					spOuts := getBTCAddressSpendableOutputs(address.Address, wallet.CurrencyID, wallet.NetworkID, restClient)
 
@@ -2264,6 +2297,10 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 						IsSyncing:      sync,
 					})
 
+					if sync {
+						walletSync = true
+					}
+
 				}
 
 				wv = append(wv, WalletVerbose{
@@ -2275,6 +2312,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					DateOfCreation: wallet.DateOfCreation,
 					VerboseAddress: av,
 					Pending:        pending,
+					Syncing:        walletSync,
 				})
 				av = []AddressVerbose{}
 				userTxs = []store.MultyTX{}
@@ -2774,15 +2812,11 @@ func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 			return
 		}
 
+		// var derivationPath string
 		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
 		restClient.log.Debugf("getWalletVerbose [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
 		if err != nil {
-			restClient.log.Errorf("resyncWallet: non int wallet index:[%d] %s \t[addr=%s]", walletIndex, err.Error(), c.Request.RemoteAddr)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrDecodeWalletIndexErr,
-			})
-			return
+			// derivationPath = strings.ToLower(c.Param("walletindex"))
 		}
 
 		currencyID, err := strconv.Atoi(c.Param("currencyid"))

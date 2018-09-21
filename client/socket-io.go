@@ -62,6 +62,7 @@ const (
 	viewTransaction    = 6
 	declineTransaction = 7
 	NotifyDeploy       = 8
+	NotifyResyncEnd    = 9
 
 	msgSend    = "message:send"
 	msgRecieve = "message:recieve"

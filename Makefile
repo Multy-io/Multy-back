@@ -46,6 +46,8 @@ todo:
 
 dist:
 	cd ./cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
+dist1:
+	cd ./cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o multy1 .
 
 test: dist
 	cd cmd && scp  multy multy@test.multy.io:/mnt/hdd/back && cd ..

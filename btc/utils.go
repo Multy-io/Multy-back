@@ -223,8 +223,6 @@ func sendNotify(txMsq *store.TransactionWithUserID, nsqProducer *nsq.Producer) {
 		log.Errorf("sendNotifyToClients: [%+v] %s\n", txMsq, err.Error())
 		return
 	}
-
-	log.Infof("THIS JSON IS: %s", newTxJSON)
 	err = nsqProducer.Publish(store.TopicTransaction, newTxJSON)
 	if err != nil {
 		log.Errorf("nsq publish new transaction: [%+v] %s\n", txMsq, err.Error())
