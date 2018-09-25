@@ -264,6 +264,17 @@ func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommuunications_EventN
 	return nil
 }
 
+func (s *Server) CheckRejectTxs(ctx context.Context, txs *pb.TxsToCheck) (*pb.RejectedTxs, error) {
+	reTxs := &pb.RejectedTxs{}
+	for _, tx := range txs.Hash {
+		rtx, _ := s.EthCli.Rpc.EthGetTransactionByHash(tx)
+		if len(rtx.Hash) == 0 {
+			reTxs.RejectedTxs = append(reTxs.RejectedTxs, tx)
+		}
+	}
+	return reTxs, nil
+}
+
 func (s *Server) AddMultisig(_ *pb.Empty, stream pb.NodeCommuunications_AddMultisigServer) error {
 	for m := range s.EthCli.NewMultisig {
 		log.Infof("AddMultisig new contract address - %v", m.GetContract())

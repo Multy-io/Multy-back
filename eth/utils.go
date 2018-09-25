@@ -61,6 +61,15 @@ func (client *Client) GetAddressBalance(address string) (big.Int, error) {
 	return balance, err
 }
 
+func (client *Client) GetTxByHash(hash string) (bool, error) {
+	tx, err := client.Rpc.EthGetTransactionByHash(hash)
+	if tx == nil {
+		return false, err
+	} else {
+		return true, err
+	}
+}
+
 func (client *Client) GetGasPrice() (big.Int, error) {
 	gas, err := client.Rpc.EthGasPrice()
 	if err != nil {

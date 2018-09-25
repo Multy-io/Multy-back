@@ -46,6 +46,9 @@ service NodeCommuunications {
     rpc EventNewBlock (Empty) returns (stream BlockHeight){
     }
 
+    rpc CheckRejectTxs (TxsToCheck) returns (RejectedTxs){
+    }
+
     rpc EventSendRawTx (RawTx) returns (ReplyInfo){
     }
 
@@ -62,6 +65,13 @@ service NodeCommuunications {
     rpc GetMultisigInfo (AddressToResync) returns (ContractInfo){
     }
 
+}
+
+message RejectedTxs  {
+    repeated string RejectedTxs  = 1;
+}
+message TxsToCheck  {
+    repeated string Hash  = 1;
 }
 
 //  Multisig messages
