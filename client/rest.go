@@ -117,6 +117,7 @@ func SetRestHandlers(
 	v1.Use(restClient.middlewareJWT.MiddlewareFunc())
 	{
 		v1.POST("/wallet", restClient.addWallet())
+		v1.DELETE("/wallet/:currencyid/:networkid/:walletindex", restClient.deleteWallet())
 		v1.DELETE("/wallet/:currencyid/:networkid/:walletindex/*type", restClient.deleteWallet())
 		v1.POST("/address", restClient.addAddress())
 		v1.GET("/transaction/feerate/:currencyid/:networkid", restClient.getFeeRate())
@@ -651,7 +652,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 				}
 
 				if !existMember {
-					restClient.log.Errorf("addWallet: createCustomMultisig: address are not member of multisig %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+					restClient.log.Errorf("addWallet: createCustomMultisig: address are not member of multisig %s\t[addr=%s]", c.Request.RemoteAddr)
 					c.JSON(http.StatusBadRequest, gin.H{
 						"code":    http.StatusBadRequest,
 						"message": "address are not member of multisig",
@@ -2184,13 +2185,14 @@ type ETHAddressVerbose struct {
 }
 
 type MultisigVerbose struct {
-	Owners         []store.AddressExtended `json:"owners,omitempty"`
-	Confirmations  int                     `json:"confirmations,omitempty"`
-	DeployStatus   int                     `json:"deployStatus,omitempty"`
-	FactoryAddress string                  `json:"factoryAddress,omitempty"`
-	TxOfCreation   string                  `json:"txOfCreation,omitempty"`
-	InviteCode     string                  `json:"inviteCode,omitempty"`
-	OwnersCount    int                     `json:"ownersCount,omitempty"`
+	Owners             []store.AddressExtended `json:"owners,omitempty"`
+	Confirmations      int                     `json:"confirmations,omitempty"`
+	DeployStatus       int                     `json:"deployStatus,omitempty"`
+	FactoryAddress     string                  `json:"factoryAddress,omitempty"`
+	TxOfCreation       string                  `json:"txOfCreation,omitempty"`
+	InviteCode         string                  `json:"inviteCode,omitempty"`
+	OwnersCount        int                     `json:"ownersCount,omitempty"`
+	HavePaymentReqests bool                    `json:"havePaymentReqests"`
 }
 
 type StockExchangeRate struct {

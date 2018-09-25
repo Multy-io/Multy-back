@@ -677,7 +677,7 @@ func (mStore *MongoUserStore) ViewTransaction(txid, address string, currencyid, 
 		ms := TransactionETH{}
 		if networkid == currencies.ETHMain {
 			err := mStore.ETHMainMultisigTxsData.Find(sel).One(&ms)
-			if ms.Multisig.Owners != nil {
+			if ms.Multisig != nil {
 				for _, owner := range ms.Multisig.Owners {
 					if owner.Address == address && owner.ConfirmationTime != 0 {
 						return errors.New("transaction already seen")

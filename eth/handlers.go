@@ -300,7 +300,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				log.Errorf("setGRPCHandlers: client.EventNewBlock:stream.Recv: %s", err.Error())
 			}
 
-			query := bson.M{"currencyid": currencies.Bitcoin, "networkid": networtkID}
+			query := bson.M{"currencyid": currencies.Ether, "networkid": networtkID}
 			update := bson.M{
 				"$set": bson.M{
 					"blockheight": h.GetHeight(),
@@ -310,14 +310,97 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			if err == mgo.ErrNotFound {
 				restoreState.Insert(store.LastState{
 					BlockHeight: h.GetHeight(),
-					CurrencyID:  currencies.Bitcoin,
+					CurrencyID:  currencies.Ether,
 					NetworkID:   networtkID,
 				})
 			}
 
-			if err != nil {
-				log.Errorf("initGrpcClient: restoreState.Update: %s", err.Error())
+			// check for rejected transactions
+			var txStore *mgo.Collection
+			var nsCli pb.NodeCommuunicationsClient
+			switch networtkID {
+			case currencies.ETHMain:
+				txStore = txsData
+				nsCli = ethcli.CliMain
+			case currencies.ETHTest:
+				txStore = txsDataTest
+				nsCli = ethcli.CliTest
 			}
+
+			//TODO: to store
+			query = bson.M{
+				"$or": []bson.M{
+					bson.M{"blockheight": 0},
+					bson.M{"$and": []bson.M{
+						bson.M{"blockheight": bson.M{"$lt": h.GetHeight()}},
+						bson.M{"blockheight": bson.M{"$gt": h.GetHeight() - 6}}},
+					},
+				},
+			}
+
+			txs := []store.TransactionETH{}
+			txStore.Find(query).All(&txs)
+
+			hashes := &pb.TxsToCheck{}
+
+			for _, tx := range txs {
+				hashes.Hash = append(hashes.Hash, tx.Hash)
+			}
+
+			txToReject, err := nsCli.CheckRejectTxs(context.Background(), hashes)
+			if err != nil {
+				log.Errorf("setGRPCHandlers: CheckRejectTxs: %s", err.Error())
+			}
+			// log.Warnf(" txToReject -- %v", txToReject)
+
+			//TODO: to store
+			// set rejected status
+			if len(txToReject.GetRejectedTxs()) > 0 {
+
+				for _, hash := range txToReject.GetRejectedTxs() {
+
+					// reject incoming
+					query := bson.M{
+						"$or": []bson.M{
+							bson.M{"txstatus": store.TxStatusAppearedInMempoolIncoming, "hash": hash},
+							bson.M{"txstatus": store.TxStatusAppearedInBlockIncoming, "hash": hash},
+							bson.M{"txstatus": store.TxStatusInBlockConfirmedIncoming, "hash": hash},
+						},
+					}
+					update := bson.M{
+						"$set": bson.M{
+							"txstatus": store.TxStatusTxRejectedIncoming,
+						},
+					}
+					_, err := txStore.UpdateAll(query, update)
+					if err != nil {
+						log.Errorf("setGRPCHandlers: cli.EventNewBlock:txStore.UpdateAll:Incoming: %s", err.Error())
+					}
+
+					// reject outcoming
+					query = bson.M{
+						"$or": []bson.M{
+							bson.M{"txstatus": store.TxStatusAppearedInMempoolOutcoming, "hash": hash},
+							bson.M{"txstatus": store.TxStatusAppearedInBlockOutcoming, "hash": hash},
+							bson.M{"txstatus": store.TxStatusInBlockConfirmedOutcoming, "hash": hash},
+						},
+					}
+					update = bson.M{
+						"$set": bson.M{
+							"txstatus": store.TxStatusTxRejectedIncoming,
+						},
+					}
+					_, err = txStore.UpdateAll(query, update)
+					if err != nil {
+						log.Errorf("setGRPCHandlers: cli.EventNewBlock:txStore.UpdateAll:Outcoming: %s", err.Error())
+					}
+				}
+
+				if err != nil {
+					log.Errorf("initGrpcClient: restoreState.Update: %s", err.Error())
+				}
+			}
+
 		}
 	}()
 

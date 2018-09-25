@@ -343,14 +343,6 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 		return "", errors.New("processMultisig: wrong networkID")
 	}
 
-	//TODO: fix netids
-	if networtkID == 0 {
-		networtkID = currencies.ETHMain
-	}
-	if networtkID == 1 {
-		networtkID = currencies.ETHTest
-	}
-
 	tx.Multisig.Contract = tx.To
 	multyTX := &store.TransactionETH{}
 	if tx.Status == store.TxStatusAppearedInBlockIncoming || tx.Status == store.TxStatusAppearedInMempoolIncoming || tx.Status == store.TxStatusInBlockConfirmedIncoming {
@@ -401,6 +393,8 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 	owners, _ := FethContractOwners(currencies.Ether, networtkID, tx.Multisig.Contract)
 	tx.Multisig.Owners = owners
 	tx.Multisig.MethodInvoked = fethMethod(tx.Multisig.Input)
+
+	log.Warnf("__________ %v ", owners)
 
 	users := findContractOwners(tx.To)
 	contract, err := fethMultisig(users, tx.To)

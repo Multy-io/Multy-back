@@ -25,6 +25,8 @@ const (
 	TxStatusInBlockConfirmedOutcoming = 6
 
 	TxStatusInBlockMethodInvocationFail = 7
+	TxStatusTxRejectedIncoming          = 8
+	TxStatusTxRejectedOutgoing          = 9
 
 	MultisigStatusWaitingForJoin = 1
 	MultisigStatusAllJoined      = 2
