@@ -2456,6 +2456,25 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 				waletNonce = nonce.GetNonce()
 			}
 
+			txs := &[]store.TransactionETH{}
+			restClient.userStore.GetAllMultisigEthTransactions(multisig.ContractAddress, multisig.CurrencyID, multisig.NetworkID, txs)
+			havePaymentReqest := false
+			allTxs := *txs
+			for _, tx := range allTxs {
+				if tx.Multisig.MethodInvoked == store.SubmitTransaction && !tx.Multisig.Confirmed {
+					declinedCount := 0
+					for _, owner := range tx.Multisig.Owners {
+						if owner.ConfirmationStatus == store.MultisigOwnerStatusDeclined {
+							declinedCount++
+						}
+					}
+					if len(tx.Multisig.Owners)-declinedCount > multisig.Confirmations {
+						havePaymentReqest = true
+						break
+					}
+				}
+			}
+
 			av = append(av, ETHAddressVerbose{
 				LastActionTime: multisig.LastActionTime,
 				Address:        multisig.ContractAddress,
@@ -2475,13 +2494,14 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 				VerboseAddress: av,
 				Pending:        pending,
 				Multisig: &MultisigVerbose{
-					Owners:         multisig.Owners,
-					Confirmations:  multisig.Confirmations,
-					DeployStatus:   multisig.DeployStatus,
-					FactoryAddress: multisig.FactoryAddress,
-					TxOfCreation:   multisig.TxOfCreation,
-					InviteCode:     multisig.InviteCode,
-					OwnersCount:    multisig.OwnersCount,
+					Owners:             multisig.Owners,
+					Confirmations:      multisig.Confirmations,
+					DeployStatus:       multisig.DeployStatus,
+					FactoryAddress:     multisig.FactoryAddress,
+					TxOfCreation:       multisig.TxOfCreation,
+					InviteCode:         multisig.InviteCode,
+					OwnersCount:        multisig.OwnersCount,
+					HavePaymentReqests: havePaymentReqest,
 				},
 			})
 
@@ -2735,7 +2755,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 					} else {
 						userTxs[i].Confirmations = int(blockHeight-userTxs[i].BlockHeight) + 1
 					}
-					if userTxs[i].Multisig.MethodInvoked == "0xc6427474" {
+					if userTxs[i].Multisig.MethodInvoked == "0xc6427474" && userTxs[i].Multisig.Contract == derivationPath {
 						fethedHistory = append(fethedHistory, userTxs[i])
 					}
 					if userTxs[i].Multisig.MethodInvoked == "0x" {
@@ -2753,6 +2773,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 
 			}
 
+			//history for Imported Address
 			if assetType == store.AssetTypeImportedAddress && derivationPath != "" {
 				err = restClient.userStore.GetAllAddressTransactions(derivationPath, currencyId, networkid, &userTxs)
 				if err != nil {

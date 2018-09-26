@@ -59,10 +59,17 @@ const (
 	NotifyConfirmTx    = 11
 	NotifyRevokeTx     = 12
 	NotifyResyncEnd    = 13
+	NotifyTxSubmitted  = 14
 
 	AssetTypeMultyAddress    = 0
 	AssetTypeMultisig        = 1
 	AssetTypeImportedAddress = 2
+
+	MultiSigFactory    = "0xf8f73808"
+	SubmitTransaction  = "0xc6427474"
+	ConfirmTransaction = "0xc01a8c84"
+	RevokeConfirmation = "0x20ea8d86"
+	ExecuteTransaction = "0xee22610b"
 )
 
 // User represents a single app user

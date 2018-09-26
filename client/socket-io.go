@@ -222,7 +222,6 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 				pool.log.Errorf("server.On:msgSend:joinMultisig:mapstructure.Decode %v", err.Error())
 				return makeErr(msgMultisig.UserID, "can't join multisig: bad request: "+err.Error(), store.JoinMultisig)
 			}
-
 			// if invite code exists
 			if !ratesDB.CheckInviteCode(msgMultisig.InviteCode) {
 				// check current multisig for able to joining
@@ -283,7 +282,6 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 					users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
 					err = ratesDB.JoinMultisig(msgMultisig.UserID, multisigToJoin)
 					if err != nil {
-						//db err
 						pool.log.Errorf("server.On:MultisigMsgratesDB.MultisigMsg: %v", err.Error())
 						return makeErr(msgMultisig.UserID, "can't join multisig: "+err.Error(), store.JoinMultisig)
 					}
@@ -306,6 +304,16 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 							server.BroadcastToAll(msgRecieve+":"+user.UserID, msg)
 						}
 					}
+
+					ratesDB.FindMultisig(msgMultisig.UserID, multisigToJoin.InviteCode)
+					// if err != nil {
+					// 	for {
+					// 		_, err := ratesDB.FindMultisig(msgMultisig.UserID, multisigToJoin.InviteCode)
+					// 		if err == nil {
+					// 			break
+					// 		}
+					// 	}
+					// }
 
 					return store.WsMessage{
 						Type:    store.JoinMultisig,
@@ -561,17 +569,28 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 				err = ratesDB.DeclineTransaction(msgMultisig.TxID, msgMultisig.Address, msgMultisig.CurrencyID, msgMultisig.NetworkID)
 				if err != nil {
 					pool.log.Errorf("server.On:msgSend:declineTransaction:DeclineTransaction %v", err.Error())
+					return makeErr("", "Tx can't be declined: ", store.DeclineTransaction)
 				}
 				users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
-
+				ms, err := ratesDB.FindMultisig(msgMultisig.UserID, msgMultisig.InviteCode)
+				if err != nil {
+					pool.log.Errorf("server.On:msgSend:declineTransaction:DeclineTransaction %v", err.Error())
+					return makeErr("", "You not owe those multisig: ", store.DeclineTransaction)
+				}
 				for _, user := range users {
 					_, online := pool.users[user.UserID]
 					if online {
 						msg := store.WsMessage{
-							Type:    store.DeclineTransaction,
-							To:      user.UserID,
-							Date:    time.Now().Unix(),
-							Payload: msgMultisig.InviteCode,
+							Type: store.DeclineTransaction,
+							To:   user.UserID,
+							Date: time.Now().Unix(),
+							Payload: struct {
+								ContractAddress string
+								Hash            string
+							}{
+								ms.ContractAddress,
+								msgMultisig.TxID,
+							},
 						}
 						server.BroadcastToAll(msgRecieve+":"+user.UserID, msg)
 					}
@@ -606,6 +625,31 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 				}
 				return msg
 			}
+			ms, err := ratesDB.FindMultisig(msgMultisig.UserID, msgMultisig.InviteCode)
+			if err != nil {
+				pool.log.Errorf("server.On:msgSend:declineTransaction:DeclineTransaction %v", err.Error())
+				return makeErr("", "You not owe those multisig: ", store.DeclineTransaction)
+			}
+			users := ratesDB.FindMultisigUsers(msgMultisig.InviteCode)
+			for _, user := range users {
+				_, online := pool.users[user.UserID]
+				if online {
+					msg := store.WsMessage{
+						Type: store.ViewTransaction,
+						To:   user.UserID,
+						Date: time.Now().Unix(),
+						Payload: struct {
+							ContractAddress string
+							Hash            string
+						}{
+							ms.ContractAddress,
+							msgMultisig.TxID,
+						},
+					}
+					server.BroadcastToAll(msgRecieve+":"+user.UserID, msg)
+				}
+			}
+
 			msg := store.WsMessage{
 				Type:    store.ViewTransaction,
 				To:      msgMultisig.UserID,

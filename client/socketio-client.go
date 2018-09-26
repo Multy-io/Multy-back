@@ -176,7 +176,7 @@ func (sIOUser *SocketIOUser) runUpdateExchange() {
 			gdaxRate := sIOUser.chart.getExchangeGdax()
 			poloniexRate := sIOUser.chart.getExchangePoloniex()
 			for _, c := range sIOUser.conns {
-				sIOUser.log.Debugf("sending updated exchange: conn id=%s", c.Id())
+				// sIOUser.log.Debugf("sending updated exchange: conn id=%s", c.Id())
 				c.Emit(topicExchangeGdax, gdaxRate)
 				c.Emit(topicExchangePoloniex, poloniexRate)
 			}

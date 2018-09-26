@@ -254,7 +254,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			}
 			// process multisig txs
 			if gTx.Multisig {
-				methodInvoked, err := processMultisig(&tx, networtkID, nsqProducer)
+				methodInvoked, err := processMultisig(&tx, networtkID, nsqProducer, ethcli)
 
 				// ws notify about all kinds of ms transactions
 
@@ -272,9 +272,6 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 						Payload: gTx,
 					}
 					ethcli.WsServer.BroadcastToAll(store.MsgRecieve+":"+user.UserID, msg)
-					if user.UserID == "00798aee2c353d1fa3264095e2f5f48dd2b9a8a295a3b3276b4cadcf242d9bfa55" {
-						log.Warnf("msg %v\n", msg)
-					}
 				}
 
 				if err != nil {

@@ -328,7 +328,7 @@ func saveTransaction(tx store.TransactionETH, networtkID int, resync bool) error
 	return nil
 }
 
-func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.Producer) (string, error) {
+func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.Producer, ethcli *ETHConn) (string, error) {
 
 	multisigStore := &mgo.Collection{}
 	txStore := &mgo.Collection{}
@@ -351,18 +351,17 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 		sel := bson.M{"hash": tx.Hash}
 		err := multisigStore.Find(sel).One(nil)
 		if err == mgo.ErrNotFound {
-			multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore, nsqProducer)
+			multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore, nsqProducer, ethcli)
 			err := multisigStore.Insert(multyTX)
 			return "", err
 		}
 
-		multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore, nsqProducer)
+		multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore, nsqProducer, ethcli)
 		if multyTX.Multisig.MethodInvoked == submitTransaction && multyTX.Status == store.TxStatusAppearedInBlockIncoming {
 			multyTX.Status = store.TxStatusInBlockConfirmedOutcoming
 		}
 
 		if err != nil && err != mgo.ErrNotFound {
-			// database error
 			return "", err
 		}
 
@@ -388,13 +387,11 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 	return "", nil
 }
 
-func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore, txStore *mgo.Collection, nsqProducer *nsq.Producer) *store.TransactionETH { // method
+func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore, txStore *mgo.Collection, nsqProducer *nsq.Producer, ethcli *ETHConn) *store.TransactionETH { // method
 
 	owners, _ := FethContractOwners(currencies.Ether, networtkID, tx.Multisig.Contract)
 	tx.Multisig.Owners = owners
 	tx.Multisig.MethodInvoked = fethMethod(tx.Multisig.Input)
-
-	log.Warnf("__________ %v ", owners)
 
 	users := findContractOwners(tx.To)
 	contract, err := fethMultisig(users, tx.To)
@@ -488,11 +485,13 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 							txToUser.Hash = tx.Hash
 							txToUser.Status = store.TxStatusInBlockConfirmedIncoming
 							txToUser.IsInternal = true
+							tx.Multisig = nil
 							break
 						}
 					}
 
 					if isOurUser {
+						txToUser.Multisig = nil
 						_ = multisigStore.Insert(txToUser)
 					}
 
@@ -501,6 +500,18 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 				if err != nil && err != mgo.ErrNotFound {
 					// database error
 					log.Errorf("ParseMultisigInput:confirmTransaction:multisigStore.Find %v", err.Error())
+				}
+
+				// notify on submit transaction
+
+				for _, user := range users {
+					msg := store.WsMessage{
+						Type:    store.NotifyTxSubmitted,
+						To:      user.UserID,
+						Date:    time.Now().Unix(),
+						Payload: "ok",
+					}
+					ethcli.WsServer.BroadcastToAll(store.MsgRecieve+":"+user.UserID, msg)
 				}
 
 			}
@@ -666,6 +677,17 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 			if err != nil && err != mgo.ErrNotFound {
 				// database error
 				log.Errorf("ParseMultisigInput:confirmTransaction:multisigStore.Find %v", err.Error())
+			}
+
+			// notify on submit transaction
+			for _, user := range users {
+				msg := store.WsMessage{
+					Type:    store.NotifyTxSubmitted,
+					To:      user.UserID,
+					Date:    time.Now().Unix(),
+					Payload: "ok",
+				}
+				ethcli.WsServer.BroadcastToAll(store.MsgRecieve+":"+user.UserID, msg)
 			}
 		}
 
