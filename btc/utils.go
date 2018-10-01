@@ -74,11 +74,14 @@ func (c *Client) setTransactionInfo(multyTx *store.MultyTX, txVerbose *btcjson.T
 			log.Errorf("setTransactionInfo:RpcClient.GetRawTransactionVerbose: %s", err.Error())
 		}
 
-		for _, address := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses {
-			amount := int64(previousTxVerbose.Vout[input.Vout].Value * SatoshiToBitcoin)
-			inputs = append(inputs, newAddresAmount(address, amount))
+		if len(previousTxVerbose.Vout) >= int(input.Vout) {
+			for _, address := range previousTxVerbose.Vout[input.Vout].ScriptPubKey.Addresses {
+				amount := int64(previousTxVerbose.Vout[input.Vout].Value * SatoshiToBitcoin)
+				inputs = append(inputs, newAddresAmount(address, amount))
+			}
+			inputSum += previousTxVerbose.Vout[input.Vout].Value
 		}
-		inputSum += previousTxVerbose.Vout[input.Vout].Value
+
 	}
 	fee := int64((inputSum - outputSum) * SatoshiToBitcoin)
 
@@ -130,15 +133,16 @@ func (c *Client) ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcj
 	}
 }
 
-func (c *Client) ResyncAddresses(reTxs []store.ResyncTx, address *pb.AddressToResync) {
+func (c *Client) ResyncAddresses(reTxs []store.ResyncTx, address *pb.AddressToResync, delFromResyncQ string) {
 
-	resync := pb.Resync{}
+	resync := pb.Resync{
+		DeleteFromQueue: delFromResyncQ,
+	}
 	for _, reTx := range reTxs {
 		rawTx, err := c.rawTxByTxid(reTx.Hash)
 		if err != nil {
 			log.Errorf("ResyncAddresses:chainhash.NewHashFromStr: %v", err.Error())
 		}
-
 		SpOut, SpOutDelete := c.ResyncSpendableOutputs(rawTx, int64(reTx.BlockHeight), address.GetAddress(), address.GetUserID())
 		resync.SpOutDelete = append(resync.SpOutDelete, SpOutDelete...)
 		resync.SpOuts = append(resync.SpOuts, SpOut...)

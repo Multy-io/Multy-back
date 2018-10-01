@@ -100,7 +100,8 @@ message AddSpOut {
 message Resync {
 	repeated	BTCTransaction Txs = 1;
 	repeated	AddSpOut SpOuts = 2;
-	repeated ReqDeleteSpOut SpOutDelete = 3;
+	repeated    ReqDeleteSpOut SpOutDelete = 3;
+    string DeleteFromQueue = 4;
 }
 
 message BlockHeight{
