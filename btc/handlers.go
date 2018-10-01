@@ -382,6 +382,10 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				log.Errorf("initGrpcClient: cli.NewTx:stream.Recv: %s", err.Error())
 			}
 
+			if rTxs.GetDeleteFromQueue() != "" {
+				resync.Delete(rTxs.GetDeleteFromQueue())
+			}
+
 			// tx history
 			for _, gTx := range rTxs.Txs {
 				tx := generatedTxDataToStore(gTx)

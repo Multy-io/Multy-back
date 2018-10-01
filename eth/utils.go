@@ -485,13 +485,12 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 							txToUser.Hash = tx.Hash
 							txToUser.Status = store.TxStatusInBlockConfirmedIncoming
 							txToUser.IsInternal = true
-							tx.Multisig = nil
+							txToUser.Multisig.Contract = multisig.ContractAddress
 							break
 						}
 					}
 
 					if isOurUser {
-						txToUser.Multisig = nil
 						_ = multisigStore.Insert(txToUser)
 					}
 
@@ -653,11 +652,11 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 				isOurUser = false
 				sel = bson.M{"multisig.contractAddress": outputAddress}
 				usersData.Find(sel).One(&user)
-				// internal tansaction to multisig
+				// internal transaction to multisig
 				for _, multisig := range user.Multisigs {
 					if multisig.ContractAddress == outputAddress {
 						txToUser.From = contract.ContractAddress
-						txToUser.To = outputAddress
+						txToUser.To = multisig.ContractAddress
 						txToUser.PoolTime = time.Now().Unix()
 						txToUser.Multisig.MethodInvoked = executeTransaction
 						isOurUser = true
@@ -665,13 +664,14 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 						txToUser.Hash = tx.Hash
 						txToUser.Status = store.TxStatusInBlockConfirmedIncoming
 						txToUser.IsInternal = true
+						txToUser.Multisig.Contract = multisig.ContractAddress
+						txToUser.Multisig.MethodInvoked = store.SubmitTransaction
 						break
 					}
 				}
 
 				if isOurUser {
-					log.Warnf("-------- traatpp \n\n")
-					_ = multisigStore.Insert(tx)
+					_ = multisigStore.Insert(txToUser)
 				}
 			}
 			if err != nil && err != mgo.ErrNotFound {

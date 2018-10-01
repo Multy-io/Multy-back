@@ -420,6 +420,17 @@ type ServiceInfo struct {
 	Lasttag   string
 }
 
+type MobileVersions struct {
+	Android struct {
+		Hard int `json:"hard"`
+		Soft int `json:"soft"`
+	} `json:"android"`
+	Ios struct {
+		Hard int `json:"hard"`
+		Soft int `json:"soft"`
+	} `json:"ios"`
+}
+
 type Receiver struct {
 	ID         string `json:"userid"`
 	UserCode   string `json:"usercode"`
@@ -511,6 +522,19 @@ type InviteCodeInfo struct {
 	CurrencyID int  `json:"currencyid"`
 	NetworkID  int  `json:"networkid"`
 	Exists     bool `json:"exists"`
+}
+
+type BtcComResp struct {
+	Data struct {
+		TotalCount int `json:"total_count"`
+		Page       int `json:"page"`
+		List       []struct {
+			BlockHeight int    `json:"block_height"`
+			Hash        string `json:"hash"`
+		} `json:"list"`
+	}
+	ErrNo  int         `json:"err_no"`
+	ErrMsg interface{} `json:"err_msg"`
 }
 
 func (s *MultisigMsg) FillStruct(m map[string]interface{}) error {

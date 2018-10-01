@@ -77,6 +77,7 @@ type RestClient struct {
 	log slf.StructuredLogger
 
 	donationAddresses []store.DonationInfo
+	mobileVersions    store.MobileVersions
 
 	BTC          *btc.BTCConn
 	ETH          *eth.ETHConn
@@ -96,6 +97,7 @@ func SetRestHandlers(
 	eth *eth.ETHConn,
 	mv store.ServerConfig,
 	secretkey string,
+	mobileVer store.MobileVersions,
 ) (*RestClient, error) {
 	restClient := &RestClient{
 		userStore:         userDB,
@@ -105,6 +107,7 @@ func SetRestHandlers(
 		ETH:               eth,
 		MultyVerison:      mv,
 		Secretkey:         secretkey,
+		mobileVersions:    mobileVer,
 	}
 	initMiddlewareJWT(restClient)
 
@@ -112,6 +115,7 @@ func SetRestHandlers(
 	r.GET("/server/config", restClient.getServerConfig())
 
 	r.GET("/donations", restClient.donations())
+	// r.GET("/", restClient.resynctxs())
 
 	v1 := r.Group("/api/v1")
 	v1.Use(restClient.middlewareJWT.MiddlewareFunc())
@@ -868,6 +872,16 @@ func (restClient *RestClient) donations() gin.HandlerFunc {
 	}
 }
 
+// func (restClient *RestClient) resynctxs() gin.HandlerFunc {
+// 	return func(c *gin.Context) {
+
+// 		c.JSON(http.StatusOK, gin.H{
+// 			"code":    http.StatusOK,
+// 			"message": restClient.BTC.Resync,
+// 		})
+// 	}
+// }
+
 func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		resp := map[string]interface{}{
@@ -877,21 +891,31 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 			},
 			"servertime": time.Now().UTC().Unix(),
 			"api":        "1.2",
-			"android": map[string]int{
-				"soft": 7,
-				"hard": 7,
-			},
+
+			// "android": map[string]int{
+			// 	"soft": 7,
+			// 	"hard": 7,
+			// },
 			"version": restClient.MultyVerison,
-			"ios": map[string]int{
-				"soft": 49,
-				"hard": 49,
-			},
+			// "ios": map[string]int{
+			// 	"soft": 49,
+			// 	"hard": 49,
+			// },
 			"donate": restClient.donationAddresses,
 			"multisigfactory": map[string]string{
 				"ethtestnet": "0x04f68589f53cfdf408025cd7cea8a40dbf488e49",
 				"ethmainnet": "0xc2cbdd9b58502cff1db5f9cce48ac17a9a550185",
 			},
 		}
+		resp["android"] = map[string]int{
+			"soft": restClient.mobileVersions.Android.Soft,
+			"hard": restClient.mobileVersions.Android.Hard,
+		}
+		resp["ios"] = map[string]int{
+			"soft": restClient.mobileVersions.Ios.Soft,
+			"hard": restClient.mobileVersions.Ios.Hard,
+		}
+
 		c.JSON(http.StatusOK, resp)
 	}
 }
@@ -2755,12 +2779,19 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 					} else {
 						userTxs[i].Confirmations = int(blockHeight-userTxs[i].BlockHeight) + 1
 					}
-					if userTxs[i].Multisig.MethodInvoked == "0xc6427474" && userTxs[i].Multisig.Contract == derivationPath {
-						fethedHistory = append(fethedHistory, userTxs[i])
+					if userTxs[i].Multisig.MethodInvoked == "0xc6427474" && userTxs[i].Multisig.Contract == derivationPath && userTxs[i].IsInternal {
+						txhistory := userTxs[i]
+						txhistory.Multisig = nil
+						fethedHistory = append(fethedHistory, txhistory)
+					}
+					if userTxs[i].Multisig.MethodInvoked == "0xc6427474" && userTxs[i].Multisig.Contract == derivationPath && !userTxs[i].IsInternal {
+						txhistory := userTxs[i]
+						fethedHistory = append(fethedHistory, txhistory)
 					}
 					if userTxs[i].Multisig.MethodInvoked == "0x" {
-						userTxs[i].Multisig = nil
-						fethedHistory = append(fethedHistory, userTxs[i])
+						txhistory := userTxs[i]
+						txhistory.Multisig = nil
+						fethedHistory = append(fethedHistory, txhistory)
 					}
 				}
 

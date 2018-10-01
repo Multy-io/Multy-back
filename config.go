@@ -25,6 +25,7 @@ type Configuration struct {
 	// ExchangerConfiguration core.ManagerConfiguration
 	ServicesInfo []store.ServiceInfo
 	Secretkey    string
+	store.MobileVersions
 
 	SupportedNodes []store.CoinType
 }
