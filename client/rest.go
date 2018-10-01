@@ -2738,9 +2738,9 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				}
 
 				for i := 0; i < len(userTxs); i++ {
-					if userTxs[i].BlockHeight == -1 {
+					if userTxs[i].BlockTime == 0 {
 						userTxs[i].Confirmations = 0
-					} else {
+					} else if userTxs[i].BlockTime != 0 {
 						userTxs[i].Confirmations = int(blockHeight-userTxs[i].BlockHeight) + 1
 					}
 					userTxs[i].Multisig = nil
@@ -2774,9 +2774,9 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				}
 				fethedHistory := []store.TransactionETH{}
 				for i := 0; i < len(userTxs); i++ {
-					if userTxs[i].BlockHeight == -1 {
+					if userTxs[i].BlockTime == 0 {
 						userTxs[i].Confirmations = 0
-					} else {
+					} else if userTxs[i].BlockTime != 0 {
 						userTxs[i].Confirmations = int(blockHeight-userTxs[i].BlockHeight) + 1
 					}
 					if userTxs[i].Multisig.MethodInvoked == "0xc6427474" && userTxs[i].Multisig.Contract == derivationPath && userTxs[i].IsInternal {
