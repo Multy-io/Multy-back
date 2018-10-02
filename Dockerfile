@@ -1,24 +1,29 @@
 FROM golang:1.9.4
 
-RUN go get github.com/Multy-io/Multy-back && \
-    rm -rf $GOPATH/src/github.com/Multy-io/Multy-back && \
-    cd $GOPATH/src/github.com/Multy-io && \ 
+RUN mkdir $GOPATH/src/github.com && \
+    mkdir $GOPATH/src/github.com/Multy-io 
+
+RUN cd $GOPATH/src/github.com/Multy-io && \ 
     git clone https://github.com/Multy-io/Multy-back.git && \ 
     cd Multy-back && \ 
-    git checkout release_1.1 && \  
-    go get firebase.google.com/go   && \ 
-    go get firebase.google.com/go/messaging  && \ 
-    go get google.golang.org/api/option  && \ 
-    go get github.com/satori/go.uuid
+    git checkout import-eth-multisig 
+
+RUN go get -u github.com/golang/protobuf/proto && \
+    cd $GOPATH/src/github.com/golang/protobuf && \
+    make all
+
+RUN apt-get update && \
+    apt-get install -y protobuf-compiler
 
 RUN cd $GOPATH/src/github.com/Multy-io && \
     git clone https://github.com/Multy-io/Multy-BTC-node-service.git && \
-    cd $GOPATH/src/github.com/Multy-io/Multy-BTC-node-service 
-# go get ./...
+    cd $GOPATH/src/github.com/Multy-io/Multy-BTC-node-service && \
+    git checkout release_1.2
 
 
 RUN cd $GOPATH/src/github.com/Multy-io/Multy-BTC-node-service && \
-    make all-with-deps && \
+    go get ./... && \
+    make build && \
     rm -r $GOPATH/src/github.com/Multy-io/Multy-back 
 
 
