@@ -1,21 +1,37 @@
 FROM golang:1.9.4
 
-RUN go get golang.org/x/net/context
-RUN go get google.golang.org/grpc && go get firebase.google.com/go && go get google.golang.org/api/option
+# RUN go get golang.org/x/net/context
+# RUN go get google.golang.org/grpc && go get firebase.google.com/go && go get google.golang.org/api/option
 
-RUN go get github.com/Multy-io/Multy-back
-RUN go get github.com/satori/go.uuid
+# RUN go get github.com/Multy-io/Multy-back
+# RUN go get github.com/satori/go.uuid
+RUN mkdir $GOPATH/src/github.com && \
+    mkdir $GOPATH/src/github.com/Multy-io 
+# mkdir $GOPATH/src/github.com/Multy-io/Multy-back
+
+RUN cd $GOPATH/src/github.com/Multy-io && \
+    git clone https://github.com/Multy-io/Multy-BTC-node-service.git && \
+    cd $GOPATH/src/github.com/Multy-io/Multy-BTC-node-service && \
+    git checkout release_1.2
+
+RUN cd $GOPATH/src/github.com/Multy-io && \
+    git clone https://github.com/Multy-io/Multy-ETH-node-service.git && \
+    cd $GOPATH/src/github.com/Multy-io/Multy-ETH-node-service && \
+    git checkout import-eth 
 
 RUN cd $GOPATH/src/github.com/Multy-io && \ 
-    rm -rf Multy-back && \ 
     git clone https://github.com/Multy-io/Multy-back.git && \ 
     cd Multy-back && \
-    git checkout release_1.1 && \
-    git pull origin release_1.1
+    git checkout import-eth-multisig 
 
 
 RUN cd $GOPATH/src/github.com/Multy-io/Multy-back && \ 
-    make all-with-deps 
+    go get ./... && \  
+    make build && \ 
+    rm -r $GOPATH/src/github.com/Multy-io/Multy-ETH-node-service && \ 
+    rm -r $GOPATH/src/github.com/Multy-io//Multy-BTC-node-service
+
+
 # make all-docker 
 
 WORKDIR /go/src/github.com/Multy-io/Multy-back/cmd

@@ -655,6 +655,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 				// internal transaction to multisig
 				for _, multisig := range user.Multisigs {
 					if multisig.ContractAddress == outputAddress {
+						tx.Status = store.TxStatusAppearedInBlockIncoming
 						txToUser.From = contract.ContractAddress
 						txToUser.To = multisig.ContractAddress
 						txToUser.PoolTime = time.Now().Unix()

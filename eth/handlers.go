@@ -257,7 +257,6 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				methodInvoked, err := processMultisig(&tx, networtkID, nsqProducer, ethcli)
 
 				// ws notify about all kinds of ms transactions
-
 				sel := bson.M{"multisig.contractAddress": tx.Multisig.Contract}
 				users := []store.User{}
 				err = usersData.Find(sel).All(&users)
