@@ -85,13 +85,14 @@ func Init(conf *Configuration) (*NodeClient, error) {
 
 	s := grpc.NewServer()
 	srv := streamer.Server{
-		UsersData: cli.Clients,
-		EthCli:    cli.Instance,
-		Info:      &conf.ServiceInfo,
-		Multisig:  cli.CliMultisig,
-		NetworkID: conf.NetworkID,
-		ResyncUrl: resyncUrl,
-		ABIcli:    ABIconn,
+		UsersData:       cli.Clients,
+		EthCli:          cli.Instance,
+		Info:            &conf.ServiceInfo,
+		Multisig:        cli.CliMultisig,
+		NetworkID:       conf.NetworkID,
+		ResyncUrl:       resyncUrl,
+		EtherscanAPIKey: conf.EtherscanAPIKey,
+		ABIcli:          ABIconn,
 	}
 
 	pb.RegisterNodeCommuunicationsServer(s, &srv)

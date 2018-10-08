@@ -31,6 +31,8 @@ func (c *Client) FactoryContract(hash string) {
 		fi.Contract = "0x" + m["returnValue"].(string)[24:]
 	}
 
+	log.Warnf("rtn v %v ", m["returnValue"].(string))
+
 	fi.TxOfCreation = hash
 	fi.FactoryAddress = c.Multisig.FactoryAddress
 	deployStatus := int64(store.MultisigStatusRejected)
@@ -38,16 +40,6 @@ func (c *Client) FactoryContract(hash string) {
 		deployStatus = store.MultisigStatusDeployed
 	}
 	fi.DeployStatus = deployStatus
-
-	// Add to local contract store
-
-	// if c.Multisig.UsersContracts == nil {
-	// 	c.Multisig.UsersContracts = map[string]string{
-	// 		fi.Contract: fi.FactoryAddress,
-	// 	}
-	// } else {
-	// 	c.Multisig.UsersContracts[fi.Contract] = fi.FactoryAddress
-	// }
 
 	c.Multisig.UsersContracts.Store(fi.Contract, fi.FactoryAddress)
 

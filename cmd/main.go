@@ -6,7 +6,14 @@ See LICENSE for details
 package main
 
 import (
+	"flag"
 	"fmt"
+	"os"
+	"runtime"
+	"runtime/pprof"
+
+	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/Multy-io/Multy-ETH-node-service"
 	"github.com/Multy-io/Multy-back/store"
@@ -16,11 +23,12 @@ import (
 )
 
 var (
-	log = slf.WithContext("main")
-
+	log       = slf.WithContext("main")
 	branch    string
 	commit    string
 	buildtime string
+
+	memprofile = flag.String("memprofile", "", "write memory profile to `file`")
 )
 
 var globalOpt = node.Configuration{
@@ -41,11 +49,26 @@ func main() {
 		Buildtime: buildtime,
 	}
 
+	flag.Parse()
+	if *memprofile != "" {
+		f, err := os.Create(*memprofile)
+		if err != nil {
+			log.Fatalf("could not create memory profile: %v", err.Error())
+		}
+		runtime.GC() // get up-to-date statistics
+		if err := pprof.WriteHeapProfile(f); err != nil {
+			log.Fatalf("could not write memory profile: %v", err.Error())
+		}
+		f.Close()
+	}
+
 	node, err := node.Init(&globalOpt)
 	if err != nil {
 		log.Fatalf("Server initialization: %s\n", err.Error())
 	}
 	fmt.Println(node)
+
+	http.ListenAndServe(globalOpt.PprofPort, nil)
 
 	block := make(chan bool)
 	<-block

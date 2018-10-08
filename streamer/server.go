@@ -26,13 +26,14 @@ var log = slf.WithContext("streamer")
 
 // Server implements streamer interface and is a gRPC server
 type Server struct {
-	UsersData *sync.Map
-	Multisig  *eth.Multisig
-	EthCli    *eth.Client
-	Info      *store.ServiceInfo
-	NetworkID int
-	ResyncUrl string
-	ABIcli    *ethclient.Client
+	UsersData       *sync.Map
+	Multisig        *eth.Multisig
+	EthCli          *eth.Client
+	Info            *store.ServiceInfo
+	NetworkID       int
+	ResyncUrl       string
+	EtherscanAPIKey string
+	ABIcli          *ethclient.Client
 }
 
 func (s *Server) ServiceInfo(c context.Context, in *pb.Empty) (*pb.ServiceVersion, error) {
@@ -258,7 +259,6 @@ func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommuunications_EventN
 					break
 				}
 			}
-
 		}
 	}
 	return nil
@@ -280,7 +280,6 @@ func (s *Server) AddMultisig(_ *pb.Empty, stream pb.NodeCommuunications_AddMulti
 		log.Infof("AddMultisig new contract address - %v", m.GetContract())
 		err := stream.Send(&m)
 		if err != nil {
-			//HACK:
 			log.Errorf("New block %s", err.Error())
 			i := 0
 			for {
@@ -387,7 +386,7 @@ func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResy
 
 	if !strings.Contains(reTx.Message, "OK") {
 		return &pb.ReplyInfo{
-			Message: fmt.Sprintf("EventResyncAddress: strings.Contains OK  bad resp form 3-party"),
+			Message: fmt.Sprintf("EventResyncAddress: bad resp form 3-party"),
 		}, nil
 	}
 

@@ -13,6 +13,9 @@ all-with-deps: setup deps build
 run: build
 	cd cmd && ./$(NAME) && ../
 
+memprofiler: build
+	cd cmd && ./$(NAME) -memprofile mem.prof && ../
+
 setup:
 	go get -u github.com/kardianos/govendor
 
