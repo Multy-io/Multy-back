@@ -279,6 +279,7 @@ func (s *Server) AddMultisig(_ *pb.Empty, stream pb.NodeCommuunications_AddMulti
 	for m := range s.EthCli.NewMultisig {
 		log.Infof("AddMultisig new contract address - %v", m.GetContract())
 		err := stream.Send(&m)
+		log.Warnf("Multisig sent on address contract %v", m.Contract)
 		if err != nil {
 			log.Errorf("New block %s", err.Error())
 			i := 0
