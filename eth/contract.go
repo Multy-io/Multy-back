@@ -12,9 +12,19 @@ import (
 
 func (c *Client) FactoryContract(hash string) {
 	log.Debugf("FactoryContract")
-	m, err := c.Rpc.TraceTransaction(hash)
+	m, err := c.Rpc.TransactionReceipt(hash)
 	if err != nil {
-		fmt.Printf("FactoryContract:c.Rpc.TraceTransaction %v", err.Error())
+		fmt.Printf("FactoryContract:c.Rpc.TransactionReceipt %v", err.Error())
+	}
+
+	receipt := m["logs"].([]interface{})
+	multisigAddress := ""
+	deployed := false
+	if len(receipt) > 0 && len(receipt[0].(map[string]interface{})["data"].(string)) > 90 {
+		multisigAddress = "0x" + receipt[0].(map[string]interface{})["data"].(string)[90:]
+		if m["status"] == "0x1" {
+			deployed = true
+		}
 	}
 
 	rawTx, err := c.Rpc.EthGetTransactionByHash(hash)
@@ -27,19 +37,21 @@ func (c *Client) FactoryContract(hash string) {
 		log.Errorf("FactoryContract:parseInput: %s", err.Error())
 	}
 
-	if len(m["returnValue"].(string)) > 25 {
-		fi.Contract = "0x" + m["returnValue"].(string)[24:]
-	}
+	// if len(m["returnValue"].(string)) > 25 {
+	// 	fi.Contract = "0x" + m["returnValue"].(string)[24:]
+	// }
 
-	log.Warnf("rtn v %v ", m["returnValue"].(string))
+	fi.Contract = multisigAddress
 
 	fi.TxOfCreation = hash
 	fi.FactoryAddress = c.Multisig.FactoryAddress
 	deployStatus := int64(store.MultisigStatusRejected)
-	if !m["failed"].(bool) {
+	if deployed {
 		deployStatus = store.MultisigStatusDeployed
 	}
 	fi.DeployStatus = deployStatus
+
+	log.Warnf("DeployStatus  %v ", deployed)
 
 	c.Multisig.UsersContracts.Store(fi.Contract, fi.FactoryAddress)
 
@@ -77,23 +89,26 @@ func parseFactoryInput(in string) (*pb.Multisig, error) {
 }
 
 func (c *Client) GetInvocationStatus(hash string) (bool, string, error) {
-	m, err := c.Rpc.TraceTransaction(hash)
+	m, err := c.Rpc.TransactionReceipt(hash)
 	if err != nil {
-		log.Errorf("FactoryContract:c.Rpc.TraceTransaction %v", err.Error())
+		log.Errorf("FactoryContract:c.Rpc.TransactionReceipt %v", err.Error())
 		return false, "", err
 	}
 
-	isFailed, ok := m["failed"].(bool)
-	if !ok {
-		return false, "", errors.New("Trace failed unavalible ")
-	}
-
-	returnValue, ok := m["returnValue"].(string)
+	receipt, ok := m["logs"].([]interface{})
 	if !ok {
 		return false, "", errors.New("Trace returnValue unavalible ")
 	}
+	returnValue := ""
+	deployed := false
+	if len(receipt) > 0 {
+		returnValue = receipt[0].(map[string]interface{})["data"].(string)
+		if m["status"] == "0x1" {
+			deployed = true
+		}
+	}
 
-	return !isFailed, returnValue, nil
+	return deployed, returnValue, nil
 	// if !isFailed {
 
 	// 	rawTx, err := c.Rpc.EthGetTransactionByHash(hash)
