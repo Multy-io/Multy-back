@@ -15,18 +15,17 @@ func (c *Client) BlockTransaction(hash string) {
 		return
 	}
 
-	go func() {
-		log.Debugf("new block number = %v", block.Number)
+	go func(blockNum int64) {
+		log.Debugf("new block number = %v", blockNum)
 		c.Block <- pb.BlockHeight{
-			Height: int64(block.Number),
+			Height: blockNum,
 		}
-	}()
+	}(int64(block.Number))
 
 	txs := []ethrpc.Transaction{}
 	if block.Transactions != nil {
 		txs = block.Transactions
 	} else {
-
 		return
 	}
 
@@ -35,15 +34,17 @@ func (c *Client) BlockTransaction(hash string) {
 	for _, rawTx := range txs {
 		c.parseETHMultisig(rawTx, int64(*rawTx.BlockNumber), false)
 		c.parseETHTransaction(rawTx, int64(*rawTx.BlockNumber), false)
-		go func() {
+		go func(hash string) {
 			c.DeleteMempool <- pb.MempoolToDelete{
-				Hash: rawTx.Hash,
+				Hash: hash,
 			}
-		}()
+		}(rawTx.Hash)
 
 		if strings.ToLower(rawTx.To) == strings.ToLower(c.Multisig.FactoryAddress) {
 			log.Debugf("%v %s %v", strings.ToLower(rawTx.To), ":", strings.ToLower(c.Multisig.FactoryAddress))
-			go c.FactoryContract(rawTx.Hash)
+			go func(hash string) {
+				go c.FactoryContract(hash)
+			}(rawTx.Hash)
 		}
 	}
 
