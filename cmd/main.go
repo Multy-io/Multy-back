@@ -6,8 +6,11 @@ See LICENSE for details
 package main
 
 import (
+	"flag"
 	"os"
 	"os/signal"
+	"runtime"
+	"runtime/pprof"
 	"syscall"
 
 	"github.com/jekabolt/config"
@@ -49,6 +52,7 @@ var (
 		// 	WsPort:  ":8545",
 		// },
 	}
+	memprofile = flag.String("memprofile", "", "write memory profile to `file`")
 )
 
 func main() {
@@ -72,6 +76,19 @@ func main() {
 	}
 
 	globalOpt.MultyVerison = sc
+
+	flag.Parse()
+	if *memprofile != "" {
+		f, err := os.Create(*memprofile)
+		if err != nil {
+			log.Fatalf("could not create memory profile: %v", err.Error())
+		}
+		runtime.GC() // get up-to-date statistics
+		if err := pprof.WriteHeapProfile(f); err != nil {
+			log.Fatalf("could not write memory profile: %v", err.Error())
+		}
+		f.Close()
+	}
 
 	mu, err := multy.Init(&globalOpt)
 	if err != nil {

@@ -7,7 +7,10 @@ package multyback
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
 
 	// exchanger "github.com/Multy-io/Multy-back-exchange-service"
 	btcpb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
@@ -264,8 +267,20 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 	router := gin.Default()
 	multy.route = router
-	//
 	gin.SetMode(gin.DebugMode)
+
+	f, err := os.OpenFile("../currencies/erc20tokens.json", os.O_RDONLY, os.FileMode(0644))
+	// f, err := os.OpenFile("/currencies/erc20tokens.json")
+	if err != nil {
+		return err
+	}
+
+	bs, err := ioutil.ReadAll(f)
+	if err != nil {
+		return err
+	}
+	tokenList := store.VerifiedTokenList{}
+	_ = json.Unmarshal(bs, &tokenList)
 
 	restClient, err := client.SetRestHandlers(
 		multy.userStore,
@@ -276,6 +291,7 @@ func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 		conf.MultyVerison,
 		conf.Secretkey,
 		conf.MobileVersions,
+		tokenList,
 	)
 	if err != nil {
 		return err

@@ -1,0 +1,3506 @@
+[{
+        "ContractAddress": "0xB8c77482e45F1F44dE1745F52C74426C631bDD52",
+        "Ticker": "BNB",
+        "Name": "BNB"
+    },
+    {
+        "ContractAddress": "0xd850942ef8811f2a866692a623011bde52a462c1",
+        "Ticker": "VEN",
+        "Name": "VeChain"
+    },
+    {
+        "ContractAddress": "0xd26114cd6EE289AccF82350c8d8487fedB8A0C07",
+        "Ticker": "OMG",
+        "Name": "OmiseGO"
+    },
+    {
+        "ContractAddress": "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2",
+        "Ticker": "MKR",
+        "Name": "Maker"
+    },
+    {
+        "ContractAddress": "0xe41d2489571d322189246dafa5ebde1f4699f498",
+        "Ticker": "ZRX",
+        "Name": "ZRX"
+    },
+    {
+        "ContractAddress": "0x05f4a42e251f2d52b8ed15e9fedaacfcef1fad27",
+        "Ticker": "ZIL",
+        "Name": "Zilliqa"
+    },
+    {
+        "ContractAddress": "0xb5a5f22694352c15b00323844ad545abb2b11028",
+        "Ticker": "ICX",
+        "Name": "ICON"
+    },
+    {
+        "ContractAddress": "0x5ca9a71b1d01849c0a95490cc00559717fcf0d1d",
+        "Ticker": "AE",
+        "Name": "Aeternity"
+    },
+    {
+        "ContractAddress": "0xa15c7ebe1f07caf6bff097d8a589fb8ac49ae5b3",
+        "Ticker": "NPXS",
+        "Name": "PundiXToken"
+    },
+    {
+        "ContractAddress": "0xcb97e65f07da24d46bcdd078ebebd7c6e6e3d750",
+        "Ticker": "BTM",
+        "Name": "Bytom"
+    },
+    {
+        "ContractAddress": "0x0d8775f648430679a709e98d2b0cb6250d2887ef",
+        "Ticker": "BAT",
+        "Name": "BAT"
+    },
+    {
+        "ContractAddress": "0xa74476443119A942dE498590Fe1f2454d7D4aC0d",
+        "Ticker": "GNT",
+        "Name": "Golem"
+    },
+    {
+        "ContractAddress": "0x1985365e9f78359a9B6AD760e32412f4a445E862",
+        "Ticker": "REP",
+        "Name": "Reputation"
+    },
+    {
+        "ContractAddress": "0x6c6ee5e31d828de241282b9606c8e98ea48526e2",
+        "Ticker": "HOT",
+        "Name": "HoloToken"
+    },
+    {
+        "ContractAddress": "0x744d70fdbe2ba4cf95131626614a1763df805b9e",
+        "Ticker": "SNT",
+        "Name": "StatusNetwork"
+    },
+    {
+        "ContractAddress": "0xd4fa1460f537bb9085d22c7bccb5dd450ef28e3a",
+        "Ticker": "PPT",
+        "Name": "Populous"
+    },
+    {
+        "ContractAddress": "0x8dd5fbce2f6a956c3022ba3663759011dd51e73e",
+        "Ticker": "TUSD",
+        "Name": "TrueUSD"
+    },
+    {
+        "ContractAddress": "0xb7cb1c96db6b22b0d3d9536e0108d062bd488f74",
+        "Ticker": "WTC",
+        "Name": "Walton"
+    },
+    {
+        "ContractAddress": "0x514910771af9ca656af840dff83e8264ecf986ca",
+        "Ticker": "LINK",
+        "Name": "ChainLinkToken"
+    },
+    {
+        "ContractAddress": "0xfa1a856cfa3409cfa145fa4e20eb270df3eb21ab",
+        "Ticker": "IOST",
+        "Name": "IOSToken"
+    },
+    {
+        "ContractAddress": "0x4CEdA7906a5Ed2179785Cd3A40A69ee8bc99C466",
+        "Ticker": "AION",
+        "Name": "AION"
+    },
+    {
+        "ContractAddress": "0x6f259637dcd74c767781e37bc6133cd6a68aa161",
+        "Ticker": "HT",
+        "Name": "HuobiToken"
+    },
+    {
+        "ContractAddress": "0xbf2179859fc6d5bee9bf9158632dc51678a4100e",
+        "Ticker": "ELF",
+        "Name": "ELF"
+    },
+    {
+        "ContractAddress": "0x1f573d6fb3f13d689ff844b4ce37794d79a7ff1c",
+        "Ticker": "BNT",
+        "Name": "Bancor"
+    },
+    {
+        "ContractAddress": "0x08d32b0da63e2C3bcF8019c9c5d849d7a9d791e6",
+        "Ticker": "Dentacoin",
+        "Name": "Dentacoin"
+    },
+    {
+        "ContractAddress": "0x168296bb09e24a88805cb9c33356536b980d3fc5",
+        "Ticker": "RHOC",
+        "Name": "RHOC"
+    },
+    {
+        "ContractAddress": "0x419d0d8bdd9af5e606ae2232ed285aff190e711b",
+        "Ticker": "FUN",
+        "Name": "FunFair"
+    },
+    {
+        "ContractAddress": "0x0f5d2fb29fb7d3cfee444a200298f468908cc942",
+        "Ticker": "MANA",
+        "Name": "Decentraland"
+    },
+    {
+        "ContractAddress": "0x618e75ac90b12c6049ba3b27f5d5f8651b0037f6",
+        "Ticker": "QASH",
+        "Name": "QASH"
+    },
+    {
+        "ContractAddress": "0xe0b7927c4af23765cb51314a0e0521a9645f0e2a",
+        "Ticker": "DGD",
+        "Name": "DGD"
+    },
+    {
+        "ContractAddress": "0x5d65D971895Edc438f465c17DB6992698a52318D",
+        "Ticker": "NAS",
+        "Name": "Nebulas"
+    },
+    {
+        "ContractAddress": "0xB97048628DB6B661D4C2aA833e95Dbe1A905B280",
+        "Ticker": "PAY",
+        "Name": "TenXPay"
+    },
+    {
+        "ContractAddress": "0x9ab165d795019b6d8b3e971dda91071421305e5a",
+        "Ticker": "AOA",
+        "Name": "Aurora"
+    },
+    {
+        "ContractAddress": "0xf85feea2fdd81d51177f6b8f35f0e6734ce45f5f",
+        "Ticker": "CMT",
+        "Name": "CyberMiles"
+    },
+    {
+        "ContractAddress": "0xb63b606ac810a52cca15e44bb630fd42d8d1d83d",
+        "Ticker": "MCO",
+        "Name": "Crypto.com"
+    },
+    {
+        "ContractAddress": "0x58a4884182d9e835597f405e5f258290e46ae7c2",
+        "Ticker": "NOAH",
+        "Name": "NOAHCOIN"
+    },
+    {
+        "ContractAddress": "0x39bb259f66e1c59d5abef88375979b4d20d98022",
+        "Ticker": "WAX",
+        "Name": "WAXToken"
+    },
+    {
+        "ContractAddress": "0x3883f5e181fccaf8410fa61e12b59bad963fb645",
+        "Ticker": "THETA",
+        "Name": "ThetaToken"
+    },
+    {
+        "ContractAddress": "0x595832f8fc6bf59c85c527fec3740a1b7a361269",
+        "Ticker": "POWR",
+        "Name": "PowerLedger"
+    },
+    {
+        "ContractAddress": "0xef68e7c694f40c8202821edf525de3782458639f",
+        "Ticker": "LRC",
+        "Name": "Loopring"
+    },
+    {
+        "ContractAddress": "0xa4e8c3ec456107ea67d3075bf9e3df3a75823db0",
+        "Ticker": "LOOM",
+        "Name": "Loom"
+    },
+    {
+        "ContractAddress": "0x419c4db4b9e25d6db2ad9691ccb832c8d9fda05e",
+        "Ticker": "DRGN",
+        "Name": "Dragon"
+    },
+    {
+        "ContractAddress": "0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359",
+        "Ticker": "DAI",
+        "Name": "DaiStablecoinv1.0"
+    },
+    {
+        "ContractAddress": "0x4092678e4e78230f46a1534c0fbc8fa39780892b",
+        "Ticker": "OCN",
+        "Name": "OCoin"
+    },
+    {
+        "ContractAddress": "0xea11755ae41d889ceec39a63e6ff75a02bc1c00d",
+        "Ticker": "CTXC",
+        "Name": "CortexCoin"
+    },
+    {
+        "ContractAddress": "0x9992ec3cf6a55b00978cddf2b27bc6882d88d1ec",
+        "Ticker": "POLY",
+        "Name": "Polymath"
+    },
+    {
+        "ContractAddress": "0x12480e24eb5bec1a9d4369cab6a80cad3c0a377a",
+        "Ticker": "SUB",
+        "Name": "Substratum"
+    },
+    {
+        "ContractAddress": "0xdd974d5c2e2928dea5f71b9825b8b646686bd200",
+        "Ticker": "KNC",
+        "Name": "KyberNetwork"
+    },
+    {
+        "ContractAddress": "0x818fc6c2ec5986bc6e2cbf00939d90556ab12ce5",
+        "Ticker": "KIN",
+        "Name": "Kin"
+    },
+    {
+        "ContractAddress": "0xb62132e35a6c13ee1ee0f84dc5d40bad8d815206",
+        "Ticker": "NEXO",
+        "Name": "Nexo"
+    },
+    {
+        "ContractAddress": "0x103c3A209da59d3E7C4A89307e66521e081CFDF0",
+        "Ticker": "GVT",
+        "Name": "GenesisVision"
+    },
+    {
+        "ContractAddress": "0xcc80c051057b774cd75067dc48f8987c4eb97a5e",
+        "Ticker": "NEC",
+        "Name": "EthfinexNectarToken"
+    },
+    {
+        "ContractAddress": "0xb91318f35bdb262e9423bc7c7c2a3a93dd93c92c",
+        "Ticker": "NULS",
+        "Name": "Nuls"
+    },
+    {
+        "ContractAddress": "0xf0ee6b27b759c9893ce4f094b49ad28fd15a23e4",
+        "Ticker": "ENG",
+        "Name": "Enigma"
+    },
+    {
+        "ContractAddress": "0xb3104b4b9da82025e8b9f8fb28b3553ce2f67069",
+        "Ticker": "BIX",
+        "Name": "BIXToken"
+    },
+    {
+        "ContractAddress": "0x41e5560054824ea6b0732e656e3ad64e20e94e45",
+        "Ticker": "CVC",
+        "Name": "Civic"
+    },
+    {
+        "ContractAddress": "0xf629cbd94d3791c9250152bd8dfbdf380e2a3b9c",
+        "Ticker": "ENJ",
+        "Name": "EnjinCoin"
+    },
+    {
+        "ContractAddress": "0x85e076361cc813a908ff672f9bad1541474402b2",
+        "Ticker": "TEL",
+        "Name": "Telcoin"
+    },
+    {
+        "ContractAddress": "0xea26c4ac16d4a5a106820bc8aee85fd0b7b2b664",
+        "Ticker": "QKC",
+        "Name": "QuarkChainToken"
+    },
+    {
+        "ContractAddress": "0x3597bfd533a99c9aa083587b074434e61eb0a258",
+        "Ticker": "DENT",
+        "Name": "DENT"
+    },
+    {
+        "ContractAddress": "0x888666CA69E0f178DED6D75b5726Cee99A87D698",
+        "Ticker": "ICN",
+        "Name": "ICONOMI"
+    },
+    {
+        "ContractAddress": "0x48f775efbe4f5ece6e0df2f7b5932df56823b990",
+        "Ticker": "R",
+        "Name": "Revain"
+    },
+    {
+        "ContractAddress": "0x1122b6a0e00dce0563082b6e2953f3a943855c1f",
+        "Ticker": "CENNZ",
+        "Name": "CentralityToken"
+    },
+    {
+        "ContractAddress": "0xd0a4b8946cb52f0661273bfbc6fd0e0c75fc6433",
+        "Ticker": "STORM",
+        "Name": "Storm"
+    },
+    {
+        "ContractAddress": "0x49bd2da75b1f7af1e4dfd6b1125fecde59dbec58",
+        "Ticker": "LKY",
+        "Name": "LinkeyToken"
+    },
+    {
+        "ContractAddress": "0x4156D3342D5c385a87D264F90653733592000581",
+        "Ticker": "SALT",
+        "Name": "Salt"
+    },
+    {
+        "ContractAddress": "0xc5bbae50781be1669306b9e001eff57a2957b09d",
+        "Ticker": "GTO",
+        "Name": "Gifto"
+    },
+    {
+        "ContractAddress": "0xb64ef51c888972c908cfacf59b47c1afbc0ab8ac",
+        "Ticker": "STORJ",
+        "Name": "Storj"
+    },
+    {
+        "ContractAddress": "0xe25bcec5d3801ce3a794079bf94adf1b8ccd802d",
+        "Ticker": "MAN",
+        "Name": "MATRIXAINetwork"
+    },
+    {
+        "ContractAddress": "0xa9d2927d3a04309e008b6af6e2e282ae2952e7fd",
+        "Ticker": "ZIP",
+        "Name": "Zipper"
+    },
+    {
+        "ContractAddress": "0x8f8221afbb33998d8584a2b05749ba73c37a938a",
+        "Ticker": "REQ",
+        "Name": "Request"
+    },
+    {
+        "ContractAddress": "0x8f3470A7388c05eE4e7AF3d01D8C722b0FF52374",
+        "Ticker": "VERI",
+        "Name": "Veritaseum"
+    },
+    {
+        "ContractAddress": "0x1c83501478f1320977047008496dacbd60bb15ef",
+        "Ticker": "DGTX",
+        "Name": "DigitexFutures"
+    },
+    {
+        "ContractAddress": "0x607F4C5BB672230e8672085532f7e901544a7375",
+        "Ticker": "RLC",
+        "Name": "RLC"
+    },
+    {
+        "ContractAddress": "0x7c5a0ce9267ed19b22f8cae653f198e3e8daf098",
+        "Ticker": "SAN",
+        "Name": "SAN"
+    },
+    {
+        "ContractAddress": "0xd4c435f5b09f855c3317c8524cb1f586e42795fa",
+        "Ticker": "CND",
+        "Name": "Cindicator"
+    },
+    {
+        "ContractAddress": "0x38c6a68304cdefb9bec48bbfaaba5c5b47818bb2",
+        "Ticker": "HPB",
+        "Name": "HPBCoin"
+    },
+    {
+        "ContractAddress": "0x558ec3152e2eb2174905cd19aea4e34a23de9ad6",
+        "Ticker": "BRD",
+        "Name": "Bread"
+    },
+    {
+        "ContractAddress": "0xdd16ec0f66e54d453e6756713e533355989040e4",
+        "Ticker": "TEN",
+        "Name": "Tokenomy"
+    },
+    {
+        "ContractAddress": "0xee74110fb5a1007b06282e0de5d73a61bf41d9cd",
+        "Ticker": "BHPC",
+        "Name": "BHPCash"
+    },
+    {
+        "ContractAddress": "0x4e0603e2a27a30480e5e3a4fe548e29ef12f64be",
+        "Ticker": "CREDO",
+        "Name": "CredoToken"
+    },
+    {
+        "ContractAddress": "0xc528c28fec0a90c083328bc45f587ee215760a0f",
+        "Ticker": "EDR",
+        "Name": "EndorProtocolToken"
+    },
+    {
+        "ContractAddress": "0x26e75307fc0c021472feb8f727839531f112f317",
+        "Ticker": "C20",
+        "Name": "Crypto20"
+    },
+    {
+        "ContractAddress": "0xd0352a019e9ab9d757776f532377aaebd36fd541",
+        "Ticker": "FSN",
+        "Name": "Fusion"
+    },
+    {
+        "ContractAddress": "0xced4e93198734ddaff8492d525bd258d49eb388e",
+        "Ticker": "EDO",
+        "Name": "Eidoo"
+    },
+    {
+        "ContractAddress": "0xe3818504c1b32bf1557b16c238b2e01fd3149c17",
+        "Ticker": "PLR",
+        "Name": "PILLAR"
+    },
+    {
+        "ContractAddress": "0x2d0e95bd4795d7ace0da3c0ff7b706a5970eb9d3",
+        "Ticker": "SOC",
+        "Name": "AllSportsCoin"
+    },
+    {
+        "ContractAddress": "0x809826cceab68c387726af962713b64cb5cb3cca",
+        "Ticker": "nCash",
+        "Name": "NucleusVision"
+    },
+    {
+        "ContractAddress": "0xff3519eeeea3e76f1f699ccce5e23ee0bdda41ac",
+        "Ticker": "BCAP",
+        "Name": "BCAP"
+    },
+    {
+        "ContractAddress": "0xbf52f2ab39e26e0951d2a02b49b7702abe30406a",
+        "Ticker": "ODEM",
+        "Name": "ODEMToken"
+    },
+    {
+        "ContractAddress": "0x5c3a228510d246b78a3765c20221cbf3082b44a4",
+        "Ticker": "STQ",
+        "Name": "Storiqa"
+    },
+    {
+        "ContractAddress": "0xa5fd1a791c4dfcaacc963d4f73c6ae5824149ea7",
+        "Ticker": "JNT",
+        "Name": "JibrelNetworkToken"
+    },
+    {
+        "ContractAddress": "0x5af2be193a6abca9c8817001f45744777db30756",
+        "Ticker": "ETHOS",
+        "Name": "Ethos"
+    },
+    {
+        "ContractAddress": "0x80a7e048f37a50500351c204cb407766fa3bae7f",
+        "Ticker": "CRPT",
+        "Name": "Crypterium"
+    },
+    {
+        "ContractAddress": "0x255aa6df07540cb5d3d297f0d0d4d84cb52bc8e6",
+        "Ticker": "RDN",
+        "Name": "Raiden"
+    },
+    {
+        "ContractAddress": "0x0cf0ee63788a0849fe5297f3407f701e122cc023",
+        "Ticker": "DATA",
+        "Name": "DATAcoin"
+    },
+    {
+        "ContractAddress": "0x46b9ad944d1059450da1163511069c718f699d31",
+        "Ticker": "CS",
+        "Name": "CREDITS"
+    },
+    {
+        "ContractAddress": "0x5732046a883704404f284ce41ffadd5b007fd668",
+        "Ticker": "BLZ",
+        "Name": "Bluzelle"
+    },
+    {
+        "ContractAddress": "0x8eb24319393716668d768dcec29356ae9cffe285",
+        "Ticker": "AGI",
+        "Name": "SingularityNET"
+    },
+    {
+        "ContractAddress": "0x6810e776880c02933d47db1b9fc05908e5386b96",
+        "Ticker": "GNO",
+        "Name": "Gnosis"
+    },
+    {
+        "ContractAddress": "0x0e0989b1f9b8a38983c2ba8053269ca62ec9b195",
+        "Ticker": "POE",
+        "Name": "Po.et"
+    },
+    {
+        "ContractAddress": "0xff603f43946a3a28df5e6a73172555d8c8b02386",
+        "Ticker": "RNT",
+        "Name": "OneRootNetwork"
+    },
+    {
+        "ContractAddress": "0xB70835D7822eBB9426B56543E391846C107bd32C",
+        "Ticker": "GTC",
+        "Name": "Game.comToken"
+    },
+    {
+        "ContractAddress": "0xf278c1ca969095ffddded020290cf8b5c424ace2",
+        "Ticker": "RUFF",
+        "Name": "RUFF"
+    },
+    {
+        "ContractAddress": "0xb98d4c97425d9908e66e53a6fdf673acca0be986",
+        "Ticker": "ABT",
+        "Name": "ArcBlock"
+    },
+    {
+        "ContractAddress": "0x36905fc93280f52362a1cbab151f25dc46742fb5",
+        "Ticker": "BTO",
+        "Name": "BTOCoin"
+    },
+    {
+        "ContractAddress": "0x960b236A07cf122663c4303350609A66A7B288C0",
+        "Ticker": "ANT",
+        "Name": "Aragon"
+    },
+    {
+        "ContractAddress": "0x99ea4db9ee77acd40b119bd1dc4e33e1c070b80d",
+        "Ticker": "QSP",
+        "Name": "Quantstamp"
+    },
+    {
+        "ContractAddress": "0x40395044Ac3c0C57051906dA938B54BD6557F212",
+        "Ticker": "MGO",
+        "Name": "MobileGo"
+    },
+    {
+        "ContractAddress": "0x8b353021189375591723e7384262f45709a3c3dc",
+        "Ticker": "TOMO",
+        "Name": "Tomocoin"
+    },
+    {
+        "ContractAddress": "0x340d2bde5eb28c1eed91b2f790723e3b160613b7",
+        "Ticker": "VEE",
+        "Name": "BLOCKv"
+    },
+    {
+        "ContractAddress": "0x66186008C1050627F979d464eABb258860563dbE",
+        "Ticker": "MDS",
+        "Name": "MediShares"
+    },
+    {
+        "ContractAddress": "0xdf2c7238198ad8b389666574f2d8bc411a4b7428",
+        "Ticker": "MFT",
+        "Name": "MainframeToken"
+    },
+    {
+        "ContractAddress": "0xc4bcd64cb216d49fd3c643a32762f34626b45a1a",
+        "Ticker": "COSM",
+        "Name": "CosmoCoin"
+    },
+    {
+        "ContractAddress": "0xF433089366899D83a9f26A773D59ec7eCF30355e",
+        "Ticker": "MTL",
+        "Name": "Metal"
+    },
+    {
+        "ContractAddress": "0x4c0fbe1bb46612915e7967d2c3213cd4d87257ad",
+        "Ticker": "APIS",
+        "Name": "APIS"
+    },
+    {
+        "ContractAddress": "0x42d6622dece394b54999fbd73d108123806f6a18",
+        "Ticker": "SPANK",
+        "Name": "SPANK"
+    },
+    {
+        "ContractAddress": "0x6ec8a24cabdc339a06a172f8223ea557055adaa5",
+        "Ticker": "GNX",
+        "Name": "GenaroX"
+    },
+    {
+        "ContractAddress": "0x4dc3643dbc642b72c158e7f3d2ff232df61cb6ce",
+        "Ticker": "AMB",
+        "Name": "Amber"
+    },
+    {
+        "ContractAddress": "0x983f6d60db79ea8ca4eb9968c6aff8cfa04b3c63",
+        "Ticker": "SNM",
+        "Name": "SONM"
+    },
+    {
+        "ContractAddress": "0x68d57c9a1c35f63e2c83ee8e49a64e9d70528d25",
+        "Ticker": "SRN",
+        "Name": "SIRIN"
+    },
+    {
+        "ContractAddress": "0x408e41876cccdc0f92210600ef50372656052a38",
+        "Ticker": "REN",
+        "Name": "Republic"
+    },
+    {
+        "ContractAddress": "0x6fb3e0a217407efff7ca062d46c26e5d60a14d69",
+        "Ticker": "IOTX",
+        "Name": "IoTeXNetwork"
+    },
+    {
+        "ContractAddress": "0x2c4e8f2d746113d0696ce89b35f0d8bf88e0aeca",
+        "Ticker": "ST",
+        "Name": "SimpleToken"
+    },
+    {
+        "ContractAddress": "0xbe428c3867f05dea2a89fc76a102b544eac7f772",
+        "Ticker": "CVT",
+        "Name": "CyberVeinToken"
+    },
+    {
+        "ContractAddress": "0x622dFfCc4e83C64ba959530A5a5580687a57581b",
+        "Ticker": "AUTO",
+        "Name": "CUBE"
+    },
+    {
+        "ContractAddress": "0x5e6b6d9abad9093fdc861ea1600eba1b355cd940",
+        "Ticker": "ITC",
+        "Name": "IOTChain"
+    },
+    {
+        "ContractAddress": "0x72dd4b6bd852a3aa172be4d6c5a6dbec588cf131",
+        "Ticker": "NGC",
+        "Name": "NAGACoin"
+    },
+    {
+        "ContractAddress": "0x6758b7d441a9739b98552b373703d8d3d14f9e62",
+        "Ticker": "POA20",
+        "Name": "POAERC20onFoundation"
+    },
+    {
+        "ContractAddress": "0x57ad67acf9bf015e4820fbd66ea1a21bed8852ec",
+        "Ticker": "LYM",
+        "Name": "Lympo"
+    },
+    {
+        "ContractAddress": "0x80fB784B7eD66730e8b1DBd9820aFD29931aab03",
+        "Ticker": "LEND",
+        "Name": "EthLend"
+    },
+    {
+        "ContractAddress": "0xeda8b016efa8b1161208cf041cd86972eee0f31e",
+        "Ticker": "IHT",
+        "Name": "IHOUSETOKEN"
+    },
+    {
+        "ContractAddress": "0x08711d3b02c8758f2fb3ab4e80228418a7f8e39c",
+        "Ticker": "EDG",
+        "Name": "Edgeless"
+    },
+    {
+        "ContractAddress": "0x3833dda0aeb6947b98ce454d89366cba8cc55528",
+        "Ticker": "SPHTX",
+        "Name": "SPHTX"
+    },
+    {
+        "ContractAddress": "0x106aa49295b525fcf959aa75ec3f7dcbf5352f1c",
+        "Ticker": "RKT",
+        "Name": "Rock"
+    },
+    {
+        "ContractAddress": "0x70a72833d6bf7f508c8224ce59ea1ef3d0ea3a38",
+        "Ticker": "UTK",
+        "Name": "UTRUST"
+    },
+    {
+        "ContractAddress": "0x8713d26637cf49e1b6b4a7ce57106aabc9325343",
+        "Ticker": "CNN",
+        "Name": "CNNToken"
+    },
+    {
+        "ContractAddress": "0x80bc5512561c7f85a3a9508c7df7901b370fa1df",
+        "Ticker": "TIO",
+        "Name": "Trade"
+    },
+    {
+        "ContractAddress": "0x9a0242b7a33dacbe40edb927834f96eb39f8fbcb",
+        "Ticker": "BAX",
+        "Name": "BAX"
+    },
+    {
+        "ContractAddress": "0x4af328c52921706dcb739f25786210499169afe6",
+        "Ticker": "SKB",
+        "Name": "SakuraBloom"
+    },
+    {
+        "ContractAddress": "0xaec2e87e0a235266d9c5adc9deb4b2e29b54d009",
+        "Ticker": "SNGLS",
+        "Name": "SNGLS"
+    },
+    {
+        "ContractAddress": "0xe8ff5c9c75deb346acac493c463c8950be03dfba",
+        "Ticker": "VIBE",
+        "Name": "VibeCoin"
+    },
+    {
+        "ContractAddress": "0x5d4abc77b8405ad177d8ac6682d584ecbfd46cec",
+        "Ticker": "PST",
+        "Name": "PrimasToken"
+    },
+    {
+        "ContractAddress": "0x1b793e49237758dbd8b752afc9eb4b329d5da016",
+        "Ticker": "VITE",
+        "Name": "ViteToken"
+    },
+    {
+        "ContractAddress": "0x4cc19356f2d37338b9802aa8e8fc58b0373296e7",
+        "Ticker": "KEY",
+        "Name": "SelfKey"
+    },
+    {
+        "ContractAddress": "0x1829aa045e21e0d59580024a951db48096e01782",
+        "Ticker": "FXT",
+        "Name": "FuzeX"
+    },
+    {
+        "ContractAddress": "0x0abdace70d3790235af448c88547603b945604ea",
+        "Ticker": "DNT",
+        "Name": "district0x"
+    },
+    {
+        "ContractAddress": "0x957c30ab0426e0c93cd8241e2c60392d08c6ac8e",
+        "Ticker": "MOD",
+        "Name": "ModumToken"
+    },
+    {
+        "ContractAddress": "0x3fd8f39a962efda04956981c31ab89fab5fb8bc8",
+        "Ticker": "RTH",
+        "Name": "Rotharium"
+    },
+    {
+        "ContractAddress": "0x27695e09149adc738a978e9a678f99e4c39e9eb9",
+        "Ticker": "KICK",
+        "Name": "KickCoin"
+    },
+    {
+        "ContractAddress": "0x4470BB87d77b963A013DB939BE332f927f2b992e",
+        "Ticker": "ADX",
+        "Name": "AdEx"
+    },
+    {
+        "ContractAddress": "0xdb25f211ab05b1c97d595516f45794528a807ad8",
+        "Ticker": "EURS",
+        "Name": "STASISEURSToken"
+    },
+    {
+        "ContractAddress": "0xb1eef147028e9f480dbc5ccaa3277d417d1b85f0",
+        "Ticker": "Seele",
+        "Name": "SeeleToken"
+    },
+    {
+        "ContractAddress": "0x20e94867794dba030ee287f1406e100d03c84cd3",
+        "Ticker": "DEW",
+        "Name": "DEW"
+    },
+    {
+        "ContractAddress": "0xb9bb08ab7e9fa0a1356bd4a39ec0ca267e03b0b3",
+        "Ticker": "PAI",
+        "Name": "PCHAIN"
+    },
+    {
+        "ContractAddress": "0xa33e729bf4fdeb868b534e1f20523463d9c46bee",
+        "Ticker": "¢",
+        "Name": "ICO"
+    },
+    {
+        "ContractAddress": "0xfd1e80508f243e64ce234ea88a5fd2827c71d4b7",
+        "Ticker": "MEDX",
+        "Name": "MEDXTOKEN"
+    },
+    {
+        "ContractAddress": "0x4CF488387F035FF08c371515562CBa712f9015d4",
+        "Ticker": "WPR",
+        "Name": "WePower"
+    },
+    {
+        "ContractAddress": "0x1410434b0346f5be678d0fb554e5c7ab620f8f4a",
+        "Ticker": "KAN",
+        "Name": "KAN"
+    },
+    {
+        "ContractAddress": "0x9389434852b94bbad4c8afed5b7bdbc5ff0c2275",
+        "Ticker": "TTC",
+        "Name": "TTCProtocol(TTC)"
+    },
+    {
+        "ContractAddress": "0xebbdf302c940c6bfd49c6b165f457fdb324649bc",
+        "Ticker": "HYDRO",
+        "Name": "Hydro"
+    },
+    {
+        "ContractAddress": "0xf970b8e36e23f7fc3fd752eea86f8be8d83375a6",
+        "Ticker": "RCN",
+        "Name": "RipioCreditNetwork"
+    },
+    {
+        "ContractAddress": "0x27054b13b1b798b345b591a4d22e6562d47ea75a",
+        "Ticker": "AST",
+        "Name": "AirSwap"
+    },
+    {
+        "ContractAddress": "0x667088b212ce3d06a1b553a7221E1fD19000d9aF",
+        "Ticker": "WINGS",
+        "Name": "WINGS"
+    },
+    {
+        "ContractAddress": "0x905e337c6c8645263d3521205aa37bf4d034e745",
+        "Ticker": "MTC",
+        "Name": "MedicalTokenCurrency"
+    },
+    {
+        "ContractAddress": "0xa3d58c4e56fedcae3a7c43a725aee9a71f0ece4e",
+        "Ticker": "MET",
+        "Name": "Metronome"
+    },
+    {
+        "ContractAddress": "0x88a3e4f35d64aad41a6d4030ac9afe4356cb84fa",
+        "Ticker": "PRE",
+        "Name": "Presearch"
+    },
+    {
+        "ContractAddress": "0x08f5a9235b08173b7569f83645d2c7fb55e8ccd8",
+        "Ticker": "TNT",
+        "Name": "TierionNetworkToken"
+    },
+    {
+        "ContractAddress": "0x55296f69f40ea6d20e478533c15a6b08b654e758",
+        "Ticker": "XYO",
+        "Name": "XYOracle"
+    },
+    {
+        "ContractAddress": "0x846c66cf71c43f80403b51fe3906b3599d63336f",
+        "Ticker": "PMA",
+        "Name": "PumaPay"
+    },
+    {
+        "ContractAddress": "0xfAE4Ee59CDd86e3Be9e8b90b53AA866327D7c090",
+        "Ticker": "CPC",
+        "Name": "CPChain"
+    },
+    {
+        "ContractAddress": "0x1a7a8bd9106f2b8d977e08582dc7d24c723ab0db",
+        "Ticker": "APPC",
+        "Name": "AppCoins"
+    },
+    {
+        "ContractAddress": "0x9cda8a60dd5afa156c95bd974428d91a0812e054",
+        "Ticker": "TTU",
+        "Name": "TaTaTu"
+    },
+    {
+        "ContractAddress": "0x054c64741dbafdc19784505494029823d89c3b13",
+        "Ticker": "XET",
+        "Name": "ETERNALTOKEN"
+    },
+    {
+        "ContractAddress": "0x12b306fa98f4cbb8d4457fdff3a0a0a56f07ccdf",
+        "Ticker": "SXDT",
+        "Name": "Spectre.aiD-Token"
+    },
+    {
+        "ContractAddress": "0xa823e6722006afe99e91c30ff5295052fe6b8e32",
+        "Ticker": "NEU",
+        "Name": "Neumark"
+    },
+    {
+        "ContractAddress": "0x88d50b466be55222019d71f9e8fae17f5f45fca1",
+        "Ticker": "CPT",
+        "Name": "Cryptaur"
+    },
+    {
+        "ContractAddress": "0x16f812be7fff02caf662b85d5d58a5da6572d4df",
+        "Ticker": "UTT",
+        "Name": "UnitedTradersToken"
+    },
+    {
+        "ContractAddress": "0xfe5f141bf94fe84bc28ded0ab966c16b17490657",
+        "Ticker": "LBA",
+        "Name": "LibraToken"
+    },
+    {
+        "ContractAddress": "0x123ab195dd38b1b40510d467a6a359b201af056f",
+        "Ticker": "LGO",
+        "Name": "LGO"
+    },
+    {
+        "ContractAddress": "0xffa93aacf49297d51e211817452839052fdfb961",
+        "Ticker": "DCC",
+        "Name": "DistributedCreditChain"
+    },
+    {
+        "ContractAddress": "0x1a0f2ab46ec630f9fd638029027b552afa64b94c",
+        "Ticker": "ATX",
+        "Name": "AstonX"
+    },
+    {
+        "ContractAddress": "0x697beac28b09e122c4332d163985e8a73121b97f",
+        "Ticker": "QRL",
+        "Name": "QRL"
+    },
+    {
+        "ContractAddress": "0xd0929d411954c47438dc1d871dd6081f5c5e149c",
+        "Ticker": "RFR",
+        "Name": "Refereum"
+    },
+    {
+        "ContractAddress": "0xc42209aCcC14029c1012fB5680D95fBd6036E2a0",
+        "Ticker": "PPP",
+        "Name": "PayPie"
+    },
+    {
+        "ContractAddress": "0x5b2e4a700dfbc560061e957edec8f6eeeb74a320",
+        "Ticker": "INS",
+        "Name": "INS"
+    },
+    {
+        "ContractAddress": "0x177d39ac676ed1c67a2b268ad7f1e58826e5b0af",
+        "Ticker": "CDT",
+        "Name": "CoinDash"
+    },
+    {
+        "ContractAddress": "0xC0Eb85285d83217CD7c891702bcbC0FC401E2D9D",
+        "Ticker": "HVN",
+        "Name": "HiveProjectToken"
+    },
+    {
+        "ContractAddress": "0x286BDA1413a2Df81731D4930ce2F862a35A609fE",
+        "Ticker": "WaBi",
+        "Name": "WaBi"
+    },
+    {
+        "ContractAddress": "0xe2fb6529ef566a080e6d23de0bd351311087d567",
+        "Ticker": "COV",
+        "Name": "Covesting"
+    },
+    {
+        "ContractAddress": "0x0b4bdc478791897274652dc15ef5c135cae61e60",
+        "Ticker": "DAX",
+        "Name": "DAEXToken"
+    },
+    {
+        "ContractAddress": "0xb2f7eb1f2c37645be61d73953035360e768d81e6",
+        "Ticker": "COB",
+        "Name": "Cobinhood"
+    },
+    {
+        "ContractAddress": "0xaa7a9ca87d3694b5755f213b5d04094b8d0f0a6f",
+        "Ticker": "TRAC",
+        "Name": "Trace"
+    },
+    {
+        "ContractAddress": "0x0bb217e40f8a5cb79adf04e1aab60e5abd0dfc1e",
+        "Ticker": "SWFTC",
+        "Name": "SwftCoin"
+    },
+    {
+        "ContractAddress": "0xcdcfc0f66c522fd086a1b725ea3c0eeb9f9e8814",
+        "Ticker": "AURA",
+        "Name": "AuroraDAO"
+    },
+    {
+        "ContractAddress": "0x13119e34e140097a507b07a5564bde1bc375d9e6",
+        "Ticker": "IMT",
+        "Name": "MoneyToken"
+    },
+    {
+        "ContractAddress": "0x24dcc881e7dd730546834452f21872d5cb4b5293",
+        "Ticker": "SCRL",
+        "Name": "SCRL"
+    },
+    {
+        "ContractAddress": "0x9b68bfae21df5a510931a262cecf63f41338f264",
+        "Ticker": "DBET",
+        "Name": "Decent.Bet"
+    },
+    {
+        "ContractAddress": "0xea38eaa3c86c8f9b751533ba2e562deb9acded40",
+        "Ticker": "FUEL",
+        "Name": "FuelToken"
+    },
+    {
+        "ContractAddress": "0xbd168cbf9d3a375b38dc51a202b5e8a4e52069ed",
+        "Ticker": "BWX",
+        "Name": "BlueWhaleToken"
+    },
+    {
+        "ContractAddress": "0xD65960FAcb8E4a2dFcb2C2212cb2e44a02e2a57E",
+        "Ticker": "Soar",
+        "Name": "Soarcoin"
+    },
+    {
+        "ContractAddress": "0x9e88613418cf03dca54d6a2cf6ad934a78c7a17a",
+        "Ticker": "SWM",
+        "Name": "SwarmFund"
+    },
+    {
+        "ContractAddress": "0x12fef5e57bf45873cd9b62e9dbd7bfb99e32d73e",
+        "Ticker": "CFI",
+        "Name": "Cofoundit"
+    },
+    {
+        "ContractAddress": "0xaaaf91d9b90df800df4f55c205fd6989c977e73a",
+        "Ticker": "TKN",
+        "Name": "TokenCard"
+    },
+    {
+        "ContractAddress": "0x832904863978b94802123106e6eb491bdf0df928",
+        "Ticker": "OPTI",
+        "Name": "OptiToken"
+    },
+    {
+        "ContractAddress": "0xafbec4d65bc7b116d85107fd05d912491029bf46",
+        "Ticker": "ARB",
+        "Name": "ARBITRAGE"
+    },
+    {
+        "ContractAddress": "0x2ccbff3a042c68716ed2a2cb0c544a9f1d1935e1",
+        "Ticker": "DMT",
+        "Name": "DMarket"
+    },
+    {
+        "ContractAddress": "0x9b68bfae21df5a510931a262cecf63f41338f264",
+        "Ticker": "DBET",
+        "Name": "Decent.Bet"
+    },
+    {
+        "ContractAddress": "0x00c4b398500645eb5da00a1a379a88b11683ba01",
+        "Ticker": "EXC",
+        "Name": "EximchainToken"
+    },
+    {
+        "ContractAddress": "0xcbeaec699431857fdb4d37addbbdc20e132d4903",
+        "Ticker": "YOYOW",
+        "Name": "YOYOW"
+    },
+    {
+        "ContractAddress": "0x68AA3F232dA9bdC2343465545794ef3eEa5209BD",
+        "Ticker": "MSP",
+        "Name": "Mothership"
+    },
+    {
+        "ContractAddress": "0xa849eaae994fb86afa73382e9bd88c2b6b18dc71",
+        "Ticker": "MVL",
+        "Name": "MassVehicleLedgerToken"
+    },
+    {
+        "ContractAddress": "0x63f584fa56e60e4d0fe8802b27c7e6e3b33e007f",
+        "Ticker": "BOX",
+        "Name": "ContentBoxToken"
+    },
+    {
+        "ContractAddress": "0xcb5ea3c190d8f82deadf7ce5af855ddbf33e3962",
+        "Ticker": "QBIT",
+        "Name": "Qubitica"
+    },
+    {
+        "ContractAddress": "0x51db5ad35c671a87207d88fc11d593ac0c8415bd",
+        "Ticker": "MDA",
+        "Name": "MoedaLoyaltyPoints"
+    },
+    {
+        "ContractAddress": "0x93190dbce9b9bd4aa546270a8d1d65905b5fdd28",
+        "Ticker": "DAPS",
+        "Name": "DAPSTOKEN"
+    },
+    {
+        "ContractAddress": "0x4a220e6096b25eadb88358cb44068a3248254675",
+        "Ticker": "QNT",
+        "Name": "Quant"
+    },
+    {
+        "ContractAddress": "0x9e3319636e2126e3c0bc9e3134aec5e1508a46c7",
+        "Ticker": "UTNP",
+        "Name": "UTN-P:UniversaToken"
+    },
+    {
+        "ContractAddress": "0xb24754be79281553dc1adc160ddf5cd9b74361a4",
+        "Ticker": "XRL",
+        "Name": "Rialto"
+    },
+    {
+        "ContractAddress": "0xd0d6d6c5fe4a677d343cc433536bb717bae167dd",
+        "Ticker": "ADT",
+        "Name": "AdToken"
+    },
+    {
+        "ContractAddress": "0xe5dada80aa6477e85d09747f2842f7993d0df71c",
+        "Ticker": "DOCK",
+        "Name": "Dock"
+    },
+    {
+        "ContractAddress": "0x9e96604445ec19ffed9a5e8dd7b50a29c899a10c",
+        "Ticker": "COSS",
+        "Name": "COSS"
+    },
+    {
+        "ContractAddress": "0xfa05A73FfE78ef8f1a739473e462c54bae6567D9",
+        "Ticker": "LUN",
+        "Name": "Lunyr"
+    },
+    {
+        "ContractAddress": "0x05860d453c7974cbf46508c06cba14e211c629ce",
+        "Ticker": "EDN",
+        "Name": "EdenCoin"
+    },
+    {
+        "ContractAddress": "0xffe02ee4c69edf1b340fcad64fbd6b37a7b9e265",
+        "Ticker": "NANJ",
+        "Name": "NANJCOIN"
+    },
+    {
+        "ContractAddress": "0x0affa06e7fbe5bc9a764c979aa66e8256a631f02",
+        "Ticker": "PLBT",
+        "Name": "Polybius"
+    },
+    {
+        "ContractAddress": "0x2C974B2d0BA1716E644c1FC59982a89DDD2fF724",
+        "Ticker": "VIB",
+        "Name": "VIB"
+    },
+    {
+        "ContractAddress": "0xbab165df9455aa0f2aed1f2565520b91ddadb4c8",
+        "Ticker": "EKT",
+        "Name": "EDUCare"
+    },
+    {
+        "ContractAddress": "0x9af839687f6c94542ac5ece2e317daae355493a1",
+        "Ticker": "HOT",
+        "Name": "HydroProtocol"
+    },
+    {
+        "ContractAddress": "0x922105fad8153f516bcfb829f56dc097a0e1d705",
+        "Ticker": "YEE",
+        "Name": "Yee-ABlockchain-powered\u0026amp;Cloud-basedSocia"
+    },
+    {
+        "ContractAddress": "0xf3db5fa2c66b7af3eb0c0b782510816cbe4813b8",
+        "Ticker": "EVX",
+        "Name": "Everex"
+    },
+    {
+        "ContractAddress": "0x6425c6be902d692ae2db752b3c268afadb099d3b",
+        "Ticker": "MWAT",
+        "Name": "REDMWAT"
+    },
+    {
+        "ContractAddress": "0xe50365f5d679cb98a1dd62d6f6e58e59321bcddf",
+        "Ticker": "LA",
+        "Name": "LAtoken"
+    },
+    {
+        "ContractAddress": "0x2008e3057bd734e10ad13c9eae45ff132abc1722",
+        "Ticker": "ZCO",
+        "Name": "ZebiCoin"
+    },
+    {
+        "ContractAddress": "0x12b19d3e2ccc14da04fae33e63652ce469b3f2fd",
+        "Ticker": "GRID",
+        "Name": "GRID"
+    },
+    {
+        "ContractAddress": "0xe7D3e4413E29ae35B0893140F4500965c74365e5",
+        "Ticker": "BBC",
+        "Name": "B2BCoin"
+    },
+    {
+        "ContractAddress": "0x1c4481750daa5ff521a2a7490d9981ed46465dbd",
+        "Ticker": "BCPT",
+        "Name": "BLOCKMASONCREDITPROTOCOLTOKEN"
+    },
+    {
+        "ContractAddress": "0x226bb599a12c826476e3a771454697ea52e9e220",
+        "Ticker": "PRO",
+        "Name": "Propy"
+    },
+    {
+        "ContractAddress": "0xe8780b48bdb05f928697a5e8155f672ed91462f7",
+        "Ticker": "CAS",
+        "Name": "Cashaa"
+    },
+    {
+        "ContractAddress": "0xba9d4199fab4f26efe3551d490e3821486f135ba",
+        "Ticker": "CHSB",
+        "Name": "SwissBorg"
+    },
+    {
+        "ContractAddress": "0xaf4dce16da2877f8c9e00544c93b62ac40631f16",
+        "Ticker": "MTH",
+        "Name": "Monetha"
+    },
+    {
+        "ContractAddress": "0x263c618480dbe35c300d8d5ecda19bbb986acaed",
+        "Ticker": "MOT",
+        "Name": "MOT"
+    },
+    {
+        "ContractAddress": "0xac3211a5025414af2866ff09c23fc18bc97e79b1",
+        "Ticker": "DOV",
+        "Name": "DOVU"
+    },
+    {
+        "ContractAddress": "0xe1aee98495365fc179699c1bb3e761fa716bee62",
+        "Ticker": "BZNT",
+        "Name": "BezantToken"
+    },
+    {
+        "ContractAddress": "0xC16b542ff490e01fcc0DC58a60e1EFdc3e357cA6",
+        "Ticker": "ROCK2",
+        "Name": "ICEROCKMINING"
+    },
+    {
+        "ContractAddress": "0xb9EF770B6A5e12E45983C5D80545258aA38F3B78",
+        "Ticker": "ZCN",
+        "Name": "0chain"
+    },
+    {
+        "ContractAddress": "0xb5b8f5616fe42d5ceca3e87f3fddbdd8f496d760",
+        "Ticker": "ZPR",
+        "Name": "ZPER"
+    },
+    {
+        "ContractAddress": "0xAc709FcB44a43c35F0DA4e3163b117A17F3770f5",
+        "Ticker": "ARC",
+        "Name": "Arcade"
+    },
+    {
+        "ContractAddress": "0xBEB9eF514a379B997e0798FDcC901Ee474B6D9A1",
+        "Ticker": "MLN",
+        "Name": "Melon"
+    },
+    {
+        "ContractAddress": "0x4270bb238f6dd8b1c3ca01f96ca65b2647c06d3c",
+        "Ticker": "FOTA",
+        "Name": "FOTA"
+    },
+    {
+        "ContractAddress": "0xea1f346faf023f974eb5adaf088bbcdf02d761f4",
+        "Ticker": "TIX",
+        "Name": "Blocktix"
+    },
+    {
+        "ContractAddress": "0x5d51fcced3114a8bb5e90cdd0f9d682bcbcc5393",
+        "Ticker": "B2BX",
+        "Name": "B2BX"
+    },
+    {
+        "ContractAddress": "0x1dea979ae76f26071870f824088da78979eb91c8",
+        "Ticker": "SPD",
+        "Name": "SPINDLE"
+    },
+    {
+        "ContractAddress": "0x8aa33a7899fcc8ea5fbe6a608a109c3893a1b8b2",
+        "Ticker": "BET",
+        "Name": "Dao.Casino"
+    },
+    {
+        "ContractAddress": "0xfb2f26f266fb2805a387230f2aa0a331b4d96fba",
+        "Ticker": "DADI",
+        "Name": "DADI"
+    },
+    {
+        "ContractAddress": "0x9e46a38f5daabe8683e10793b06749eef7d733d1",
+        "Ticker": "NCT",
+        "Name": "Nectar"
+    },
+    {
+        "ContractAddress": "0x865ec58b06bf6305b886793aa20a2da31d034e68",
+        "Ticker": "MOC",
+        "Name": "MossCoin"
+    },
+    {
+        "ContractAddress": "0x45245bc59219eeaaf6cd3f382e078a461ff9de7b",
+        "Ticker": "BKX",
+        "Name": "BANKEX"
+    },
+    {
+        "ContractAddress": "0x31f3d9d1bece0c033ff78fa6da60a6048f3e13c5",
+        "Ticker": "EBC",
+        "Name": "EBCoin"
+    },
+    {
+        "ContractAddress": "0xAa0bb10CEc1fa372eb3Abc17C933FC6ba863DD9E",
+        "Ticker": "HMC",
+        "Name": "HmsToken"
+    },
+    {
+        "ContractAddress": "0x07e3c70653548b04f0a75970c1f81b4cbbfb606f",
+        "Ticker": "DLT",
+        "Name": "Delta"
+    },
+    {
+        "ContractAddress": "0xdf6ef343350780bf8c3410bf062e0c015b1dd671",
+        "Ticker": "BMC",
+        "Name": "BlackmoonCryptoToken"
+    },
+    {
+        "ContractAddress": "0x1844b21593262668b7248d0f57a220caaba46ab9",
+        "Ticker": "PRL",
+        "Name": "OysterPearl"
+    },
+    {
+        "ContractAddress": "0xaf30d2a7e90d7dc361c8c4585e9bb7d2f6f15bc7",
+        "Ticker": "ST",
+        "Name": "FirstBlood"
+    },
+    {
+        "ContractAddress": "0xc011a72400e58ecd99ee497cf89e3775d4bd732f",
+        "Ticker": "HAV",
+        "Name": "Havven"
+    },
+    {
+        "ContractAddress": "0x7A41e0517a5ecA4FdbC7FbebA4D4c47B9fF6DC63",
+        "Ticker": "ZSC",
+        "Name": "ZeusShieldCoin"
+    },
+    {
+        "ContractAddress": "0xcbcc0f036ed4788f63fc0fee32873d6a7487b908",
+        "Ticker": "HMQ",
+        "Name": "Humaniq"
+    },
+    {
+        "ContractAddress": "0xA4eA687A2A7F29cF2dc66B39c68e4411C0D00C49",
+        "Ticker": "IVY",
+        "Name": "IvyKoinPublicNetworkTokens"
+    },
+    {
+        "ContractAddress": "0x327682779bab2bf4d1337e8974ab9de8275a7ca8",
+        "Ticker": "BPT",
+        "Name": "Blockport"
+    },
+    {
+        "ContractAddress": "0xF3b3Cad094B89392fcE5faFD40bC03b80F2Bc624",
+        "Ticker": "PAT",
+        "Name": "PATRON"
+    },
+    {
+        "ContractAddress": "0x92e52a1a235d9a103d970901066ce910aacefd37",
+        "Ticker": "UCASH",
+        "Name": "UCASH"
+    },
+    {
+        "ContractAddress": "0xabbbb6447b68ffd6141da77c18c7b5876ed6c5ab",
+        "Ticker": "DATx",
+        "Name": "DATx"
+    },
+    {
+        "ContractAddress": "0xd780ae2bf04cd96e577d3d014762f831d97129d0",
+        "Ticker": "EVN",
+        "Name": "Envion"
+    },
+    {
+        "ContractAddress": "0x264dc2dedcdcbb897561a57cba5085ca416fb7b4",
+        "Ticker": "QUN",
+        "Name": "QunQunCommunities"
+    },
+    {
+        "ContractAddress": "0x8a854288a5976036a725879164ca3e91d30c6a1b",
+        "Ticker": "GET",
+        "Name": "GuaranteedEntranceToken"
+    },
+    {
+        "ContractAddress": "0xBA5F11b16B155792Cf3B2E6880E8706859A8AEB6",
+        "Ticker": "ARN",
+        "Name": "Aeron"
+    },
+    {
+        "ContractAddress": "0x107c4504cd79c5d2696ea0030a8dd4e92601b82e",
+        "Ticker": "BLT",
+        "Name": "Bloom"
+    },
+    {
+        "ContractAddress": "0x4a6058666cf1057eac3cd3a5a614620547559fc9",
+        "Ticker": "BBK",
+        "Name": "Brickblock"
+    },
+    {
+        "ContractAddress": "0x943ed852dadb5c3938ecdc6883718df8142de4c8",
+        "Ticker": "FTI",
+        "Name": "FTI"
+    },
+    {
+        "ContractAddress": "0x29d75277ac7f0335b2165d0895e8725cbf658d73",
+        "Ticker": "CSNO",
+        "Name": "BitDice"
+    },
+    {
+        "ContractAddress": "0x4bbbc57af270138ef2ff2c50dbfad684e9e0e604",
+        "Ticker": "WAB",
+        "Name": "WABnetwork"
+    },
+    {
+        "ContractAddress": "0x41ab1b6fcbb2fa9dced81acbdec13ea6315f2bf2",
+        "Ticker": "XDCE",
+        "Name": "XinFinXDCE"
+    },
+    {
+        "ContractAddress": "0x6BEB418Fc6E1958204aC8baddCf109B8E9694966",
+        "Ticker": "LNC",
+        "Name": "LinkerCoin"
+    },
+    {
+        "ContractAddress": "0x998b3b82bc9dba173990be7afb772788b5acb8bd",
+        "Ticker": "BANCA",
+        "Name": "BANCA"
+    },
+    {
+        "ContractAddress": "0xc86d054809623432210c107af2e3f619dcfbf652",
+        "Ticker": "UPP",
+        "Name": "SENTINELPROTOCOL"
+    },
+    {
+        "ContractAddress": "0x81c9151de0c8bafcd325a57e3db5a5df1cebf79c",
+        "Ticker": "DAT",
+        "Name": "Datum"
+    },
+    {
+        "ContractAddress": "0xd99b8a7fa48e25cce83b81812220a3e03bf64e5f",
+        "Ticker": "SKM",
+        "Name": "SkrumbleToken"
+    },
+    {
+        "ContractAddress": "0xa31108e5bab5494560db34c95492658af239357c",
+        "Ticker": "DACS",
+        "Name": "DACSEE"
+    },
+    {
+        "ContractAddress": "0x006bea43baa3f7a6f765f14f10a1a1b08334ef45",
+        "Ticker": "STX",
+        "Name": "Stox"
+    },
+    {
+        "ContractAddress": "0x0707681f344deb24184037fc0228856f2137b02e",
+        "Ticker": "FNKOS",
+        "Name": "FNKOSToken"
+    },
+    {
+        "ContractAddress": "0xfa456cf55250a839088b27ee32a424d7dacb54ff",
+        "Ticker": "BTT",
+        "Name": "blocktrade"
+    },
+    {
+        "ContractAddress": "0x97aeb5066e1a590e868b511457beb6fe99d329f5",
+        "Ticker": "ATMI",
+        "Name": "Atonomi"
+    },
+    {
+        "ContractAddress": "0x24692791bc444c5cd0b81e3cbcaba4b04acd1f3b",
+        "Ticker": "UKG",
+        "Name": "UnikoinGold"
+    },
+    {
+        "ContractAddress": "0x7d4b8cce0591c9044a22ee543533b72e976e36c3",
+        "Ticker": "CAG",
+        "Name": "ChangeBank"
+    },
+    {
+        "ContractAddress": "0x9041fe5b3fdea0f5e4afdc17e75180738d877a01",
+        "Ticker": "PRO",
+        "Name": "Pro"
+    },
+    {
+        "ContractAddress": "0xda6cb58a0d0c01610a29c5a65c303e13e885887c",
+        "Ticker": "cV",
+        "Name": "cVToken"
+    },
+    {
+        "ContractAddress": "0x28b5e12cce51f15594b0b91d5b5adaa70f684a02",
+        "Ticker": "NPX",
+        "Name": "NapoleonX"
+    },
+    {
+        "ContractAddress": "0xe5f166c0d8872b68790061317bb6cca04582c912",
+        "Ticker": "TFD",
+        "Name": "TE-FOOD"
+    },
+    {
+        "ContractAddress": "0x701c244b988a513c945973defa05de933b23fe1d",
+        "Ticker": "OAX",
+        "Name": "OpenANX"
+    },
+    {
+        "ContractAddress": "0xC39E626A04C5971D770e319760D7926502975e47",
+        "Ticker": "AXPR",
+        "Name": "aXpire"
+    },
+    {
+        "ContractAddress": "0xaa19961b6b858d9f18a115f25aa1d98abc1fdba8",
+        "Ticker": "LCS",
+        "Name": "LocalCoinSwapCryptoshare"
+    },
+    {
+        "ContractAddress": "0xc7bba5b765581efb2cdd2679db5bea9ee79b201f",
+        "Ticker": "GEM",
+        "Name": "Gems"
+    },
+    {
+        "ContractAddress": "0x954b890704693af242613edef1b603825afcd708",
+        "Ticker": "CARD",
+        "Name": "Cardstack"
+    },
+    {
+        "ContractAddress": "0x90528aeb3a2b736b780fd1b6c478bb7e1d643170",
+        "Ticker": "XPA",
+        "Name": "XPlay"
+    },
+    {
+        "ContractAddress": "0xae73b38d1c9a8b274127ec30160a4927c4d71824",
+        "Ticker": "STK",
+        "Name": "STK"
+    },
+    {
+        "ContractAddress": "0x3209f98bebf0149b769ce26d71f7aea8e435efea",
+        "Ticker": "TMT",
+        "Name": "TraxiaMembershipToken"
+    },
+    {
+        "ContractAddress": "0x83984d6142934bb535793a82adb0a46ef0f66b6d",
+        "Ticker": "REM",
+        "Name": "REMME"
+    },
+    {
+        "ContractAddress": "0x04f2e7221fdb1b52a68169b25793e51478ff0329",
+        "Ticker": "CAPP",
+        "Name": "Cappasity"
+    },
+    {
+        "ContractAddress": "0x1776e1f26f98b1a5df9cd347953a26dd3cb46671",
+        "Ticker": "NMR",
+        "Name": "Numeraire"
+    },
+    {
+        "ContractAddress": "0x780116d91e5592e58a3b3c76a351571b39abcec6",
+        "Ticker": "BOXX",
+        "Name": "Boxx"
+    },
+    {
+        "ContractAddress": "0x44bf22949f9cc84b61b9328a9d885d1b5c806b41",
+        "Ticker": "MOZO",
+        "Name": "MozoToken"
+    },
+    {
+        "ContractAddress": "0xc27a2f05fa577a83ba0fdb4c38443c0718356501",
+        "Ticker": "TAU",
+        "Name": "LamdenTau"
+    },
+    {
+        "ContractAddress": "0x6ba460ab75cd2c56343b3517ffeba60748654d26",
+        "Ticker": "UP",
+        "Name": "UpToken"
+    },
+    {
+        "ContractAddress": "0xa645264C5603E96c3b0B078cdab68733794B0A71",
+        "Ticker": "MYST",
+        "Name": "Mysterium"
+    },
+    {
+        "ContractAddress": "0xb5dbc6d3cf380079df3b27135664b6bcf45d1869",
+        "Ticker": "OMX",
+        "Name": "Omix"
+    },
+    {
+        "ContractAddress": "0x41dbecc1cdc5517c6f76f6a6e836adbee2754de3",
+        "Ticker": "MTN",
+        "Name": "MedToken"
+    },
+    {
+        "ContractAddress": "0xa44e5137293e855b1b7bc7e2c6f8cd796ffcb037",
+        "Ticker": "SENT",
+        "Name": "SENTinel"
+    },
+    {
+        "ContractAddress": "0x5e3346444010135322268a4630d2ed5f8d09446c",
+        "Ticker": "LOC",
+        "Name": "LockTrip"
+    },
+    {
+        "ContractAddress": "0x4DF812F6064def1e5e029f1ca858777CC98D2D81",
+        "Ticker": "Xaurum",
+        "Name": "Xaurum"
+    },
+    {
+        "ContractAddress": "0xF4134146AF2d511Dd5EA8cDB1C4AC88C57D60404",
+        "Ticker": "SNC",
+        "Name": "SunContract"
+    },
+    {
+        "ContractAddress": "0x8e1b448ec7adfc7fa35fc2e885678bd323176e34",
+        "Ticker": "EGT",
+        "Name": "Egretia"
+    },
+    {
+        "ContractAddress": "0x74ceda77281b339142a36817fa5f9e29412bab85",
+        "Ticker": "ERO",
+        "Name": "EROSCOIN"
+    },
+    {
+        "ContractAddress": "0xa017ac5fac5941f95010b12570b812c974469c2c",
+        "Ticker": "XES",
+        "Name": "Proxeus"
+    },
+    {
+        "ContractAddress": "0xd49ff13661451313ca1553fd6954bd1d9b6e02b9",
+        "Ticker": "ELEC",
+        "Name": "ElectrifyAsia"
+    },
+    {
+        "ContractAddress": "0x9e6b2b11542f2bc52f3029077ace37e8fd838d7f",
+        "Ticker": "HKN",
+        "Name": "Hacken"
+    },
+    {
+        "ContractAddress": "0xf7b098298f7c69fc14610bf71d5e02c60792894c",
+        "Ticker": "Guppy",
+        "Name": "Guppy"
+    },
+    {
+        "ContractAddress": "0x973e52691176d36453868d9d86572788d27041a9",
+        "Ticker": "DX",
+        "Name": "DxChainToken"
+    },
+    {
+        "ContractAddress": "0x8db54ca569d3019a2ba126d03c37c44b5ef81ef6",
+        "Ticker": "DXT",
+        "Name": "DataWallet"
+    },
+    {
+        "ContractAddress": "0x228ba514309ffdf03a81a205a6d040e429d6e80c",
+        "Ticker": "GSC",
+        "Name": "GlobalSocialChain"
+    },
+    {
+        "ContractAddress": "0x554c20b7c486beee439277b4540a434566dc4c02",
+        "Ticker": "HST",
+        "Name": "DecisionToken"
+    },
+    {
+        "ContractAddress": "0x26db5439f651caf491a87d48799da81f191bdb6b",
+        "Ticker": "CBC",
+        "Name": "CashBetCoin"
+    },
+    {
+        "ContractAddress": "0x3543638ed4a9006e4840b105944271bcea15605d",
+        "Ticker": "UUU",
+        "Name": "UNetworkToken"
+    },
+    {
+        "ContractAddress": "0x72430a612adc007c50e3b6946dbb1bb0fd3101d1",
+        "Ticker": "TIC",
+        "Name": "Thingschain"
+    },
+    {
+        "ContractAddress": "0x69beab403438253f13b6e92db91f7fb849258263",
+        "Ticker": "NTK",
+        "Name": "NeuroToken"
+    },
+    {
+        "ContractAddress": "0x9af4f26941677c706cfecf6d3379ff01bb85d5ab",
+        "Ticker": "DRT",
+        "Name": "DomRaiderToken"
+    },
+    {
+        "ContractAddress": "0xe7775a6e9bcf904eb39da2b68c5efb4f9360e08c",
+        "Ticker": "TAAS",
+        "Name": "TAAS"
+    },
+    {
+        "ContractAddress": "0x378903a03fb2c3ac76bb52773e3ce11340377a32",
+        "Ticker": "CCCX",
+        "Name": "ClipperCoinCapital"
+    },
+    {
+        "ContractAddress": "0x422866a8f0b032c5cf1dfbdef31a20f4509562b0",
+        "Ticker": "ADST",
+        "Name": "Adshares"
+    },
+    {
+        "ContractAddress": "0xf453b5b9d4e0b5c62ffb256bb2378cc2bc8e8a89",
+        "Ticker": "MRK",
+        "Name": "Mark"
+    },
+    {
+        "ContractAddress": "0x2e071D2966Aa7D8dECB1005885bA1977D6038A65",
+        "Ticker": "ROL",
+        "Name": "DICE"
+    },
+    {
+        "ContractAddress": "0x35a69642857083ba2f30bfab735dacc7f0bac969",
+        "Ticker": "BBN",
+        "Name": "BBN"
+    },
+    {
+        "ContractAddress": "0x6531f133e6deebe7f2dce5a0441aa7ef330b4e53",
+        "Ticker": "TIME",
+        "Name": "TIME"
+    },
+    {
+        "ContractAddress": "0x0223fc70574214f65813fe336d870ac47e147fae",
+        "Ticker": "CZR",
+        "Name": "CZR"
+    },
+    {
+        "ContractAddress": "0x543ff227f64aa17ea132bf9886cab5db55dcaddf",
+        "Ticker": "GEN",
+        "Name": "DAOstack"
+    },
+    {
+        "ContractAddress": "0x671abbe5ce652491985342e85428eb1b07bc6c64",
+        "Ticker": "QAU",
+        "Name": "Quantum"
+    },
+    {
+        "ContractAddress": "0xe3f4b4a5d91e5cb9435b947f090a319737036312",
+        "Ticker": "PCH",
+        "Name": "POPCHAINCASH"
+    },
+    {
+        "ContractAddress": "0x986EE2B944c42D017F52Af21c4c69B84DBeA35d8",
+        "Ticker": "BMC",
+        "Name": "BitMartToken"
+    },
+    {
+        "ContractAddress": "0xe469c4473af82217b30cf17b10bcdb6c8c796e75",
+        "Ticker": "EXRN",
+        "Name": "EXRPNetwork"
+    },
+    {
+        "ContractAddress": "0x8d5682941ce456900b12d47ac06a88b47c764ce1",
+        "Ticker": "RMESH",
+        "Name": "RightMeshToken"
+    },
+    {
+        "ContractAddress": "0xfca47962d45adfdfd1ab2d972315db4ce7ccf094",
+        "Ticker": "IXT",
+        "Name": "iXledger"
+    },
+    {
+        "ContractAddress": "0xbc86727e770de68b1060c91f6bb6945c73e10388",
+        "Ticker": "XNK",
+        "Name": "InkProtocol"
+    },
+    {
+        "ContractAddress": "0x9f195617fa8fbad9540c5d113a99a0a0172aaedc",
+        "Ticker": "NBC",
+        "Name": "Niobium"
+    },
+    {
+        "ContractAddress": "0x5c743a35E903F6c584514ec617ACEe0611Cf44f3",
+        "Ticker": "EXY",
+        "Name": "Experty"
+    },
+    {
+        "ContractAddress": "0x171d750d42d661b62c277a6b486adb82348c3eca",
+        "Ticker": "ECOM",
+        "Name": "Omnitude"
+    },
+    {
+        "ContractAddress": "0x82b0e50478eeafde392d45d1259ed1071b6fda81",
+        "Ticker": "DNA",
+        "Name": "DNA"
+    },
+    {
+        "ContractAddress": "0xf3db7560e820834658b590c96234c333cd3d5e5e",
+        "Ticker": "CHP",
+        "Name": "PokerChips"
+    },
+    {
+        "ContractAddress": "0x4375e7ad8a01b8ec3ed041399f62d9cd120e0063",
+        "Ticker": "BZ",
+        "Name": "BZ"
+    },
+    {
+        "ContractAddress": "0x423b5f62b328d0d6d44870f4eee316befa0b2df5",
+        "Ticker": "GOT",
+        "Name": "GoToken"
+    },
+    {
+        "ContractAddress": "0xf3e014fe81267870624132ef3a646b8e83853a96",
+        "Ticker": "VIN",
+        "Name": "VIN"
+    },
+    {
+        "ContractAddress": "0x814e0908b12a99fecf5bc101bb5d0b8b5cdf7d26",
+        "Ticker": "MDT",
+        "Name": "MeasurableDataToken"
+    },
+    {
+        "ContractAddress": "0x4289c043a12392f1027307fb58272d8ebd853912",
+        "Ticker": "ALI",
+        "Name": "AiLinkToken"
+    },
+    {
+        "ContractAddress": "0x5136c98a80811c3f46bdda8b5c4555cfd9f812f0",
+        "Ticker": "IDH",
+        "Name": "indaHashCoin"
+    },
+    {
+        "ContractAddress": "0x3c4a3ffd813a107febd57b2f01bc344264d90fde",
+        "Ticker": "ETK",
+        "Name": "EnergiToken"
+    },
+    {
+        "ContractAddress": "0xDF347911910b6c9A4286bA8E2EE5ea4a39eB2134",
+        "Ticker": "BOB",
+        "Name": "BOBToken"
+    },
+    {
+        "ContractAddress": "0x1cb3209d45b2a60b7fbca1ccdbf87f674237a4aa",
+        "Ticker": "THR",
+        "Name": "ThoreCoin"
+    },
+    {
+        "ContractAddress": "0xa7f976c360ebbed4465c2855684d1aae5271efa9",
+        "Ticker": "TFL",
+        "Name": "TrueFlip"
+    },
+    {
+        "ContractAddress": "0x5554e04e76533e1d14c52f05beef6c9d329e1e30",
+        "Ticker": "NIO",
+        "Name": "Autonio"
+    },
+    {
+        "ContractAddress": "0x27dce1ec4d3f72c3e457cc50354f1f975ddef488",
+        "Ticker": "AIR",
+        "Name": "AirToken"
+    },
+    {
+        "ContractAddress": "0x2baac9330cf9ac479d819195794d79ad0c7616e3",
+        "Ticker": "ADB",
+        "Name": "AdBank"
+    },
+    {
+        "ContractAddress": "0x7728dFEF5aBd468669EB7f9b48A7f70a501eD29D",
+        "Ticker": "PRG",
+        "Name": "PRG"
+    },
+    {
+        "ContractAddress": "0x2c82c73d5b34aa015989462b2948cd616a37641f",
+        "Ticker": "SXUT",
+        "Name": "Spectre.aiU-Token"
+    },
+    {
+        "ContractAddress": "0x1fe70be734e473e5721ea57c8b5b01e6caa52686",
+        "Ticker": "RNTB",
+        "Name": "RNTBToken"
+    },
+    {
+        "ContractAddress": "0x7654915a1b82d6d2d0afc37c52af556ea8983c7e",
+        "Ticker": "IFT",
+        "Name": "Feed"
+    },
+    {
+        "ContractAddress": "0x2859021ee7f2cb10162e67f33af2d22764b31aff",
+        "Ticker": "SNTR",
+        "Name": "SilentNotaryToken"
+    },
+    {
+        "ContractAddress": "0x491c9a23db85623eed455a8efdd6aba9b911c5df",
+        "Ticker": "HER",
+        "Name": "HeroNodeToken"
+    },
+    {
+        "ContractAddress": "0x624d520bab2e4ad83935fa503fb130614374e850",
+        "Ticker": "SSP",
+        "Name": "smartsharetoken"
+    },
+    {
+        "ContractAddress": "0x8ae4bf2c33a8e667de34b54938b0ccd03eb8cc06",
+        "Ticker": "PTOY",
+        "Name": "Patientory"
+    },
+    {
+        "ContractAddress": "0x3d1ba9be9f66b8ee101911bc36d3fb562eac2244",
+        "Ticker": "RVT",
+        "Name": "RvT"
+    },
+    {
+        "ContractAddress": "0x151202c9c18e495656f372281f493eb7698961d5",
+        "Ticker": "DEB",
+        "Name": "DEBITUM"
+    },
+    {
+        "ContractAddress": "0xcfb98637bcae43C13323EAa1731cED2B716962fD",
+        "Ticker": "NET",
+        "Name": "NimiqNetwork"
+    },
+    {
+        "ContractAddress": "0x554ffc77f4251a9fb3c0e3590a6a205f8d4e067d",
+        "Ticker": "ZMN",
+        "Name": "ZMINEToken"
+    },
+    {
+        "ContractAddress": "0x2a093BcF0C98Ef744Bb6F69D74f2F85605324290",
+        "Ticker": "FOOD",
+        "Name": "FoodCoin"
+    },
+    {
+        "ContractAddress": "0xb6ee9668771a79be7967ee29a63d4184f8097143",
+        "Ticker": "CXO",
+        "Name": "CargoX"
+    },
+    {
+        "ContractAddress": "0x13f11c9905a08ca76e3e853be63d4f0944326c72",
+        "Ticker": "DIVX",
+        "Name": "DiviExchangeToken"
+    },
+    {
+        "ContractAddress": "0x9d9223436ddd466fc247e9dbbd20207e640fef58",
+        "Ticker": "OLE",
+        "Name": "Olive"
+    },
+    {
+        "ContractAddress": "0x4f3afec4e5a3f2a6a1a411def7d7dfe50ee057bf",
+        "Ticker": "DGX",
+        "Name": "DigixGoldToken"
+    },
+    {
+        "ContractAddress": "0x0f4ca92660efad97a9a70cb0fe969c755439772c",
+        "Ticker": "LEV",
+        "Name": "Leverj"
+    },
+    {
+        "ContractAddress": "0xaaf37055188feee4869de63464937e683d61b2a1",
+        "Ticker": "UCN",
+        "Name": "UChainToken"
+    },
+    {
+        "ContractAddress": "0x0947b0e6d821378805c9598291385ce7c791a6b2",
+        "Ticker": "LND",
+        "Name": "Lendingblock"
+    },
+    {
+        "ContractAddress": "0x3839d8ba312751aa0248fed6a8bacb84308e20ed",
+        "Ticker": "Bez",
+        "Name": "Bezop"
+    },
+    {
+        "ContractAddress": "0xae4f56f072c34c0a65b3ae3e4db797d831439d93",
+        "Ticker": "GIM",
+        "Name": "Gimli"
+    },
+    {
+        "ContractAddress": "0x2cf618c19041d9db330d8222b860a624021f30fb",
+        "Ticker": "CRBT",
+        "Name": "CRUISEBIT"
+    },
+    {
+        "ContractAddress": "0x9B11EFcAAA1890f6eE52C6bB7CF8153aC5d74139",
+        "Ticker": "ATM",
+        "Name": "ATMChain"
+    },
+    {
+        "ContractAddress": "0xa13f0743951b4f6e3e3aa039f682e17279f52bc3",
+        "Ticker": "SENC",
+        "Name": "SentinelChain"
+    },
+    {
+        "ContractAddress": "0x3136ef851592acf49ca4c825131e364170fa32b3",
+        "Ticker": "COFI",
+        "Name": "CoinFi"
+    },
+    {
+        "ContractAddress": "0x64cdf819d3e75ac8ec217b3496d7ce167be42e80",
+        "Ticker": "IPL",
+        "Name": "InsurePal"
+    },
+    {
+        "ContractAddress": "0x881ef48211982d01e2cb7092c915e647cd40d85c",
+        "Ticker": "OTN",
+        "Name": "OpenTradingNetwork"
+    },
+    {
+        "ContractAddress": "0xe25b0bba01dc5630312b6a21927e578061a13f55",
+        "Ticker": "SHIP",
+        "Name": "ShipChainSHIP"
+    },
+    {
+        "ContractAddress": "0x37e8789bb9996cac9156cd5f5fd32599e6b91289",
+        "Ticker": "AID",
+        "Name": "AidCoin"
+    },
+    {
+        "ContractAddress": "0xfec0cf7fe078a500abf15f1284958f22049c2c7e",
+        "Ticker": "ART",
+        "Name": "MaecenasARTToken"
+    },
+    {
+        "ContractAddress": "0xb9e7f8568e08d5659f5d29c4997173d84cdf2607",
+        "Ticker": "SWT",
+        "Name": "SwarmCity"
+    },
+    {
+        "ContractAddress": "0x4a42d2c580f83dce404acad18dab26db11a1750e",
+        "Ticker": "RLX",
+        "Name": "Relex"
+    },
+    {
+        "ContractAddress": "0x84119cb33e8f590d75c2d6ea4e6b0741a7494eda",
+        "Ticker": "WTT",
+        "Name": "WTT"
+    },
+    {
+        "ContractAddress": "0x23352036e911a22cfc692b5e2e196692658aded9",
+        "Ticker": "FDZ",
+        "Name": "FriendzCoin"
+    },
+    {
+        "ContractAddress": "0x5adc961d6ac3f7062d2ea45fefb8d8167d44b190",
+        "Ticker": "DTH",
+        "Name": "Dether"
+    },
+    {
+        "ContractAddress": "0x0e8d6b471e332f140e7d9dbb99e5e3822f728da6",
+        "Ticker": "ABYSS",
+        "Name": "ABYSS"
+    },
+    {
+        "ContractAddress": "0xef2463099360a085f1f10b076ed72ef625497a06",
+        "Ticker": "SHP",
+        "Name": "SharpePlatformToken"
+    },
+    {
+        "ContractAddress": "0xdd6c68bb32462e01705011a4e2ad1a60740f217f",
+        "Ticker": "HBT",
+        "Name": "Hubiits"
+    },
+    {
+        "ContractAddress": "0x5b26c5d0772e5bbac8b3182ae9a13f9bb2d03765",
+        "Ticker": "LEDU",
+        "Name": "Education"
+    },
+    {
+        "ContractAddress": "0xea610b1153477720748dc13ed378003941d84fab",
+        "Ticker": "ALIS",
+        "Name": "Alis"
+    },
+    {
+        "ContractAddress": "0xbdeb4b83251fb146687fa19d1c660f99411eefe3",
+        "Ticker": "SVD",
+        "Name": "savedroid"
+    },
+    {
+        "ContractAddress": "0xe2492f8d2a2618d8709ca99b1d8d75713bd84089",
+        "Ticker": "HB",
+        "Name": "HeartBout"
+    },
+    {
+        "ContractAddress": "0x1d462414fe14cf489c7a21cac78509f4bf8cd7c0",
+        "Ticker": "CAN",
+        "Name": "CanYaCoin"
+    },
+    {
+        "ContractAddress": "0xa6a840e50bcaa50da017b91a0d86b8b2d41156ee",
+        "Ticker": "EKO",
+        "Name": "EchoLink"
+    },
+    {
+        "ContractAddress": "0x0f8c45b896784a1e408526b9300519ef8660209c",
+        "Ticker": "XMX",
+        "Name": "XMAX"
+    },
+    {
+        "ContractAddress": "0x3a1bda28adb5b0a812a7cf10a1950c920f79bcd3",
+        "Ticker": "FLP",
+        "Name": "FLIP"
+    },
+    {
+        "ContractAddress": "0xfdbc1adc26f0f8f8606a5d63b7d3a3cd21c22b23",
+        "Ticker": "1WO",
+        "Name": "1World"
+    },
+    {
+        "ContractAddress": "0x621d78f2ef2fd937bfca696cabaf9a779f59b3ed",
+        "Ticker": "DRP",
+        "Name": "DCORP"
+    },
+    {
+        "ContractAddress": "0xff5c25d2f40b47c4a37f989de933e26562ef0ac0",
+        "Ticker": "KNT",
+        "Name": "KoraNetworkToken"
+    },
+    {
+        "ContractAddress": "0x0d88ed6e74bbfd96b831231638b66c05571e824f",
+        "Ticker": "AVT",
+        "Name": "AVT"
+    },
+    {
+        "ContractAddress": "0xf04a8ac553fcedb5ba99a64799155826c136b0be",
+        "Ticker": "FLIXX",
+        "Name": "Flixx"
+    },
+    {
+        "ContractAddress": "0x8400d94a5cb0fa0d041a3788e395285d61c9ee5e",
+        "Ticker": "UBT",
+        "Name": "UniBright"
+    },
+    {
+        "ContractAddress": "0x6745fab6801e376cd24f03572b9c9b0d4edddccf",
+        "Ticker": "SENSE",
+        "Name": "Sense"
+    },
+    {
+        "ContractAddress": "0xbbff862d906e348e9946bfb2132ecb157da3d4b4",
+        "Ticker": "SS",
+        "Name": "Sharder"
+    },
+    {
+        "ContractAddress": "0x49b127bc33ce7e1586ec28cec6a65b112596c822",
+        "Ticker": "ALX",
+        "Name": "ALX"
+    },
+    {
+        "ContractAddress": "0x076C97e1c869072eE22f8c91978C99B4bcB02591",
+        "Ticker": "CBT",
+        "Name": "CommerceBlock"
+    },
+    {
+        "ContractAddress": "0x4162178b78d6985480a308b2190ee5517460406d",
+        "Ticker": "CLN",
+        "Name": "ColuLocalNetwork"
+    },
+    {
+        "ContractAddress": "0x910dfc18d6ea3d6a7124a6f8b5458f281060fa4c",
+        "Ticker": "X8X",
+        "Name": "X8XToken"
+    },
+    {
+        "ContractAddress": "0x923108a439c4e8c2315c4f6521e5ce95b44e9b4c",
+        "Ticker": "EVE",
+        "Name": "Devery.io"
+    },
+    {
+        "ContractAddress": "0x9214ec02cb71cba0ada6896b8da260736a67ab10",
+        "Ticker": "REAL",
+        "Name": "RealEstateAssetLedger"
+    },
+    {
+        "ContractAddress": "0xd01db73e047855efb414e6202098c4be4cd2423b",
+        "Ticker": "UQC",
+        "Name": "UquidCoin"
+    },
+    {
+        "ContractAddress": "0x1ccaa0f2a7210d76e1fdec740d5f323e2e1b1672",
+        "Ticker": "FACE",
+        "Name": "Faceter"
+    },
+    {
+        "ContractAddress": "0xd7631787b4dcc87b1254cfd1e5ce48e96823dee8",
+        "Ticker": "SCL",
+        "Name": "SOCIALL"
+    },
+    {
+        "ContractAddress": "0xcb94be6f13a1182e4a4b6140cb7bf2025d28e41b",
+        "Ticker": "TRST",
+        "Name": "Trustcoin"
+    },
+    {
+        "ContractAddress": "0x0af44e2784637218dd1d32a322d44e603a8f0c6a",
+        "Ticker": "MTX",
+        "Name": "Matryx"
+    },
+    {
+        "ContractAddress": "0xffe8196bc259e8dedc544d935786aa4709ec3e64",
+        "Ticker": "HDG",
+        "Name": "Hedge"
+    },
+    {
+        "ContractAddress": "0x6aeb95f06cda84ca345c2de0f3b7f96923a44f4c",
+        "Ticker": "BERRY",
+        "Name": "Berry"
+    },
+    {
+        "ContractAddress": "0xac3da587eac229c9896d919abc235ca4fd7f72c1",
+        "Ticker": "TGT",
+        "Name": "TargetCoin"
+    },
+    {
+        "ContractAddress": "0xb056c38f6b7dc4064367403e26424cd2c60655e1",
+        "Ticker": "CEEK",
+        "Name": "CEEK"
+    },
+    {
+        "ContractAddress": "0xc72fe8e3dd5bef0f9f31f259399f301272ef2a2d",
+        "Ticker": "INSTAR",
+        "Name": "InsightsNetwork"
+    },
+    {
+        "ContractAddress": "0xd559f20296ff4895da39b5bd9add54b442596a61",
+        "Ticker": "FTX",
+        "Name": "FintruXNetwork"
+    },
+    {
+        "ContractAddress": "0xD8912C10681D8B21Fd3742244f44658dBA12264E",
+        "Ticker": "PLU",
+        "Name": "Pluton"
+    },
+    {
+        "ContractAddress": "0xa8006c4ca56f24d6836727d106349320db7fef82",
+        "Ticker": "INXT",
+        "Name": "Internxt"
+    },
+    {
+        "ContractAddress": "0x1bcbc54166f6ba149934870b60506199b6c9db6d",
+        "Ticker": "ROC",
+        "Name": "ROC"
+    },
+    {
+        "ContractAddress": "0x1961b3331969ed52770751fc718ef530838b6dee",
+        "Ticker": "BDG",
+        "Name": "BitDegree"
+    },
+    {
+        "ContractAddress": "0xcc13fc627effd6e35d2d2706ea3c4d7396c610ea",
+        "Ticker": "IDXM",
+        "Name": "IDEXMembership"
+    },
+    {
+        "ContractAddress": "0xfedae5642668f8636a11987ff386bfd215f942ee",
+        "Ticker": "PAL",
+        "Name": "PolicyPalNetwork"
+    },
+    {
+        "ContractAddress": "0x2604fa406be957e542beb89e6754fcde6815e83f",
+        "Ticker": "PKT",
+        "Name": "Playkey"
+    },
+    {
+        "ContractAddress": "0x4ce6b362bc77a24966dda9078f9cef81b3b886a7",
+        "Ticker": "NPER",
+        "Name": "NPER"
+    },
+    {
+        "ContractAddress": "0x9720b467a710382A232a32F540bDCed7d662a10B",
+        "Ticker": "VZT",
+        "Name": "Vezt"
+    },
+    {
+        "ContractAddress": "0x954b5de09a55e59755acbda29e1eb74a45d30175",
+        "Ticker": "FLUZ",
+        "Name": "FluzFluz"
+    },
+    {
+        "ContractAddress": "0x2aec18c5500f21359ce1bea5dc1777344df4c0dc",
+        "Ticker": "FTT",
+        "Name": "FarmaTrustToken"
+    },
+    {
+        "ContractAddress": "0x1c62aca2b7605db3606eacda7bc67a1857ddb8ff",
+        "Ticker": "SONIQ",
+        "Name": "SoniqToken"
+    },
+    {
+        "ContractAddress": "0xca0e7269600d353f70b14ad118a49575455c0f2f",
+        "Ticker": "AMLT",
+        "Name": "AMLT"
+    },
+    {
+        "ContractAddress": "0x8eFFd494eB698cc399AF6231fCcd39E08fd20B15",
+        "Ticker": "PIX",
+        "Name": "PIX"
+    },
+    {
+        "ContractAddress": "0x6781a0f84c7e9e846dcb84a9a5bd49333067b104",
+        "Ticker": "ZAP",
+        "Name": "ZAPTOKEN"
+    },
+    {
+        "ContractAddress": "0x7b22938ca841aa392c93dbb7f4c42178e3d65e88",
+        "Ticker": "ASTRO",
+        "Name": "AstroTokens"
+    },
+    {
+        "ContractAddress": "0xdfdc0d82d96f8fd40ca0cfb4a288955becec2088",
+        "Ticker": "MTC",
+        "Name": "MTCMeshNetwork"
+    },
+    {
+        "ContractAddress": "0x5f53f7a8075614b699baad0bc2c899f4bad8fbbf",
+        "Ticker": "REBL",
+        "Name": "Rebellious"
+    },
+    {
+        "ContractAddress": "0xe34e1944e776f39b9252790a0527ebda647ae668",
+        "Ticker": "HBZ",
+        "Name": "Helbiz"
+    },
+    {
+        "ContractAddress": "0x5d48f293baed247a2d0189058ba37aa238bd4725",
+        "Ticker": "NCC",
+        "Name": "NeuroChainClausius"
+    },
+    {
+        "ContractAddress": "0x17e67d1cb4e349b9ca4bc3e17c7df2a397a7bb64",
+        "Ticker": "FREC",
+        "Name": "FreyrCoin"
+    },
+    {
+        "ContractAddress": "0xd2d6158683aee4cc838067727209a0aaf4359de3",
+        "Ticker": "BNTY",
+        "Name": "Bounty0x"
+    },
+    {
+        "ContractAddress": "0x4d8fc1453a0f359e99c9675954e656d80d996fbf",
+        "Ticker": "BEE",
+        "Name": "Bee"
+    },
+    {
+        "ContractAddress": "0x0d262e5dc4a06a0f1c90ce79c7a60c09dfc884e4",
+        "Ticker": "J8T",
+        "Name": "J8T"
+    },
+    {
+        "ContractAddress": "0xbdc5bac39dbe132b1e030e898ae3830017d7d969",
+        "Ticker": "SNOV",
+        "Name": "Snovio"
+    },
+    {
+        "ContractAddress": "0x241ba672574a78a3a604cdd0a94429a73a84a324",
+        "Ticker": "KWATT",
+        "Name": "4NEW"
+    },
+    {
+        "ContractAddress": "0xea5f88e54d982cbb0c441cde4e79bc305e5b43bc",
+        "Ticker": "PARETO",
+        "Name": "ParetoNetworkToken"
+    },
+    {
+        "ContractAddress": "0x170b275ced089fffaebfe927f445a350ed9160dc",
+        "Ticker": "OWN",
+        "Name": "OwnData"
+    },
+    {
+        "ContractAddress": "0x705EE96c1c160842C92c1aeCfCFfccc9C412e3D9",
+        "Ticker": "POLL",
+        "Name": "ClearPoll"
+    },
+    {
+        "ContractAddress": "0x76974c7b79dc8a6a109fd71fd7ceb9e40eff5382",
+        "Ticker": "dow",
+        "Name": "DOW"
+    },
+    {
+        "ContractAddress": "0x687174f8c49ceb7729d925c3a961507ea4ac7b28",
+        "Ticker": "GAT",
+        "Name": "GAT"
+    },
+    {
+        "ContractAddress": "0x45e42D659D9f9466cD5DF622506033145a9b89Bc",
+        "Ticker": "NxC",
+        "Name": "Nexium"
+    },
+    {
+        "ContractAddress": "0x2f85e502a988af76f7ee6d83b7db8d6c0a823bf9",
+        "Ticker": "LATX",
+        "Name": "LatiumX"
+    },
+    {
+        "ContractAddress": "0xe8663a64a96169ff4d95b4299e7ae9a76b905b31",
+        "Ticker": "Rating",
+        "Name": "Rating"
+    },
+    {
+        "ContractAddress": "0xf44745fbd41f6a1ba151df190db0564c5fcc4410",
+        "Ticker": "CPY",
+        "Name": "COPYTRACK"
+    },
+    {
+        "ContractAddress": "0x05aaaa829afa407d83315cded1d45eb16025910c",
+        "Ticker": "SPX",
+        "Name": "SP8DEToken"
+    },
+    {
+        "ContractAddress": "0x763186eb8d4856d536ed4478302971214febc6a9",
+        "Ticker": "BETR",
+        "Name": "BetterBetting"
+    },
+    {
+        "ContractAddress": "0x02f61fd266da6e8b102d4121f5ce7b992640cf98",
+        "Ticker": "LIKE",
+        "Name": "LikeCoin"
+    },
+    {
+        "ContractAddress": "0x539efe69bcdd21a83efd9122571a64cc25e0282b",
+        "Ticker": "BLUE",
+        "Name": "EthereumBlue"
+    },
+    {
+        "ContractAddress": "0xf8e386eda857484f5a12e4b5daa9984e06e73705",
+        "Ticker": "IND",
+        "Name": "Indorse"
+    },
+    {
+        "ContractAddress": "0x47bc01597798dcd7506dcca36ac4302fc93a8cfb",
+        "Ticker": "CMCT",
+        "Name": "CrowdMachineComputeToken"
+    },
+    {
+        "ContractAddress": "0xa5f8fc0921880cb7342368bd128eb8050442b1a1",
+        "Ticker": "ARY",
+        "Name": "BlockArray"
+    },
+    {
+        "ContractAddress": "0xfd8971d5e8e1740ce2d0a84095fca4de729d0c16",
+        "Ticker": "ZLA",
+        "Name": "Zilla"
+    },
+    {
+        "ContractAddress": "0xb6ed7644c69416d67b522e20bc294a9a9b405b31",
+        "Ticker": "0xBTC",
+        "Name": "0xBitcoinToken"
+    },
+    {
+        "ContractAddress": "0xb62d18dea74045e822352ce4b3ee77319dc5ff2f",
+        "Ticker": "EVC",
+        "Name": "EventChain"
+    },
+    {
+        "ContractAddress": "0x6863be0e7cf7ce860a574760e9020d519a8bdc47",
+        "Ticker": "ONL",
+        "Name": "On.Live"
+    },
+    {
+        "ContractAddress": "0xeb9a4b185816c354db92db09cc3b50be60b901b6",
+        "Ticker": "ORS",
+        "Name": "OriginSportToken"
+    },
+    {
+        "ContractAddress": "0x78b7fada55a64dd895d8c8c35779dd8b67fa8a05",
+        "Ticker": "ATL",
+        "Name": "ATLANT"
+    },
+    {
+        "ContractAddress": "0x3adfc4999f77d04c8341bac5f3a76f58dff5b37a",
+        "Ticker": "PRIX",
+        "Name": "Privatix"
+    },
+    {
+        "ContractAddress": "0xbb49a51ee5a66ca3a8cbe529379ba44ba67e6771",
+        "Ticker": "CST",
+        "Name": "Cryptosolartech"
+    },
+    {
+        "ContractAddress": "0x0Ebb614204E47c09B6C3FeB9AAeCad8EE060E23E",
+        "Ticker": "CPAY",
+        "Name": "CPAY"
+    },
+    {
+        "ContractAddress": "0x13f25cd52b21650caa8225c9942337d914c9b030",
+        "Ticker": "RCT",
+        "Name": "realchain"
+    },
+    {
+        "ContractAddress": "0x001f0aa5da15585e5b2305dbab2bac425ea71007",
+        "Ticker": "IPSX",
+        "Name": "IPSX"
+    },
+    {
+        "ContractAddress": "0x6888a16ea9792c15a4dcf2f6c623d055c8ede792",
+        "Ticker": "SIG",
+        "Name": "Signals"
+    },
+    {
+        "ContractAddress": "0x1234567461d3f8db7496581774bd869c83d51c93",
+        "Ticker": "CAT",
+        "Name": "BitClave"
+    },
+    {
+        "ContractAddress": "0x8542325b72c6d9fc0ad2ca965a78435413a915a0",
+        "Ticker": "SHL",
+        "Name": "OysterShell"
+    },
+    {
+        "ContractAddress": "0x71d01db8d6a2fbea7f8d434599c237980c234e4c",
+        "Ticker": "GLA",
+        "Name": "Gladius"
+    },
+    {
+        "ContractAddress": "0xe477292f1b3268687a29376116b0ed27a9c76170",
+        "Ticker": "PLAY",
+        "Name": "Herocoin"
+    },
+    {
+        "ContractAddress": "0xea097a2b1db00627b2fa17460ad260c016016977",
+        "Ticker": "UFR",
+        "Name": "Upfiring"
+    },
+    {
+        "ContractAddress": "0x96A65609a7B84E8842732DEB08f56C3E21aC6f8a",
+        "Ticker": "CTR",
+        "Name": "Centra"
+    },
+    {
+        "ContractAddress": "0xd341d1680eeee3255b8c4c75bcce7eb57f144dae",
+        "Ticker": "ONG",
+        "Name": "onG"
+    },
+    {
+        "ContractAddress": "0x85089389c14bd9c77fc2b8f0c3d1dc3363bf06ef",
+        "Ticker": "SPF",
+        "Name": "SPF"
+    },
+    {
+        "ContractAddress": "0xba2184520a1cc49a6159c57e61e1844e085615b6",
+        "Ticker": "HGT",
+        "Name": "HelloGold"
+    },
+    {
+        "ContractAddress": "0x999967e2ec8a74b7c8e9db19e039d920b31d39d0",
+        "Ticker": "TIE",
+        "Name": "TieToken"
+    },
+    {
+        "ContractAddress": "0x55648de19836338549130b1af587f16bea46f66b",
+        "Ticker": "PBL",
+        "Name": "Pebbles"
+    },
+    {
+        "ContractAddress": "0xff2b3353c3015e9f1fbf95b9bda23f58aa7ce007",
+        "Ticker": "BITX",
+        "Name": "BitScreenerToken"
+    },
+    {
+        "ContractAddress": "0x5dbac24e98e2a4f43adc0dc82af403fca063ce2c",
+        "Ticker": "EGT",
+        "Name": "EngagementToken"
+    },
+    {
+        "ContractAddress": "0xfd107b473ab90e8fbd89872144a3dc92c40fa8c9",
+        "Ticker": "LALA",
+        "Name": "LALA"
+    },
+    {
+        "ContractAddress": "0x1e26b3d07e57f453cae30f7ddd2f945f5bf3ef33",
+        "Ticker": "XCLR",
+        "Name": "ClearCoin"
+    },
+    {
+        "ContractAddress": "0xedd7c94fd7b4971b916d15067bc454b9e1bad980",
+        "Ticker": "ZIPT",
+        "Name": "Zippie"
+    },
+    {
+        "ContractAddress": "0x1460a58096d80a50a2f1f956dda497611fa4f165",
+        "Ticker": "CHX",
+        "Name": "Chainium"
+    },
+    {
+        "ContractAddress": "0x049399a6b048d52971f7d122ae21a1532722285f",
+        "Ticker": "FLOT",
+        "Name": "FireLotto"
+    },
+    {
+        "ContractAddress": "0x1b22c32cd936cb97c28c5690a0695a82abf688e6",
+        "Ticker": "WISH",
+        "Name": "MyWish"
+    },
+    {
+        "ContractAddress": "0xeee2d00eb7deb8dd6924187f5aa3496b7d06e62a",
+        "Ticker": "TIG",
+        "Name": "Tigereum"
+    },
+    {
+        "ContractAddress": "0x65be44c747988fbf606207698c944df4442efe19",
+        "Ticker": "FUCK",
+        "Name": "FinallyUsableCryptoKarma"
+    },
+    {
+        "ContractAddress": "0xe4c94d45f7aef7018a5d66f44af780ec6023378e",
+        "Ticker": "CCRB",
+        "Name": "CCRB"
+    },
+    {
+        "ContractAddress": "0x1b9743f556d65e757c4c650b4555baf354cb8bd3",
+        "Ticker": "ETBS",
+        "Name": "EthBitsETBSToken"
+    },
+    {
+        "ContractAddress": "0x2fa32a39fc1c399e0cc7b2935868f5165de7ce97",
+        "Ticker": "PFR",
+        "Name": "PayFair"
+    },
+    {
+        "ContractAddress": "0x57ab1e02fee23774580c119740129eac7081e9d3",
+        "Ticker": "nUSD",
+        "Name": "NominUSD"
+    },
+    {
+        "ContractAddress": "0x4618519de4c304f3444ffa7f812dddc2971cc688",
+        "Ticker": "KIND",
+        "Name": "KindAdsToken"
+    },
+    {
+        "ContractAddress": "0x4a527d8fc13c5203ab24ba0944f4cb14658d1db6",
+        "Ticker": "MITx",
+        "Name": "MorpheusInfrastructureToken"
+    },
+    {
+        "ContractAddress": "0x13c2fab6354d3790d8ece4f0f1a3280b4a25ad96",
+        "Ticker": "PHI",
+        "Name": "PHIToken"
+    },
+    {
+        "ContractAddress": "0x39013f961c378f02c2b82a6e1d31e9812786fd9d",
+        "Ticker": "SMS",
+        "Name": "SpeedMiningService"
+    },
+    {
+        "ContractAddress": "0x23b75bc7aaf28e2d6628c3f424b3882f8f072a3c",
+        "Ticker": "VIT",
+        "Name": "Vice"
+    },
+    {
+        "ContractAddress": "0x4355fC160f74328f9b383dF2EC589bB3dFd82Ba0",
+        "Ticker": "OPT",
+        "Name": "Opus"
+    },
+    {
+        "ContractAddress": "0x6dd4e4aad29a40edd6a409b9c1625186c9855b4d",
+        "Ticker": "GENE",
+        "Name": "GENETOKEN(PARKGENE)"
+    },
+    {
+        "ContractAddress": "0x68909e586eeac8f47315e84b4c9788dd54ef65bb",
+        "Ticker": "EVN",
+        "Name": "EvenCoin"
+    },
+    {
+        "ContractAddress": "0xfef3884b603c33ef8ed4183346e093a173c94da6",
+        "Ticker": "METM",
+        "Name": "MetaMorph"
+    },
+    {
+        "ContractAddress": "0x83cee9e086a77e492ee0bb93c2b0437ad6fdeccc",
+        "Ticker": "MNTP",
+        "Name": "GoldmintMNTPrelaunchToken"
+    },
+    {
+        "ContractAddress": "0xc12d099be31567add4e4e4d0d45691c3f58f5663",
+        "Ticker": "AUC",
+        "Name": "Auctus"
+    },
+    {
+        "ContractAddress": "0x83eEA00D838f92dEC4D1475697B9f4D3537b56E3",
+        "Ticker": "VOISE",
+        "Name": "VOISE"
+    },
+    {
+        "ContractAddress": "0x59061b6f26BB4A9cE5828A19d35CFD5A4B80F056",
+        "Ticker": "LGD",
+        "Name": "Legends"
+    },
+    {
+        "ContractAddress": "0x72adadb447784dd7ab1f472467750fc485e4cb2d",
+        "Ticker": "WRC",
+        "Name": "Worldcore"
+    },
+    {
+        "ContractAddress": "0x83e2be8d114f9661221384b3a50d24b96a5653f5",
+        "Ticker": "ZXC",
+        "Name": "0xcertProtocolToken"
+    },
+    {
+        "ContractAddress": "0x3f06b5d78406cd97bdf10f5c420b241d32759c80",
+        "Ticker": "CYFM",
+        "Name": "CYBERFM"
+    },
+    {
+        "ContractAddress": "0x9c23d67aea7b95d80942e3836bcdf7e708a747c2",
+        "Ticker": "LOCI",
+        "Name": "LOCIcoin"
+    },
+    {
+        "ContractAddress": "0x840fe75abfadc0f2d54037829571b2782e919ce4",
+        "Ticker": "WEB",
+        "Name": "Webcoin"
+    },
+    {
+        "ContractAddress": "0x06147110022b768ba8f99a8f385df11a151a9cc8",
+        "Ticker": "ACE",
+        "Name": "ACE"
+    },
+    {
+        "ContractAddress": "0x2bdc0d42996017fce214b21607a515da41a9e0c5",
+        "Ticker": "SKIN",
+        "Name": "SkinCoin"
+    },
+    {
+        "ContractAddress": "0x672a1ad4f667fb18a333af13667aa0af1f5b5bdd",
+        "Ticker": "CRED",
+        "Name": "Verify"
+    },
+    {
+        "ContractAddress": "0xdb8646f5b487b5dd979fac618350e85018f557d4",
+        "Ticker": "BTK",
+        "Name": "BitcoinToken"
+    },
+    {
+        "ContractAddress": "0x12759512d326303b45f1cec8f7b6fd96f387778e",
+        "Ticker": "TRAK",
+        "Name": "TrakInvestToken"
+    },
+    {
+        "ContractAddress": "0xf14922001a2fb8541a433905437ae954419c2439",
+        "Ticker": "DIT",
+        "Name": "Inmediate"
+    },
+    {
+        "ContractAddress": "0xf8e06e4e4a80287fdca5b02dccecaa9d0954840f",
+        "Ticker": "TGAME",
+        "Name": "TGAME"
+    },
+    {
+        "ContractAddress": "0x4f27053f32eda8af84956437bc00e5ffa7003287",
+        "Ticker": "THRT",
+        "Name": "ThriveToken"
+    },
+    {
+        "ContractAddress": "0x588047365df5ba589f923604aac23d673555c623",
+        "Ticker": "NAVI",
+        "Name": "NaviToken"
+    },
+    {
+        "ContractAddress": "0xd938137e6d96c72e4a6085412ada2dad78ff89c4",
+        "Ticker": "AAA",
+        "Name": "ChangeYourLife"
+    },
+    {
+        "ContractAddress": "0xa54ddc7b3cce7fc8b1e3fa0256d0db80d2c10970",
+        "Ticker": "NDC",
+        "Name": "NEVERDIE"
+    },
+    {
+        "ContractAddress": "0x89303500a7abfb178b274fd89f2469c264951e1f",
+        "Ticker": "REF",
+        "Name": "RefToken"
+    },
+    {
+        "ContractAddress": "0xcc34366e3842ca1bd36c1f324d15257960fcc801",
+        "Ticker": "BON",
+        "Name": "Bonpay"
+    },
+    {
+        "ContractAddress": "0x56ba2ee7890461f463f7be02aac3099f6d5811a8",
+        "Ticker": "CAT",
+        "Name": "BlockCAT"
+    },
+    {
+        "ContractAddress": "0x009e864923b49263c7f10d19b7f8ab7a9a5aad33",
+        "Ticker": "FKX",
+        "Name": "Knoxstertoken"
+    },
+    {
+        "ContractAddress": "0x24ddff6d8b8a42d835af3b440de91f3386554aa4",
+        "Ticker": "ING",
+        "Name": "IUNGO"
+    },
+    {
+        "ContractAddress": "0x464ebe77c293e473b48cfe96ddcf88fcf7bfdac0",
+        "Ticker": "KRL",
+        "Name": "Kryll"
+    },
+    {
+        "ContractAddress": "0xeb7c20027172e5d143fb030d50f91cece2d1485d",
+        "Ticker": "EBTC",
+        "Name": "eBitcoin"
+    },
+    {
+        "ContractAddress": "0x5b0751713b2527d7f002c0c4e2a37e1219610a6b",
+        "Ticker": "HORSE",
+        "Name": "Horse"
+    },
+    {
+        "ContractAddress": "0x9002d4485b7594e3e850f0a206713b305113f69e",
+        "Ticker": "HAT",
+        "Name": "Hawala"
+    },
+    {
+        "ContractAddress": "0x52fb36c83ad33c1824912fc81071ca5eeb8ab390",
+        "Ticker": "FID",
+        "Name": "FideliumToken"
+    },
+    {
+        "ContractAddress": "0x48c1b2f3efa85fbafb2ab951bf4ba860a08cdbb7",
+        "Ticker": "HAND",
+        "Name": "ShowHand"
+    },
+    {
+        "ContractAddress": "0x3a1237d38d0fb94513f85d61679cad7f38507242",
+        "Ticker": "MIC",
+        "Name": "Mindexcoin"
+    },
+    {
+        "ContractAddress": "0xf03f8d65bafa598611c3495124093c56e8f638f0",
+        "Ticker": "VIEW",
+        "Name": "VIEW"
+    },
+    {
+        "ContractAddress": "0x1063ce524265d5a3a624f4914acd573dd89ce988",
+        "Ticker": "AIX",
+        "Name": "Aigang"
+    },
+    {
+        "ContractAddress": "0xf3d29fb98d2dc5e78c87198deef99377345fd6f1",
+        "Ticker": "BITPARK",
+        "Name": "BITPARK"
+    },
+    {
+        "ContractAddress": "0x3a92bd396aef82af98ebc0aa9030d25a23b11c6b",
+        "Ticker": "TBX",
+        "Name": "Tokenbox"
+    },
+    {
+        "ContractAddress": "0x9b70740e708a083c6ff38df52297020f5dfaa5ee",
+        "Ticker": "DAN",
+        "Name": "Daneel"
+    },
+    {
+        "ContractAddress": "0xcb5a05bef3257613e984c17dbcf039952b6d883f",
+        "Ticker": "SGR",
+        "Name": "SugarExchange"
+    },
+    {
+        "ContractAddress": "0xece83617db208ad255ad4f45daf81e25137535bb",
+        "Ticker": "INV",
+        "Name": "InvacioCoin"
+    },
+    {
+        "ContractAddress": "0x8f0921f30555624143d427b340b1156914882c10",
+        "Ticker": "FYP",
+        "Name": "Flyp.me"
+    },
+    {
+        "ContractAddress": "0xdae1baf249964bc4b6ac98c3122f0e3e785fd279",
+        "Ticker": "TKA",
+        "Name": "Tokia"
+    },
+    {
+        "ContractAddress": "0x9a005c9a89bd72a4bd27721e7a09a3c11d2b03c4",
+        "Ticker": "STAC",
+        "Name": "StarterCoin"
+    },
+    {
+        "ContractAddress": "0x139d9397274bb9e2c29a9aa8aa0b5874d30d62e3",
+        "Ticker": "BOUTS",
+        "Name": "BoutsPro"
+    },
+    {
+        "ContractAddress": "0xAef38fBFBF932D1AeF3B808Bc8fBd8Cd8E1f8BC5",
+        "Ticker": "CRB",
+        "Name": "CreditBIT"
+    },
+    {
+        "ContractAddress": "0x20f7a3ddf244dc9299975b4da1c39f8d5d75f05a",
+        "Ticker": "SPN",
+        "Name": "SapienNetwork"
+    },
+    {
+        "ContractAddress": "0x1d4ccc31dab6ea20f461d329a0562c1c58412515",
+        "Ticker": "TALAO",
+        "Name": "Talao"
+    },
+    {
+        "ContractAddress": "0x84f7c44b6fed1080f647e354d552595be2cc602f",
+        "Ticker": "BBO",
+        "Name": "Bigbom"
+    },
+    {
+        "ContractAddress": "0x81b4d08645da11374a03749ab170836e4e539767",
+        "Ticker": "PMNT",
+        "Name": "Paymon"
+    },
+    {
+        "ContractAddress": "0xdb455c71c1bc2de4e80ca451184041ef32054001",
+        "Ticker": "JOT",
+        "Name": "Jury.Online"
+    },
+    {
+        "ContractAddress": "0x5c543e7AE0A1104f78406C340E9C64FD9fCE5170",
+        "Ticker": "VSL",
+        "Name": "vSlice"
+    },
+    {
+        "ContractAddress": "0x4c383bdcae52a6e1cb810c76c70d6f31a249ec9b",
+        "Ticker": "RGS",
+        "Name": "Rusgas"
+    },
+    {
+        "ContractAddress": "0x765f0c16d1ddc279295c1a7c24b0883f62d33f75",
+        "Ticker": "DTX",
+        "Name": "DaTaeXchangeToken"
+    },
+    {
+        "ContractAddress": "0x6710c63432a2de02954fc0f851db07146a6c0312",
+        "Ticker": "MFG",
+        "Name": "SyncFabSmartManufacturingBlockchain"
+    },
+    {
+        "ContractAddress": "0xf05a9382A4C3F29E2784502754293D88b835109C",
+        "Ticker": "REX",
+        "Name": "imbrex"
+    },
+    {
+        "ContractAddress": "0x4df47b4969b2911c966506e3592c41389493953b",
+        "Ticker": "FND",
+        "Name": "FundRequest"
+    },
+    {
+        "ContractAddress": "0xf41e5fbc2f6aac200dd8619e121ce1f05d150077",
+        "Ticker": "CRC",
+        "Name": "CryCash"
+    },
+    {
+        "ContractAddress": "0x8810c63470d38639954c6b41aac545848c46484a",
+        "Ticker": "ADI",
+        "Name": "Aditus"
+    },
+    {
+        "ContractAddress": "0xab95e915c123fded5bdfb6325e35ef5515f1ea69",
+        "Ticker": "XNN",
+        "Name": "XENON"
+    },
+    {
+        "ContractAddress": "0x4689a4e169eb39cc9078c0940e21ff1aa8a39b9c",
+        "Ticker": "PTT",
+        "Name": "ProtonToken"
+    },
+    {
+        "ContractAddress": "0x78c292d1445e6b9558bf42e8bc369271ded062ea",
+        "Ticker": "CYMT",
+        "Name": "CyberMusic"
+    },
+    {
+        "ContractAddress": "0x7703c35cffdc5cda8d27aa3df2f9ba6964544b6e",
+        "Ticker": "PYLNT",
+        "Name": "Pylon"
+    },
+    {
+        "ContractAddress": "0xd2946be786f35c3cc402c29b323647abda799071",
+        "Ticker": "VIKKY",
+        "Name": "VikkyToken"
+    },
+    {
+        "ContractAddress": "0x02f2d4a04e6e01ace88bd2cd632875543b2ef577",
+        "Ticker": "PKG",
+        "Name": "PKGToken"
+    },
+    {
+        "ContractAddress": "0x7627de4b93263a6a7570b8dafa64bae812e5c394",
+        "Ticker": "NXX",
+        "Name": "Nexxus"
+    },
+    {
+        "ContractAddress": "0x906b3f8b7845840188eab53c3f5ad348a787752f",
+        "Ticker": "DOR",
+        "Name": "DoradoToken"
+    },
+    {
+        "ContractAddress": "0x737f98ac8ca59f2c68ad658e3c3d8c8963e40a4c",
+        "Ticker": "AMN",
+        "Name": "Amon"
+    },
+    {
+        "ContractAddress": "0xb2135ab9695a7678dd590b1a996cb0f37bcb0718",
+        "Ticker": "SGN",
+        "Name": "SignalsNetworkToken"
+    },
+    {
+        "ContractAddress": "0xb3bd49e28f8f832b8d1e246106991e546c323502",
+        "Ticker": "GMT",
+        "Name": "GlobalMessagingToken"
+    },
+    {
+        "ContractAddress": "0x41875c2332b0877cdfaa699b641402b7d4642c32",
+        "Ticker": "FTXT",
+        "Name": "FUTURAX"
+    },
+    {
+        "ContractAddress": "0x47dd62d4d075dead71d0e00299fc56a2d747bebb",
+        "Ticker": "EQL",
+        "Name": "EQUAL"
+    },
+    {
+        "ContractAddress": "0x5e6016ae7d7c49d347dcf834860b9f3ee282812b",
+        "Ticker": "EZT",
+        "Name": "EZToken"
+    },
+    {
+        "ContractAddress": "0x0b1724cc9fda0186911ef6a75949e9c0d3f0f2f3",
+        "Ticker": "RIYA",
+        "Name": "Etheriya"
+    },
+    {
+        "ContractAddress": "0xe120c1ecbfdfea7f0a8f0ee30063491e8c26fedf",
+        "Ticker": "SUR",
+        "Name": "Suretly"
+    },
+    {
+        "ContractAddress": "0x8e5610ab5e39d26828167640ea29823fe1dd5843",
+        "Ticker": "KNDC",
+        "Name": "KanadeCoin"
+    },
+    {
+        "ContractAddress": "0xcdb7ecfd3403eef3882c65b761ef9b5054890a47",
+        "Ticker": "HUR",
+        "Name": "HurifyToken"
+    },
+    {
+        "ContractAddress": "0x63e634330a20150dbb61b15648bc73855d6ccf07",
+        "Ticker": "LNC",
+        "Name": "LancerToken"
+    },
+    {
+        "ContractAddress": "0x78a73B6CBc5D183CE56e786f6e905CaDEC63547B",
+        "Ticker": "FT",
+        "Name": "FabricToken"
+    },
+    {
+        "ContractAddress": "0xe81d72d14b1516e68ac3190a46c93302cc8ed60f",
+        "Ticker": "CL",
+        "Name": "Coinlancer"
+    },
+    {
+        "ContractAddress": "0x5d4d57cd06fa7fe99e26fdc481b468f77f05073c",
+        "Ticker": "NTK",
+        "Name": "Netkoin"
+    },
+    {
+        "ContractAddress": "0xb802b24e0637c2b87d2e8b7784c055bbe921011a",
+        "Ticker": "EMV",
+        "Name": "EthereumMovieVenture"
+    },
+    {
+        "ContractAddress": "0x519475b31653e46d20cd09f9fdcf3b12bdacb4f5",
+        "Ticker": "VIU",
+        "Name": "VIU"
+    },
+    {
+        "ContractAddress": "0x4aac461c86abfa71e9d00d9a2cde8d74e4e1aeea",
+        "Ticker": "ZINC",
+        "Name": "ZINC"
+    },
+    {
+        "ContractAddress": "0x0371a82e4a9d0a4312f3ee2ac9c6958512891372",
+        "Ticker": "STU",
+        "Name": "StudentCoin"
+    },
+    {
+        "ContractAddress": "0x1c79ab32c66acaa1e9e81952b8aaa581b43e54e7",
+        "Ticker": "TEAM",
+        "Name": "TEAM"
+    },
+    {
+        "ContractAddress": "0x6fff3806bbac52a20e0d79bc538d527f6a22c96b",
+        "Ticker": "CDX",
+        "Name": "Network"
+    },
+    {
+        "ContractAddress": "0x37d40510a2f5bc98aa7a0f7bf4b3453bcfb90ac1",
+        "Ticker": "BBI",
+        "Name": "BelugaBankingInfrastructureToken"
+    },
+    {
+        "ContractAddress": "0x33c623a2baafeb8d15dfaf3ce44095efec83d72c",
+        "Ticker": "SGP",
+        "Name": "SGPay"
+    },
+    {
+        "ContractAddress": "0x0aef06dcccc531e581f0440059e6ffcc206039ee",
+        "Ticker": "ITT",
+        "Name": "IntelligentTradingTechnologies"
+    },
+    {
+        "ContractAddress": "0x02725836ebf3ecdb1cdf1c7b02fcbbfaa2736af8",
+        "Ticker": "BTCA",
+        "Name": "BitAir"
+    },
+    {
+        "ContractAddress": "0xe30e02f049957e2a5907589e06ba646fb2c321ba",
+        "Ticker": "DRPU",
+        "Name": "DRPUtility"
+    },
+    {
+        "ContractAddress": "0xec491c1088eae992b7a214efb0a266ad0927a72a",
+        "Ticker": "RTB",
+        "Name": "AB-CHAINRTBtoken"
+    },
+    {
+        "ContractAddress": "0xf03045a4c8077e38f3b8e2ed33b8aee69edf869f",
+        "Ticker": "MESH",
+        "Name": "BlockMesh"
+    },
+    {
+        "ContractAddress": "0xe8a1df958be379045e2b46a31a98b93a2ecdfded",
+        "Ticker": "ESZ",
+        "Name": "ESZCoin"
+    },
+    {
+        "ContractAddress": "0xce5c603c78d047ef43032e96b5b785324f753a4f",
+        "Ticker": "E4ROW",
+        "Name": "E4ROW"
+    },
+    {
+        "ContractAddress": "0x2dAEE1AA61D60A252DC80564499A69802853583A",
+        "Ticker": "ATS",
+        "Name": "Authorship"
+    },
+    {
+        "ContractAddress": "0x8727c112c712c4a03371ac87a74dd6ab104af768",
+        "Ticker": "JET",
+        "Name": "Jetcoin"
+    },
+    {
+        "ContractAddress": "0x814964b1bceAf24e26296D031EaDf134a2Ca4105",
+        "Ticker": "NEWB",
+        "Name": "Newbium"
+    },
+    {
+        "ContractAddress": "0xa95592dcffa3c080b4b40e459c5f5692f67db7f8",
+        "Ticker": "ELY",
+        "Name": "Elycoin"
+    },
+    {
+        "ContractAddress": "0xe2e6d4be086c6938b53b22144855eef674281639",
+        "Ticker": "LNK",
+        "Name": "LinkPlatform"
+    },
+    {
+        "ContractAddress": "0x138a8752093f4f9a79aaedf48d4b9248fab93c9c",
+        "Ticker": "MCI",
+        "Name": "Musiconomi"
+    },
+    {
+        "ContractAddress": "0xafc39788c51f0c1ff7b55317f3e70299e521fff6",
+        "Ticker": "eBCH",
+        "Name": "eBitcoinCash"
+    },
+    {
+        "ContractAddress": "0x46492473755e8df960f8034877f61732d718ce96",
+        "Ticker": "STRC",
+        "Name": "StarCredits"
+    },
+    {
+        "ContractAddress": "0x13f1b7fdfbe1fc66676d56483e21b1ecb40b58e2",
+        "Ticker": "ACC",
+        "Name": "Accelerator"
+    },
+    {
+        "ContractAddress": "0x8a88f04e0c905054d2f33b26bb3a46d7091a039a",
+        "Ticker": "IG",
+        "Name": "IG"
+    },
+    {
+        "ContractAddress": "0xf4faea455575354d2699bc209b0a65ca99f69982",
+        "Ticker": "NOBS",
+        "Name": "NoBSCrypto"
+    },
+    {
+        "ContractAddress": "0x50ee674689d75c0f88e8f83cfe8c4b69e8fd590d",
+        "Ticker": "EPY",
+        "Name": "EmphyCoin"
+    },
+    {
+        "ContractAddress": "0xe2d82dc7da0e6f882e96846451f4fabcc8f90528",
+        "Ticker": "JC",
+        "Name": "JesusCoin"
+    },
+    {
+        "ContractAddress": "0x05c7065d644096a4e4c3fe24af86e36de021074b",
+        "Ticker": "LCT",
+        "Name": "LendConnect"
+    },
+    {
+        "ContractAddress": "0xef51c9377feb29856e61625caf9390bd0b67ea18",
+        "Ticker": "BNC",
+        "Name": "Bionic"
+    },
+    {
+        "ContractAddress": "0x859a9c0b44cb7066d956a958b0b82e54c9e44b4b",
+        "Ticker": "iETH",
+        "Name": "iEthereum"
+    },
+    {
+        "ContractAddress": "0x88FCFBc22C6d3dBaa25aF478C578978339BDe77a",
+        "Ticker": "KAT",
+        "Name": "Katalyse"
+    },
+    {
+        "ContractAddress": "0xc98e0639c6d2ec037a615341c369666b110e80e5",
+        "Ticker": "EXMR",
+        "Name": "EXMR"
+    },
+    {
+        "ContractAddress": "0xda80b20038bdf968c7307bb5907a469482cf6251",
+        "Ticker": "BNN",
+        "Name": "BrokerNekoNetwork"
+    },
+    {
+        "ContractAddress": "0x1a95b271b0535d15fa49932daba31ba612b52946",
+        "Ticker": "MNE",
+        "Name": "minereum"
+    },
+    {
+        "ContractAddress": "0xd2fa8f92ea72abb35dbd6deca57173d22db2ba49",
+        "Ticker": "ORI",
+        "Name": "OrigamiNetwork"
+    },
+    {
+        "ContractAddress": "0xf6cfe53d6febaeea051f400ff5fc14f0cbbdaca1",
+        "Ticker": "DGPT",
+        "Name": "DigiPulse"
+    },
+    {
+        "ContractAddress": "0x28c8d01ff633ea9cd8fc6a451d7457889e698de6",
+        "Ticker": "ETG",
+        "Name": "EthereumGold"
+    },
+    {
+        "ContractAddress": "0x1f54638b7737193ffd86c19ec51907a7c41755d8",
+        "Ticker": "SOL",
+        "Name": "SolaToken"
+    },
+    {
+        "ContractAddress": "0xcced5b8288086be8c38e23567e684c3740be4d48",
+        "Ticker": "RLT",
+        "Name": "RouletteToken"
+    },
+    {
+        "ContractAddress": "0xb53a96bcbdd9cf78dff20bab6c2be7baec8f00f8",
+        "Ticker": "eGAS",
+        "Name": "ETHGAS"
+    },
+    {
+        "ContractAddress": "0xb0280743b44bf7db4b6be482b2ba7b75e5da096c",
+        "Ticker": "TNS",
+        "Name": "Transcodium"
+    },
+    {
+        "ContractAddress": "0x30ceCB5461A449A90081F5a5F55db4e048397BAB",
+        "Ticker": "TRCT",
+        "Name": "Tracto"
+    },
+    {
+        "ContractAddress": "0x386467f1f3ddbe832448650418311a479eecfc57",
+        "Ticker": "EMB",
+        "Name": "Embers"
+    },
+    {
+        "ContractAddress": "0xd3c00772b24d997a812249ca637a921e81357701",
+        "Ticker": "WILD",
+        "Name": "WILDToken"
+    },
+    {
+        "ContractAddress": "0x1245ef80f4d9e02ed9425375e8f649b9221b31d8",
+        "Ticker": "ARCT",
+        "Name": "ArbitrageCT"
+    },
+    {
+        "ContractAddress": "0x1183f92a5624d68e85ffb9170f16bf0443b4c242",
+        "Ticker": "QVT",
+        "Name": "QVT"
+    },
+    {
+        "ContractAddress": "0x03c780cd554598592b97b7256ddaad759945b125",
+        "Ticker": "BTRN",
+        "Name": "BTRN"
+    },
+    {
+        "ContractAddress": "0xb444208cb0516c150178fcf9a52604bc04a1acea",
+        "Ticker": "GRMD",
+        "Name": "GreenMed"
+    },
+    {
+        "ContractAddress": "0x92e78dae1315067a8819efd6dca432de9dcde2e9",
+        "Ticker": "VRS",
+        "Name": "Veros"
+    },
+    {
+        "ContractAddress": "0x899338b84d25ac505a332adce7402d697d947494",
+        "Ticker": "WIN",
+        "Name": "WCOIN"
+    },
+    {
+        "ContractAddress": "0xd9a12cde03a86e800496469858de8581d3a5353d",
+        "Ticker": "YUP",
+        "Name": "YUP"
+    },
+    {
+        "ContractAddress": "0x900b4449236a7bb26b286601dd14d2bde7a6ac6c",
+        "Ticker": "EARTH",
+        "Name": "EARTHToken"
+    },
+    {
+        "ContractAddress": "0x6aac8cb9861e42bf8259f5abdc6ae3ae89909e11",
+        "Ticker": "BTCR",
+        "Name": "BitcoinRed"
+    },
+    {
+        "ContractAddress": "0xc20464e0c373486d2b3335576e83a218b1618a5e",
+        "Ticker": "DTRC",
+        "Name": "DatariusCredit"
+    },
+    {
+        "ContractAddress": "0xbdcfbf5c4d91abc0bc9709c7286d00063c0e6f22",
+        "Ticker": "GUESS",
+        "Name": "GUESS"
+    },
+    {
+        "ContractAddress": "0xde1e0ae6101b46520cf66fdc0b1059c5cc3d106c",
+        "Ticker": "DELTA",
+        "Name": "DeltaChainToken"
+    },
+    {
+        "ContractAddress": "0x153ed9cc1b792979d2bde0bbf45cc2a7e436a5f9",
+        "Ticker": "XOV",
+        "Name": "XOVBank"
+    },
+    {
+        "ContractAddress": "0xb45a50545beeab73f38f31e5973768c421805e5e",
+        "Ticker": "TKR",
+        "Name": "TKRToken"
+    },
+    {
+        "ContractAddress": "0x679badc551626e01b23ceecefbc9b877ea18fc46",
+        "Ticker": "CCO",
+        "Name": "Ccore"
+    },
+    {
+        "ContractAddress": "0x662abcad0b7f345ab7ffb1b1fbb9df7894f18e66",
+        "Ticker": "CTX",
+        "Name": "CarTaxi"
+    },
+    {
+        "ContractAddress": "0x336f646f87d9f6bc6ed42dd46e8b3fd9dbd15c22",
+        "Ticker": "CCT",
+        "Name": "CrystalClearToken"
+    },
+    {
+        "ContractAddress": "0x44197a4c44d6a059297caf6be4f7e172bd56caaf",
+        "Ticker": "ELTCOIN",
+        "Name": "ELTCOIN"
+    },
+    {
+        "ContractAddress": "0xbd4b60a138b3fce3584ea01f50c0908c18f9677a",
+        "Ticker": "FNTB",
+        "Name": "FinTab"
+    },
+    {
+        "ContractAddress": "0x499a6b77bc25c26bcf8265e2102b1b3dd1617024",
+        "Ticker": "BTR",
+        "Name": "Bitether"
+    },
+    {
+        "ContractAddress": "0x6aedbf8dff31437220df351950ba2a3362168d1b",
+        "Ticker": "DGS",
+        "Name": "Dragonglass"
+    },
+    {
+        "ContractAddress": "0x49aec0752e68d0282db544c677f6ba407ba17ed7",
+        "Ticker": "XBL",
+        "Name": "BillionaireToken"
+    },
+    {
+        "ContractAddress": "0x5a84969bb663fb64f6d015dcf9f622aedc796750",
+        "Ticker": "ICE",
+        "Name": "IDICE"
+    },
+    {
+        "ContractAddress": "0x7b2df125567815ac9b57da04b620f50bc93b320c",
+        "Ticker": "ACTP",
+        "Name": "ArchetypalNetwork"
+    },
+    {
+        "ContractAddress": "0xaec98a708810414878c3bcdf46aad31ded4a4557",
+        "Ticker": "300",
+        "Name": "300Token"
+    },
+    {
+        "ContractAddress": "0x3abdff32f76b42e7635bdb7e425f0231a5f3ab17",
+        "Ticker": "CJT",
+        "Name": "ConnectJob"
+    },
+    {
+        "ContractAddress": "0x93e682107d1e9defb0b5ee701c71707a4b2e46bc",
+        "Ticker": "MCAP",
+        "Name": "MCAP"
+    },
+    {
+        "ContractAddress": "0x501262281b2ba043e2fbf14904980689cddb0c78",
+        "Ticker": "MORE",
+        "Name": "MithrilOre"
+    },
+    {
+        "ContractAddress": "0xcc4ef9eeaf656ac1a2ab886743e98e97e090ed38",
+        "Ticker": "DDF",
+        "Name": "DigitalDevelopersFundToken"
+    },
+    {
+        "ContractAddress": "0xdbfb423e9bbf16294388e07696a5120e4ceba0c5",
+        "Ticker": "ETHD",
+        "Name": "EthereumDark"
+    },
+    {
+        "ContractAddress": "0xec46f8207d766012454c408de210bcbc2243e71c",
+        "Ticker": "NOX",
+        "Name": "Nitro"
+    },
+    {
+        "ContractAddress": "0x44449Fa4d607F807d1eD4a69ad942971728391C8",
+        "Ticker": "XMCT",
+        "Name": "XMEDChainToken"
+    },
+    {
+        "ContractAddress": "0x27f706edde3aD952EF647Dd67E24e38CD0803DD6",
+        "Ticker": "UET",
+        "Name": "UselessEthereumToken"
+    },
+    {
+        "ContractAddress": "0x05d412ce18f24040bb3fa45cf2c69e506586d8e8",
+        "Ticker": "MFTU",
+        "Name": "MFTU"
+    },
+    {
+        "ContractAddress": "0x8a99ed8a1b204903ee46e733f2c1286f6d20b177",
+        "Ticker": "NTO",
+        "Name": "Fujinto"
+    },
+    {
+        "ContractAddress": "0x07d9e49ea402194bf48a8276dafb16e4ed633317",
+        "Ticker": "DALC",
+        "Name": "DALECOIN"
+    },
+    {
+        "ContractAddress": "0x9972a0f24194447e73a7e8b6cd26a52e02ddfad5",
+        "Ticker": "TCH",
+        "Name": "ThoreCash"
+    },
+    {
+        "ContractAddress": "0x9e77d5a1251b6f7d456722a6eac6d2d5980bd891",
+        "Ticker": "BRAT",
+        "Name": "BRAT"
+    },
+    {
+        "ContractAddress": "0x7dc4f41294697a7903c4027f6ac528c5d14cd7eb",
+        "Ticker": "RMC",
+        "Name": "RemiCoin"
+    },
+    {
+        "ContractAddress": "0x33f90dee07c6e8b9682dd20f73e6c358b2ed0f03",
+        "Ticker": "TRDT",
+        "Name": "TridentGroup"
+    },
+    {
+        "ContractAddress": "0xee609fe292128cad03b786dbb9bc2634ccdbe7fc",
+        "Ticker": "POS",
+        "Name": "PoSToken"
+    },
+    {
+        "ContractAddress": "0xca29db4221c111888a7e80b12eac8a266da3ee0d",
+        "Ticker": "BLN",
+        "Name": "Boleno"
+    },
+    {
+        "ContractAddress": "0x87f5e8c3425218837f3cb67db941af0c01323e56",
+        "Ticker": "BTCONE",
+        "Name": "BitCoinONE"
+    },
+    {
+        "ContractAddress": "0x48df4e0296f908ceab0428a5182d19b31fc037d6",
+        "Ticker": "FRV",
+        "Name": "Fitrova"
+    },
+    {
+        "ContractAddress": "0xBAE235823D7255D9D48635cEd4735227244Cd583",
+        "Ticker": "STR",
+        "Name": "Staker"
+    },
+    {
+        "ContractAddress": "0x2233799ee2683d75dfefacbcd2a26c78d34b470d",
+        "Ticker": "NTWK",
+        "Name": "Network"
+    },
+    {
+        "ContractAddress": "0x2a05d22db079bc40c2f77a1d1ff703a56e631cc1",
+        "Ticker": "BAS",
+        "Name": "BitAsean"
+    },
+    {
+        "ContractAddress": "0x5121e348e897daef1eef23959ab290e5557cf274",
+        "Ticker": "AI",
+        "Name": "PolyAi"
+    }
+]

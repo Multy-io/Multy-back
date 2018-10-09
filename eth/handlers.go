@@ -111,7 +111,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			log.Errorf("setGRPCHandlers: cli.AddMultisig: %s", err.Error())
 		}
 
-	Loop:
+		// Loop:
 		for {
 			multisigTx, err := stream.Recv()
 			if err == io.EOF {
@@ -141,7 +141,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				user := store.User{}
 				err := usersData.Find(bson.M{"wallets.addresses.address": strings.ToLower(address)}).One(&user)
 				if err != nil {
-					log.Errorf("cli.AddMultisig:stream.Recv:usersData.Find: not multy user in contrat %v  %v", err.Error(), address)
+					log.Errorf("cli.AddMultisig:stream.Recv:usersData.Find: no multy user in contrat %v -mgo: %v", err.Error(), address)
 					break
 				}
 				// attachedAddress = strings.ToLower(address)
@@ -177,50 +177,54 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 			msUser := store.User{}
 			err = usersData.Find(bson.M{"multisig.inviteCode": invitecode}).One(&msUser)
+			doubleInvited := false
 			for _, checkMs := range msUser.Multisigs {
 				if checkMs.InviteCode == invitecode {
 					if checkMs.ContractAddress != "" {
-						log.Errorf("cli.AddMultisig:stream.Recv:usersData.Find: can't add one more multisig %v", checkMs.ContractAddress)
-						break Loop
+						// break Loop
+						doubleInvited = true
+						break
 					}
 				}
 			}
 
-			for _, user := range users {
-				//TODO:
-				addrs, err := FethUserAddresses(currencies.Ether, multisig.NetworkID, user, multisigTx.Addresses)
-				if err != nil {
-					log.Errorf("createMultisig:FethUserAddresses: %v", err.Error())
-				}
+			if !doubleInvited {
+				for _, user := range users {
+					//TODO:
+					addrs, err := FethUserAddresses(currencies.Ether, multisig.NetworkID, user, multisigTx.Addresses)
+					if err != nil {
+						log.Errorf("createMultisig:FethUserAddresses: %v", err.Error())
+					}
 
-				for _, addr := range addrs {
-					log.Warnf("addr :%v AddressIndex: %v Associated: %v UserID: %v \n", addr.Address, addr.AddressIndex, addr.Associated, addr.UserID)
-				}
+					for _, addr := range addrs {
+						log.Warnf("addr :%v AddressIndex: %v Associated: %v UserID: %v \n", addr.Address, addr.AddressIndex, addr.Associated, addr.UserID)
+					}
 
-				multisig.Owners = addrs
+					multisig.Owners = addrs
 
-				sel := bson.M{"userID": user.UserID, "multisig.inviteCode": invitecode}
-				update := bson.M{"$set": bson.M{
-					"multisig.$.confirmations":   multisig.Confirmations,
-					"multisig.$.contractAddress": multisig.ContractAddress,
-					"multisig.$.txOfCreation":    multisig.TxOfCreation,
-					"multisig.$.factoryAddress":  multisig.FactoryAddress,
-					"multisig.$.lastActionTime":  multisig.LastActionTime,
-					"multisig.$.deployStatus":    multisig.DeployStatus,
-				}}
+					sel := bson.M{"userID": user.UserID, "multisig.inviteCode": invitecode}
+					update := bson.M{"$set": bson.M{
+						"multisig.$.confirmations":   multisig.Confirmations,
+						"multisig.$.contractAddress": multisig.ContractAddress,
+						"multisig.$.txOfCreation":    multisig.TxOfCreation,
+						"multisig.$.factoryAddress":  multisig.FactoryAddress,
+						"multisig.$.lastActionTime":  multisig.LastActionTime,
+						"multisig.$.deployStatus":    multisig.DeployStatus,
+					}}
 
-				err = usersData.Update(sel, update)
-				if err != nil {
-					log.Errorf("cli.AddMultisig:stream.Recv:userStore.Update: %s", err.Error())
+					err = usersData.Update(sel, update)
+					if err != nil {
+						log.Errorf("cli.AddMultisig:stream.Recv:userStore.Update: %s", err.Error())
+					}
+					multisig.InviteCode = invitecode
+					msg := store.WsMessage{
+						Type:    store.NotifyDeploy,
+						To:      user.UserID,
+						Date:    time.Now().Unix(),
+						Payload: multisig,
+					}
+					ethcli.WsServer.BroadcastToAll(store.MsgRecieve+":"+user.UserID, msg)
 				}
-				multisig.InviteCode = invitecode
-				msg := store.WsMessage{
-					Type:    store.NotifyDeploy,
-					To:      user.UserID,
-					Date:    time.Now().Unix(),
-					Payload: multisig,
-				}
-				ethcli.WsServer.BroadcastToAll(store.MsgRecieve+":"+user.UserID, msg)
 			}
 		}
 	}()

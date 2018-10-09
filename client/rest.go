@@ -78,6 +78,7 @@ type RestClient struct {
 
 	donationAddresses []store.DonationInfo
 	mobileVersions    store.MobileVersions
+	ERC20TokenList    store.VerifiedTokenList
 
 	BTC          *btc.BTCConn
 	ETH          *eth.ETHConn
@@ -98,6 +99,7 @@ func SetRestHandlers(
 	mv store.ServerConfig,
 	secretkey string,
 	mobileVer store.MobileVersions,
+	tl store.VerifiedTokenList,
 ) (*RestClient, error) {
 	restClient := &RestClient{
 		userStore:         userDB,
@@ -108,6 +110,7 @@ func SetRestHandlers(
 		MultyVerison:      mv,
 		Secretkey:         secretkey,
 		mobileVersions:    mobileVer,
+		ERC20TokenList:    tl,
 	}
 	initMiddlewareJWT(restClient)
 
@@ -891,21 +894,13 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 			},
 			"servertime": time.Now().UTC().Unix(),
 			"api":        "1.2",
-
-			// "android": map[string]int{
-			// 	"soft": 7,
-			// 	"hard": 7,
-			// },
-			"version": restClient.MultyVerison,
-			// "ios": map[string]int{
-			// 	"soft": 49,
-			// 	"hard": 49,
-			// },
-			"donate": restClient.donationAddresses,
+			"version":    restClient.MultyVerison,
+			"donate":     restClient.donationAddresses,
 			"multisigfactory": map[string]string{
 				"ethtestnet": "0x04f68589f53cfdf408025cd7cea8a40dbf488e49",
 				"ethmainnet": "0xc2cbdd9b58502cff1db5f9cce48ac17a9a550185",
 			},
+			"erc20tokenlist": restClient.ERC20TokenList,
 		}
 		resp["android"] = map[string]int{
 			"soft": restClient.mobileVersions.Android.Soft,

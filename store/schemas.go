@@ -271,33 +271,31 @@ type SpendableOutputs struct {
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 }
 
-type WalletETH struct {
-	// Currency of wallet.
-	CurrencyID int `bson:"currencyID"`
-	// Currency of wallet.
-	NetworkID int `bson:"networkID"`
-
-	//wallet identifier
-	WalletIndex int `bson:"walletIndex"`
-
-	//wallet identifier
-	WalletName string `bson:"walletName"`
-
-	LastActionTime int64 `bson:"lastActionTime"`
-
-	DateOfCreation int64 `bson:"dateOfCreation"`
-
-	// All addresses assigned to this wallet.
-	Adresses []Address `bson:"addresses"`
-
-	// Wallet status
-	Status string `bson:"status"`
-
-	// Balance of the eth wallet in wei
-	Balance int64 `bson:"balance"`
-
-	// Nonce of the wallet - index of the last transaction
-	Nonce int64 `bson:"nonce"`
+type EtherscanResp struct {
+	Status  string                 `json:"status"`
+	Message string                 `json:"message"`
+	Result  []ERC20TokenTransferTx `json:"result"`
+}
+type ERC20TokenTransferTx struct {
+	BlockNumber       string `json:"blockNumber"`
+	TimeStamp         string `json:"timeStamp"`
+	Hash              string `json:"hash"`
+	Nonce             string `json:"nonce"`
+	BlockHash         string `json:"blockHash"`
+	From              string `json:"from"`
+	ContractAddress   string `json:"contractAddress"`
+	To                string `json:"to"`
+	Value             string `json:"value"`
+	TokenName         string `json:"tokenName"`
+	TokenSymbol       string `json:"tokenSymbol"`
+	TokenDecimal      string `json:"tokenDecimal"`
+	TransactionIndex  string `json:"transactionIndex"`
+	Gas               string `json:"gas"`
+	GasPrice          string `json:"gasPrice"`
+	GasUsed           string `json:"gasUsed"`
+	CumulativeGasUsed string `json:"cumulativeGasUsed"`
+	Input             string `json:"input"`
+	Confirmations     string `json:"confirmations"`
 }
 
 type TransactionETH struct {
@@ -535,6 +533,12 @@ type BtcComResp struct {
 	}
 	ErrNo  int         `json:"err_no"`
 	ErrMsg interface{} `json:"err_msg"`
+}
+
+type VerifiedTokenList []struct {
+	ContractAddress string
+	Ticker          string
+	Name            string
 }
 
 func (s *MultisigMsg) FillStruct(m map[string]interface{}) error {

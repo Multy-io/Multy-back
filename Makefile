@@ -19,6 +19,9 @@ all-docker:  setup deps
 run:
 	cd $(GOPATH)/src/github.com/Multy-io/Multy-back/cmd && rm -rf multy && cd .. && make build  && cd cmd && ./$(NAME) && ../
 
+# memprofiler:
+# 	cd $(GOPATH)/src/github.com/Multy-io/Multy-back/cmd && rm -rf multy && cd .. && make build  && cd cmd && ./$(NAME) -memprofile mem.prof && ../
+
 setup:
 	go get -u github.com/kardianos/govendor
 
@@ -46,8 +49,6 @@ todo:
 
 dist:
 	cd ./cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
-dist1:
-	cd ./cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o multy1 .
 
 test: dist
 	cd cmd && scp  multy multy@test.multy.io:/mnt/hdd/back && cd ..
