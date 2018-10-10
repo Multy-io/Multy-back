@@ -53,13 +53,14 @@ const (
 	CheckMultisig      = 5
 	ViewTransaction    = 6
 	DeclineTransaction = 7
-	NotifyDeploy       = 8
-	NotifyPaymentReq   = 9
-	NotifyIncomingTx   = 10
-	NotifyConfirmTx    = 11
-	NotifyRevokeTx     = 12
-	NotifyResyncEnd    = 13
-	NotifyTxSubmitted  = 14
+
+	NotifyDeploy      = 8
+	NotifyPaymentReq  = 9
+	NotifyIncomingTx  = 10
+	NotifyConfirmTx   = 11
+	NotifyRevokeTx    = 12
+	NotifyResyncEnd   = 13
+	NotifyTxSubmitted = 14
 
 	AssetTypeMultyAddress    = 0
 	AssetTypeMultisig        = 1

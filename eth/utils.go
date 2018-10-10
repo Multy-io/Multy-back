@@ -534,9 +534,10 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 		tx.Multisig.Owners = ownerHistorys
 
-		address, _ := parseSubmitInput(tx.Multisig.Input)
+		address, amount := parseSubmitInput(tx.Multisig.Input)
 		tx.From = tx.To
 		tx.To = address
+		tx.Amount = amount
 
 		return tx
 
@@ -913,4 +914,42 @@ func signatuteToStatus(signature string) int {
 	default:
 		return store.NotifyPaymentReq
 	}
+}
+
+func msToUserData(addresses []string, usersData *mgo.Collection) map[string]store.User {
+	users := map[string]store.User{} // ms attached address to user
+	for _, address := range addresses {
+		user := store.User{}
+		err := usersData.Find(bson.M{"wallets.addresses.address": strings.ToLower(address)}).One(&user)
+		if err != nil {
+			break
+		}
+		// attachedAddress = strings.ToLower(address)
+		users[strings.ToLower(address)] = user
+	}
+	return users
+}
+
+// Fetch invite code from undeployed multisigs
+func fetchInviteUndeployed(users map[string]store.User) string {
+	invitecode := ""
+	ownersCount := 0
+	for _, msUser := range users {
+		for _, ms := range msUser.Multisigs {
+			for _, owner := range ms.Owners {
+				for addres := range users {
+					if addres == owner.Address {
+						ownersCount++
+						if ownersCount == ms.OwnersCount {
+							invitecode = ms.InviteCode
+							break
+						}
+					}
+				}
+			}
+			ownersCount = 0
+		}
+	}
+	return invitecode
+
 }

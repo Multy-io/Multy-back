@@ -111,6 +111,8 @@ type UserStore interface {
 	DeleteHistory(CurrencyID, NetworkID int, Address string) error
 
 	FethLastSyncBlockState(networkid, currencyid int) (int64, error)
+	// MsToUserData(addresses []string) map[string]User
+	// sToUserData(addresses []string) map[string]store.User
 
 	CheckTx(tx string) bool
 }
