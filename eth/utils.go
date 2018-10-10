@@ -284,7 +284,7 @@ func (client *Client) parseETHMultisig(rawTX ethrpc.Transaction, blockHeight int
 
 	if blockHeight != -1 {
 		log.Debugf("GetInvocationStatus")
-		invocationStatus, returnValue, err := client.GetInvocationStatus(rawTX.Hash)
+		invocationStatus, returnValue, err := client.GetInvocationStatus(rawTX.Hash, input)
 		if err != nil {
 			log.Errorf("GetInvocationStatus: %v", err.Error())
 			return

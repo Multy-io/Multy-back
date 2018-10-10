@@ -88,25 +88,29 @@ func parseFactoryInput(in string) (*pb.Multisig, error) {
 	return fi, errors.New("Wrong method name")
 }
 
-func (c *Client) GetInvocationStatus(hash string) (bool, string, error) {
+func (c *Client) GetInvocationStatus(hash, method string) (bool, string, error) {
 	m, err := c.Rpc.TransactionReceipt(hash)
 	if err != nil {
 		log.Errorf("FactoryContract:c.Rpc.TransactionReceipt %v", err.Error())
 		return false, "", err
 	}
+	receipt := m["logs"].([]interface{})
 
-	receipt, ok := m["logs"].([]interface{})
-	if !ok {
-		return false, "", errors.New("Trace returnValue unavalible ")
-	}
 	returnValue := ""
 	deployed := false
 	if len(receipt) > 0 {
 		returnValue = receipt[0].(map[string]interface{})["data"].(string)
-		if m["status"] == "0x1" {
+		if returnValue == "0x" {
+			returnValue = ""
+		}
+		if method == store.SubmitTransaction {
+			returnValue = receipt[0].(map[string]interface{})["topics"].([]interface{})[1].(string)[2:]
+		}
+		if m["status"].(string) == "0x1" {
 			deployed = true
 		}
 	}
+	log.Warnf("GetInvocationStatus: deployed: %v returnValue: %v", deployed, returnValue)
 
 	return deployed, returnValue, nil
 	// if !isFailed {
