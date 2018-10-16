@@ -1,0 +1,12 @@
+sudo: required
+
+language: go
+
+services:
+  - docker
+
+before_script:
+  - docker info
+
+script:
+  - docker build .
