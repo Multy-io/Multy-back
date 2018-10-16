@@ -64,7 +64,21 @@ service NodeCommuunications {
 
     rpc GetMultisigInfo (AddressToResync) returns (ContractInfo){
     }
+    
+    // erc20 methods
+    rpc GetERC20Info (AddressToResync) returns (ERC20Info){
+    }
 
+}
+
+message ContractInfo  {
+    int64 ConfirmationsRequired  = 1;
+    repeated string ContractOwners  = 2;
+}
+
+message TokenInfo  {
+    string ContractAddress  = 1;
+    string Balance  = 2;
 }
 
 message RejectedTxs  {
@@ -127,9 +141,28 @@ message ETHTransaction {
 
 }
 
-message ContractInfo{
-    int64 ConfirmationsRequired = 1;
-    repeated string ContractOwners = 2;
+message ERC20Info{
+    repeated ERC20History History = 1;
+    repeated ERC20Balances Balances = 2;
+}
+
+message ERC20Balances{
+    string Address = 1;
+    string Balance = 2;
+}
+
+message ERC20History{
+    string BlockNumber = 1;
+    string TimeStamp = 2;
+    string Hash = 3;
+    string Nonce = 4;
+    string From = 5;
+    string To = 6;
+    string ContractAddress = 7;
+    string Amount = 8;
+    string GasPrice = 9;
+    string GasLimit = 10;
+    string Input = 11;
 }
 
 message MultisigInfo{

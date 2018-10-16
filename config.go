@@ -20,6 +20,7 @@ type Configuration struct {
 	NetworkID       int
 	ResyncUrl       string
 	AbiClientUrl    string
+	EtherscanAPIURL string
 	EtherscanAPIKey string
 	PprofPort       string
 }

@@ -55,6 +55,10 @@ func (s *Server) EventGetGasPrice(ctx context.Context, in *pb.Empty) (*pb.GasPri
 	}, nil
 }
 
+func (s *Server) GetERC20Info(ctx context.Context, in *pb.AddressToResync) (*pb.ERC20Info, error) {
+	return nil, nil
+}
+
 func (s *Server) GetMultisigInfo(ctx context.Context, in *pb.AddressToResync) (*pb.ContractInfo, error) {
 
 	contract, err := NewMultiSigWallet(common.HexToAddress(in.GetAddress()), s.ABIcli)
