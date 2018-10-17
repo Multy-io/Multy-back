@@ -420,7 +420,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 						"txstatus": store.TxStatusInBlockMethodInvocationFail,
 					},
 				}
-				txStore.Update(sel, update)
+				txStore.UpdateAll(sel, update)
 			}
 			tx.Multisig.RequestID = i.Int64()
 
@@ -578,7 +578,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		}
 
 		// update confirmations history
-		err = multisigStore.Update(sel, update)
+		_, err = multisigStore.UpdateAll(sel, update)
 		if err != nil {
 			log.Errorf("ParseMultisigInput:confirmTransaction:multisigStore.Update %v requestid:%v  contract:%v ", err.Error(), originTx.Multisig.RequestID, contract.ContractAddress)
 		}
@@ -603,7 +603,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 					"multisig.confirmed": true,
 				},
 			}
-			err = multisigStore.Update(sel, update)
+			_, err = multisigStore.UpdateAll(sel, update)
 			if err != nil {
 				log.Errorf("ParseMultisigInput:confirmTransaction:multisigStore.Update:contract.Confirmations %v contract:%v ", err.Error(), contract.ContractAddress)
 			}
@@ -701,7 +701,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 					"txstatus": store.TxStatusInBlockMethodInvocationFail,
 				},
 			}
-			txStore.Update(sel, update)
+			txStore.UpdateAll(sel, update)
 		}
 
 		return tx
@@ -740,7 +740,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 			},
 		}
 
-		err = multisigStore.Update(sel, update)
+		_, err = multisigStore.UpdateAll(sel, update)
 		if err != nil {
 			log.Errorf("ParseMultisigInput:revokeConfirmation:multisigStore.Update %v requestid:%v  contract:%v ", err.Error(), i.Int64(), contract.ContractAddress)
 		}
@@ -753,7 +753,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 					"txstatus": store.TxStatusInBlockMethodInvocationFail,
 				},
 			}
-			txStore.Update(sel, update)
+			txStore.UpdateAll(sel, update)
 		}
 
 		return tx
@@ -766,7 +766,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 					"txstatus": store.TxStatusInBlockMethodInvocationFail,
 				},
 			}
-			txStore.Update(sel, update)
+			txStore.UpdateAll(sel, update)
 		}
 		// TODO: notify owners about new transation
 		log.Debugf("incoming transaction: %v", tx.Multisig.Input)

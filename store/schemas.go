@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"time"
 
+	ethpb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
 	"github.com/graarh/golang-socketio"
 )
 
@@ -140,7 +141,8 @@ type Wallet struct {
 
 	Status string `bson:"status"`
 
-	IsImported bool `bson:"isImported"`
+	IsImported   bool `bson:"isImported"`
+	BrokenStatus int  `bson:"brokenStatus"`
 }
 
 type RatesRecord struct {
@@ -273,9 +275,9 @@ type SpendableOutputs struct {
 }
 
 type EtherscanResp struct {
-	Status  string                 `json:"status"`
-	Message string                 `json:"message"`
-	Result  []ERC20TokenTransferTx `json:"result"`
+	Status  string               `json:"status"`
+	Message string               `json:"message"`
+	Result  []ethpb.ERC20History `json:"result"`
 }
 type ERC20TokenTransferTx struct {
 	BlockNumber       string `json:"blockNumber"`
@@ -297,6 +299,12 @@ type ERC20TokenTransferTx struct {
 	CumulativeGasUsed string `json:"cumulativeGasUsed"`
 	Input             string `json:"input"`
 	Confirmations     string `json:"confirmations"`
+}
+
+type TokenBalance struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Result  string `json:"result"`
 }
 
 type TransactionETH struct {

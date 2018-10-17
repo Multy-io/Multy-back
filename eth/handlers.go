@@ -125,59 +125,18 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			log.Warnf("Multisig recved on address contract %v ", multisigTx.Contract)
 
 			multisig := generatedMultisigTxToStore(multisigTx, currencies.Ether, networtkID)
-			// //TODO: fix problem with net id
-			// if networtkID == 0 {
-			// 	multisig.NetworkID = currencies.ETHMain
-			// }
-
-			// if networtkID == 1 {
-			// 	multisig.NetworkID = currencies.ETHTest
-			// }
 
 			log.Warnf("\n\n\n\n\n multisigTx.DeployStatus = %v", multisigTx.DeployStatus)
-			// feth ussers included as owners in multisig
-			// users := map[string]store.User{} // ms attached address to user
-			// // attachedAddress := ""
-			// for _, address := range multisigTx.Addresses {
-			// 	user := store.User{}
-			// 	err := usersData.Find(bson.M{"wallets.addresses.address": strings.ToLower(address)}).One(&user)
-			// 	if err != nil {
-			// 		log.Errorf("cli.AddMultisig:stream.Recv:usersData.Find: no multy user in contrat %v -mgo: %v", err.Error(), address)
-			// 		break
-			// 	}
-			// 	// attachedAddress = strings.ToLower(address)
-			// 	users[strings.ToLower(address)] = user
-			// }
 
 			users := msToUserData(multisigTx.Addresses, usersData)
-
-			// log.Warnf("\nownersCount %v", users)
-			// Fetch invite code from undeployed multisigs
-			// invitecode := ""
-			// ownersCount := 0
-			// for _, msUser := range users {
-			// 	for _, ms := range msUser.Multisigs {
-			// 		for _, owner := range ms.Owners {
-			// 			for addres := range users {
-			// 				if addres == owner.Address {
-			// 					ownersCount++
-			// 					if ownersCount == ms.OwnersCount {
-			// 						invitecode = ms.InviteCode
-			// 						break
-			// 					}
-			// 				}
-			// 			}
-			// 		}
-			// 		ownersCount = 0
-			// 	}
-			// }
 
 			invitecode := fetchInviteUndeployed(users)
 			log.Warnf("\ninvitecode %v", invitecode)
 
+			emptyCode := false
 			if invitecode == "" {
 				log.Errorf("cli.AddMultisig:stream.Recv:not found contract transaction %v", multisigTx.Addresses)
-				break
+				emptyCode = true
 			}
 
 			msUser := store.User{}
@@ -186,15 +145,13 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			for _, checkMs := range msUser.Multisigs {
 				if checkMs.InviteCode == invitecode {
 					if checkMs.ContractAddress != "" {
-						// break Loop
 						doubleInvited = true
 					}
 				}
 			}
 
-			if !doubleInvited {
+			if !doubleInvited && !emptyCode {
 				for _, user := range users {
-					//TODO:
 					addrs, err := FethUserAddresses(currencies.Ether, multisig.NetworkID, user, multisigTx.Addresses)
 					if err != nil {
 						log.Errorf("createMultisig:FethUserAddresses: %v", err.Error())
@@ -231,6 +188,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				}
 			}
 		}
+		log.Panicf("AddMultisig")
 	}()
 
 	// add to transaction history record and send ws notification on tx

@@ -140,6 +140,7 @@ func SetRestHandlers(
 		v1.POST("/resync/wallet/:currencyid/:networkid/:walletindex/*type", restClient.resyncWallet())
 		v1.GET("/exchange/changelly/list", restClient.changellyListCurrencies())
 		v1.GET("/multisig/estimate/:contractaddress", restClient.estimateMultisig())
+		v1.POST("/wallet/convert/broken", restClient.convertToBroken())
 	}
 	return restClient, nil
 }
@@ -530,8 +531,10 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 			return
 		}
 
-		// Create multisig
+		// New multisig
 		if wp.Multisig.IsMultisig {
+
+			// Create multisig
 			if !wp.Multisig.IsImported {
 				if wp.Multisig.OwnersCount < wp.Multisig.SignaturesRequired || wp.Multisig.OwnersCount < 2 {
 					c.JSON(http.StatusBadRequest, gin.H{
@@ -565,13 +568,13 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 				return
 			}
 
-			//TODO: beautify
+			//Import multisig
 			if wp.Multisig.IsImported {
-
+				wp.Multisig.ContractAddress = strings.ToLower(wp.Multisig.ContractAddress)
 				msInfo := &ethpb.ContractInfo{}
 				var err error
 				address := &ethpb.AddressToResync{
-					Address: wp.Multisig.ContractAddress,
+					Address: strings.ToLower(wp.Multisig.ContractAddress),
 				}
 				switch wp.NetworkID {
 				case currencies.ETHMain:
@@ -602,9 +605,9 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 				}
 				msOwners := []store.AddressExtended{}
 
+				// Check address relation to userid
 				walletIndex := 0
 				isRelatedAddres := false
-				// feth owner address wallet index
 				for _, wallet := range user.Wallets {
 					if len(wallet.Adresses) > 0 {
 						if wallet.Adresses[0].Address == wp.Address {
@@ -623,14 +626,14 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 					return
 				}
 
-				// one user can't be multiple owner of one multisig
-				existMultisig := false
+				// single user can't import multisig twice
+				alreadyImported := false
 				for _, multisig := range user.Multisigs {
-					if multisig.ContractAddress == wp.Multisig.ContractAddress {
-						existMultisig = true
+					if strings.ToLower(multisig.ContractAddress) == strings.ToLower(wp.Multisig.ContractAddress) {
+						alreadyImported = true
 					}
 				}
-				if existMultisig {
+				if alreadyImported {
 					restClient.log.Errorf("addWallet: createCustomMultisig: user already have this multisig\t[addr=%s]", c.Request.RemoteAddr)
 					c.JSON(http.StatusBadRequest, gin.H{
 						"code":    http.StatusBadRequest,
@@ -641,6 +644,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 
 				// check for user address relation to multisig
 				existMember := false
+				relatedAddressConut := 0
 				for _, owner := range msInfo.GetContractOwners() {
 					if owner == wp.Address {
 						msOwners = append(msOwners, store.AddressExtended{
@@ -650,6 +654,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 							WalletIndex:  walletIndex,
 							AddressIndex: wp.AddressIndex,
 						})
+						relatedAddressConut++
 						existMember = true
 					} else {
 						msOwners = append(msOwners, store.AddressExtended{
@@ -667,6 +672,16 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 					return
 				}
 
+				// user can't be multisig member twice
+				if relatedAddressConut > 1 {
+					restClient.log.Errorf("addWallet: createCustomMultisig: user can't be multisig member twice \t[addr=%s]", c.Request.RemoteAddr)
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": "address are not member of multisig",
+					})
+					return
+				}
+
 				// creating invitecode for multisig
 				sha512 := sha512.New()
 				sha512.Write([]byte(wp.Multisig.ContractAddress))
@@ -675,7 +690,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 				sel := bson.M{"multisig.inviteCode": invitecode}
 				msUsers := restClient.userStore.FindMultisigUsers(invitecode)
 
-				// join multisig
+				// add multisig to db
 				if len(msUsers) > 0 {
 					multisig, err := restClient.userStore.FindMultisig(msUsers[0].UserID, invitecode)
 					if err != nil {
@@ -688,14 +703,14 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 					}
 
 					// can't join to multy multsig
-					if !multisig.Imported {
-						restClient.log.Errorf("addWallet: createCustomMultisig: you can't join multy multisig")
-						c.JSON(http.StatusBadRequest, gin.H{
-							"code":    http.StatusBadRequest,
-							"message": "you can't join multy multisig",
-						})
-						return
-					}
+					// if !multisig.Imported {
+					// 	restClient.log.Errorf("addWallet: createCustomMultisig: you can't join multy multisig")
+					// 	c.JSON(http.StatusBadRequest, gin.H{
+					// 		"code":    http.StatusBadRequest,
+					// 		"message": "you can't join multy multisig",
+					// 	})
+					// 	return
+					// }
 
 					owners := []store.AddressExtended{}
 					for _, owner := range multisig.Owners {
@@ -712,7 +727,6 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 								Address: owner.Address,
 							})
 						}
-
 					}
 
 					multisig.Owners = owners
@@ -749,15 +763,15 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 
 				}
 
-				ms := importMultisig(wp.CurrencyID, wp.NetworkID, int(msInfo.GetConfirmationsRequired()), invitecode, wp.Multisig.ContractAddress, wp.WalletName, msOwners)
+				ms := importMultisig(wp.CurrencyID, wp.NetworkID, int(msInfo.GetConfirmationsRequired()), invitecode, strings.ToLower(wp.Multisig.ContractAddress), wp.WalletName, msOwners)
 				switch ms.NetworkID {
 				case currencies.ETHMain:
 					_, err = restClient.ETH.CliMain.EventAddNewMultisig(context.Background(), &ethpb.WatchAddress{
-						Address: wp.Multisig.ContractAddress,
+						Address: strings.ToLower(wp.Multisig.ContractAddress),
 					})
 				case currencies.ETHTest:
 					_, err = restClient.ETH.CliTest.EventAddNewMultisig(context.Background(), &ethpb.WatchAddress{
-						Address: wp.Multisig.ContractAddress,
+						Address: strings.ToLower(wp.Multisig.ContractAddress),
 					})
 				}
 				if err != nil {
@@ -1945,6 +1959,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					PendingBalance: pendingBalance,
 					VerboseAddress: av,
 					Pending:        pending,
+					Broken:         wallet.BrokenStatus,
 				})
 				av = []ETHAddressVerbose{}
 
@@ -2036,7 +2051,6 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					PendingBalance: pendingBalance,
 					VerboseAddress: av,
 					Pending:        pending,
-
 					Multisig: &MultisigVerbose{
 						Owners:         multisig.Owners,
 						Confirmations:  multisig.Confirmations,
@@ -2137,6 +2151,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					PendingBalance: pendingBalance,
 					VerboseAddress: av,
 					Pending:        pending,
+					Broken:         wallet.BrokenStatus,
 				})
 				av = []ETHAddressVerbose{}
 			}
@@ -2182,6 +2197,7 @@ type WalletVerboseETH struct {
 	VerboseAddress []ETHAddressVerbose `json:"addresses"`
 	Pending        bool                `json:"pending"`
 	Syncing        bool                `json:"issyncing"`
+	Broken         int                 `json:"brokenStatus"`
 	Multisig       *MultisigVerbose    `json:"multisig,omitempty"`
 }
 
@@ -2418,6 +2434,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					DateOfCreation: wallet.DateOfCreation,
 					VerboseAddress: av,
 					Pending:        pending,
+					Broken:         wallet.BrokenStatus,
 				})
 				av = []ETHAddressVerbose{}
 			default:
@@ -2811,6 +2828,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 					return
 				}
 
+				history := []store.TransactionETH{}
 				for i := 0; i < len(userTxs); i++ {
 					if userTxs[i].BlockHeight == -1 {
 						userTxs[i].Confirmations = 0
@@ -2818,12 +2836,13 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 						userTxs[i].Confirmations = int(blockHeight-userTxs[i].BlockHeight) + 1
 					}
 					userTxs[i].Multisig = nil
+					history = append(history, userTxs[i])
 				}
 
 				c.JSON(http.StatusOK, gin.H{
 					"code":    http.StatusOK,
 					"message": http.StatusText(http.StatusOK),
-					"history": userTxs,
+					"history": history,
 				})
 				return
 			}
@@ -3033,6 +3052,54 @@ func (restClient *RestClient) estimateMultisig() gin.HandlerFunc {
 		})
 
 	}
+}
+
+func (restClient *RestClient) convertToBroken() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token, err := getToken(c)
+		if err != nil {
+			restClient.log.Errorf("addWallet: getToken: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrHeaderError,
+			})
+			return
+		}
+
+		user := store.User{}
+		sel := bson.M{"devices.JWT": token}
+		err = restClient.userStore.FindUser(sel, &user)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrUserNotFound,
+			})
+			return
+		}
+
+		var br brokenWallets
+		err = decodeBody(c, &br)
+		if err != nil {
+			restClient.log.Errorf("addWallet: decodeBody: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": msgErrRequestBodyError,
+			})
+			return
+		}
+
+		restClient.userStore.ConvertToBroken(br.Addresses, user.UserID)
+
+		c.JSON(http.StatusOK, gin.H{
+			"code":    http.StatusOK,
+			"message": http.StatusText(http.StatusOK),
+		})
+
+	}
+}
+
+type brokenWallets struct {
+	Addresses []string `json:"addresses"`
 }
 
 func (restClient *RestClient) changellyListCurrencies() gin.HandlerFunc {

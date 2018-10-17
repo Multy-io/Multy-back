@@ -109,6 +109,7 @@ type UserStore interface {
 	UpdateMultisigOwners(userid, invitecode string, owners []AddressExtended, deployStatus int) error
 
 	DeleteHistory(CurrencyID, NetworkID int, Address string) error
+	ConvertToBroken(addresses []string, userid string)
 
 	FethLastSyncBlockState(networkid, currencyid int) (int64, error)
 	// MsToUserData(addresses []string) map[string]User
@@ -284,6 +285,18 @@ func (mStore *MongoUserStore) FethUserAddresses(currencyID, networkID int, useri
 	return AddressExtended{}, nil
 }
 
+func (mStore *MongoUserStore) ConvertToBroken(addresses []string, userid string) {
+	for _, address := range addresses {
+		sel := bson.M{"userID": userid, "wallets.addresses.address": address}
+		fmt.Println(sel)
+		update := bson.M{"$set": bson.M{
+			"wallets.$.brokenStatus": 1,
+		}}
+		err := mStore.usersData.Update(sel, update)
+		fmt.Println("err : ", err)
+	}
+}
+
 func (mStore *MongoUserStore) DeleteHistory(CurrencyID, NetworkID int, Address string) error {
 
 	switch CurrencyID {
@@ -359,7 +372,7 @@ func (mStore *MongoUserStore) DeleteWallet(userid, address string, walletindex, 
 			return mStore.usersData.Update(sel, update)
 		}
 	case AssetTypeImportedAddress:
-		query := bson.M{"userID": userid, "wallets.addresses.address": address, "true": true}
+		query := bson.M{"userID": userid, "wallets.addresses.address": address, "wallets.isImported": true}
 		update := bson.M{
 			"$set": bson.M{
 				"wallets.$.status": WalletStatusDeleted,
@@ -492,7 +505,7 @@ func (mStore *MongoUserStore) GetAllAddressTransactions(address string, currency
 				bson.M{"to": address},
 				bson.M{"from": address},
 			},
-			"userid": "imported",
+			// "userid": "imported",
 		}
 
 		if networkID == currencies.ETHMain {
