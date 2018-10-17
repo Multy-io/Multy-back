@@ -1868,9 +1868,11 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 			var totalBalance string
 			var pendingBalance string
 			var waletNonce int64
+			var erc20Info *ethpb.ERC20Info
 			wallet := store.Wallet{}
 			multisig := store.Multisig{}
 
+			// imported wallet verbose
 			if assetType == store.AssetTypeImportedAddress && derivationPath != "" {
 				for _, w := range user.Wallets {
 					if len(w.Adresses) > 0 {
@@ -1899,14 +1901,20 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					adr := ethpb.AddressToResync{
 						Address: address.Address,
 					}
+					ercAddres := &ethpb.ERC20Address{
+						Address:      address.Address,
+						OnlyBalances: true,
+					}
 
 					switch networkId {
 					case currencies.ETHTest:
 						nonce, err = restClient.ETH.CliTest.EventGetAdressNonce(context.Background(), &adr)
 						amount, err = restClient.ETH.CliTest.EventGetAdressBalance(context.Background(), &adr)
+						erc20Info, err = restClient.ETH.CliTest.GetERC20Info(context.Background(), ercAddres)
 					case currencies.ETHMain:
 						nonce, err = restClient.ETH.CliMain.EventGetAdressNonce(context.Background(), &adr)
 						amount, err = restClient.ETH.CliMain.EventGetAdressBalance(context.Background(), &adr)
+						erc20Info, err = restClient.ETH.CliMain.GetERC20Info(context.Background(), ercAddres)
 					default:
 						c.JSON(code, gin.H{
 							"code":    http.StatusBadRequest,
@@ -1943,6 +1951,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 						AddressIndex:   address.AddressIndex,
 						Amount:         totalBalance,
 						Nonce:          waletNonce,
+						ERC20Balances:  erc20Info.Balances,
 					})
 
 				}
@@ -2033,7 +2042,6 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					waletNonce = nonce.GetNonce()
 
 				}
-
 				av = append(av, ETHAddressVerbose{
 					LastActionTime: multisig.LastActionTime,
 					Address:        multisig.ContractAddress,
@@ -2091,14 +2099,20 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 					adr := ethpb.AddressToResync{
 						Address: address.Address,
 					}
+					ercAddres := &ethpb.ERC20Address{
+						Address:      address.Address,
+						OnlyBalances: true,
+					}
 
 					switch networkId {
 					case currencies.ETHTest:
 						nonce, err = restClient.ETH.CliTest.EventGetAdressNonce(context.Background(), &adr)
 						amount, err = restClient.ETH.CliTest.EventGetAdressBalance(context.Background(), &adr)
+						erc20Info, err = restClient.ETH.CliTest.GetERC20Info(context.Background(), ercAddres)
 					case currencies.ETHMain:
 						nonce, err = restClient.ETH.CliMain.EventGetAdressNonce(context.Background(), &adr)
 						amount, err = restClient.ETH.CliMain.EventGetAdressBalance(context.Background(), &adr)
+						erc20Info, err = restClient.ETH.CliMain.GetERC20Info(context.Background(), ercAddres)
 					default:
 						c.JSON(code, gin.H{
 							"code":    http.StatusBadRequest,
@@ -2135,6 +2149,7 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 						AddressIndex:   address.AddressIndex,
 						Amount:         totalBalance,
 						Nonce:          waletNonce,
+						ERC20Balances:  erc20Info.Balances,
 					})
 
 				}
@@ -2212,11 +2227,12 @@ type AddressVerbose struct {
 }
 
 type ETHAddressVerbose struct {
-	LastActionTime int64  `json:"lastactiontime"`
-	Address        string `json:"address"`
-	AddressIndex   int    `json:"addressindex"`
-	Amount         string `json:"amount"`
-	Nonce          int64  `json:"nonce,omitempty"`
+	LastActionTime int64                  `json:"lastactiontime"`
+	Address        string                 `json:"address"`
+	AddressIndex   int                    `json:"addressindex"`
+	Amount         string                 `json:"amount"`
+	Nonce          int64                  `json:"nonce,omitempty"`
+	ERC20Balances  []*ethpb.ERC20Balances `json:"erc20balances"`
 }
 
 type MultisigVerbose struct {
@@ -2365,9 +2381,10 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 				var av []ETHAddressVerbose
 				var pending bool
 				var walletNonce int64
-
 				var totalBalance string
 				var pendingBalance string
+				var erc20Info *ethpb.ERC20Info
+
 				for _, address := range wallet.Adresses {
 					amount := &ethpb.Balance{}
 					nonce := &ethpb.Nonce{}
@@ -2376,14 +2393,20 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					adr := ethpb.AddressToResync{
 						Address: address.Address,
 					}
+					ercAddres := &ethpb.ERC20Address{
+						Address:      address.Address,
+						OnlyBalances: true,
+					}
 
 					switch wallet.NetworkID {
 					case currencies.ETHTest:
 						nonce, err = restClient.ETH.CliTest.EventGetAdressNonce(context.Background(), &adr)
 						amount, err = restClient.ETH.CliTest.EventGetAdressBalance(context.Background(), &adr)
+						erc20Info, err = restClient.ETH.CliTest.GetERC20Info(context.Background(), ercAddres)
 					case currencies.ETHMain:
 						nonce, err = restClient.ETH.CliMain.EventGetAdressNonce(context.Background(), &adr)
 						amount, err = restClient.ETH.CliMain.EventGetAdressBalance(context.Background(), &adr)
+						erc20Info, err = restClient.ETH.CliTest.GetERC20Info(context.Background(), ercAddres)
 					default:
 						c.JSON(code, gin.H{
 							"code":    http.StatusBadRequest,
@@ -2418,6 +2441,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 						AddressIndex:   address.AddressIndex,
 						Amount:         totalBalance,
 						Nonce:          walletNonce,
+						ERC20Balances:  erc20Info.Balances,
 					})
 
 				}
@@ -2711,6 +2735,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 		case currencies.Ether:
 			var blockHeight int64
 
+			// tokenHistory := []*ethpb.ERC20History
 			switch networkid {
 			case currencies.ETHTest:
 				resp, err := restClient.ETH.CliTest.EventGetBlockHeight(context.Background(), &ethpb.Empty{})
@@ -2748,6 +2773,15 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 					})
 					return
 				}
+				// w := store.Wallet{}
+				// for _, wallet := range user.Wallets {
+				// 	for _,address := range wallet.Adresses {
+				// 		if wallet.CurrencyID == currencyId && wallet.NetworkID == networkid && wallet.WalletIndex == walletIndex {
+				// 			w = wallet
+				// 			break
+				// 		}
+				// 	}
+				// }
 
 				for i := 0; i < len(userTxs); i++ {
 					if userTxs[i].BlockTime == 0 {
@@ -2763,6 +2797,37 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 					if tx.WalletIndex == walletIndex {
 						history = append(history, tx)
 					}
+				}
+
+				c.JSON(http.StatusOK, gin.H{
+					"code":    http.StatusOK,
+					"message": http.StatusText(http.StatusOK),
+					"history": history,
+				})
+				return
+			}
+
+			//history for Imported Address
+			if assetType == store.AssetTypeImportedAddress && derivationPath != "" {
+				err = restClient.userStore.GetAllAddressTransactions(derivationPath, currencyId, networkid, &userTxs)
+				if err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{
+						"code":    http.StatusBadRequest,
+						"message": msgErrTxHistory,
+						"history": walletTxs,
+					})
+					return
+				}
+
+				history := []store.TransactionETH{}
+				for i := 0; i < len(userTxs); i++ {
+					if userTxs[i].BlockHeight == -1 {
+						userTxs[i].Confirmations = 0
+					} else {
+						userTxs[i].Confirmations = int(blockHeight-userTxs[i].BlockHeight) + 1
+					}
+					userTxs[i].Multisig = nil
+					history = append(history, userTxs[i])
 				}
 
 				c.JSON(http.StatusOK, gin.H{
@@ -2814,37 +2879,6 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 				})
 				return
 
-			}
-
-			//history for Imported Address
-			if assetType == store.AssetTypeImportedAddress && derivationPath != "" {
-				err = restClient.userStore.GetAllAddressTransactions(derivationPath, currencyId, networkid, &userTxs)
-				if err != nil {
-					c.JSON(http.StatusBadRequest, gin.H{
-						"code":    http.StatusBadRequest,
-						"message": msgErrTxHistory,
-						"history": walletTxs,
-					})
-					return
-				}
-
-				history := []store.TransactionETH{}
-				for i := 0; i < len(userTxs); i++ {
-					if userTxs[i].BlockHeight == -1 {
-						userTxs[i].Confirmations = 0
-					} else {
-						userTxs[i].Confirmations = int(blockHeight-userTxs[i].BlockHeight) + 1
-					}
-					userTxs[i].Multisig = nil
-					history = append(history, userTxs[i])
-				}
-
-				c.JSON(http.StatusOK, gin.H{
-					"code":    http.StatusOK,
-					"message": http.StatusText(http.StatusOK),
-					"history": history,
-				})
-				return
 			}
 		default:
 			c.JSON(http.StatusBadRequest, gin.H{

@@ -325,6 +325,7 @@ type TransactionETH struct {
 	Confirmations     int                   `json:"confirmations"`
 	IsInternal        bool                  `json:"isinternal"`
 	Multisig          *MultisigTx           `json:"multisig,omitempty"`
+	ERC20Token        *ERC20Tx              `json:"erc20Token,omitempty"`
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 }
 
@@ -337,6 +338,13 @@ type MultisigTx struct {
 	Return           string         `json:"return,omitempty"`
 	Owners           []OwnerHistory `json:"owners,omitempty"`
 	Confirmed        bool           `json:"confirmed"`
+}
+
+type ERC20Tx struct {
+	From            string `json:"from"`
+	To              string `json:"to"`
+	ContractAddress string `json:"ContractAddress"`
+	Value           string `json:"value"`
 }
 
 type Multisig struct {
