@@ -14,6 +14,7 @@ import (
 	bind "github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/parnurzeal/gorequest"
 
 	"github.com/Multy-io/Multy-ETH-node-service/eth"
 	pb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
@@ -33,6 +34,7 @@ type Server struct {
 	NetworkID       int
 	ResyncUrl       string
 	EtherscanAPIKey string
+	EtherscanAPIURL string
 	ABIcli          *ethclient.Client
 }
 
@@ -55,8 +57,56 @@ func (s *Server) EventGetGasPrice(ctx context.Context, in *pb.Empty) (*pb.GasPri
 	}, nil
 }
 
-func (s *Server) GetERC20Info(ctx context.Context, in *pb.AddressToResync) (*pb.ERC20Info, error) {
-	return nil, nil
+func (s *Server) GetERC20Info(ctx context.Context, in *pb.ERC20Address) (*pb.ERC20Info, error) {
+	addressInfo := &pb.ERC20Info{}
+
+	// erc token tx hisotry
+	url := s.EtherscanAPIURL + "/api?module=account&action=tokentx&address=" + in.GetAddress() + "&startblock=0&endblock=999999999&sort=asc&apikey=" + s.EtherscanAPIKey
+	request := gorequest.New()
+	resp, _, errs := request.Get(url).Retry(10, 3*time.Second, http.StatusForbidden, http.StatusBadRequest, http.StatusInternalServerError).End()
+	if len(errs) > 0 {
+
+	}
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(`return errors.Wrap(err, "failed to read response body")`)
+	}
+
+	tokenresp := store.EtherscanResp{}
+	if err := json.Unmarshal(respBody, &tokenresp); err != nil {
+		fmt.Println(`fmt.Println("err Unmarshal ", err)`)
+	}
+	for _, tx := range tokenresp.Result {
+		addressInfo.History = append(addressInfo.History, &tx)
+	}
+
+	// erc token balances
+	tokens := map[string]string{}
+	for _, token := range tokenresp.Result {
+		tokens[token.ContractAddress] = ""
+	}
+	for contract := range tokens {
+		token, err := NewToken(common.HexToAddress(contract), s.ABIcli)
+		if err != nil {
+			log.Errorf("GetMultisigInfo - %v", err)
+			return nil, err
+		}
+		balance, err := token.BalanceOf(&bind.CallOpts{}, common.HexToAddress(in.GetAddress()))
+		if err != nil {
+			log.Errorf("GetERC20Info:token.BalanceOf %v", err.Error())
+		}
+		addressInfo.Balances = append(addressInfo.Balances, &pb.ERC20Balances{
+			Address: contract,
+			Balance: balance.String(),
+		})
+	}
+
+	if in.OnlyBalances {
+		addressInfo.History = nil
+	}
+
+	return addressInfo, nil
 }
 
 func (s *Server) GetMultisigInfo(ctx context.Context, in *pb.AddressToResync) (*pb.ContractInfo, error) {

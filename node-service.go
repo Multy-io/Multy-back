@@ -92,6 +92,7 @@ func Init(conf *Configuration) (*NodeClient, error) {
 		NetworkID:       conf.NetworkID,
 		ResyncUrl:       resyncUrl,
 		EtherscanAPIKey: conf.EtherscanAPIKey,
+		EtherscanAPIURL: conf.EtherscanAPIURL,
 		ABIcli:          ABIconn,
 	}
 

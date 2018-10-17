@@ -159,9 +159,9 @@ message ERC20History{
     string From = 5;
     string To = 6;
     string ContractAddress = 7;
-    string Amount = 8;
+    string Value = 8;
     string GasPrice = 9;
-    string GasLimit = 10;
+    string Gas = 10;
     string Input = 11;
 }
 
@@ -196,6 +196,11 @@ message AddressToResync {
    string address = 1;
 }
 
+
+message ERC20Address {
+   string address = 1;
+   bool onlyBalances = 2;
+}
 
 message UsersData {
     map<string, AddressExtended> map = 1;
