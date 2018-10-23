@@ -110,7 +110,9 @@ func (client *Client) ResyncAddress(txid string) error {
 	if err != nil {
 		return err
 	}
-	client.parseETHTransaction(*tx, int64(*tx.BlockNumber), true)
+	if tx != nil {
+		client.parseETHTransaction(*tx, int64(*tx.BlockNumber), true)
+	}
 	return nil
 }
 

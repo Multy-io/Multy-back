@@ -59,7 +59,7 @@ func NewClient(conf *Conf, usersData *sync.Map, multisig *Multisig) *Client {
 func (c *Client) RunProcess() error {
 	log.Info("Run ETH Process")
 	// c.Rpc = ethrpc.NewEthRPC("http://" + c.config.Address + c.config.RpcPort)
-	c.Rpc = ethrpc.NewEthRPC("http://" + c.config.Address + c.config.RpcPort)
+	c.Rpc = ethrpc.NewEthRPC("http" + c.config.Address + c.config.RpcPort)
 	log.Infof("ETH RPC Connection %s", "http://"+c.config.Address+c.config.RpcPort)
 
 	_, err := c.Rpc.EthNewPendingTransactionFilter()
@@ -68,7 +68,7 @@ func (c *Client) RunProcess() error {
 		return err
 	}
 	// client, err := rpc.Dial("ws://" + c.config.Address + c.config.WsPort)
-	client, err := rpc.Dial("ws://" + c.config.Address + c.config.WsPort)
+	client, err := rpc.Dial("ws" + c.config.Address + c.config.WsPort)
 
 	if err != nil {
 		log.Errorf("Dial err: %s", err.Error())

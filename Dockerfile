@@ -6,7 +6,7 @@ RUN mkdir $GOPATH/src/github.com && \
 RUN cd $GOPATH/src/github.com/Multy-io && \ 
     git clone https://github.com/Multy-io/Multy-back.git && \ 
     cd Multy-back && \ 
-    git checkout import-eth-multisig 
+    git checkout release_1.2.2 
 
 
 RUN go get -u github.com/golang/protobuf/proto && \
