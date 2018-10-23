@@ -11,7 +11,7 @@ before_script:
   - docker info
 
 script:
-  - docker build -t "$IMAGE"
+  - docker build -t "$IMAGE" .
 
 deploy:
   - provider: script
