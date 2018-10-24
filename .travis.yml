@@ -1,6 +1,9 @@
-sudo: required
-
-language: go
+env:
+  global:
+    - DOCKER_USERNAME=multyio
+    # encrypted DOCKER_PASSWORD
+    - secure: Gv/7H35KTUY8o+BZz5vIxeZNnwqvDZiypm4rBY+GumGkG5DbQT/al2ytomGq2/T5mK0H1t2QexvJ5llEav10fVQOrxJSXge/1ytHtYrtC3/2HTghm1n9+inae5QX93yS0sUPcIzDwTRhx7tdnpIDc1J8541rAhkGmBIVhTll+K/MlrAhibmjQ63kbb5yDcHqgr37Lyv3jvsY4VelNj7nk1tOq+Nd/7tebZ/uq8YVBKyI6hHDS4oqAaiF+lCxLu783uoV7mmCo+cDmuvWJEU+i3qKwNKJRbf3qaowm+gfqkGhCxXVeuLAYxe67e/rLujIe1zD8butfXJabaZCe8vLAIRzRiBS+PAjTh3FSZ3UmRxgGREVfkGasofBFmQDZA8IixnzongVEScACDHDtYDjH6gY09IZJrthJM1IVy/ri4ZU8Qk+9qnG7FXC8n1beMEIMRBWxRrVoVVv6LGhhVHXkMzsB33AiIG2keB+0te5FPTNv2fbBp0hj2K3b6vtQGI2EQVyLlMGWC2yMN9oT17cHM+tWKN/rXNSclAABhK/qeBWstA9ov/rZlS69ulf75XR7pa/enFCASRsbcABFIO62QVMk3/cn+FZq1EDlCyiEYiOiq8PNlT3uH7ExAVzx7zEftsdJMOY8MFf81Z47PDEhPLiFrt0k4HVV7EcgVeC7ug=
+    - IMAGE=multyio/multy-back
 
 services:
   - docker
@@ -9,4 +12,11 @@ before_script:
   - docker info
 
 script:
-  - docker build .
+  - docker build -t "$IMAGE" .
+
+deploy:
+  - provider: script
+    script: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
+            docker push "$IMAGE"
+    on:
+      branch: master
