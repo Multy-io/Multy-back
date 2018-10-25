@@ -1,3 +1,5 @@
+language: bash
+
 env:
   global:
     - IMAGE=multyio/multy-btc-node-service
