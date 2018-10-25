@@ -1,0 +1,19 @@
+env:
+  global:
+    - IMAGE=multyio/multy-btc-node-service
+    - DOCKER_USERNAME=multyio
+    # encrypted DOCKER_PASSWORD
+    - secure: "e5bPMaGzHMA5GYudnP+uPm30SmoiezGyhiiXZpJarNe6PLLu6i6pPN0ntIxyrcc0eIf7jCdFVoVlwwlvaIlJTWnMPBGE/f8twS2OIt4F2T/sYcNVklP8S/XebFHvvrHRUZYHLHsPssA+ysRLa21FydhLG1EpfKUPOhwvw0+jNZ6NrPzyhrZPkRfxJImLyjiP2/8/sgD6671I2AWPTO3g9V/E77OrNGxvhsLObf1Un6j78NdAuvjXhmUyuC2iX6Srp/sOPr4dQ7T8bdCVk9MVbmo9piTAENkhs9Ob2LWbyt406kAClycXgs9pye/W90ZYKg/6w0mSJ2lXTt9ujIn7iAfnpqNkAL9B1zwBQF81tsDIlTWm7kYk4AbH0LY3/dpEhnSr0HhwoFzU1OYvloM1vQLfZDmMj4W31awgKTBx4eBzyb0avHhu7KI5oioHe2W6sotdEi1mnnRXUzzsVJiSqgjzn9KAOBKjitxwGnEE4PZOJmzIoLb2MKVsh4hJ8Wqj4xSbHpAecnD74x1rfxhJqaTkFLLrkOivLLElQ3NrHUZ7qhhMSDZIgun1H8FP23X0ibT1f5L/2DMJunJCftvuM70wrXI+CGQdWEyNioMhLIwuELF/DOOPv7ITPUh8KXPLf/AZ+QGM2gbY5HepkZ5cg14Ti+gE+Be+2cnyMitPPTo="
+
+services:
+  - docker
+
+script:
+  - docker build -t "$IMAGE" .
+
+deploy:
+  - provider: script
+    script: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
+            docker push "$IMAGE"
+    on:
+branch: master
