@@ -80,10 +80,11 @@ type RestClient struct {
 	mobileVersions    store.MobileVersions
 	ERC20TokenList    store.VerifiedTokenList
 
-	BTC          *btc.BTCConn
-	ETH          *eth.ETHConn
-	MultyVerison store.ServerConfig
-	Secretkey    string
+	BTC            *btc.BTCConn
+	ETH            *eth.ETHConn
+	MultyVerison   store.ServerConfig
+	BrowserDefault store.BrowserDefault
+	Secretkey      string
 }
 
 type BTCApiConf struct {
@@ -100,6 +101,7 @@ func SetRestHandlers(
 	secretkey string,
 	mobileVer store.MobileVersions,
 	tl store.VerifiedTokenList,
+	bd store.BrowserDefault,
 ) (*RestClient, error) {
 	restClient := &RestClient{
 		userStore:         userDB,
@@ -111,6 +113,7 @@ func SetRestHandlers(
 		Secretkey:         secretkey,
 		mobileVersions:    mobileVer,
 		ERC20TokenList:    tl,
+		BrowserDefault:    bd,
 	}
 	initMiddlewareJWT(restClient)
 
@@ -923,6 +926,11 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 		resp["ios"] = map[string]int{
 			"soft": restClient.mobileVersions.Ios.Soft,
 			"hard": restClient.mobileVersions.Ios.Hard,
+		}
+		resp["browserdefault"] = store.BrowserDefault{
+			URL:        restClient.BrowserDefault.URL,
+			CurrencyID: restClient.BrowserDefault.CurrencyID,
+			NetworkID:  restClient.BrowserDefault.NetworkID,
 		}
 
 		c.JSON(http.StatusOK, resp)

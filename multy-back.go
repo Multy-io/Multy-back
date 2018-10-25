@@ -292,6 +292,7 @@ func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 		conf.Secretkey,
 		conf.MobileVersions,
 		tokenList,
+		conf.BrowserDefault,
 	)
 	if err != nil {
 		return err

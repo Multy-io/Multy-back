@@ -26,6 +26,7 @@ type Configuration struct {
 	ServicesInfo []store.ServiceInfo
 	Secretkey    string
 	store.MobileVersions
+	BrowserDefault store.BrowserDefault
 
 	SupportedNodes []store.CoinType
 }
