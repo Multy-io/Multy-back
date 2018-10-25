@@ -2,7 +2,7 @@
 
 Back end server for [Multy](https://github.com/Multy-io/Multy/wiki) application
 
-[![Build Status](https://travis-ci.org/Multy-io/Multy-back.svg?branch=master)](https://travis-ci.org/Multy-io/Multy-back)
+[![Build Status](https://travis-ci.com/Multy-io/Multy-back.svg?branch=master)](https://travis-ci.com/Multy-io/Multy-back)
 
 ## Usage Instructions
 
