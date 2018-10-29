@@ -294,6 +294,8 @@ func saveTransaction(tx store.TransactionETH, networtkID int, resync bool) error
 				"txstatus":    tx.Status,
 				"blockheight": tx.BlockHeight,
 				"blocktime":   tx.BlockTime,
+				"gasprice":    tx.GasPrice,
+				"gaslimit":    tx.GasLimit,
 			},
 		}
 		err = txStore.Update(sel, update)
@@ -317,6 +319,8 @@ func saveTransaction(tx store.TransactionETH, networtkID int, resync bool) error
 				"txstatus":    tx.Status,
 				"blockheight": tx.BlockHeight,
 				"blocktime":   tx.BlockTime,
+				"gasprice":    tx.GasPrice,
+				"gaslimit":    tx.GasLimit,
 			},
 		}
 		err = txStore.Update(sel, update)
