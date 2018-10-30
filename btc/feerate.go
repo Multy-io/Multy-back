@@ -12,11 +12,11 @@ const (
 
 func (c *Client) GetAllMempool() ([]store.MempoolRecord, error) {
 	allMempool := []store.MempoolRecord{}
-	mempool, err := c.RpcClient.GetRawMempoolVerbose()
+	mempool, err := c.RPCClient.GetRawMempoolVerbose()
 	if err != nil {
 		return allMempool, err
 	}
-	log.Errorf("MEMPOOL SIZE == %v", len(mempool))
+	log.Warnf("MEMPOOL SIZE == %v", len(mempool))
 
 	for hash, txInfo := range mempool {
 

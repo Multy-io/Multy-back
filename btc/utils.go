@@ -43,7 +43,7 @@ func (c *Client) rawTxByTxid(txid string) (*btcjson.TxRawResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	previousTxVerbose, err := c.RpcClient.GetRawTransactionVerbose(hash)
+	previousTxVerbose, err := c.RPCClient.GetRawTransactionVerbose(hash)
 	if err != nil {
 		return nil, err
 	}
@@ -69,9 +69,9 @@ func (c *Client) setTransactionInfo(multyTx *store.MultyTX, txVerbose *btcjson.T
 		if err != nil {
 			log.Errorf("setTransactionInfo:chainhash.NewHashFromStr: %s", err.Error())
 		}
-		previousTxVerbose, err := c.RpcClient.GetRawTransactionVerbose(hash)
+		previousTxVerbose, err := c.RPCClient.GetRawTransactionVerbose(hash)
 		if err != nil {
-			log.Errorf("setTransactionInfo:RpcClient.GetRawTransactionVerbose: %s", err.Error())
+			log.Errorf("setTransactionInfo:RPCClient.GetRawTransactionVerbose: %s", err.Error())
 		}
 
 		if len(previousTxVerbose.Vout) >= int(input.Vout) {
@@ -128,7 +128,7 @@ func (c *Client) ProcessTransaction(blockChainBlockHeight int64, txVerbose *btcj
 
 		for _, transaction := range transactions {
 			finalizeTransaction(&transaction, txVerbose)
-			saveMultyTransaction(transaction, isReSync, c.TransactionsCh)
+			c.saveMultyTransaction(transaction, isReSync)
 		}
 	}
 }
@@ -283,7 +283,7 @@ func (c *Client) splitTransaction(multyTx store.MultyTX, blockHeight int64) []st
 
 	transactions := []store.MultyTX{}
 
-	currentBlockHeight, err := c.RpcClient.GetBlockCount()
+	currentBlockHeight, err := c.RPCClient.GetBlockCount()
 	if err != nil {
 		log.Errorf("splitTransaction:getBlockCount: %s", err.Error())
 	}
@@ -378,7 +378,7 @@ func newEntity(multyTx store.MultyTX) store.MultyTX {
 	return newTx
 }
 
-func saveMultyTransaction(tx store.MultyTX, resync bool, TransactionsCh chan pb.BTCTransaction) {
+func (c *Client) saveMultyTransaction(tx store.MultyTX, resync bool) {
 	// This is splited transaction! That means that transaction's WalletsInputs and WalletsOutput have the same WalletIndex!
 	//Here we have outgoing transaction for exact wallet!
 	if tx.WalletsInput != nil && len(tx.WalletsInput) > 0 {
@@ -411,7 +411,7 @@ func saveMultyTransaction(tx store.MultyTX, resync bool, TransactionsCh chan pb.
 
 		outcomingTx := storeTxToGenerated(tx)
 		// send to outcomingTx to chan
-		TransactionsCh <- outcomingTx
+		c.TransactionsCh <- outcomingTx
 
 		return
 	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0 {
@@ -433,20 +433,6 @@ func saveMultyTransaction(tx store.MultyTX, resync bool, TransactionsCh chan pb.
 			}
 
 			tx.TxOutAmount = amount
-
-			// if tx.TxOutScript == "" {
-			// 	if tx.TxStatus == store.TxStatusAppearedInMempoolIncoming {
-			// 		tx.TxStatus = store.TxStatusAppearedInMempoolOutcoming
-			// 	}
-
-			// 	if tx.TxStatus == store.TxStatusAppearedInBlockIncoming {
-			// 		tx.TxStatus = store.TxStatusAppearedInBlockOutcoming
-			// 	}
-
-			// 	if tx.TxStatus == store.TxStatusInBlockConfirmedIncoming {
-			// 		tx.TxStatus = store.TxStatusInBlockConfirmedOutcoming
-			// 	}
-			// }
 		}
 
 		//HACK: fetching userid like this
@@ -461,7 +447,7 @@ func saveMultyTransaction(tx store.MultyTX, resync bool, TransactionsCh chan pb.
 		incomingTx := storeTxToGenerated(tx)
 		incomingTx.Resync = resync
 		// send to incomingTx to chan
-		TransactionsCh <- incomingTx
+		c.TransactionsCh <- incomingTx
 
 		return
 	}
@@ -803,10 +789,10 @@ func (c *Client) rawTxToMempoolRec(inTx *btcjson.TxRawResult) store.MempoolRecor
 			log.Errorf("newTxToDB: chainhash.NewHashFromStr: %s", err.Error())
 		}
 
-		previousTx, err := c.RpcClient.GetRawTransactionVerbose(txCHash)
+		previousTx, err := c.RPCClient.GetRawTransactionVerbose(txCHash)
 
 		if err != nil {
-			log.Errorf("newTxToDB: rpcClient.GetTransaction: %s", err.Error())
+			log.Errorf("newTxToDB: rPCClient.GetTransaction: %s", err.Error())
 		}
 		inputSum += previousTx.Vout[input.Vout].Value
 	}

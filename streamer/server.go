@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strconv"
 	"sync"
@@ -17,18 +18,20 @@ import (
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/blockcypher/gobcy"
 	"github.com/parnurzeal/gorequest"
+	"google.golang.org/grpc"
 )
 
 var log = slf.WithContext("streamer")
 
 // Server implements streamer interface and is a gRPC server
 type Server struct {
-	UsersData *sync.Map
-	// UsersData sync.Map
+	UsersData  *sync.Map
 	BtcAPI     *gobcy.API
 	BtcCli     *btc.Client
 	M          *sync.Mutex
 	Info       *store.ServiceInfo
+	GRPCserver *grpc.Server
+	Listener   net.Listener
 	ReloadChan chan struct{}
 }
 
@@ -90,7 +93,7 @@ func (s *Server) EventAddNewAddress(c context.Context, wa *pb.WatchAddress) (*pb
 }
 
 func (s *Server) EventGetBlockHeight(ctx context.Context, in *pb.Empty) (*pb.BlockHeight, error) {
-	h, err := s.BtcCli.RpcClient.GetBlockCount()
+	h, err := s.BtcCli.RPCClient.GetBlockCount()
 	if err != nil {
 		return &pb.BlockHeight{}, err
 	}
@@ -116,19 +119,19 @@ func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_E
 }
 
 func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyInfo, error) {
-	// s.BtcCli.RpcClient.GetTxOut()
+	// s.BtcCli.RPCClient.GetTxOut()
 	// var blocks []*chainhash.Hash
-	currentH, err := s.BtcCli.RpcClient.GetBlockCount()
+	currentH, err := s.BtcCli.RPCClient.GetBlockCount()
 	if err != nil {
-		log.Errorf("s.BtcCli.RpcClient.GetBlockCount: %v ", err.Error())
+		log.Errorf("s.BtcCli.RPCClient.GetBlockCount: %v ", err.Error())
 	}
 
 	log.Debugf("currentH %v lastH %v", currentH, in.GetHeight())
 
 	// for lastH := int64(in.GetHeight()); lastH < currentH; lastH++ {
-	// 	hash, err := s.BtcCli.RpcClient.GetBlockHash(lastH)
+	// 	hash, err := s.BtcCli.RPCClient.GetBlockHash(lastH)
 	// 	if err != nil {
-	// 		log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
+	// 		log.Errorf("s.BtcCli.RPCClient.GetBlockHash: %v", err.Error())
 	// 	}
 	// 	log.Debugf("currentH %v lastH %v cur %v", currentH, lastH, int64(in.GetHeight()))
 	// 	fmt.Println("hash", hash.String())
@@ -136,9 +139,9 @@ func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyIn
 	// }
 
 	// for i := in.GetHeight(); i <= currentH; i++ {
-	// hash, err := s.BtcCli.RpcClient.GetBlockHash(i)
+	// hash, err := s.BtcCli.RPCClient.GetBlockHash(i)
 	// if err != nil {
-	// 	log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
+	// 	log.Errorf("s.BtcCli.RPCClient.GetBlockHash: %v", err.Error())
 	// }
 	// go s.BtcCli.BlockTransactions(hash)
 	// }
@@ -271,9 +274,9 @@ func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResy
 }
 
 func (s *Server) EventSendRawTx(c context.Context, tx *pb.RawTx) (*pb.ReplyInfo, error) {
-	hash, err := s.BtcCli.RpcClient.SendCyberRawTransaction(tx.Transaction, true)
+	hash, err := s.BtcCli.RPCClient.SendCyberRawTransaction(tx.Transaction, true)
 	if err != nil {
-		log.Errorf("EventSendRawTx:s.BtcCli.RpcClient.SendCyberRawTransaction: %v", err.Error())
+		log.Errorf("EventSendRawTx:s.BtcCli.RPCClient.SendCyberRawTransaction: %v", err.Error())
 		return &pb.ReplyInfo{
 			Message: "err: wrong raw tx",
 		}, fmt.Errorf("err: wrong raw tx %s", err.Error())

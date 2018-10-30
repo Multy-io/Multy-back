@@ -35,19 +35,18 @@ type NodeClient struct {
 	Instance   *btc.Client
 	GRPCserver *streamer.Server
 	Clients    *sync.Map // address to userid
-	// Clients sync.Map // address to userid
-	BtcApi *gobcy.API
+	BtcApi     *gobcy.API
 }
 
 // Init initializes Multy instance
-func Init(conf *Configuration) (*NodeClient, error) {
+func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
 	cli := &NodeClient{
 		Config: conf,
 	}
 
 	usersData := sync.Map{}
 
-	usersData.Store("2MvPhdUf3cwaadRKsSgbQ2SXc83CPcBJezT", store.AddressExtended{
+	usersData.Store("address", store.AddressExtended{
 		UserID:       "kek",
 		WalletIndex:  1,
 		AddressIndex: 2,
@@ -86,14 +85,18 @@ func Init(conf *Configuration) (*NodeClient, error) {
 		M:          &sync.Mutex{},
 		BtcCli:     btcClient,
 		Info:       &conf.ServiceInfo,
+		GRPCserver: s,
+		Listener:   lis,
 		ReloadChan: make(chan struct{}),
 	}
+
+	cli.GRPCserver = &srv
 
 	pb.RegisterNodeCommuunicationsServer(s, &srv)
 
 	go s.Serve(lis)
 
-	go WathReload(srv.ReloadChan, s, &srv, lis, conf)
+	go WathReload(srv.ReloadChan, cli)
 
 	log.Debug("NodeCommuunications Server initialization done √")
 
@@ -115,19 +118,21 @@ func getCertificate(certFile string) []byte {
 	return []byte{}
 }
 
-func WathReload(reload chan struct{}, s *grpc.Server, srv *streamer.Server, lis net.Listener, conf *Configuration) {
+func WathReload(reload chan struct{}, cli *NodeClient) {
+	// func WathReload(reload chan struct{}, s *grpc.Server, srv *streamer.Server, lis net.Listener, conf *Configuration) {
 	for {
 		select {
 		case _ = <-reload:
-			ticker := time.NewTicker(10 * time.Second)
-			err := lis.Close()
+			ticker := time.NewTicker(1 * time.Second)
+
+			err := cli.GRPCserver.Listener.Close()
 			if err != nil {
 				log.Errorf("WathReload:lis.Close %v", err.Error())
 			}
-			s.Stop()
+			cli.GRPCserver.GRPCserver.Stop()
 			log.Warnf("WathReload:Successfully stopped")
 			for _ = range ticker.C {
-				_, err := Init(conf)
+				_, err := cli.Init(cli.Config)
 				if err != nil {
 					log.Errorf("WathReload:Init %v ", err)
 					continue
@@ -138,4 +143,14 @@ func WathReload(reload chan struct{}, s *grpc.Server, srv *streamer.Server, lis 
 			}
 		}
 	}
+}
+
+func closeServerChannels(srv *streamer.Server) {
+	close(srv.BtcCli.AddSpOut)
+	close(srv.BtcCli.AddToMempool)
+	close(srv.BtcCli.Block)
+	close(srv.BtcCli.DeleteMempool)
+	close(srv.BtcCli.DelSpOut)
+	close(srv.BtcCli.ResyncCh)
+	close(srv.BtcCli.TransactionsCh)
 }

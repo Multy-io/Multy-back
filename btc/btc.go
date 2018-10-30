@@ -19,7 +19,7 @@ import (
 )
 
 type Client struct {
-	RpcClient      *rpcclient.Client
+	RPCClient      *rpcclient.Client
 	ResyncCh       chan pb.Resync
 	TransactionsCh chan pb.BTCTransaction
 	AddSpOut       chan pb.AddSpOut
@@ -71,7 +71,6 @@ func (c *Client) RunProcess(btcNodeAddress string) error {
 			c.Block <- pb.BlockHeight{Height: int64(height)}
 		},
 		OnTxAcceptedVerbose: func(txDetails *btcjson.TxRawResult) {
-			// log.Debugf("OnTxAcceptedVerbose: new transaction id = %v \n ud = %v lock = %v", txDetails.Txid, c.UsersData, c.UserDataM)
 			go c.mempoolTransaction(txDetails)
 		},
 		OnFilteredBlockDisconnected: func(height int32, header *wire.BlockHeader) {
@@ -79,26 +78,26 @@ func (c *Client) RunProcess(btcNodeAddress string) error {
 		},
 	}
 
-	rpcClient, err := rpcclient.New(c.rpcConf, &ntfnHandlers)
+	RPCClient, err := rpcclient.New(c.rpcConf, &ntfnHandlers)
 	if err != nil {
-		log.Errorf("RunProcess(): rpcclient.New %s\n", err.Error())
+		log.Errorf("RunProcess(): RPCclient.New %s\n", err.Error())
 		return err
 	}
 
 	// Register for block connect and disconnect notifications.
-	if err = rpcClient.NotifyBlocks(); err != nil {
+	if err = RPCClient.NotifyBlocks(); err != nil {
 		return err
 	}
 	log.Info("NotifyBlocks: Registration Complete")
 
 	// Register for new transaction in mempool notifications.
-	if err = rpcClient.NotifyNewTransactions(true); err != nil {
+	if err = RPCClient.NotifyNewTransactions(true); err != nil {
 		return err
 	}
 	log.Info("NotifyNewTransactions: Registration Complete")
 
-	c.RpcClient = rpcClient
+	c.RPCClient = RPCClient
 
-	c.RpcClient.WaitForShutdown()
+	c.RPCClient.WaitForShutdown()
 	return nil
 }
