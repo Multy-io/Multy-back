@@ -11,8 +11,10 @@ import (
 	"io/ioutil"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/KristinaEtc/slf"
+	_ "github.com/KristinaEtc/slflog"
 	"github.com/Multy-io/Multy-BTC-node-service/btc"
 	pb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
 	"github.com/Multy-io/Multy-BTC-node-service/streamer"
@@ -79,15 +81,20 @@ func Init(conf *Configuration) (*NodeClient, error) {
 	// Creates a new gRPC server
 	s := grpc.NewServer()
 	srv := streamer.Server{
-		UsersData: cli.Clients,
-		BtcAPI:    cli.BtcApi,
-		M:         &sync.Mutex{},
-		BtcCli:    btcClient,
-		Info:      &conf.ServiceInfo,
+		UsersData:  cli.Clients,
+		BtcAPI:     cli.BtcApi,
+		M:          &sync.Mutex{},
+		BtcCli:     btcClient,
+		Info:       &conf.ServiceInfo,
+		ReloadChan: make(chan struct{}),
 	}
 
 	pb.RegisterNodeCommuunicationsServer(s, &srv)
+
 	go s.Serve(lis)
+
+	go WathReload(srv.ReloadChan, s, &srv, lis, conf)
+
 	log.Debug("NodeCommuunications Server initialization done √")
 
 	return cli, nil
@@ -106,4 +113,29 @@ func getCertificate(certFile string) []byte {
 	}
 	log.Errorf("get certificate: empty certificate")
 	return []byte{}
+}
+
+func WathReload(reload chan struct{}, s *grpc.Server, srv *streamer.Server, lis net.Listener, conf *Configuration) {
+	for {
+		select {
+		case _ = <-reload:
+			ticker := time.NewTicker(10 * time.Second)
+			err := lis.Close()
+			if err != nil {
+				log.Errorf("WathReload:lis.Close %v", err.Error())
+			}
+			s.Stop()
+			log.Warnf("WathReload:Successfully stopped")
+			for _ = range ticker.C {
+				_, err := Init(conf)
+				if err != nil {
+					log.Errorf("WathReload:Init %v ", err)
+					continue
+				}
+
+				log.Warnf("WathReload:Successfully reloaded")
+				return
+			}
+		}
+	}
 }

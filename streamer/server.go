@@ -25,10 +25,11 @@ var log = slf.WithContext("streamer")
 type Server struct {
 	UsersData *sync.Map
 	// UsersData sync.Map
-	BtcAPI *gobcy.API
-	BtcCli *btc.Client
-	M      *sync.Mutex
-	Info   *store.ServiceInfo
+	BtcAPI     *gobcy.API
+	BtcCli     *btc.Client
+	M          *sync.Mutex
+	Info       *store.ServiceInfo
+	ReloadChan chan struct{}
 }
 
 func (s *Server) ServiceInfo(c context.Context, in *pb.Empty) (*pb.ServiceVersion, error) {
@@ -272,6 +273,7 @@ func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResy
 func (s *Server) EventSendRawTx(c context.Context, tx *pb.RawTx) (*pb.ReplyInfo, error) {
 	hash, err := s.BtcCli.RpcClient.SendCyberRawTransaction(tx.Transaction, true)
 	if err != nil {
+		log.Errorf("EventSendRawTx:s.BtcCli.RpcClient.SendCyberRawTransaction: %v", err.Error())
 		return &pb.ReplyInfo{
 			Message: "err: wrong raw tx",
 		}, fmt.Errorf("err: wrong raw tx %s", err.Error())
@@ -287,24 +289,9 @@ func (s *Server) EventSendRawTx(c context.Context, tx *pb.RawTx) (*pb.ReplyInfo,
 func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventDeleteMempoolServer) error {
 	for del := range s.BtcCli.DeleteMempool {
 		err := stream.Send(&del)
-		if err != nil {
-			//HACK:
-			log.Errorf("Delete mempool record %s", err.Error())
-			i := 0
-			for {
-				err := stream.Send(&del)
-				if err != nil {
-					i++
-					log.Errorf("Delete mempool record resend attempt(%d) err = %s", i, err.Error())
-					time.Sleep(time.Second * 2)
-					if i == 3 {
-						break
-					}
-				} else {
-					log.Debugf("Delete mempool record resend success on %d attempt", i)
-					break
-				}
-			}
+		if err != nil && err.Error() == ErrGrpcTransport {
+			log.Warnf("EventDeleteMempool:stream.Send(&del) %v ", err.Error())
+			s.ReloadChan <- struct{}{}
 		}
 	}
 	return nil
@@ -313,24 +300,9 @@ func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommuunications_E
 func (s *Server) EventAddMempoolRecord(_ *pb.Empty, stream pb.NodeCommuunications_EventAddMempoolRecordServer) error {
 	for add := range s.BtcCli.AddToMempool {
 		err := stream.Send(&add)
-		if err != nil {
-			//HACK:
-			log.Errorf("Add mempool record %s", err.Error())
-			i := 0
-			for {
-				err := stream.Send(&add)
-				if err != nil {
-					i++
-					log.Errorf("Add mempool record resend attempt(%d) err = %s", i, err.Error())
-					time.Sleep(time.Second * 2)
-					if i == 3 {
-						break
-					}
-				} else {
-					log.Debugf("Add mempool record resend success on %d attempt", i)
-					break
-				}
-			}
+		if err != nil && err.Error() == ErrGrpcTransport {
+			log.Warnf("EventAddMempoolRecord:stream.Send(&del) %v ", err.Error())
+			s.ReloadChan <- struct{}{}
 		}
 	}
 	return nil
@@ -340,26 +312,10 @@ func (s *Server) EventDeleteSpendableOut(_ *pb.Empty, stream pb.NodeCommuunicati
 	for delSp := range s.BtcCli.DelSpOut {
 		log.Infof("Delete spendable out %v", delSp.String())
 		err := stream.Send(&delSp)
-		if err != nil {
-			//HACK:
-			log.Errorf("Delete spendable out %s", err.Error())
-			i := 0
-			for {
-				err := stream.Send(&delSp)
-				if err != nil {
-					i++
-					log.Errorf("Delete spendable out resend attempt(%d) err = %s", i, err.Error())
-					time.Sleep(time.Second * 2)
-					if i == 3 {
-						break
-					}
-				} else {
-					log.Debugf("EventDeleteSpendableOut history resend success on %d attempt", i)
-					break
-				}
-			}
+		if err != nil && err.Error() == ErrGrpcTransport {
+			log.Warnf("EventDeleteSpendableOut:stream.Send(&del) %v ", err.Error())
+			s.ReloadChan <- struct{}{}
 		}
-
 	}
 	return nil
 }
@@ -368,24 +324,10 @@ func (s *Server) EventAddSpendableOut(_ *pb.Empty, stream pb.NodeCommuunications
 	for addSp := range s.BtcCli.AddSpOut {
 		log.Infof("Add spendable out %v", addSp.String())
 		err := stream.Send(&addSp)
-		if err != nil {
-			//HACK:
-			log.Errorf("Add spendable out %s", err.Error())
-			i := 0
-			for {
-				err := stream.Send(&addSp)
-				if err != nil {
-					i++
-					log.Errorf("Add spendable out resend attempt(%d) err = %s", i, err.Error())
-					time.Sleep(time.Second * 2)
-				} else {
-					log.Debugf("Add spendable out resend success on %d attempt", i)
-					break
-				}
-			}
-
+		if err != nil && err.Error() == ErrGrpcTransport {
+			log.Warnf("EventAddSpendableOut:stream.Send(&del) %v ", err.Error())
+			s.ReloadChan <- struct{}{}
 		}
-
 	}
 
 	return nil
@@ -395,22 +337,9 @@ func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommuunications_NewTxServer) e
 	for tx := range s.BtcCli.TransactionsCh {
 		log.Infof("NewTx history - %v", tx.String())
 		err := stream.Send(&tx)
-		if err != nil {
-			//HACK:
-			log.Errorf("NewTx history %s", err.Error())
-			i := 0
-			for {
-				err := stream.Send(&tx)
-				if err != nil {
-					i++
-					log.Errorf("NewTx history resend attempt(%d) err = %s", i, err.Error())
-					time.Sleep(time.Second * 2)
-				} else {
-					log.Debugf("NewTx history resend success on %d attempt", i)
-					break
-				}
-			}
-
+		if err != nil && err.Error() == ErrGrpcTransport {
+			log.Warnf("NewTx:stream.Send(&del) %v ", err.Error())
+			s.ReloadChan <- struct{}{}
 		}
 	}
 	return nil
@@ -420,22 +349,9 @@ func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommuunications_EventN
 	for h := range s.BtcCli.Block {
 		log.Infof("New block height - %v", h.GetHeight())
 		err := stream.Send(&h)
-		if err != nil {
-			//HACK:
-			log.Errorf("New block %s", err.Error())
-			i := 0
-			for {
-				err := stream.Send(&h)
-				if err != nil {
-					i++
-					log.Errorf("New block resend attempt(%d) err = %s", i, err.Error())
-					time.Sleep(time.Second * 2)
-				} else {
-					log.Debugf("New block resend success on %d attempt", i)
-					break
-				}
-			}
-
+		if err != nil && err.Error() == ErrGrpcTransport {
+			log.Warnf("EventNewBlock:stream.Send(&del) %v ", err.Error())
+			s.ReloadChan <- struct{}{}
 		}
 	}
 	return nil
@@ -445,22 +361,8 @@ func (s *Server) ResyncAddress(_ *pb.Empty, stream pb.NodeCommuunications_Resync
 	for res := range s.BtcCli.ResyncCh {
 		log.Infof("Resync address - %v", res.String())
 		err := stream.Send(&res)
-		if err != nil {
-			//HACK:
-			log.Errorf("Resync address %s", err.Error())
-			i := 0
-			for {
-				err := stream.Send(&res)
-				if err != nil {
-					i++
-					log.Errorf("Resync address resend attempt(%d) err = %s", i, err.Error())
-					time.Sleep(time.Second * 2)
-				} else {
-					log.Debugf("Resync address resend success on %d attempt", i)
-					break
-				}
-			}
-
+		if err != nil && err.Error() == ErrGrpcTransport {
+			s.ReloadChan <- struct{}{}
 		}
 	}
 	return nil
