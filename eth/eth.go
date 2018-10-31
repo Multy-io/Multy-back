@@ -55,6 +55,9 @@ func NewClient(conf *Conf, usersData *sync.Map, multisig *Multisig) *Client {
 	go c.RunProcess()
 	return c
 }
+func (c *Client) Shutdown() {
+	c.Client.Close()
+}
 
 func (c *Client) RunProcess() error {
 	log.Info("Run ETH Process")

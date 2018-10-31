@@ -44,11 +44,15 @@ func newETHtx(hash, from, to string, amount float64, gas, gasprice, nonce int) s
 }
 
 func (client *Client) SendRawTransaction(rawTX string) (string, error) {
+	startTime := time.Now()
 	hash, err := client.Rpc.EthSendRawTransaction(rawTX)
 	if err != nil {
 		log.Errorf("SendRawTransaction:rpc.EthSendRawTransaction: %s", err.Error())
+		log.Warnf("send err since time %v ", time.Since(startTime).Nanoseconds())
 		return hash, err
+
 	}
+	log.Warnf("send err since time %v ", time.Since(startTime).Nanoseconds())
 	return hash, err
 }
 

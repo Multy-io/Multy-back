@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/parnurzeal/gorequest"
+	"google.golang.org/grpc"
 
 	"github.com/Multy-io/Multy-ETH-node-service/eth"
 	pb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
@@ -36,6 +38,9 @@ type Server struct {
 	EtherscanAPIKey string
 	EtherscanAPIURL string
 	ABIcli          *ethclient.Client
+	GRPCserver      *grpc.Server
+	Listener        net.Listener
+	ReloadChan      chan struct{}
 }
 
 func (s *Server) ServiceInfo(c context.Context, in *pb.Empty) (*pb.ServiceVersion, error) {
@@ -140,7 +145,7 @@ func (s *Server) GetMultisigInfo(ctx context.Context, in *pb.AddressToResync) (*
 }
 
 func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.ReplyInfo, error) {
-	log.Debugf("EventInitialAdd - %v", ud.Map)
+	log.Debugf("EventInitialAdd len - %v", len(ud.Map))
 
 	udMap := sync.Map{}
 	for addr, ex := range ud.GetMap() {
@@ -156,8 +161,6 @@ func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.Reply
 	for key, value := range ud.GetUsersContracts() {
 		s.Multisig.UsersContracts.Store(key, value)
 	}
-
-	log.Debugf("EventInitialAdd - %v", udMap)
 
 	return &pb.ReplyInfo{
 		Message: "ok",
@@ -294,30 +297,6 @@ func (s *Server) EventGetAdressBalance(ctx context.Context, in *pb.AddressToResy
 	}, nil
 }
 
-func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommuunications_EventNewBlockServer) error {
-	for h := range s.EthCli.Block {
-		log.Infof("New block height - %v", h.GetHeight())
-		err := stream.Send(&h)
-		if err != nil {
-			//HACK:
-			log.Errorf("New block %s", err.Error())
-			i := 0
-			for {
-				err := stream.Send(&h)
-				if err != nil {
-					i++
-					log.Errorf("New block resend attempt(%d) err = %s", i, err.Error())
-					time.Sleep(time.Second * 2)
-				} else {
-					log.Debugf("New block resend success on %d attempt", i)
-					break
-				}
-			}
-		}
-	}
-	return nil
-}
-
 func (s *Server) CheckRejectTxs(ctx context.Context, txs *pb.TxsToCheck) (*pb.RejectedTxs, error) {
 	reTxs := &pb.RejectedTxs{}
 	for _, tx := range txs.Hash {
@@ -327,30 +306,6 @@ func (s *Server) CheckRejectTxs(ctx context.Context, txs *pb.TxsToCheck) (*pb.Re
 		}
 	}
 	return reTxs, nil
-}
-
-func (s *Server) AddMultisig(_ *pb.Empty, stream pb.NodeCommuunications_AddMultisigServer) error {
-	for m := range s.EthCli.NewMultisig {
-		log.Infof("AddMultisig new contract address - %v", m.GetContract())
-		err := stream.Send(&m)
-		log.Warnf("Multisig sent on address contract %v", m.Contract)
-		if err != nil {
-			log.Errorf("New block %s", err.Error())
-			i := 0
-			for {
-				err := stream.Send(&m)
-				if err != nil {
-					i++
-					log.Errorf("Add multisig resend attempt(%d) err = %s", i, err.Error())
-					time.Sleep(time.Second * 2)
-				} else {
-					log.Debugf("Add multisig resend success on %d attempt", i)
-					break
-				}
-			}
-		}
-	}
-	return nil
 }
 
 func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyInfo, error) {
@@ -473,24 +428,9 @@ func (s *Server) EventSendRawTx(c context.Context, tx *pb.RawTx) (*pb.ReplyInfo,
 func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventDeleteMempoolServer) error {
 	for del := range s.EthCli.DeleteMempool {
 		err := stream.Send(&del)
-		if err != nil {
-			//HACK:
-			log.Errorf("Delete mempool record %s", err.Error())
-			i := 0
-			for {
-				err := stream.Send(&del)
-				if err != nil {
-					i++
-					log.Errorf("Delete mempool record resend attempt(%d) err = %s", i, err.Error())
-					time.Sleep(time.Second * 2)
-					if i == 3 {
-						break
-					}
-				} else {
-					log.Debugf("Delete mempool record resend success on %d attempt", i)
-					break
-				}
-			}
+		if err != nil && err.Error() == ErrGrpcTransport {
+			log.Warnf("EventDeleteMempool:stream.Send() %v ", err.Error())
+			s.ReloadChan <- struct{}{}
 		}
 	}
 	return nil
@@ -499,24 +439,9 @@ func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommuunications_E
 func (s *Server) EventAddMempoolRecord(_ *pb.Empty, stream pb.NodeCommuunications_EventAddMempoolRecordServer) error {
 	for add := range s.EthCli.AddToMempool {
 		err := stream.Send(&add)
-		if err != nil {
-			//HACK:
-			log.Errorf("Add mempool record %s", err.Error())
-			i := 0
-			for {
-				err := stream.Send(&add)
-				if err != nil {
-					i++
-					log.Errorf("Add mempool record resend attempt(%d) err = %s", i, err.Error())
-					time.Sleep(time.Second * 2)
-					if i == 3 {
-						break
-					}
-				} else {
-					log.Debugf("Add mempool record resend success on %d attempt", i)
-					break
-				}
-			}
+		if err != nil && err.Error() == ErrGrpcTransport {
+			log.Warnf("EventAddMempoolRecord:stream.Send() %v ", err.Error())
+			s.ReloadChan <- struct{}{}
 		}
 	}
 	return nil
@@ -526,25 +451,34 @@ func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommuunications_NewTxServer) e
 	for tx := range s.EthCli.TransactionsCh {
 		log.Infof("NewTx history - %v", tx.String())
 		err := stream.Send(&tx)
-		if err != nil {
-			//HACK:
-			log.Errorf("NewTx history %s", err.Error())
-			i := 0
-			for {
-				err := stream.Send(&tx)
-				if err != nil {
-					i++
-					log.Errorf("NewTx history resend attempt(%d) err = %s", i, err.Error())
-					time.Sleep(time.Second * 2)
-					if i == 3 {
-						break
-					}
-				} else {
-					log.Debugf("NewTx history resend success on %d attempt", i)
-					break
-				}
-			}
+		if err != nil && err.Error() == ErrGrpcTransport {
+			log.Warnf("NewTx:stream.Send() %v ", err.Error())
+			s.ReloadChan <- struct{}{}
+		}
+	}
+	return nil
+}
 
+func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommuunications_EventNewBlockServer) error {
+	for h := range s.EthCli.Block {
+		log.Infof("New block height - %v", h.GetHeight())
+		err := stream.Send(&h)
+		if err != nil && err.Error() == ErrGrpcTransport {
+			log.Warnf("EventNewBlock:stream.Send() %v ", err.Error())
+			s.ReloadChan <- struct{}{}
+		}
+	}
+	return nil
+}
+
+func (s *Server) AddMultisig(_ *pb.Empty, stream pb.NodeCommuunications_AddMultisigServer) error {
+	for m := range s.EthCli.NewMultisig {
+		log.Infof("AddMultisig new contract address - %v", m.GetContract())
+		err := stream.Send(&m)
+		log.Warnf("Multisig sent on address contract %v", m.Contract)
+		if err != nil && err.Error() == ErrGrpcTransport {
+			log.Warnf("AddMultisig:stream.Send() %v ", err.Error())
+			s.ReloadChan <- struct{}{}
 		}
 	}
 	return nil

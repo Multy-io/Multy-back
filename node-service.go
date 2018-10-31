@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/Multy-io/Multy-ETH-node-service/eth"
 	pb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
@@ -32,10 +33,10 @@ type NodeClient struct {
 }
 
 // Init initializes Multy instance
-func Init(conf *Configuration) (*NodeClient, error) {
+func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
 	resyncUrl := FethResyncUrl(conf.NetworkID)
 	conf.ResyncUrl = resyncUrl
-	cli := &NodeClient{
+	nc = &NodeClient{
 		Config: conf,
 	}
 
@@ -48,7 +49,7 @@ func Init(conf *Configuration) (*NodeClient, error) {
 	})
 
 	// initail initialization of clients data
-	cli.Clients = &usersData
+	nc.Clients = &usersData
 
 	//TODO: init contract clients
 	multisig := eth.Multisig{
@@ -59,7 +60,7 @@ func Init(conf *Configuration) (*NodeClient, error) {
 	multisig.UsersContracts.Store("0x7d2d50791f839aea9b3ebe2c1dfd4dea13bc12ca", "0x116FfA11DD8829524767f561da5d33D3D170E17d")
 
 	// initail initialization of clients contracts data
-	cli.CliMultisig = &multisig
+	nc.CliMultisig = &multisig
 
 	log.Infof("Users data initialization done")
 
@@ -68,16 +69,17 @@ func Init(conf *Configuration) (*NodeClient, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to listen: %v", err.Error())
 	}
-	// Creates a new gRPC server
 
-	ethCli := eth.NewClient(&conf.EthConf, cli.Clients, cli.CliMultisig)
+	// Creates a new gRPC server
+	ethCli := eth.NewClient(&conf.EthConf, nc.Clients, nc.CliMultisig)
 	if err != nil {
 		return nil, fmt.Errorf("eth.NewClient initialization: %s", err.Error())
 	}
 	log.Infof("ETH client initialization done")
 
-	cli.Instance = ethCli
+	nc.Instance = ethCli
 
+	// Dial to abi client to reach smart contracts methods
 	ABIconn, err := ethclient.Dial(conf.AbiClientUrl)
 	if err != nil {
 		log.Fatalf("Failed to connect to infura %v", err)
@@ -85,20 +87,28 @@ func Init(conf *Configuration) (*NodeClient, error) {
 
 	s := grpc.NewServer()
 	srv := streamer.Server{
-		UsersData:       cli.Clients,
-		EthCli:          cli.Instance,
+		UsersData:       nc.Clients,
+		EthCli:          nc.Instance,
 		Info:            &conf.ServiceInfo,
-		Multisig:        cli.CliMultisig,
+		Multisig:        nc.CliMultisig,
 		NetworkID:       conf.NetworkID,
 		ResyncUrl:       resyncUrl,
 		EtherscanAPIKey: conf.EtherscanAPIKey,
 		EtherscanAPIURL: conf.EtherscanAPIURL,
 		ABIcli:          ABIconn,
+		GRPCserver:      s,
+		Listener:        lis,
+		ReloadChan:      make(chan struct{}),
 	}
+
+	nc.GRPCserver = &srv
 
 	pb.RegisterNodeCommuunicationsServer(s, &srv)
 	go s.Serve(lis)
-	return cli, nil
+
+	go WathReload(srv.ReloadChan, nc)
+
+	return nc, nil
 }
 
 func FethResyncUrl(networkid int) string {
@@ -111,5 +121,30 @@ func FethResyncUrl(networkid int) string {
 		return "http://api.etherscan.io/api?sort=asc&endblock=99999999&startblock=0&address="
 	default:
 		return "http://api.etherscan.io/api?sort=asc&endblock=99999999&startblock=0&address="
+	}
+}
+
+func WathReload(reload chan struct{}, cli *NodeClient) {
+	// func WathReload(reload chan struct{}, s *grpc.Server, srv *streamer.Server, lis net.Listener, conf *Configuration) {
+	for {
+		select {
+		case _ = <-reload:
+			ticker := time.NewTicker(1 * time.Second)
+			err := cli.GRPCserver.Listener.Close()
+			if err != nil {
+				log.Errorf("WathReload:lis.Close %v", err.Error())
+			}
+			cli.GRPCserver.GRPCserver.Stop()
+			log.Warnf("WathReload:Successfully stopped")
+			for _ = range ticker.C {
+				_, err := cli.Init(cli.Config)
+				if err != nil {
+					log.Errorf("WathReload:Init %v ", err)
+					continue
+				}
+				log.Warnf("WathReload:Successfully reloaded")
+				return
+			}
+		}
 	}
 }

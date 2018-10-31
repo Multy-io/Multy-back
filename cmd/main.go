@@ -62,7 +62,8 @@ func main() {
 		f.Close()
 	}
 
-	node, err := node.Init(&globalOpt)
+	nc := node.NodeClient{}
+	node, err := nc.Init(&globalOpt)
 	if err != nil {
 		log.Fatalf("Server initialization: %s\n", err.Error())
 	}
