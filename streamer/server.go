@@ -46,7 +46,7 @@ func (s *Server) ServiceInfo(c context.Context, in *pb.Empty) (*pb.ServiceVersio
 
 // EventInitialAdd us used to add initial pairs of watch addresses
 func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.ReplyInfo, error) {
-	log.Debugf("EventInitialAdd - %v", ud.Map)
+	log.Debugf("EventInitialAdd len - %v", len(ud.Map))
 
 	udMap := sync.Map{}
 
