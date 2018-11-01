@@ -2291,10 +2291,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 			})
 			return
 		}
-		var (
-			code    int
-			message string
-		)
 		user := store.User{}
 		query := bson.M{"devices.JWT": token}
 		if err := restClient.userStore.FindUser(query, &user); err != nil {
@@ -2308,9 +2304,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 		}
 
 		topIndexes := findTopIndexes(user.Wallets)
-
-		code = http.StatusOK
-		message = http.StatusText(http.StatusOK)
 
 		okWallets := fetchUndeletedWallets(user.Wallets)
 
@@ -2393,7 +2386,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 						nonce, err = restClient.ETH.CliMain.EventGetAdressNonce(context.Background(), &adr)
 						amount, err = restClient.ETH.CliMain.EventGetAdressBalance(context.Background(), &adr)
 					default:
-						c.JSON(code, gin.H{
+						c.JSON(http.StatusBadRequest, gin.H{
 							"code":    http.StatusBadRequest,
 							"message": msgErrMethodNotImplennted,
 							"wallet":  wv,
@@ -2474,7 +2467,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					nonce, err = restClient.ETH.CliMain.EventGetAdressNonce(context.Background(), &adr)
 					amount, err = restClient.ETH.CliMain.EventGetAdressBalance(context.Background(), &adr)
 				default:
-					c.JSON(code, gin.H{
+					c.JSON(http.StatusBadRequest, gin.H{
 						"code":    http.StatusBadRequest,
 						"message": msgErrMethodNotImplennted,
 						"wallet":  wv,
@@ -2551,9 +2544,9 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 		}
 
-		c.JSON(code, gin.H{
-			"code":       code,
-			"message":    message,
+		c.JSON(http.StatusOK, gin.H{
+			"code":       http.StatusOK,
+			"message":    http.StatusText(http.StatusOK),
 			"wallets":    wv,
 			"topindexes": topIndexes,
 		})
