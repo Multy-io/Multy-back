@@ -80,10 +80,11 @@ type RestClient struct {
 	mobileVersions    store.MobileVersions
 	ERC20TokenList    store.VerifiedTokenList
 
-	BTC          *btc.BTCConn
-	ETH          *eth.ETHConn
-	MultyVerison store.ServerConfig
-	Secretkey    string
+	BTC            *btc.BTCConn
+	ETH            *eth.ETHConn
+	MultyVerison   store.ServerConfig
+	BrowserDefault store.BrowserDefault
+	Secretkey      string
 }
 
 type BTCApiConf struct {
@@ -100,6 +101,7 @@ func SetRestHandlers(
 	secretkey string,
 	mobileVer store.MobileVersions,
 	tl store.VerifiedTokenList,
+	bd store.BrowserDefault,
 ) (*RestClient, error) {
 	restClient := &RestClient{
 		userStore:         userDB,
@@ -111,6 +113,7 @@ func SetRestHandlers(
 		Secretkey:         secretkey,
 		mobileVersions:    mobileVer,
 		ERC20TokenList:    tl,
+		BrowserDefault:    bd,
 	}
 	initMiddlewareJWT(restClient)
 
@@ -924,6 +927,11 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 			"soft": restClient.mobileVersions.Ios.Soft,
 			"hard": restClient.mobileVersions.Ios.Hard,
 		}
+		resp["browserdefault"] = store.BrowserDefault{
+			URL:        restClient.BrowserDefault.URL,
+			CurrencyID: restClient.BrowserDefault.CurrencyID,
+			NetworkID:  restClient.BrowserDefault.NetworkID,
+		}
 
 		c.JSON(http.StatusOK, resp)
 	}
@@ -1012,7 +1020,7 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 		query := bson.M{"devices.JWT": token}
 		if err := restClient.userStore.FindUser(query, &user); err != nil {
 			restClient.log.Errorf("deleteWallet: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			c.JSON(http.StatusBadRequest, gin.H{
+			c.JSON(http.StatusUnauthorized, gin.H{
 				"code":    http.StatusBadRequest,
 				"message": msgErrUserNotFound,
 			})
@@ -1477,7 +1485,7 @@ func (restClient *RestClient) getSpendableOutputs() gin.HandlerFunc {
 		query := bson.M{"devices.JWT": token}
 		if err := restClient.userStore.FindUser(query, &user); err != nil {
 			restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			c.JSON(http.StatusBadRequest, gin.H{
+			c.JSON(http.StatusUnauthorized, gin.H{
 				"code":    http.StatusBadRequest,
 				"message": msgErrUserNotFound,
 				"outs":    0,
@@ -1813,8 +1821,8 @@ func (restClient *RestClient) getWalletVerbose() gin.HandlerFunc {
 
 			if len(wallet.Adresses) == 0 {
 				restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser:\t[addr=%s]", c.Request.RemoteAddr)
-				c.JSON(code, gin.H{
-					"code":    http.StatusBadRequest,
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"code":    http.StatusUnauthorized,
 					"message": msgErrUserNotFound,
 					"wallet":  wv,
 				})
@@ -2299,16 +2307,12 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 			})
 			return
 		}
-		var (
-			code    int
-			message string
-		)
 		user := store.User{}
 		query := bson.M{"devices.JWT": token}
 		if err := restClient.userStore.FindUser(query, &user); err != nil {
 			restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			c.JSON(code, gin.H{
-				"code":    http.StatusBadRequest,
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"code":    http.StatusUnauthorized,
 				"message": msgErrUserNotFound,
 				"wallets": wv,
 			})
@@ -2316,9 +2320,6 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 		}
 
 		topIndexes := findTopIndexes(user.Wallets)
-
-		code = http.StatusOK
-		message = http.StatusText(http.StatusOK)
 
 		okWallets := fetchUndeletedWallets(user.Wallets)
 
@@ -2408,7 +2409,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 						amount, err = restClient.ETH.CliMain.EventGetAdressBalance(context.Background(), &adr)
 						erc20Info, err = restClient.ETH.CliTest.GetERC20Info(context.Background(), ercAddres)
 					default:
-						c.JSON(code, gin.H{
+						c.JSON(http.StatusBadRequest, gin.H{
 							"code":    http.StatusBadRequest,
 							"message": msgErrMethodNotImplennted,
 							"wallet":  wv,
@@ -2490,7 +2491,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					nonce, err = restClient.ETH.CliMain.EventGetAdressNonce(context.Background(), &adr)
 					amount, err = restClient.ETH.CliMain.EventGetAdressBalance(context.Background(), &adr)
 				default:
-					c.JSON(code, gin.H{
+					c.JSON(http.StatusBadRequest, gin.H{
 						"code":    http.StatusBadRequest,
 						"message": msgErrMethodNotImplennted,
 						"wallet":  wv,
@@ -2522,13 +2523,13 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 			allTxs := *txs
 			for _, tx := range allTxs {
 				if tx.Multisig.MethodInvoked == store.SubmitTransaction && !tx.Multisig.Confirmed {
-					declinedCount := 0
+					confirmedCount := 0
 					for _, owner := range tx.Multisig.Owners {
-						if owner.ConfirmationStatus == store.MultisigOwnerStatusDeclined {
-							declinedCount++
+						if owner.ConfirmationStatus == store.MultisigOwnerStatusConfirmed {
+							confirmedCount++
 						}
 					}
-					if len(tx.Multisig.Owners)-declinedCount > multisig.Confirmations {
+					if confirmedCount < multisig.Confirmations {
 						havePaymentReqest = true
 						break
 					}
@@ -2567,9 +2568,9 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 
 		}
 
-		c.JSON(code, gin.H{
-			"code":       code,
-			"message":    message,
+		c.JSON(http.StatusOK, gin.H{
+			"code":       http.StatusOK,
+			"message":    http.StatusText(http.StatusOK),
 			"wallets":    wv,
 			"topindexes": topIndexes,
 		})
@@ -2636,8 +2637,8 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 		sel := bson.M{"devices.JWT": token}
 		err = restClient.userStore.FindUser(sel, &user)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"code":    http.StatusUnauthorized,
 				"message": msgErrUserNotFound,
 				"history": walletTxs,
 			})
@@ -2969,8 +2970,8 @@ func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 		sel := bson.M{"devices.JWT": token}
 		err = restClient.userStore.FindUser(sel, &user)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"code":    http.StatusUnauthorized,
 				"message": msgErrUserNotFound,
 			})
 			return
@@ -3104,8 +3105,8 @@ func (restClient *RestClient) convertToBroken() gin.HandlerFunc {
 		sel := bson.M{"devices.JWT": token}
 		err = restClient.userStore.FindUser(sel, &user)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"code":    http.StatusUnauthorized,
 				"message": msgErrUserNotFound,
 			})
 			return

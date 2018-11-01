@@ -558,6 +558,12 @@ type VerifiedTokenList []struct {
 	Name            string
 }
 
+type BrowserDefault struct {
+	URL        string `json:"url"`
+	CurrencyID int    `json:"currencyid"`
+	NetworkID  int    `json:"networkid"`
+}
+
 func (s *MultisigMsg) FillStruct(m map[string]interface{}) error {
 	for k, v := range m {
 		err := SetField(s, k, v)

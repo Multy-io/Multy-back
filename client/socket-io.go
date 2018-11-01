@@ -72,7 +72,6 @@ func getHeaderDataSocketIO(headers http.Header) (*SocketIOUser, error) {
 	if len(jwtToken) == 0 {
 		return nil, fmt.Errorf("wrong jwtToken header")
 	}
-
 	return &SocketIOUser{
 		userID:     userID,
 		deviceType: deviceType,
