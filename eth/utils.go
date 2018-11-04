@@ -183,7 +183,7 @@ func (client *Client) parseETHTransaction(rawTX ethrpc.Transaction, blockHeight 
 		}
 
 		// send to multy-back
-		client.TransactionsCh <- tx
+		client.TransactionsStream <- tx
 	}
 
 	// from v1 to v2 outgoing
@@ -197,7 +197,7 @@ func (client *Client) parseETHTransaction(rawTX ethrpc.Transaction, blockHeight 
 		}
 
 		// send to multy-back
-		client.TransactionsCh <- tx
+		client.TransactionsStream <- tx
 	}
 
 	// from v1 to v2 incoming
@@ -211,7 +211,7 @@ func (client *Client) parseETHTransaction(rawTX ethrpc.Transaction, blockHeight 
 		}
 
 		// send to multy-back
-		client.TransactionsCh <- tx
+		client.TransactionsStream <- tx
 	}
 
 }
@@ -311,7 +311,7 @@ func (client *Client) parseETHMultisig(rawTX ethrpc.Transaction, blockHeight int
 		if blockHeight == -1 {
 			tx.Status = store.TxStatusAppearedInMempoolOutcoming
 		}
-		client.TransactionsCh <- tx
+		client.TransactionsStream <- tx
 	}
 
 	if toUser != "" {
@@ -320,7 +320,7 @@ func (client *Client) parseETHMultisig(rawTX ethrpc.Transaction, blockHeight int
 		if blockHeight == -1 {
 			tx.Status = store.TxStatusAppearedInMempoolIncoming
 		}
-		client.TransactionsCh <- tx
+		client.TransactionsStream <- tx
 	}
 
 	if toUser == fromUser {
@@ -329,7 +329,7 @@ func (client *Client) parseETHMultisig(rawTX ethrpc.Transaction, blockHeight int
 		if blockHeight == -1 {
 			tx.Status = store.TxStatusAppearedInMempoolOutcoming
 		}
-		client.TransactionsCh <- tx
+		client.TransactionsStream <- tx
 	}
 
 }
@@ -361,4 +361,33 @@ func isMempoolUpdate(mempool bool, status int) bson.M {
 			"blocktime": time.Now().Unix(),
 		},
 	}
+}
+
+func or(channels ...<-chan interface{}) <-chan interface{} {
+	switch len(channels) {
+	case 0:
+		return nil
+	case 1:
+		return channels[0]
+	}
+
+	orDone := make(chan interface{})
+	go func() {
+		defer close(orDone)
+		switch len(channels) {
+		case 2:
+			select {
+			case <-channels[0]:
+			case <-channels[1]:
+			}
+		default:
+			select {
+			case <-channels[0]:
+			case <-channels[1]:
+			case <-channels[2]:
+			case <-or(append(channels[3:], orDone)...):
+			}
+		}
+	}()
+	return orDone
 }

@@ -55,7 +55,7 @@ func (c *Client) FactoryContract(hash string) {
 
 	c.Multisig.UsersContracts.Store(fi.Contract, fi.FactoryAddress)
 
-	c.NewMultisig <- *fi
+	c.NewMultisigStream <- *fi
 
 }
 

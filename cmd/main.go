@@ -8,9 +8,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
-	"runtime"
-	"runtime/pprof"
 
 	"net/http"
 	_ "net/http/pprof"
@@ -37,7 +34,6 @@ var globalOpt = node.Configuration{
 
 func main() {
 	config.ReadGlobalConfig(&globalOpt, "multy configuration")
-	log.Error("--------------------------------new multy back server session")
 	log.Infof("CONFIGURATION=%+v", globalOpt)
 
 	log.Infof("branch: %s", branch)
@@ -47,19 +43,6 @@ func main() {
 		Branch:    branch,
 		Commit:    commit,
 		Buildtime: buildtime,
-	}
-
-	flag.Parse()
-	if *memprofile != "" {
-		f, err := os.Create(*memprofile)
-		if err != nil {
-			log.Fatalf("could not create memory profile: %v", err.Error())
-		}
-		runtime.GC() // get up-to-date statistics
-		if err := pprof.WriteHeapProfile(f); err != nil {
-			log.Fatalf("could not write memory profile: %v", err.Error())
-		}
-		f.Close()
 	}
 
 	nc := node.NodeClient{}

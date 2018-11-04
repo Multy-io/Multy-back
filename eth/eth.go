@@ -21,17 +21,20 @@ import (
 var log = slf.WithContext("eth")
 
 type Client struct {
-	Rpc            *ethrpc.EthRPC
-	Client         *rpc.Client
-	config         *Conf
-	TransactionsCh chan pb.ETHTransaction
-	DeleteMempool  chan pb.MempoolToDelete
-	AddToMempool   chan pb.MempoolRecord
-	Block          chan pb.BlockHeight
-	UsersData      *sync.Map
-	NewMultisig    chan pb.Multisig
-	Multisig       *Multisig
-	AbiClient      *ethclient.Client
+	Rpc                 *ethrpc.EthRPC
+	Client              *rpc.Client
+	config              *Conf
+	TransactionsStream  chan pb.ETHTransaction
+	DeleteMempoolStream chan pb.MempoolToDelete
+	AddToMempoolStream  chan pb.MempoolRecord
+	BlockStream         chan pb.BlockHeight
+	NewMultisigStream   chan pb.Multisig
+	RPCStream           chan interface{}
+	Done                <-chan interface{}
+	Stop                chan struct{}
+	UsersData           *sync.Map
+	Multisig            *Multisig
+	AbiClient           *ethclient.Client
 }
 
 type Conf struct {
@@ -42,14 +45,16 @@ type Conf struct {
 
 func NewClient(conf *Conf, usersData *sync.Map, multisig *Multisig) *Client {
 	c := &Client{
-		config:         conf,
-		TransactionsCh: make(chan pb.ETHTransaction),
-		DeleteMempool:  make(chan pb.MempoolToDelete),
-		AddToMempool:   make(chan pb.MempoolRecord),
-		Block:          make(chan pb.BlockHeight),
-		NewMultisig:    make(chan pb.Multisig),
-		UsersData:      usersData,
-		Multisig:       multisig,
+		config:              conf,
+		TransactionsStream:  make(chan pb.ETHTransaction),
+		DeleteMempoolStream: make(chan pb.MempoolToDelete),
+		AddToMempoolStream:  make(chan pb.MempoolRecord),
+		BlockStream:         make(chan pb.BlockHeight),
+		NewMultisigStream:   make(chan pb.Multisig),
+		Done:                make(chan interface{}),
+		Stop:                make(chan struct{}),
+		UsersData:           usersData,
+		Multisig:            multisig,
 	}
 
 	go c.RunProcess()
@@ -82,6 +87,8 @@ func (c *Client) RunProcess() error {
 
 	ch := make(chan interface{})
 
+	c.RPCStream = ch
+
 	_, err = c.Client.Subscribe(context.Background(), "eth", ch, "newHeads")
 	if err != nil {
 		log.Errorf("Run: client.Subscribe: newHeads %s", err.Error())
@@ -94,22 +101,26 @@ func (c *Client) RunProcess() error {
 		return err
 	}
 
+	// done := or(c.fanIn(ch)...)
+
+	// c.Done = done
+
 	for {
 		switch v := (<-ch).(type) {
 		default:
 			log.Errorf("Not found type: %v", v)
 		case string:
-			// tx pool transaction
 			go c.txpoolTransaction(v)
-			// fmt.Println(v)
 		case map[string]interface{}:
-			// tx block transactions
-			// fmt.Println(v)
 			go c.BlockTransaction(v["hash"].(string))
+		case nil:
+			defer func() {
+				c.Stop <- struct{}{}
+			}()
+			defer client.Close()
+			log.Debugf("RPC stream closed")
+			return nil
 		}
 	}
 
-	defer client.Close()
-
-	return nil
 }

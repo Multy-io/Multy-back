@@ -37,7 +37,7 @@ service NodeCommuunications {
     rpc EventAddMempoolRecord (Empty) returns (stream MempoolRecord){
     }
 
-    rpc EventDeleteMempool (Empty) returns (stream MempoolToDelete){
+    rpc EventDeleteMempoolStream (Empty) returns (stream MempoolToDelete){
     }
 
     rpc EventResyncAddress (AddressToResync) returns (ReplyInfo){

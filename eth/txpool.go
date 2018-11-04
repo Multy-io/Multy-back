@@ -24,7 +24,7 @@ func (c *Client) txpoolTransaction(txHash string) {
 	// log.Debugf("new txpool tx %v", rawTx.Hash)
 
 	// add txpool record
-	c.AddToMempool <- pb.MempoolRecord{
+	c.AddToMempoolStream <- pb.MempoolRecord{
 		Category: int32(rawTx.Gas),
 		HashTX:   rawTx.Hash,
 	}
@@ -38,7 +38,7 @@ func (c *Client) txpoolTransaction(txHash string) {
 		fi.TxOfCreation = txHash
 		fi.FactoryAddress = c.Multisig.FactoryAddress
 		fi.DeployStatus = int64(store.MultisigStatusDeployPending)
-		c.NewMultisig <- *fi
+		c.NewMultisigStream <- *fi
 		// }()
 	}
 

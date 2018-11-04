@@ -14,10 +14,10 @@ func (c *Client) BlockTransaction(hash string) {
 		log.Errorf("Get Block Err:%s", err.Error())
 		return
 	}
-
+	//
 	go func(blockNum int64) {
 		log.Debugf("new block number = %v", blockNum)
-		c.Block <- pb.BlockHeight{
+		c.BlockStream <- pb.BlockHeight{
 			Height: blockNum,
 		}
 	}(int64(block.Number))
@@ -35,7 +35,7 @@ func (c *Client) BlockTransaction(hash string) {
 		c.parseETHMultisig(rawTx, int64(*rawTx.BlockNumber), false)
 		c.parseETHTransaction(rawTx, int64(*rawTx.BlockNumber), false)
 		go func(hash string) {
-			c.DeleteMempool <- pb.MempoolToDelete{
+			c.DeleteMempoolStream <- pb.MempoolToDelete{
 				Hash: hash,
 			}
 		}(rawTx.Hash)

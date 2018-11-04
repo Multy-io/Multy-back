@@ -135,14 +135,15 @@ func WathReload(reload chan struct{}, cli *NodeClient) {
 				log.Errorf("WathReload:lis.Close %v", err.Error())
 			}
 			cli.GRPCserver.GRPCserver.Stop()
-			log.Warnf("WathReload:Successfully stopped")
+			log.Debugf("WathReload:Successfully stopped")
 			for _ = range ticker.C {
+				close(cli.Instance.RPCStream)
 				_, err := cli.Init(cli.Config)
 				if err != nil {
 					log.Errorf("WathReload:Init %v ", err)
 					continue
 				}
-				log.Warnf("WathReload:Successfully reloaded")
+				log.Debugf("WathReload:Successfully reloaded")
 				return
 			}
 		}

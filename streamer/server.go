@@ -425,60 +425,95 @@ func (s *Server) EventSendRawTx(c context.Context, tx *pb.RawTx) (*pb.ReplyInfo,
 
 }
 
-func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventDeleteMempoolServer) error {
-	for del := range s.EthCli.DeleteMempool {
-		err := stream.Send(&del)
-		if err != nil && err.Error() == ErrGrpcTransport {
-			log.Warnf("EventDeleteMempool:stream.Send() %v ", err.Error())
-			s.ReloadChan <- struct{}{}
+func (s *Server) EventDeleteMempoolStream(_ *pb.Empty, stream pb.NodeCommuunications_EventDeleteMempoolStreamServer) error {
+	defer close(s.EthCli.DeleteMempoolStream)
+	for range s.EthCli.DeleteMempoolStream {
+		select {
+		case del := <-s.EthCli.DeleteMempoolStream:
+			err := stream.Send(&del)
+			if err != nil && err.Error() == ErrGrpcTransport {
+				log.Errorf("EventDeleteMempoolStream:stream.Send() %v ", err.Error())
+				s.ReloadChan <- struct{}{}
+			}
+		case <-s.EthCli.Stop:
+			log.Debugf("EventDeleteMempoolStream close")
+			return nil
 		}
 	}
 	return nil
 }
 
 func (s *Server) EventAddMempoolRecord(_ *pb.Empty, stream pb.NodeCommuunications_EventAddMempoolRecordServer) error {
-	for add := range s.EthCli.AddToMempool {
-		err := stream.Send(&add)
-		if err != nil && err.Error() == ErrGrpcTransport {
-			log.Warnf("EventAddMempoolRecord:stream.Send() %v ", err.Error())
-			s.ReloadChan <- struct{}{}
+	defer close(s.EthCli.AddToMempoolStream)
+	for range s.EthCli.AddToMempoolStream {
+		select {
+		case add := <-s.EthCli.AddToMempoolStream:
+			err := stream.Send(&add)
+			if err != nil && err.Error() == ErrGrpcTransport {
+				log.Errorf("EventAddMempoolRecord:stream.Send() %v ", err.Error())
+				s.ReloadChan <- struct{}{}
+			}
+		case <-s.EthCli.Stop:
+			log.Debugf("EventAddMempoolRecord close")
+			return nil
 		}
 	}
 	return nil
 }
 
 func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommuunications_NewTxServer) error {
-	for tx := range s.EthCli.TransactionsCh {
-		log.Infof("NewTx history - %v", tx.String())
-		err := stream.Send(&tx)
-		if err != nil && err.Error() == ErrGrpcTransport {
-			log.Warnf("NewTx:stream.Send() %v ", err.Error())
-			s.ReloadChan <- struct{}{}
+	defer close(s.EthCli.TransactionsStream)
+	for range s.EthCli.TransactionsStream {
+		select {
+		case tx := <-s.EthCli.TransactionsStream:
+			log.Infof("NewTx history - %v", tx.String())
+			err := stream.Send(&tx)
+			if err != nil && err.Error() == ErrGrpcTransport {
+				log.Errorf("NewTx:stream.Send() %v ", err.Error())
+				s.ReloadChan <- struct{}{}
+			}
+		case <-s.EthCli.Stop:
+			log.Debugf("NewTx close")
+			return nil
 		}
 	}
 	return nil
 }
 
 func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommuunications_EventNewBlockServer) error {
-	for h := range s.EthCli.Block {
-		log.Infof("New block height - %v", h.GetHeight())
-		err := stream.Send(&h)
-		if err != nil && err.Error() == ErrGrpcTransport {
-			log.Warnf("EventNewBlock:stream.Send() %v ", err.Error())
-			s.ReloadChan <- struct{}{}
+	defer close(s.EthCli.BlockStream)
+	for range s.EthCli.BlockStream {
+		select {
+		case h := <-s.EthCli.BlockStream:
+			log.Infof("New block height - %v", h.GetHeight())
+			err := stream.Send(&h)
+			if err != nil && err.Error() == ErrGrpcTransport {
+				log.Errorf("EventNewBlock:stream.Send() %v ", err.Error())
+				s.ReloadChan <- struct{}{}
+			}
+		case <-s.EthCli.Stop:
+			log.Debugf("EventNewBlock close")
+			return nil
 		}
 	}
 	return nil
 }
 
 func (s *Server) AddMultisig(_ *pb.Empty, stream pb.NodeCommuunications_AddMultisigServer) error {
-	for m := range s.EthCli.NewMultisig {
-		log.Infof("AddMultisig new contract address - %v", m.GetContract())
-		err := stream.Send(&m)
-		log.Warnf("Multisig sent on address contract %v", m.Contract)
-		if err != nil && err.Error() == ErrGrpcTransport {
-			log.Warnf("AddMultisig:stream.Send() %v ", err.Error())
-			s.ReloadChan <- struct{}{}
+	defer close(s.EthCli.NewMultisigStream)
+	for range s.EthCli.NewMultisigStream {
+		select {
+		case m := <-s.EthCli.NewMultisigStream:
+			log.Infof("AddMultisig new contract address - %v", m.GetContract())
+			err := stream.Send(&m)
+			log.Warnf("Multisig sent on address contract %v", m.Contract)
+			if err != nil && err.Error() == ErrGrpcTransport {
+				log.Warnf("AddMultisig:stream.Send() %v ", err.Error())
+				s.ReloadChan <- struct{}{}
+			}
+		case <-s.EthCli.Stop:
+			log.Debugf("AddMultisig close")
+			return nil
 		}
 	}
 	return nil
