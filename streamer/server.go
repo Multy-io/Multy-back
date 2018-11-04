@@ -506,9 +506,9 @@ func (s *Server) AddMultisig(_ *pb.Empty, stream pb.NodeCommuunications_AddMulti
 		case m := <-s.EthCli.NewMultisigStream:
 			log.Infof("AddMultisig new contract address - %v", m.GetContract())
 			err := stream.Send(&m)
-			log.Warnf("Multisig sent on address contract %v", m.Contract)
+			log.Debugf("Multisig sent on address contract %v", m.Contract)
 			if err != nil && err.Error() == ErrGrpcTransport {
-				log.Warnf("AddMultisig:stream.Send() %v ", err.Error())
+				log.Errorf("AddMultisig:stream.Send() %v ", err.Error())
 				s.ReloadChan <- struct{}{}
 			}
 		case <-s.EthCli.Stop:

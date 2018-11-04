@@ -44,15 +44,11 @@ func newETHtx(hash, from, to string, amount float64, gas, gasprice, nonce int) s
 }
 
 func (client *Client) SendRawTransaction(rawTX string) (string, error) {
-	startTime := time.Now()
 	hash, err := client.Rpc.EthSendRawTransaction(rawTX)
 	if err != nil {
 		log.Errorf("SendRawTransaction:rpc.EthSendRawTransaction: %s", err.Error())
-		log.Warnf("send err since time %v ", time.Since(startTime).Nanoseconds())
 		return hash, err
-
 	}
-	log.Warnf("send err since time %v ", time.Since(startTime).Nanoseconds())
 	return hash, err
 }
 
@@ -89,7 +85,7 @@ func (client *Client) GetAddressPendingBalance(address string) (big.Int, error) 
 		log.Errorf("GetAddressPendingBalance:rpc.EthGetBalance: %s", err.Error())
 		return balance, err
 	}
-	log.Errorf("GetAddressPendingBalance %v", balance.String())
+	log.Debugf("GetAddressPendingBalance %v", balance.String())
 	return balance, err
 }
 

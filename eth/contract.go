@@ -37,10 +37,6 @@ func (c *Client) FactoryContract(hash string) {
 		log.Errorf("FactoryContract:parseInput: %s", err.Error())
 	}
 
-	// if len(m["returnValue"].(string)) > 25 {
-	// 	fi.Contract = "0x" + m["returnValue"].(string)[24:]
-	// }
-
 	fi.Contract = multisigAddress
 
 	fi.TxOfCreation = hash
@@ -51,7 +47,7 @@ func (c *Client) FactoryContract(hash string) {
 	}
 	fi.DeployStatus = deployStatus
 
-	log.Warnf("DeployStatus  %v ", deployed)
+	log.Debugf("DeployStatus  %v ", deployed)
 
 	c.Multisig.UsersContracts.Store(fi.Contract, fi.FactoryAddress)
 
@@ -110,7 +106,7 @@ func (c *Client) GetInvocationStatus(hash, method string) (bool, string, error) 
 			deployed = true
 		}
 	}
-	log.Warnf("GetInvocationStatus: deployed: %v returnValue: %v", deployed, returnValue)
+	log.Debugf("GetInvocationStatus: deployed: %v returnValue: %v", deployed, returnValue)
 
 	return deployed, returnValue, nil
 	// if !isFailed {

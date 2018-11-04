@@ -14,7 +14,7 @@ func (c *Client) BlockTransaction(hash string) {
 		log.Errorf("Get Block Err:%s", err.Error())
 		return
 	}
-	//
+
 	go func(blockNum int64) {
 		log.Debugf("new block number = %v", blockNum)
 		c.BlockStream <- pb.BlockHeight{
@@ -28,8 +28,6 @@ func (c *Client) BlockTransaction(hash string) {
 	} else {
 		return
 	}
-
-	// log.Errorf("block.Transactions %v", len(block.Transactions))
 
 	for _, rawTx := range txs {
 		c.parseETHMultisig(rawTx, int64(*rawTx.BlockNumber), false)
