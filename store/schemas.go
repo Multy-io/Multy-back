@@ -379,9 +379,10 @@ type OwnerHistory struct {
 }
 
 type CoinType struct {
-	СurrencyID int `bson:"currencyID"`
-	NetworkID  int `bson:"networkID"`
-	GRPCUrl    string
+	СurrencyID    int `bson:"currencyID"`
+	NetworkID     int `bson:"networkID"`
+	AccuracyRange int `bson:"accuracyRange"`
+	GRPCUrl       string
 }
 
 type MempoolRecord struct {

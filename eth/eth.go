@@ -92,31 +92,32 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	restoreState = db.DB(dbConf.DBRestoreState).C(dbConf.TableState)
 
 	// setup main net
-	urlMain, err := fethCoinType(coinTypes, currencies.Ether, currencies.ETHMain)
+	ctMain, err := fethCoinType(coinTypes, currencies.Ether, currencies.ETHMain)
 	if err != nil {
 		return cli, fmt.Errorf("fethCoinType: %s", err.Error())
 	}
-	cliMain, err := initGrpcClient(urlMain)
+	cliMain, err := initGrpcClient(ctMain.GRPCUrl)
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
-	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.ETHMain, cli.WatchAddressMain, cli.Mempool, cli)
 
 	cli.CliMain = cliMain
-	log.Infof("InitHandlers: initGrpcClient: Main: √")
 
 	// setup testnet
-	urlTest, err := fethCoinType(coinTypes, currencies.Ether, currencies.ETHTest)
+	ctTest, err := fethCoinType(coinTypes, currencies.Ether, currencies.ETHTest)
 	if err != nil {
 		return cli, fmt.Errorf("fethCoinType: %s", err.Error())
 	}
-	cliTest, err := initGrpcClient(urlTest)
+	cliTest, err := initGrpcClient(ctTest.GRPCUrl)
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
-	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.ETHTest, cli.WatchAddressTest, cli.MempoolTest, cli)
-
 	cli.CliTest = cliTest
+
+	cli.setGRPCHandlers(currencies.ETHMain, ctMain.AccuracyRange)
+	log.Infof("InitHandlers: initGrpcClient: Main: √")
+
+	cli.setGRPCHandlers(currencies.ETHTest, ctTest.AccuracyRange)
 	log.Infof("InitHandlers: initGrpcClient: Test: √")
 
 	return cli, nil
@@ -134,13 +135,13 @@ func initGrpcClient(url string) (pb.NodeCommuunicationsClient, error) {
 	return client, nil
 }
 
-func fethCoinType(coinTypes []store.CoinType, currencyID, networkID int) (string, error) {
+func fethCoinType(coinTypes []store.CoinType, currencyID, networkID int) (store.CoinType, error) {
 	for _, ct := range coinTypes {
 		if ct.СurrencyID == currencyID && ct.NetworkID == networkID {
-			return ct.GRPCUrl, nil
+			return ct, nil
 		}
 	}
-	return "", fmt.Errorf("fethCoinType: no such coin in config")
+	return store.CoinType{}, fmt.Errorf("fethCoinType: no such coin in config")
 }
 
 // BtcTransaction stuct for ws notifications

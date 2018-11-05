@@ -41,8 +41,8 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			}
 
 			mempoolCh <- store.MempoolRecord{
-				Category: int(mpRec.Category),
-				HashTX:   mpRec.HashTX,
+				Category: int(mpRec.GetCategory()),
+				HashTX:   mpRec.GetHashTX(),
 			}
 
 		}
@@ -66,8 +66,8 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			}
 
 			mempoolCh <- store.MempoolRecord{
-				Category: int(mpRec.Category),
-				HashTX:   mpRec.HashTX,
+				Category: int(mpRec.GetCategory()),
+				HashTX:   mpRec.GetHashTX(),
 			}
 
 			if err != nil {
@@ -131,7 +131,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				log.Errorf("initGrpcClient: cli.EventDeleteMempool:stream.Recv: %s", err.Error())
 			}
 
-			mempoolCh <- mpRec.Hash
+			mempoolCh <- mpRec.GetHash()
 
 			if err != nil {
 				log.Errorf("setGRPCHandlers:mpRates.Remove: %s", err.Error())
@@ -171,12 +171,12 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				log.Errorf("initGrpcClient: cli.EventAddSpendableOut:stream.Recv: %s", err.Error())
 			}
 
-			query := bson.M{"userid": gSpOut.UserID, "txid": gSpOut.TxID, "address": gSpOut.Address}
+			query := bson.M{"userid": gSpOut.GetUserID(), "txid": gSpOut.GetTxID(), "address": gSpOut.GetAddress()}
 			err = spend.Find(query).One(nil)
 
 			if err == mgo.ErrNotFound {
 				user := store.User{}
-				sel := bson.M{"wallets.addresses.address": gSpOut.Address}
+				sel := bson.M{"wallets.addresses.address": gSpOut.GetAddress()}
 				err = usersData.Find(sel).One(&user)
 				if err != nil && err != mgo.ErrNotFound {
 					log.Errorf("SetWsHandlers: cli.On newIncomingTx: %s", err)
@@ -298,7 +298,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			}
 			tx := generatedTxDataToStore(gTx)
 
-			setExchangeRates(&tx, gTx.Resync, tx.MempoolTime)
+			setExchangeRates(&tx, gTx.GetResync(), tx.MempoolTime)
 			setUserID(&tx)
 			// setTxInfo(&tx)
 			user := store.User{}
@@ -387,7 +387,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			}
 
 			// tx history
-			if rTxs.Txs != nil {
+			if rTxs.GetTxs() != nil {
 				for _, gTx := range rTxs.Txs {
 					tx := generatedTxDataToStore(gTx)
 					setExchangeRates(&tx, gTx.Resync, tx.MempoolTime)
@@ -440,7 +440,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			}
 
 			// sp outs
-			if rTxs.SpOuts != nil {
+			if rTxs.GetSpOuts() != nil {
 				for _, gSpOut := range rTxs.SpOuts {
 					query := bson.M{"userid": gSpOut.UserID, "txid": gSpOut.TxID, "address": gSpOut.Address}
 					err = spend.Find(query).One(nil)
@@ -488,7 +488,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			}
 
 			// del sp outs
-			if rTxs.SpOutDelete != nil {
+			if rTxs.GetSpOutDelete() != nil {
 				for _, del := range rTxs.SpOutDelete {
 					i := 0
 					for {

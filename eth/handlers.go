@@ -14,18 +14,34 @@ import (
 	pb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
 	"github.com/Multy-io/Multy-back/currencies"
 	"github.com/Multy-io/Multy-back/store"
-	nsq "github.com/bitly/go-nsq"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
-func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress, mempool sync.Map, ethcli *ETHConn) {
-
+func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 	mempoolCh := make(chan interface{})
 	// initial fill mempool respectively network id
 
+	var client pb.NodeCommuunicationsClient
+	var wa chan pb.WatchAddress
+	var mempool sync.Map
+
+	nsqProducer := ethcli.NsqProducer
+
+	switch networtkID {
+	case currencies.ETHMain:
+		client = ethcli.CliMain
+		wa = ethcli.WatchAddressMain
+		mempool = ethcli.Mempool
+	case currencies.ETHTest:
+		client = ethcli.CliTest
+		wa = ethcli.WatchAddressTest
+		mempool = ethcli.MempoolTest
+
+	}
+
 	go func() {
-		stream, err := cli.EventGetAllMempool(context.Background(), &pb.Empty{})
+		stream, err := client.EventGetAllMempool(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())
 			// return nil, err
@@ -54,7 +70,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 	// add transaction on every new tx on node
 	go func() {
-		stream, err := cli.EventAddMempoolRecord(context.Background(), &pb.Empty{})
+		stream, err := client.EventAddMempoolRecord(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventAddMempoolRecord: %s", err.Error())
 			// return nil, err
@@ -78,7 +94,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 	//deleting mempool record on block
 	go func() {
 
-		stream, err := cli.EventDeleteMempool(context.Background(), &pb.Empty{})
+		stream, err := client.EventDeleteMempool(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())
 			// return nil, err
@@ -105,7 +121,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 	}()
 
 	go func() {
-		stream, err := cli.AddMultisig(context.Background(), &pb.Empty{})
+		stream, err := client.AddMultisig(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.AddMultisig: %s", err.Error())
 		}
@@ -193,7 +209,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 	// add to transaction history record and send ws notification on tx
 	go func() {
-		stream, err := cli.NewTx(context.Background(), &pb.Empty{})
+		stream, err := client.NewTx(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())
 		}
@@ -249,7 +265,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 	}()
 
 	go func() {
-		stream, err := cli.EventNewBlock(context.Background(), &pb.Empty{})
+		stream, err := client.EventNewBlock(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventNewBlock: %s", err.Error())
 			// return nil, err
@@ -262,20 +278,16 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			if err != nil {
 				log.Errorf("setGRPCHandlers: client.EventNewBlock:stream.Recv: %s", err.Error())
 			}
-
-			query := bson.M{"currencyid": currencies.Ether, "networkid": networtkID}
+			// log.Warnf("new block on net id %v bh = %v", networtkID, h.GetHeight())
+			sel := bson.M{"currencyid": currencies.Ether, "networkid": networtkID}
 			update := bson.M{
 				"$set": bson.M{
 					"blockheight": h.GetHeight(),
 				},
 			}
-			err = restoreState.Update(query, update)
-			if err == mgo.ErrNotFound {
-				restoreState.Insert(store.LastState{
-					BlockHeight: h.GetHeight(),
-					CurrencyID:  currencies.Ether,
-					NetworkID:   networtkID,
-				})
+			_, err = restoreState.Upsert(sel, update)
+			if err != nil {
+				log.Errorf("restoreState.Upsert: %v", err.Error())
 			}
 
 			// check for rejected transactions
@@ -290,14 +302,18 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				nsCli = ethcli.CliTest
 			}
 
-			//TODO: to store
-			query = bson.M{
+			query := bson.M{
 				"$or": []bson.M{
-					bson.M{"blockheight": 0},
+					bson.M{"$and": []bson.M{
+						bson.M{"blockheight": 0},
+						bson.M{"txstatus": bson.M{"$ne": store.TxStatusTxRejectedOutgoing}},
+						bson.M{"txstatus": bson.M{"$ne": store.TxStatusTxRejectedIncoming}},
+					}},
+
 					bson.M{"$and": []bson.M{
 						bson.M{"blockheight": bson.M{"$lt": h.GetHeight()}},
-						bson.M{"blockheight": bson.M{"$gt": h.GetHeight() - 6}}},
-					},
+						bson.M{"blockheight": bson.M{"$gt": h.GetHeight() - int64(accuracyRange)}},
+					}},
 				},
 			}
 
@@ -314,14 +330,11 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			if err != nil {
 				log.Errorf("setGRPCHandlers: CheckRejectTxs: %s", err.Error())
 			}
-			// log.Warnf(" txToReject -- %v", txToReject)
 
-			//TODO: to store
-			// set rejected status
+			// Set status to rejected in db
 			if len(txToReject.GetRejectedTxs()) > 0 {
 
 				for _, hash := range txToReject.GetRejectedTxs() {
-
 					// reject incoming
 					query := bson.M{
 						"$or": []bson.M{
@@ -350,7 +363,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 					}
 					update = bson.M{
 						"$set": bson.M{
-							"txstatus": store.TxStatusTxRejectedIncoming,
+							"txstatus": store.TxStatusTxRejectedOutgoing,
 						},
 					}
 					_, err = txStore.UpdateAll(query, update)
@@ -373,13 +386,13 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			select {
 			case addr := <-wa:
 				a := addr
-				rp, err := cli.EventAddNewAddress(context.Background(), &a)
+				rp, err := client.EventAddNewAddress(context.Background(), &a)
 				if err != nil {
 					log.Errorf("NewAddressNode: cli.EventAddNewAddress %s\n", err.Error())
 				}
 				log.Debugf("EventAddNewAddress Reply %s", rp)
 
-				rp, err = cli.EventResyncAddress(context.Background(), &pb.AddressToResync{
+				rp, err = client.EventResyncAddress(context.Background(), &pb.AddressToResync{
 					Address: addr.Address,
 				})
 				if err != nil {
