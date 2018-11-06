@@ -8,11 +8,11 @@ package main
 import (
 	"fmt"
 
-	"github.com/KristinaEtc/config"
-	"github.com/KristinaEtc/slf"
-	_ "github.com/KristinaEtc/slflog"
 	"github.com/Multy-io/Multy-BTC-node-service"
 	"github.com/Multy-io/Multy-back/store"
+	"github.com/jekabolt/config"
+	"github.com/jekabolt/slf"
+	_ "github.com/jekabolt/slflog"
 )
 
 var (
@@ -47,6 +47,6 @@ func main() {
 	}
 	fmt.Println(node)
 
-	block := make(chan bool)
+	block := make(chan struct{})
 	<-block
 }

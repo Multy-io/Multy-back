@@ -111,19 +111,19 @@ Copyright (c) 2016 Ventu.io, Oleg Sklyar, contributors.
 Distributed under a MIT style license found in the [LICENSE][license] file.
 
 
-[docs]: https://godoc.org/github.com/KristinaEtc/slog
+[docs]: https://godoc.org/github.com/jekabolt/slog
 [docsimage]: http://img.shields.io/badge/godoc-reference-blue.svg?style=flat
 
-[build]: https://travis-ci.org/KristinaEtc/slog
-[buildimage]: https://travis-ci.org/KristinaEtc/slog.svg?branch=master
+[build]: https://travis-ci.org/jekabolt/slog
+[buildimage]: https://travis-ci.org/jekabolt/slog.svg?branch=master
 
-[codecov]: https://codecov.io/github/KristinaEtc/slog?branch=master
-[codecovimage]: https://codecov.io/github/KristinaEtc/slog/coverage.svg?branch=master
+[codecov]: https://codecov.io/github/jekabolt/slog?branch=master
+[codecovimage]: https://codecov.io/github/jekabolt/slog/coverage.svg?branch=master
 
-[card]: http://goreportcard.com/report/KristinaEtc/slog
-[cardimage]: https://goreportcard.com/badge/github.com/KristinaEtc/slog
+[card]: http://goreportcard.com/report/jekabolt/slog
+[cardimage]: https://goreportcard.com/badge/github.com/jekabolt/slog
 
-[license]: https://github.com/KristinaEtc/slog/blob/master/LICENSE
+[license]: https://github.com/jekabolt/slog/blob/master/LICENSE
 
-[slf]: https://github.com/KristinaEtc/slf
-[coloured]: https://raw.githubusercontent.com/KristinaEtc/slog/master/basic/coloured-basic-output.png
+[slf]: https://github.com/jekabolt/slf
+[coloured]: https://raw.githubusercontent.com/jekabolt/slog/master/basic/coloured-basic-output.png

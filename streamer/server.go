@@ -11,12 +11,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/KristinaEtc/slf"
-	_ "github.com/KristinaEtc/slflog"
 	"github.com/Multy-io/Multy-BTC-node-service/btc"
 	pb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/blockcypher/gobcy"
+	"github.com/jekabolt/slf"
+	_ "github.com/jekabolt/slflog"
 	"github.com/parnurzeal/gorequest"
 	"google.golang.org/grpc"
 )

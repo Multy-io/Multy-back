@@ -4,25 +4,25 @@
 	"package": [
 		{
 			"checksumSHA1": "csETv6A+vWaoMHKZKSBYkzvtyzk=",
-			"path": "github.com/KristinaEtc/config",
+			"path": "github.com/jekabolt/config",
 			"revision": "8ed85620171d70ac3b86a2d3a427dd8f06a4a139",
 			"revisionTime": "2016-10-07T10:41:38Z"
 		},
 		{
 			"checksumSHA1": "xzcT4PN/jZFELKV6FMILRLrByFg=",
-			"path": "github.com/KristinaEtc/slf",
+			"path": "github.com/jekabolt/slf",
 			"revision": "fad0076bdc4d841337361114f4f79f9722d6bc48",
 			"revisionTime": "2017-12-18T18:00:57Z"
 		},
 		{
 			"checksumSHA1": "guh9JrLNP6BJrZcbnfXa69fNxTg=",
-			"path": "github.com/KristinaEtc/slflog",
+			"path": "github.com/jekabolt/slflog",
 			"revision": "7f74abafb53797806cb8628b4c84479ddacf6b32",
 			"revisionTime": "2017-12-18T18:05:58Z"
 		},
 		{
 			"checksumSHA1": "GeC69vuF9obBNoPhEvKZns9ShVk=",
-			"path": "github.com/KristinaEtc/slog",
+			"path": "github.com/jekabolt/slog",
 			"revision": "deae2a3cdc89c46e4df677260ea04db1fa4a21ef",
 			"revisionTime": "2017-12-11T19:21:08Z"
 		},
@@ -70,7 +70,7 @@
 		},
 		{
 			"checksumSHA1": "zO44cJ8MvpMvJPYQv+o1PpHcLWU=",
-			"origin": "github.com/KristinaEtc/rpcclient",
+			"origin": "github.com/jekabolt/rpcclient",
 			"path": "github.com/btcsuite/btcd/rpcclient",
 			"revision": "45b040f68c7607f3abcf3d1085223058d5595bd6",
 			"revisionTime": "2017-12-18T17:01:45Z"

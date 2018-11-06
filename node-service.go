@@ -13,13 +13,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/KristinaEtc/slf"
-	_ "github.com/KristinaEtc/slflog"
 	"github.com/Multy-io/Multy-BTC-node-service/btc"
 	pb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
 	"github.com/Multy-io/Multy-BTC-node-service/streamer"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/blockcypher/gobcy"
+	"github.com/jekabolt/slf"
+	_ "github.com/jekabolt/slflog"
 	"google.golang.org/grpc"
 )
 
@@ -40,7 +40,7 @@ type NodeClient struct {
 
 // Init initializes Multy instance
 func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
-	cli := &NodeClient{
+	nc = &NodeClient{
 		Config: conf,
 	}
 
@@ -57,11 +57,11 @@ func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
 		Coin:  conf.BTCAPI.Coin,
 		Chain: conf.BTCAPI.Chain,
 	}
-	cli.BtcApi = &api
+	nc.BtcApi = &api
 	log.Debug("btc api initialization done √")
 
 	// initail initialization of clients data
-	cli.Clients = &usersData
+	nc.Clients = &usersData
 	log.Debug("Users data initialization done √")
 
 	// init gRPC server
@@ -70,18 +70,18 @@ func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
 		return nil, fmt.Errorf("failed to listen: %v", err.Error())
 	}
 
-	btcClient, err := btc.NewClient(getCertificate(conf.BTCSertificate), conf.BTCNodeAddress, cli.Clients)
+	btcClient, err := btc.NewClient(getCertificate(conf.BTCSertificate), conf.BTCNodeAddress, nc.Clients)
 	if err != nil {
 		return nil, fmt.Errorf("Blockchain api initialization: %s", err.Error())
 	}
 	log.Debug("BTC client initialization done √")
-	cli.Instance = btcClient
+	nc.Instance = btcClient
 
 	// Creates a new gRPC server
 	s := grpc.NewServer()
 	srv := streamer.Server{
-		UsersData:  cli.Clients,
-		BtcAPI:     cli.BtcApi,
+		UsersData:  nc.Clients,
+		BtcAPI:     nc.BtcApi,
 		M:          &sync.Mutex{},
 		BtcCli:     btcClient,
 		Info:       &conf.ServiceInfo,
@@ -90,17 +90,19 @@ func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
 		ReloadChan: make(chan struct{}),
 	}
 
-	cli.GRPCserver = &srv
+	nc.GRPCserver = &srv
 
 	pb.RegisterNodeCommuunicationsServer(s, &srv)
 
 	go s.Serve(lis)
 
-	go WathReload(srv.ReloadChan, cli)
+	go WathReload(srv.ReloadChan, nc)
 
-	log.Debug("NodeCommuunications Server initialization done √")
+	// go ContinuousResync(nc)
 
-	return cli, nil
+	go log.Debug("NodeCommuunications Server initialization done √")
+
+	return nc, nil
 }
 
 func getCertificate(certFile string) []byte {
@@ -119,7 +121,6 @@ func getCertificate(certFile string) []byte {
 }
 
 func WathReload(reload chan struct{}, cli *NodeClient) {
-	// func WathReload(reload chan struct{}, s *grpc.Server, srv *streamer.Server, lis net.Listener, conf *Configuration) {
 	for {
 		select {
 		case _ = <-reload:
@@ -145,12 +146,49 @@ func WathReload(reload chan struct{}, cli *NodeClient) {
 	}
 }
 
-func closeServerChannels(srv *streamer.Server) {
-	close(srv.BtcCli.AddSpOut)
-	close(srv.BtcCli.AddToMempool)
-	close(srv.BtcCli.Block)
-	close(srv.BtcCli.DeleteMempool)
-	close(srv.BtcCli.DelSpOut)
-	close(srv.BtcCli.ResyncCh)
-	close(srv.BtcCli.TransactionsCh)
-}
+// func ContinuousResync(cli *NodeClient) {
+// 	log.Warnf("ContinuousResync")
+// 	time.Sleep(time.Second * 30)
+// 	var once sync.Once
+// 	once.Do(func() {
+// 		// ticker := time.NewTicker(30 * time.Second)
+// 		resyncRange := cli.Config.ContinuousResyncCap
+// 		resyncBlocks := []*chainhash.Hash{}
+// 		// disable continuous resync
+// 		if resyncRange == 0 {
+// 			return
+// 		}
+// 		// for range ticker.C {
+// 		// for range cli.Instance.Block {
+// 		blockHash, _, err := cli.Instance.RPCClient.GetBestBlock()
+// 		if err != nil {
+// 			log.Errorf("ContinuousResync:GetBestBlock( %v", err.Error())
+// 			// continue
+// 		}
+
+// 		resyncBlocks = append(resyncBlocks, blockHash)
+
+// 		for index := 0; index < resyncRange; index++ {
+// 			log.Warnf("ContinuousResync process %v ", index)
+// 			block, err := cli.Instance.RPCClient.GetBlock(resyncBlocks[index])
+// 			if err != nil {
+// 				log.Errorf("ContinuousResync:GetBlock %v", err.Error())
+// 				continue
+// 			}
+// 			prevBlock := block.Header.PrevBlock
+// 			resyncBlocks = append(resyncBlocks, &prevBlock)
+
+// 		}
+
+// 		// cut block that we alreaby synced
+// 		// resyncBlocks = resyncBlocks[1:]
+
+// 		for i := len(resyncBlocks) - 1; i >= 0; i-- {
+// 			cli.Instance.BlockTransactions(resyncBlocks[i])
+// 		}
+// 		log.Warnf("ContinuousResync:DONE")
+
+// 		// }
+// 	})
+
+// }

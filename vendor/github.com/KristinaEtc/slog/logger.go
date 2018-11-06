@@ -6,12 +6,13 @@ package slog
 import (
 	"errors"
 	"fmt"
-	"github.com/KristinaEtc/slf"
 	stdlog "log"
 	"os"
 	"path"
 	"runtime"
 	"time"
+
+	"github.com/jekabolt/slf"
 )
 
 const (

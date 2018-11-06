@@ -9,12 +9,13 @@ import "github.com/Multy-io/Multy-back/store"
 
 // Configuration is a struct with all service options
 type Configuration struct {
-	Name           string
-	GrpcPort       string
-	BTCSertificate string
-	BTCNodeAddress string
-	BTCAPI         BTCApiConf
-	ServiceInfo    store.ServiceInfo
+	Name                string
+	GrpcPort            string
+	BTCSertificate      string
+	BTCNodeAddress      string
+	ContinuousResyncCap int
+	BTCAPI              BTCApiConf
+	ServiceInfo         store.ServiceInfo
 }
 
 // BTCApiConf provide blockcypher api

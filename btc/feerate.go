@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/Multy-io/Multy-back/store"
+	_ "github.com/jekabolt/slflog"
 )
 
 const (

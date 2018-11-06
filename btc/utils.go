@@ -14,6 +14,7 @@ import (
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	_ "github.com/jekabolt/slflog"
 )
 
 const ( // currency id  nsq
