@@ -131,10 +131,12 @@ func (client *Client) parseETHTransaction(rawTX ethrpc.Transaction, blockHeight 
 
 	if udFrom, ok := client.UsersData.Load(rawTX.From); ok {
 		fromUser = udFrom.(store.AddressExtended)
+		log.Warnf("udFrom --  %v ", udFrom)
 	}
 
 	if udTo, ok := client.UsersData.Load(rawTX.To); ok {
 		toUser = udTo.(store.AddressExtended)
+		log.Warnf("udTo --  %v ", udTo)
 	}
 
 	if fromUser.UserID == toUser.UserID && fromUser.UserID == "" {
@@ -191,7 +193,7 @@ func (client *Client) parseETHTransaction(rawTX ethrpc.Transaction, blockHeight 
 		if blockHeight == -1 {
 			tx.Status = store.TxStatusAppearedInMempoolOutcoming
 		}
-
+		log.Warnf("outgoing ----- for uid %v ", fromUser.UserID)
 		// send to multy-back
 		client.TransactionsStream <- tx
 	}
@@ -205,7 +207,7 @@ func (client *Client) parseETHTransaction(rawTX ethrpc.Transaction, blockHeight 
 		if blockHeight == -1 {
 			tx.Status = store.TxStatusAppearedInMempoolIncoming
 		}
-
+		log.Warnf("incoming ----- for uid %v ", toUser.UserID)
 		// send to multy-back
 		client.TransactionsStream <- tx
 	}
@@ -357,33 +359,4 @@ func isMempoolUpdate(mempool bool, status int) bson.M {
 			"blocktime": time.Now().Unix(),
 		},
 	}
-}
-
-func or(channels ...<-chan interface{}) <-chan interface{} {
-	switch len(channels) {
-	case 0:
-		return nil
-	case 1:
-		return channels[0]
-	}
-
-	orDone := make(chan interface{})
-	go func() {
-		defer close(orDone)
-		switch len(channels) {
-		case 2:
-			select {
-			case <-channels[0]:
-			case <-channels[1]:
-			}
-		default:
-			select {
-			case <-channels[0]:
-			case <-channels[1]:
-			case <-channels[2]:
-			case <-or(append(channels[3:], orDone)...):
-			}
-		}
-	}()
-	return orDone
 }

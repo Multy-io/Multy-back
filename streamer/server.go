@@ -309,23 +309,19 @@ func (s *Server) CheckRejectTxs(ctx context.Context, txs *pb.TxsToCheck) (*pb.Re
 }
 
 func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyInfo, error) {
-
+	// s.BtcCli.RpcClient.GetTxOut()
+	// var blocks []*chainhash.Hash
 	currentH, err := s.EthCli.GetBlockHeight()
 	if err != nil {
 		log.Errorf("s.BtcCli.RpcClient.GetBlockCount: %v ", err.Error())
 	}
-	if in.GetHeight() <= 0 {
-		return &pb.ReplyInfo{
-			Message: "bad",
-		}, nil
-	}
-	log.Warnf("currentH %v lastH %v difference %v ", currentH, in.GetHeight(), int64(currentH)-in.GetHeight())
+
+	log.Debugf("currentH %v lastH %v", currentH, in.GetHeight())
 
 	for lastH := int(in.GetHeight()); lastH < currentH; lastH++ {
 		b, err := s.EthCli.Rpc.EthGetBlockByNumber(lastH, false)
 		if err != nil {
 			log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
-			continue
 		}
 		go s.EthCli.BlockTransaction(b.Hash)
 	}
@@ -430,17 +426,11 @@ func (s *Server) EventSendRawTx(c context.Context, tx *pb.RawTx) (*pb.ReplyInfo,
 }
 
 func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventDeleteMempoolServer) error {
-	defer close(s.EthCli.DeleteMempoolStream)
-	for range s.EthCli.DeleteMempoolStream {
-		select {
-		case del := <-s.EthCli.DeleteMempoolStream:
-			err := stream.Send(&del)
-			if err != nil && err.Error() == ErrGrpcTransport {
-				log.Errorf("EventDeleteMempoolStream:stream.Send() %v ", err.Error())
-				s.ReloadChan <- struct{}{}
-			}
-		case <-s.EthCli.Stop:
-			log.Debugf("EventDeleteMempoolStream close")
+	for del := range s.EthCli.DeleteMempoolStream {
+		err := stream.Send(&del)
+		if err != nil && err.Error() == ErrGrpcTransport {
+			log.Warnf("EventDeleteMempool:stream.Send() %v ", err.Error())
+			s.ReloadChan <- struct{}{}
 			return nil
 		}
 	}
@@ -448,17 +438,11 @@ func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommuunications_E
 }
 
 func (s *Server) EventAddMempoolRecord(_ *pb.Empty, stream pb.NodeCommuunications_EventAddMempoolRecordServer) error {
-	defer close(s.EthCli.AddToMempoolStream)
-	for range s.EthCli.AddToMempoolStream {
-		select {
-		case add := <-s.EthCli.AddToMempoolStream:
-			err := stream.Send(&add)
-			if err != nil && err.Error() == ErrGrpcTransport {
-				log.Errorf("EventAddMempoolRecord:stream.Send() %v ", err.Error())
-				s.ReloadChan <- struct{}{}
-			}
-		case <-s.EthCli.Stop:
-			log.Debugf("EventAddMempoolRecord close")
+	for add := range s.EthCli.AddToMempoolStream {
+		err := stream.Send(&add)
+		if err != nil && err.Error() == ErrGrpcTransport {
+			log.Warnf("EventAddMempoolRecord:stream.Send() %v ", err.Error())
+			s.ReloadChan <- struct{}{}
 			return nil
 		}
 	}
@@ -466,18 +450,12 @@ func (s *Server) EventAddMempoolRecord(_ *pb.Empty, stream pb.NodeCommuunication
 }
 
 func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommuunications_NewTxServer) error {
-	defer close(s.EthCli.TransactionsStream)
-	for range s.EthCli.TransactionsStream {
-		select {
-		case tx := <-s.EthCli.TransactionsStream:
-			log.Infof("NewTx history - %v", tx.String())
-			err := stream.Send(&tx)
-			if err != nil && err.Error() == ErrGrpcTransport {
-				log.Errorf("NewTx:stream.Send() %v ", err.Error())
-				s.ReloadChan <- struct{}{}
-			}
-		case <-s.EthCli.Stop:
-			log.Debugf("NewTx close")
+	for tx := range s.EthCli.TransactionsStream {
+		log.Infof("NewTx history - %v", tx.String())
+		err := stream.Send(&tx)
+		if err != nil && err.Error() == ErrGrpcTransport {
+			log.Warnf("NewTx:stream.Send() %v ", err.Error())
+			s.ReloadChan <- struct{}{}
 			return nil
 		}
 	}
@@ -485,18 +463,12 @@ func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommuunications_NewTxServer) e
 }
 
 func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommuunications_EventNewBlockServer) error {
-	defer close(s.EthCli.BlockStream)
-	for range s.EthCli.BlockStream {
-		select {
-		case h := <-s.EthCli.BlockStream:
-			log.Infof("New block height - %v", h.GetHeight())
-			err := stream.Send(&h)
-			if err != nil && err.Error() == ErrGrpcTransport {
-				log.Errorf("EventNewBlock:stream.Send() %v ", err.Error())
-				s.ReloadChan <- struct{}{}
-			}
-		case <-s.EthCli.Stop:
-			log.Debugf("EventNewBlock close")
+	for h := range s.EthCli.BlockStream {
+		log.Infof("New block height - %v", h.GetHeight())
+		err := stream.Send(&h)
+		if err != nil && err.Error() == ErrGrpcTransport {
+			log.Warnf("EventNewBlock:stream.Send() %v ", err.Error())
+			s.ReloadChan <- struct{}{}
 			return nil
 		}
 	}
@@ -504,19 +476,13 @@ func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommuunications_EventN
 }
 
 func (s *Server) AddMultisig(_ *pb.Empty, stream pb.NodeCommuunications_AddMultisigServer) error {
-	defer close(s.EthCli.NewMultisigStream)
-	for range s.EthCli.NewMultisigStream {
-		select {
-		case m := <-s.EthCli.NewMultisigStream:
-			log.Infof("AddMultisig new contract address - %v", m.GetContract())
-			err := stream.Send(&m)
-			log.Debugf("Multisig sent on address contract %v", m.Contract)
-			if err != nil && err.Error() == ErrGrpcTransport {
-				log.Errorf("AddMultisig:stream.Send() %v ", err.Error())
-				s.ReloadChan <- struct{}{}
-			}
-		case <-s.EthCli.Stop:
-			log.Debugf("AddMultisig close")
+	for m := range s.EthCli.NewMultisigStream {
+		log.Infof("AddMultisig new contract address - %v", m.GetContract())
+		err := stream.Send(&m)
+		log.Warnf("Multisig sent on address contract %v", m.Contract)
+		if err != nil && err.Error() == ErrGrpcTransport {
+			log.Warnf("AddMultisig:stream.Send() %v ", err.Error())
+			s.ReloadChan <- struct{}{}
 			return nil
 		}
 	}
