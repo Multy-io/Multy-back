@@ -6,7 +6,7 @@ RUN mkdir $GOPATH/src/github.com && \
 RUN cd $GOPATH/src/github.com/Multy-io && \ 
     git clone https://github.com/Multy-io/Multy-back.git && \ 
     cd Multy-back && \ 
-    git checkout release_1.2.2 
+    git checkout release_1.3
 
 
 RUN go get -u github.com/golang/protobuf/proto && \
@@ -19,7 +19,7 @@ RUN apt-get update && \
 RUN cd $GOPATH/src/github.com/Multy-io && \
     git clone https://github.com/Multy-io/Multy-ETH-node-service.git && \
     cd $GOPATH/src/github.com/Multy-io/Multy-ETH-node-service && \
-    git checkout import-eth 
+    git checkout reconnect 
 
 # go get github.com/ethereum/go-ethereum/rpc
 
