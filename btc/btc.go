@@ -72,6 +72,13 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	if err != nil {
 		return nil, err
 	}
+
+	// HACK: this made to acknowledge that queried data has already inserted to db
+	db.SetSafe(&mgo.Safe{
+		W:        1,
+		WTimeout: 100,
+		J:        true,
+	})
 	if err != nil {
 		log.Errorf("RunProcess: can't connect to DB: %s", err.Error())
 		return cli, fmt.Errorf("mgo.Dial: %s", err.Error())

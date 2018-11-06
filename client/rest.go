@@ -2774,15 +2774,6 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 					})
 					return
 				}
-				// w := store.Wallet{}
-				// for _, wallet := range user.Wallets {
-				// 	for _,address := range wallet.Adresses {
-				// 		if wallet.CurrencyID == currencyId && wallet.NetworkID == networkid && wallet.WalletIndex == walletIndex {
-				// 			w = wallet
-				// 			break
-				// 		}
-				// 	}
-				// }
 
 				for i := 0; i < len(userTxs); i++ {
 					if userTxs[i].BlockTime == 0 {

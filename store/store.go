@@ -172,6 +172,13 @@ func InitUserStore(conf Conf) (UserStore, error) {
 		return nil, err
 	}
 
+	// HACK: this made to acknowledge that queried data has already inserted to db
+	session.SetSafe(&mgo.Safe{
+		W:        1,
+		WTimeout: 100,
+		J:        true,
+	})
+
 	uStore.session = session
 	uStore.usersData = uStore.session.DB(conf.DBUsers).C(TableUsers)
 	uStore.stockExchangeRate = uStore.session.DB(conf.DBStockExchangeRate).C(TableStockExchangeRate)
@@ -480,6 +487,38 @@ func (mStore *MongoUserStore) GetAllWalletTransactions(userid string, currencyID
 	return nil
 }
 
+// func (mStore *MongoUserStore) GetAllWalletEthTransactions(userid string, currencyID, networkID, walletIndex int, walletTxs *[]TransactionETH) (string, error) {
+// 	address := ""
+// 	var err error
+// 	switch currencyID {
+// 	case currencies.Ether:
+// 		user := User{}
+// 		query := bson.M{"userID": userid}
+
+// 		mStore.usersData.Find(query).One(&user)
+// 		for _, wallet := range user.Wallets {
+// 			if wallet.WalletIndex == walletIndex && wallet.CurrencyID == currencyID && wallet.NetworkID == networkID {
+// 				address = wallet.Adresses[0].Address
+// 				break
+// 			}
+// 		}
+// 		query = bson.M{
+// 			"$or": []bson.M{
+// 				bson.M{"to": address},
+// 				bson.M{"from": address},
+// 			},
+// 		}
+
+// 		if networkID == currencies.ETHMain {
+// 			err = mStore.ETHMainTxsData.Find(query).All(walletTxs)
+// 		}
+// 		if networkID == currencies.ETHTest {
+// 			err = mStore.ETHTestTxsData.Find(query).All(walletTxs)
+// 		}
+// 	}
+// 	return address, err
+// }
+
 func (mStore *MongoUserStore) GetAllWalletEthTransactions(userid string, currencyID, networkID int, walletTxs *[]TransactionETH) error {
 	switch currencyID {
 	case currencies.Ether:
@@ -505,7 +544,6 @@ func (mStore *MongoUserStore) GetAllAddressTransactions(address string, currency
 				bson.M{"to": address},
 				bson.M{"from": address},
 			},
-			// "userid": "imported",
 		}
 
 		if networkID == currencies.ETHMain {

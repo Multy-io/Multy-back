@@ -222,6 +222,9 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 			if err != nil {
 				log.Errorf("initGrpcClient: cli.NewTx:stream.Recv: %s", err.Error())
 			}
+
+			log.Warnf("new tx for uid %v ", gTx.GetUserID())
+
 			tx := generatedTxDataToStore(gTx)
 			setExchangeRates(&tx, gTx.Resync, tx.BlockTime)
 
@@ -237,7 +240,6 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 			// process multisig txs
 			if gTx.Multisig {
 				methodInvoked, err := processMultisig(&tx, networtkID, nsqProducer, ethcli)
-
 				log.Warnf("methodInvoked %v tx.Multisig.Return %v ", methodInvoked, tx.Multisig.Return)
 				// ws notify about all kinds of ms transactions
 				sel := bson.M{"multisig.contractAddress": tx.Multisig.Contract}

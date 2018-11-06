@@ -93,8 +93,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 	}
 	pool.chart = chart
 
-	receivers := make(map[string]store.Receiver)
-	receiversM := sync.Mutex{}
+	receivers := sync.Map{} // string UserCode to store.Receiver
 
 	senders := []store.Sender{}
 
@@ -143,12 +142,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			Socket:     c,
 		}
 
-		receiversM.Lock()
-		_, ok := receivers[receiver.UserCode]
-		if !ok {
-			receivers[receiver.UserCode] = receiver
-		}
-		receiversM.Unlock()
+		receivers.Store(receiver.UserCode, receiver)
 
 		return "ok"
 	})
@@ -156,13 +150,13 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 	server.On(SenderCheck, func(c *gosocketio.Channel, nearIDs store.NearVisible) []store.Receiver {
 		pool.log.Warnf("SenderCheck")
 		nearReceivers := []store.Receiver{}
-		receiversM.Lock()
-		allR := receivers
-		receiversM.Unlock()
 
 		for _, id := range nearIDs.IDs {
-			if res, ok := allR[id]; ok {
-				nearReceivers = append(nearReceivers, res)
+			if res, ok := receivers.Load(id); ok {
+				nearReceiver, ok := res.(store.Receiver)
+				if ok {
+					nearReceivers = append(nearReceivers, nearReceiver)
+				}
 			}
 		}
 		c.Emit(SenderCheck, nearReceivers)
@@ -172,12 +166,15 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
 		pool.log.Infof("Disconnected %s", c.Id())
 		pool.removeUserConn(c.Id())
-		for _, receiver := range receivers {
-			if receiver.Socket.Id() == c.Id() {
-				delete(receivers, receiver.UserCode)
-				continue
+		receivers.Range(func(userCode, res interface{}) bool {
+			receiver, ok := res.(store.Receiver)
+			if ok {
+				if receiver.Socket.Id() == c.Id() {
+					receivers.Delete(userCode)
+				}
 			}
-		}
+			return true
+		})
 		for i, sender := range senders {
 			if sender.Socket.Id() == c.Id() {
 				senders = append(senders[:i], senders[i+1:]...)
@@ -188,15 +185,16 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 
 	server.On(stopReceive, func(c *gosocketio.Channel) string {
 		pool.log.Infof("Stop receive %s", c.Id())
-		for _, receiver := range receivers {
-			if receiver.Socket.Id() == c.Id() {
-				delete(receivers, receiver.UserCode)
-				continue
+		receivers.Range(func(userCode, res interface{}) bool {
+			receiver, ok := res.(store.Receiver)
+			if ok {
+				if receiver.Socket.Id() == c.Id() {
+					receivers.Delete(userCode)
+				}
 			}
-		}
+			return true
+		})
 
-		receiversM.Lock()
-		receiversM.Unlock()
 		return stopReceive + ":ok"
 	})
 

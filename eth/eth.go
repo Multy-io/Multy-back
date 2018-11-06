@@ -77,6 +77,12 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	}
 	log.Infof("InitHandlers: mgo.Dial: √")
 
+	db.SetSafe(&mgo.Safe{
+		W:        1,
+		WTimeout: 100,
+		J:        true,
+	})
+
 	usersData = db.DB(dbConf.DBUsers).C(store.TableUsers) // all db tables
 	exRate = db.DB(dbConf.DBStockExchangeRate).C("TableStockExchangeRate")
 
