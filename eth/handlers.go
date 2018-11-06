@@ -278,11 +278,12 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 			if err != nil {
 				log.Errorf("setGRPCHandlers: client.EventNewBlock:stream.Recv: %s", err.Error())
 			}
-			// log.Warnf("new block on net id %v bh = %v", networtkID, h.GetHeight())
+
+			height := h.GetHeight()
 			sel := bson.M{"currencyid": currencies.Ether, "networkid": networtkID}
 			update := bson.M{
 				"$set": bson.M{
-					"blockheight": h.GetHeight(),
+					"blockheight": height,
 				},
 			}
 			_, err = restoreState.Upsert(sel, update)

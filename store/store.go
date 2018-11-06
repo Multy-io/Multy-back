@@ -335,7 +335,7 @@ func (mStore *MongoUserStore) DeleteHistory(CurrencyID, NetworkID int, Address s
 func (mStore *MongoUserStore) FethLastSyncBlockState(networkid, currencyid int) (int64, error) {
 	ls := LastState{}
 	sel := bson.M{"networkid": networkid, "currencyid": currencyid}
-	err := mStore.RestoreState.Find(sel).Sort("blockheight").One(&ls)
+	err := mStore.RestoreState.Find(sel).One(&ls)
 	return ls.BlockHeight, err
 }
 

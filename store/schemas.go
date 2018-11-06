@@ -381,7 +381,7 @@ type OwnerHistory struct {
 type CoinType struct {
 	СurrencyID    int `bson:"currencyID"`
 	NetworkID     int `bson:"networkID"`
-	AccuracyRange int `bson:"accuracyRange"`
+	AccuracyRange int
 	GRPCUrl       string
 }
 
