@@ -309,19 +309,23 @@ func (s *Server) CheckRejectTxs(ctx context.Context, txs *pb.TxsToCheck) (*pb.Re
 }
 
 func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyInfo, error) {
-	// s.BtcCli.RpcClient.GetTxOut()
-	// var blocks []*chainhash.Hash
+
 	currentH, err := s.EthCli.GetBlockHeight()
 	if err != nil {
 		log.Errorf("s.BtcCli.RpcClient.GetBlockCount: %v ", err.Error())
 	}
-
-	log.Debugf("currentH %v lastH %v", currentH, in.GetHeight())
+	if in.GetHeight() <= 0 {
+		return &pb.ReplyInfo{
+			Message: "bad",
+		}, nil
+	}
+	log.Warnf("currentH %v lastH %v difference %v ", currentH, in.GetHeight(), int64(currentH)-in.GetHeight())
 
 	for lastH := int(in.GetHeight()); lastH < currentH; lastH++ {
 		b, err := s.EthCli.Rpc.EthGetBlockByNumber(lastH, false)
 		if err != nil {
 			log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
+			continue
 		}
 		go s.EthCli.BlockTransaction(b.Hash)
 	}
@@ -425,7 +429,7 @@ func (s *Server) EventSendRawTx(c context.Context, tx *pb.RawTx) (*pb.ReplyInfo,
 
 }
 
-func (s *Server) EventDeleteMempoolStream(_ *pb.Empty, stream pb.NodeCommuunications_EventDeleteMempoolStreamServer) error {
+func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventDeleteMempoolServer) error {
 	defer close(s.EthCli.DeleteMempoolStream)
 	for range s.EthCli.DeleteMempoolStream {
 		select {

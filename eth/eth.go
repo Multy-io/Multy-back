@@ -114,9 +114,9 @@ func (c *Client) RunProcess() error {
 		case map[string]interface{}:
 			go c.BlockTransaction(v["hash"].(string))
 		case nil:
-			defer func() {
-				c.Stop <- struct{}{}
-			}()
+			// defer func() {
+			// 	c.Stop <- struct{}{}
+			// }()
 			defer client.Close()
 			log.Debugf("RPC stream closed")
 			return nil

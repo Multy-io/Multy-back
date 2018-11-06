@@ -906,7 +906,7 @@ type NodeCommuunicationsClient interface {
 	EventGetAdressBalance(ctx context.Context, in *AddressToResync, opts ...grpc.CallOption) (*Balance, error)
 	EventGetAllMempool(ctx context.Context, in *Empty, opts ...grpc.CallOption) (NodeCommuunications_EventGetAllMempoolClient, error)
 	EventAddMempoolRecord(ctx context.Context, in *Empty, opts ...grpc.CallOption) (NodeCommuunications_EventAddMempoolRecordClient, error)
-	EventDeleteMempoolStream(ctx context.Context, in *Empty, opts ...grpc.CallOption) (NodeCommuunications_EventDeleteMempoolStreamClient, error)
+	EventDeleteMempool(ctx context.Context, in *Empty, opts ...grpc.CallOption) (NodeCommuunications_EventDeleteMempoolClient, error)
 	EventResyncAddress(ctx context.Context, in *AddressToResync, opts ...grpc.CallOption) (*ReplyInfo, error)
 	EventNewBlock(ctx context.Context, in *Empty, opts ...grpc.CallOption) (NodeCommuunications_EventNewBlockClient, error)
 	CheckRejectTxs(ctx context.Context, in *TxsToCheck, opts ...grpc.CallOption) (*RejectedTxs, error)
@@ -1073,12 +1073,12 @@ func (x *nodeCommuunicationsEventAddMempoolRecordClient) Recv() (*MempoolRecord,
 	return m, nil
 }
 
-func (c *nodeCommuunicationsClient) EventDeleteMempoolStream(ctx context.Context, in *Empty, opts ...grpc.CallOption) (NodeCommuunications_EventDeleteMempoolStreamClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_NodeCommuunications_serviceDesc.Streams[2], c.cc, "/eth.NodeCommuunications/EventDeleteMempoolStream", opts...)
+func (c *nodeCommuunicationsClient) EventDeleteMempool(ctx context.Context, in *Empty, opts ...grpc.CallOption) (NodeCommuunications_EventDeleteMempoolClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_NodeCommuunications_serviceDesc.Streams[2], c.cc, "/eth.NodeCommuunications/EventDeleteMempool", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &nodeCommuunicationsEventDeleteMempoolStreamClient{stream}
+	x := &nodeCommuunicationsEventDeleteMempoolClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -1088,16 +1088,16 @@ func (c *nodeCommuunicationsClient) EventDeleteMempoolStream(ctx context.Context
 	return x, nil
 }
 
-type NodeCommuunications_EventDeleteMempoolStreamClient interface {
+type NodeCommuunications_EventDeleteMempoolClient interface {
 	Recv() (*MempoolToDelete, error)
 	grpc.ClientStream
 }
 
-type nodeCommuunicationsEventDeleteMempoolStreamClient struct {
+type nodeCommuunicationsEventDeleteMempoolClient struct {
 	grpc.ClientStream
 }
 
-func (x *nodeCommuunicationsEventDeleteMempoolStreamClient) Recv() (*MempoolToDelete, error) {
+func (x *nodeCommuunicationsEventDeleteMempoolClient) Recv() (*MempoolToDelete, error) {
 	m := new(MempoolToDelete)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -1269,7 +1269,7 @@ type NodeCommuunicationsServer interface {
 	EventGetAdressBalance(context.Context, *AddressToResync) (*Balance, error)
 	EventGetAllMempool(*Empty, NodeCommuunications_EventGetAllMempoolServer) error
 	EventAddMempoolRecord(*Empty, NodeCommuunications_EventAddMempoolRecordServer) error
-	EventDeleteMempoolStream(*Empty, NodeCommuunications_EventDeleteMempoolStreamServer) error
+	EventDeleteMempool(*Empty, NodeCommuunications_EventDeleteMempoolServer) error
 	EventResyncAddress(context.Context, *AddressToResync) (*ReplyInfo, error)
 	EventNewBlock(*Empty, NodeCommuunications_EventNewBlockServer) error
 	CheckRejectTxs(context.Context, *TxsToCheck) (*RejectedTxs, error)
@@ -1491,24 +1491,24 @@ func (x *nodeCommuunicationsEventAddMempoolRecordServer) Send(m *MempoolRecord) 
 	return x.ServerStream.SendMsg(m)
 }
 
-func _NodeCommuunications_EventDeleteMempoolStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _NodeCommuunications_EventDeleteMempool_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(Empty)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(NodeCommuunicationsServer).EventDeleteMempoolStream(m, &nodeCommuunicationsEventDeleteMempoolStreamServer{stream})
+	return srv.(NodeCommuunicationsServer).EventDeleteMempool(m, &nodeCommuunicationsEventDeleteMempoolServer{stream})
 }
 
-type NodeCommuunications_EventDeleteMempoolStreamServer interface {
+type NodeCommuunications_EventDeleteMempoolServer interface {
 	Send(*MempoolToDelete) error
 	grpc.ServerStream
 }
 
-type nodeCommuunicationsEventDeleteMempoolStreamServer struct {
+type nodeCommuunicationsEventDeleteMempoolServer struct {
 	grpc.ServerStream
 }
 
-func (x *nodeCommuunicationsEventDeleteMempoolStreamServer) Send(m *MempoolToDelete) error {
+func (x *nodeCommuunicationsEventDeleteMempoolServer) Send(m *MempoolToDelete) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -1760,8 +1760,8 @@ var _NodeCommuunications_serviceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 		{
-			StreamName:    "EventDeleteMempoolStream",
-			Handler:       _NodeCommuunications_EventDeleteMempoolStream_Handler,
+			StreamName:    "EventDeleteMempool",
+			Handler:       _NodeCommuunications_EventDeleteMempool_Handler,
 			ServerStreams: true,
 		},
 		{

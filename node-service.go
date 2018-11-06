@@ -129,7 +129,7 @@ func WathReload(reload chan struct{}, cli *NodeClient) {
 	for {
 		select {
 		case _ = <-reload:
-			ticker := time.NewTicker(1 * time.Second)
+			ticker := time.NewTicker(1000 * time.Millisecond)
 			err := cli.GRPCserver.Listener.Close()
 			if err != nil {
 				log.Errorf("WathReload:lis.Close %v", err.Error())
