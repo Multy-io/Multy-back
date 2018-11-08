@@ -46,9 +46,21 @@ service NodeCommuunications {
     rpc NewTx (Empty) returns (stream BTCTransaction){
     }
 
-	 rpc ResyncAddress (Empty) returns (stream Resync){
+	rpc ResyncAddress (Empty) returns (stream Resync){
     }
 
+    rpc CheckRejectTxs (TxsToCheck) returns (RejectedTxs){
+    }
+
+}
+
+// continious resync
+message TxsToCheck  {
+    repeated string Hash  = 1;
+}
+
+message RejectedTxs  {
+    repeated string RejectedTxs  = 1;
 }
 
 message BTCTransaction {

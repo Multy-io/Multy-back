@@ -15,6 +15,7 @@ import (
 	pb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/blockcypher/gobcy"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/jekabolt/slf"
 	_ "github.com/jekabolt/slflog"
 	"github.com/parnurzeal/gorequest"
@@ -149,6 +150,22 @@ func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyIn
 	return &pb.ReplyInfo{
 		Message: "ok",
 	}, nil
+}
+
+func (s *Server) CheckRejectTxs(c context.Context, txs *pb.TxsToCheck) (*pb.RejectedTxs, error) {
+	reTxs := &pb.RejectedTxs{}
+	for _, tx := range txs.Hash {
+		hash, err := chainhash.NewHashFromStr(tx)
+		if err != nil {
+			continue
+		}
+		_, err = s.BtcCli.RPCClient.GetTransaction(hash)
+		if err != nil {
+			reTxs.RejectedTxs = append(reTxs.RejectedTxs, tx)
+		}
+
+	}
+	return reTxs, nil
 }
 
 func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResync) (*pb.ReplyInfo, error) {

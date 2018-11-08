@@ -784,6 +784,8 @@ func newMempoolRecord(category int, hashTX string) store.MempoolRecord {
 func (c *Client) rawTxToMempoolRec(inTx *btcjson.TxRawResult) store.MempoolRecord {
 	var inputSum float64
 	var outputSum float64
+
+	// if inTx != nil {
 	for _, input := range inTx.Vin {
 		txCHash, err := chainhash.NewHashFromStr(input.Txid)
 		if err != nil {
@@ -797,6 +799,7 @@ func (c *Client) rawTxToMempoolRec(inTx *btcjson.TxRawResult) store.MempoolRecor
 		}
 		inputSum += previousTx.Vout[input.Vout].Value
 	}
+
 	for _, output := range inTx.Vout {
 		outputSum += output.Value
 	}
@@ -808,6 +811,6 @@ func (c *Client) rawTxToMempoolRec(inTx *btcjson.TxRawResult) store.MempoolRecor
 	intFee := int(math.Floor(floatFee + 0.5))
 
 	rec := newMempoolRecord(intFee, inTx.Hash)
-
+	// }
 	return rec
 }

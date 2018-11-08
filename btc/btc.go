@@ -67,11 +67,21 @@ func (c *Client) RunProcess(btcNodeAddress string) error {
 	ntfnHandlers := rpcclient.NotificationHandlers{
 		OnBlockConnected: func(hash *chainhash.Hash, height int32, t time.Time) {
 			log.Debugf("OnBlockConnected: %v (%d) %v", hash, height, t)
-			go c.BlockTransactions(hash)
+			if hash != nil {
+				go c.BlockTransactions(hash)
+			}
+			if hash == nil {
+				log.Errorf("OnBlockConnected:hash is nil")
+			}
 			c.Block <- pb.BlockHeight{Height: int64(height)}
 		},
 		OnTxAcceptedVerbose: func(txDetails *btcjson.TxRawResult) {
-			go c.mempoolTransaction(txDetails)
+			if txDetails != nil {
+				go c.mempoolTransaction(txDetails)
+			}
+			if txDetails == nil {
+				log.Errorf("OnTxAcceptedVerbose:txDetails is nil")
+			}
 		},
 		OnFilteredBlockDisconnected: func(height int32, header *wire.BlockHeader) {
 
