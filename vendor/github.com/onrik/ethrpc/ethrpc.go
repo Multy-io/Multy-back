@@ -123,15 +123,10 @@ func (rpc *EthRPC) Web3ClientVersion() (string, error) {
 func (rpc *EthRPC) TxPoolContent() (map[string]interface{}, error) {
 	var txPool map[string]interface{}
 
+	//err := rpc.call("parity_pendingTransactions", &txPool)
 	err := rpc.call("txpool_content", &txPool)
+
 	return txPool, err
-}
-
-func (rpc *EthRPC) TraceTransaction(hash string) (map[string]interface{}, error) {
-	var trace map[string]interface{}
-
-	err := rpc.call("debug_traceTransaction", &trace, hash)
-	return trace, err
 }
 
 func (rpc *EthRPC) TransactionReceipt(hash string) (map[string]interface{}, error) {

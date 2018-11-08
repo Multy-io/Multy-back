@@ -317,13 +317,14 @@ func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyIn
 	}
 
 	log.Debugf("currentH %v lastH %v", currentH, in.GetHeight())
-
-	for lastH := int(in.GetHeight()); lastH < currentH; lastH++ {
-		b, err := s.EthCli.Rpc.EthGetBlockByNumber(lastH, false)
-		if err != nil {
-			log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
+	if int64(currentH) > in.GetHeight() {
+		for lastH := int(in.GetHeight()); lastH < currentH; lastH++ {
+			b, err := s.EthCli.Rpc.EthGetBlockByNumber(lastH, false)
+			if err != nil {
+				log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
+			}
+			go s.EthCli.BlockTransaction(b.Hash)
 		}
-		go s.EthCli.BlockTransaction(b.Hash)
 	}
 
 	return &pb.ReplyInfo{
@@ -352,6 +353,35 @@ func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_E
 	}
 	return nil
 }
+
+// func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventGetAllMempoolServer) error {
+// 	mp, err := s.EthCli.GetAllTxPool()
+// 	fmt.Println("==========================\n\n\n")
+// 	fmt.Println("%s\n", mp)
+// 	fmt.Println("==========================\n\n\n")
+// 	if err != nil {
+// 		return err
+// 	}
+// 	// for key, value := range mp {
+// 	// 	fmt.Printf("%T ============== %s\n", value, key)
+
+// 	// }
+
+// 	// for _, txs := range mp["result"].(map[string]interface{}) {
+// 	// 	for _, tx := range txs.(map[string]interface{}) {
+// 	// 		gas, err := strconv.ParseInt(tx.(map[string]interface{})["gas"].(string), 0, 64)
+// 	// 		if err != nil {
+// 	// 			log.Errorf("EventGetAllMempool:strconv.ParseInt")
+// 	// 		}
+// 	// 		hash := tx.(map[string]interface{})["hash"].(string)
+// 	// 		stream.Send(&pb.MempoolRecord{
+// 	// 			Category: int32(gas),
+// 	// 			HashTX:   hash,
+// 	// 		})
+// 	// 	}
+// 	// }
+// 	return nil
+// }
 
 type resyncTx struct {
 	Message string `json:"message"`

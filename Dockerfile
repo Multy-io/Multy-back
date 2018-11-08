@@ -8,9 +8,14 @@ RUN cd $GOPATH/src/github.com/Multy-io && \
     cd Multy-back && \ 
     git checkout release_1.3
 
+RUN mkdir $GOPATH/src/github.com/Multy-io && \
+    cd $GOPATH/src/github.com/Multy-io && \ 
+    git clone https://github.com/Multy-io/Multy-back.git && \ 
+    cd $GOPATH/src/github.com/Multy-io/Multy-back && \ 
+    git checkout release_1.1.1 && \  
+    git pull origin release_1.1.1
 
-RUN go get -u github.com/golang/protobuf/proto && \
-    cd $GOPATH/src/github.com/golang/protobuf && \
+RUN cd $GOPATH/src/github.com/golang/protobuf && \
     make all
 
 RUN apt-get update && \
@@ -31,7 +36,6 @@ RUN cd $GOPATH/src/github.com/Multy-io/Multy-ETH-node-service && \
     # make proto && \
     make build && \
     rm -r $GOPATH/src/github.com/Multy-io/Multy-back 
-
 
 WORKDIR $GOPATH/src/github.com/Multy-io/Multy-ETH-node-service/cmd
 

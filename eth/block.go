@@ -29,6 +29,8 @@ func (c *Client) BlockTransaction(hash string) {
 		return
 	}
 
+	log.Debugf("New block -  lenght = %d", len(txs))
+
 	for _, rawTx := range txs {
 		c.parseETHMultisig(rawTx, int64(*rawTx.BlockNumber), false)
 		c.parseETHTransaction(rawTx, int64(*rawTx.BlockNumber), false)
