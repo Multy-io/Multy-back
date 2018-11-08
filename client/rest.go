@@ -2407,7 +2407,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 					case currencies.ETHMain:
 						nonce, err = restClient.ETH.CliMain.EventGetAdressNonce(context.Background(), &adr)
 						amount, err = restClient.ETH.CliMain.EventGetAdressBalance(context.Background(), &adr)
-						erc20Info, err = restClient.ETH.CliTest.GetERC20Info(context.Background(), ercAddres)
+						erc20Info, err = restClient.ETH.CliMain.GetERC20Info(context.Background(), ercAddres)
 					default:
 						c.JSON(http.StatusBadRequest, gin.H{
 							"code":    http.StatusBadRequest,
