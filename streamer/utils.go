@@ -1,5 +1,9 @@
 package streamer
 
+var (
+	ErrGrpcTransport = "rpc error: code = Unavailable desc = transport is closing"
+)
+
 // type resyncTx struct {
 // 	hash        string
 // 	blockHeight int

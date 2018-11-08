@@ -8,7 +8,7 @@
 // The package not provide any actual logger implementation with the exception of the internal
 // noop one (No Operation) delivered by default via the factory functions to permit using
 // the interface without any further configuration. For a matching logger implementation see e.g.
-// github.com/KristinaEtc/slog.
+// github.com/jekabolt/slog.
 package slf
 
 // CallerInfo defines an enumeration for the types of caller information to output, short or long.

@@ -6,7 +6,7 @@ package slog
 import (
 	"errors"
 	"fmt"
-	"github.com/KristinaEtc/slf"
+	"github.com/jekabolt/slf"
 	stdlog "log"
 	"os"
 	"path"

@@ -13,6 +13,9 @@ all-with-deps: setup deps build
 run: build
 	cd cmd && ./$(NAME) && ../
 
+memprofiler: build
+	cd cmd && ./$(NAME) -memprofile mem.prof && ../
+
 setup:
 	go get -u github.com/kardianos/govendor
 
@@ -41,3 +44,6 @@ test:
 
 stage:
 	cd cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o stage .
+
+proto:
+	cd ./node-streamer && protoc --go_out=plugins=grpc:. *.proto 

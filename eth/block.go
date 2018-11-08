@@ -1,7 +1,10 @@
 package eth
 
 import (
-	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
+	"strings"
+
+	pb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
+
 	"github.com/onrik/ethrpc"
 )
 
@@ -11,10 +14,13 @@ func (c *Client) BlockTransaction(hash string) {
 		log.Errorf("Get Block Err:%s", err.Error())
 		return
 	}
-	log.Debugf("new block number = %v", block.Number)
-	c.Block <- pb.BlockHeight{
-		Height: int64(block.Number),
-	}
+
+	go func(blockNum int64) {
+		log.Debugf("new block number = %v", blockNum)
+		c.BlockStream <- pb.BlockHeight{
+			Height: blockNum,
+		}
+	}(int64(block.Number))
 
 	txs := []ethrpc.Transaction{}
 	if block.Transactions != nil {
@@ -24,13 +30,20 @@ func (c *Client) BlockTransaction(hash string) {
 	}
 
 	for _, rawTx := range txs {
+		c.parseETHMultisig(rawTx, int64(*rawTx.BlockNumber), false)
 		c.parseETHTransaction(rawTx, int64(*rawTx.BlockNumber), false)
-		c.DeleteMempool <- pb.MempoolToDelete{
-			Hash: rawTx.Hash,
+		go func(hash string) {
+			c.DeleteMempoolStream <- pb.MempoolToDelete{
+				Hash: hash,
+			}
+		}(rawTx.Hash)
+
+		if strings.ToLower(rawTx.To) == strings.ToLower(c.Multisig.FactoryAddress) {
+			log.Debugf("%v %s %v", strings.ToLower(rawTx.To), ":", strings.ToLower(c.Multisig.FactoryAddress))
+			go func(hash string) {
+				go c.FactoryContract(hash)
+			}(rawTx.Hash)
 		}
-		// if strings.ToLower(rawTx.To) == strings.ToLower("0x116FfA11DD8829524767f561da5d33D3D170E17d") {
-		// 	// fmt.Println("\n\ntx.to \n\n", tx.To)
-		// 	c.FactoryContract(rawTx.Hash)
-		// }
 	}
+
 }

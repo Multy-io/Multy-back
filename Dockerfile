@@ -1,17 +1,12 @@
 FROM golang:1.9.4
 
 RUN mkdir $GOPATH/src/github.com && \
-    mkdir $GOPATH/src/github.com/Multy-io && \
-    cd $GOPATH/src/github.com/Multy-io && \ 
+    mkdir $GOPATH/src/github.com/Multy-io 
+
+RUN cd $GOPATH/src/github.com/Multy-io && \ 
     git clone https://github.com/Multy-io/Multy-back.git && \ 
     cd Multy-back && \ 
-    git checkout release_1.1 && \  
-    git pull origin release_1.1 && \
-    rm -r ./vendor/github.com/golang/protobuf/proto && \
-    go get firebase.google.com/go   && \ 
-    go get firebase.google.com/go/messaging  && \ 
-    go get google.golang.org/api/option  && \ 
-    go get github.com/satori/go.uuid
+    git checkout release_1.3
 
 
 RUN go get -u github.com/golang/protobuf/proto && \
@@ -24,10 +19,17 @@ RUN apt-get update && \
 RUN cd $GOPATH/src/github.com/Multy-io && \
     git clone https://github.com/Multy-io/Multy-ETH-node-service.git && \
     cd $GOPATH/src/github.com/Multy-io/Multy-ETH-node-service && \
-    go get github.com/ethereum/go-ethereum/rpc
-    
+    git checkout reconnect 
+
+# go get github.com/ethereum/go-ethereum/rpc
+
+# RUN cd $GOPATH/src/github.com/Multy-io && \
+#     go get ./...
+
 RUN cd $GOPATH/src/github.com/Multy-io/Multy-ETH-node-service && \
-    make all-with-deps && \
+    go get ./... && \
+    # make proto && \
+    make build && \
     rm -r $GOPATH/src/github.com/Multy-io/Multy-back 
 
 

@@ -17,8 +17,8 @@ import (
 	"sync"
 	"text/template"
 
-	"github.com/KristinaEtc/slf"
-	"github.com/KristinaEtc/slog"
+	"github.com/jekabolt/slf"
+	"github.com/jekabolt/slog"
 )
 
 const (

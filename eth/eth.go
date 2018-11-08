@@ -9,26 +9,32 @@ import (
 	"context"
 	"sync"
 
-	pb "github.com/Multy-io/Multy-back/node-streamer/eth"
-	"github.com/Multy-io/Multy-back/store"
-	"github.com/KristinaEtc/slf"
-	_ "github.com/KristinaEtc/slflog"
+	"github.com/ethereum/go-ethereum/ethclient"
+
+	pb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/jekabolt/slf"
+	_ "github.com/jekabolt/slflog"
 	"github.com/onrik/ethrpc"
 )
 
 var log = slf.WithContext("eth")
 
 type Client struct {
-	Rpc            *ethrpc.EthRPC
-	Client         *rpc.Client
-	config         *Conf
-	TransactionsCh chan pb.ETHTransaction
-	DeleteMempool  chan pb.MempoolToDelete
-	AddToMempool   chan pb.MempoolRecord
-	Block          chan pb.BlockHeight
-	UsersData      *map[string]store.AddressExtended
-	UserDataM      *sync.Mutex
+	Rpc                 *ethrpc.EthRPC
+	Client              *rpc.Client
+	config              *Conf
+	TransactionsStream  chan pb.ETHTransaction
+	DeleteMempoolStream chan pb.MempoolToDelete
+	AddToMempoolStream  chan pb.MempoolRecord
+	BlockStream         chan pb.BlockHeight
+	NewMultisigStream   chan pb.Multisig
+	RPCStream           chan interface{}
+	Done                <-chan interface{}
+	Stop                chan struct{}
+	UsersData           *sync.Map
+	Multisig            *Multisig
+	AbiClient           *ethclient.Client
 }
 
 type Conf struct {
@@ -37,24 +43,31 @@ type Conf struct {
 	WsPort  string
 }
 
-func NewClient(conf *Conf, usersData *map[string]store.AddressExtended, multisig string) *Client {
+func NewClient(conf *Conf, usersData *sync.Map, multisig *Multisig) *Client {
 	c := &Client{
-		config:         conf,
-		TransactionsCh: make(chan pb.ETHTransaction),
-		DeleteMempool:  make(chan pb.MempoolToDelete),
-		AddToMempool:   make(chan pb.MempoolRecord),
-		Block:          make(chan pb.BlockHeight),
-		UsersData:      usersData,
-		UserDataM:      &sync.Mutex{},
+		config:              conf,
+		TransactionsStream:  make(chan pb.ETHTransaction),
+		DeleteMempoolStream: make(chan pb.MempoolToDelete),
+		AddToMempoolStream:  make(chan pb.MempoolRecord),
+		BlockStream:         make(chan pb.BlockHeight),
+		NewMultisigStream:   make(chan pb.Multisig),
+		Done:                make(chan interface{}),
+		Stop:                make(chan struct{}),
+		UsersData:           usersData,
+		Multisig:            multisig,
 	}
+
 	go c.RunProcess()
 	return c
+}
+func (c *Client) Shutdown() {
+	c.Client.Close()
 }
 
 func (c *Client) RunProcess() error {
 	log.Info("Run ETH Process")
 	// c.Rpc = ethrpc.NewEthRPC("http://" + c.config.Address + c.config.RpcPort)
-	c.Rpc = ethrpc.NewEthRPC("http://" + c.config.Address + c.config.RpcPort)
+	c.Rpc = ethrpc.NewEthRPC("http" + c.config.Address + c.config.RpcPort)
 	log.Infof("ETH RPC Connection %s", "http://"+c.config.Address+c.config.RpcPort)
 
 	_, err := c.Rpc.EthNewPendingTransactionFilter()
@@ -62,9 +75,8 @@ func (c *Client) RunProcess() error {
 		log.Errorf("NewClient:EthNewPendingTransactionFilter: %s", err.Error())
 		return err
 	}
-
 	// client, err := rpc.Dial("ws://" + c.config.Address + c.config.WsPort)
-	client, err := rpc.Dial("ws://" + c.config.Address + c.config.WsPort)
+	client, err := rpc.Dial("ws" + c.config.Address + c.config.WsPort)
 
 	if err != nil {
 		log.Errorf("Dial err: %s", err.Error())
@@ -74,6 +86,8 @@ func (c *Client) RunProcess() error {
 	log.Infof("ETH RPC Connection %s", "ws://"+c.config.Address+c.config.WsPort)
 
 	ch := make(chan interface{})
+
+	c.RPCStream = ch
 
 	_, err = c.Client.Subscribe(context.Background(), "eth", ch, "newHeads")
 	if err != nil {
@@ -87,22 +101,26 @@ func (c *Client) RunProcess() error {
 		return err
 	}
 
+	// done := or(c.fanIn(ch)...)
+
+	// c.Done = done
+
 	for {
 		switch v := (<-ch).(type) {
 		default:
 			log.Errorf("Not found type: %v", v)
 		case string:
-			// tx pool transaction
 			go c.txpoolTransaction(v)
-			// fmt.Println(v)
 		case map[string]interface{}:
-			// tx block transactions
-			// fmt.Println(v)
 			go c.BlockTransaction(v["hash"].(string))
+		case nil:
+			// defer func() {
+			// 	c.Stop <- struct{}{}
+			// }()
+			defer client.Close()
+			log.Debugf("RPC stream closed")
+			return nil
 		}
 	}
 
-	defer client.Close()
-
-	return nil
 }

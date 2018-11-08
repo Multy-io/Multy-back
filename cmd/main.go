@@ -6,21 +6,26 @@ See LICENSE for details
 package main
 
 import (
+	"flag"
 	"fmt"
 
-	"github.com/KristinaEtc/config"
-	"github.com/KristinaEtc/slf"
-	_ "github.com/KristinaEtc/slflog"
+	"net/http"
+	_ "net/http/pprof"
+
 	"github.com/Multy-io/Multy-ETH-node-service"
 	"github.com/Multy-io/Multy-back/store"
+	"github.com/jekabolt/config"
+	"github.com/jekabolt/slf"
+	_ "github.com/jekabolt/slflog"
 )
 
 var (
-	log = slf.WithContext("main")
-
+	log       = slf.WithContext("main")
 	branch    string
 	commit    string
 	buildtime string
+
+	memprofile = flag.String("memprofile", "", "write memory profile to `file`")
 )
 
 var globalOpt = node.Configuration{
@@ -29,7 +34,6 @@ var globalOpt = node.Configuration{
 
 func main() {
 	config.ReadGlobalConfig(&globalOpt, "multy configuration")
-	log.Error("--------------------------------new multy back server session")
 	log.Infof("CONFIGURATION=%+v", globalOpt)
 
 	log.Infof("branch: %s", branch)
@@ -41,11 +45,14 @@ func main() {
 		Buildtime: buildtime,
 	}
 
-	node, err := node.Init(&globalOpt)
+	nc := node.NodeClient{}
+	node, err := nc.Init(&globalOpt)
 	if err != nil {
 		log.Fatalf("Server initialization: %s\n", err.Error())
 	}
 	fmt.Println(node)
+
+	http.ListenAndServe(globalOpt.PprofPort, nil)
 
 	block := make(chan bool)
 	<-block
