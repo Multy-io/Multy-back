@@ -10,7 +10,7 @@
     "token_uri": "https://accounts.google.com/o/oauth2/token",
     "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
     "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/...",
-    
+
     "Name": "Multy-Stage",
     "Database": {
         "Address": "localhost:27000",
@@ -49,10 +49,10 @@
         "ReferenceCurrencies": ["USDT", "BTC"],
         "Exchanges": ["Binance", "Bitfinex", "Gdax", "HitBtc", "Okex", "Poloniex"],
         "RefreshInterval": "1",
-        "Dbconfiguration":{
+        "Dbconfiguration": {
             "User": "1",
-	        "Password": "1",
-	        "Name": "test"
+            "Password": "1",
+            "Name": "test"
         }
     },
     "Logs": {
@@ -320,8 +320,7 @@
             "DonationAddress": "1KbRaapwNnTJMZcpbTQfb7xJnymKFJDyC1"
         }
     ],
-    "SupportedNodes": [
-        {
+    "SupportedNodes": [{
             "СurrencyID": 0,
             "NetworkID": 1,
             "GRPCUrl": "localhost:6611"
