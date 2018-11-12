@@ -1,3 +1,5 @@
+language: bash
+
 env:
   global:
     - DOCKER_USERNAME=multyio
