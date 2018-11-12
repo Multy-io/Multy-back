@@ -22,7 +22,7 @@ RUN cd $GOPATH/src/github.com/Multy-io && \
 
 
 RUN cd $GOPATH/src/github.com/Multy-io/Multy-BTC-node-service && \
-    go get ./... && \
+    go get -u ./... && \
     make build && \
     rm -r $GOPATH/src/github.com/Multy-io/Multy-back 
 
