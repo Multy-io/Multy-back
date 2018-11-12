@@ -19,7 +19,6 @@ import (
 )
 
 func (btcCli *BTCConn) setGRPCHandlers(networtkID, accuracyRange int) {
-	// func (btcCli *BTCConn) setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress, mempool sync.Map, resync *sync.Map, btcCli *BTCConn) {
 
 	var client pb.NodeCommuunicationsClient
 	var wa chan pb.WatchAddress
@@ -29,11 +28,11 @@ func (btcCli *BTCConn) setGRPCHandlers(networtkID, accuracyRange int) {
 	resync := btcCli.Resync
 
 	switch networtkID {
-	case currencies.ETHMain:
+	case currencies.Main:
 		client = btcCli.CliMain
 		wa = btcCli.WatchAddressMain
 		mempool = btcCli.BtcMempool
-	case currencies.ETHTest:
+	case currencies.Test:
 		client = btcCli.CliTest
 		wa = btcCli.WatchAddressTest
 		mempool = btcCli.BtcMempoolTest
@@ -43,8 +42,6 @@ func (btcCli *BTCConn) setGRPCHandlers(networtkID, accuracyRange int) {
 	mempoolCh := make(chan interface{})
 	// initial fill mempool respectively network id
 	go func() {
-		// 		clientDeadline := time.Now().Add(time.Duration(100) * time.Second)
-		//      c, _ := context.WithDeadline(context.Background(), clientDeadline)
 		stream, err := client.EventGetAllMempool(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())

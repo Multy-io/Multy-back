@@ -153,17 +153,3 @@ func fethCoinType(coinTypes []store.CoinType, currencyID, networkID int) (store.
 	}
 	return store.CoinType{}, fmt.Errorf("fethCoinType: no such coin in config")
 }
-
-// // BtcTransaction stuct for ws notifications
-// type BtcTransaction struct {
-// 	TransactionType int    `json:"transactionType"`
-// 	Amount          int64  `json:"amount"`
-// 	TxID            string `json:"txid"`
-// 	Address         string `json:"address"`
-// }
-
-// // BtcTransactionWithUserID sub-stuct for ws notifications
-// type BtcTransactionWithUserID struct {
-// 	NotificationMsg *BtcTransaction
-// 	UserID          string
-// }
