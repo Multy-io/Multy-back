@@ -6,7 +6,7 @@ import (
 	"github.com/Multy-io/Multy-back/currencies"
 )
 
-func TestSum(t *testing.T) {
+func TestFetchCoinType(t *testing.T) {
 	mainURL := "main"
 	testURL := "test"
 	cts := []CoinType{
