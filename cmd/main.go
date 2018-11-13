@@ -39,11 +39,6 @@ var (
 		SocketioAddr:   "localhost:7780",
 		NSQAddress:     "nsq:4150",
 		BTCNodeAddress: "localhost:18334",
-		// Etherium: ethereum.Conf{
-		// 	Address: "88.198.47.112",
-		// 	RpcPort: ":18545",
-		// 	WsPort:  ":8545",
-		// },
 	}
 )
 
@@ -55,10 +50,6 @@ func main() {
 	log.Infof("commit: %s", commit)
 	log.Infof("build time: %s", buildtime)
 	log.Infof("tag: %s", lasttag)
-
-	// var gracefulStop = make(chan os.Signal)
-
-	// signal.Notify(gracefulStop, syscall.SIGTERM, syscall.SIGINT, os.Interrupt)
 
 	sc := store.ServerConfig{
 		BranchName: branch,

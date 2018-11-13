@@ -3023,7 +3023,7 @@ func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 
 			}
 		case currencies.Ether:
-			var resync ethpb.NodeCommuunicationsClient
+			var resync ethpb.NodeCommunicationsClient
 			if networkID == currencies.ETHMain {
 				resync = restClient.ETH.CliMain
 			}

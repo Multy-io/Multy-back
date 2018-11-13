@@ -22,7 +22,7 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 	mempoolCh := make(chan interface{})
 	// initial fill mempool respectively network id
 
-	var client pb.NodeCommuunicationsClient
+	var client pb.NodeCommunicationsClient
 	var wa chan pb.WatchAddress
 	var mempool sync.Map
 
@@ -295,7 +295,7 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 
 			// check for rejected transactions
 			var txStore *mgo.Collection
-			var nsCli pb.NodeCommuunicationsClient
+			var nsCli pb.NodeCommunicationsClient
 			switch networtkID {
 			case currencies.ETHMain:
 				txStore = txsData
@@ -309,8 +309,7 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 				"$or": []bson.M{
 					bson.M{"$and": []bson.M{
 						bson.M{"blockheight": 0},
-						bson.M{"txstatus": bson.M{"$ne": store.TxStatusTxRejectedOutgoing}},
-						bson.M{"txstatus": bson.M{"$ne": store.TxStatusTxRejectedIncoming}},
+						bson.M{"txstatus": bson.M{"$nin": []int{store.TxStatusTxRejectedOutgoing, store.TxStatusTxRejectedIncoming}}},
 					}},
 
 					bson.M{"$and": []bson.M{
@@ -339,13 +338,12 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 
 				for _, hash := range txToReject.GetRejectedTxs() {
 					// reject incoming
-					query := bson.M{
-						"$or": []bson.M{
-							bson.M{"txstatus": store.TxStatusAppearedInMempoolIncoming, "hash": hash},
-							bson.M{"txstatus": store.TxStatusAppearedInBlockIncoming, "hash": hash},
-							bson.M{"txstatus": store.TxStatusInBlockConfirmedIncoming, "hash": hash},
-						},
-					}
+					query := bson.M{"$and": []bson.M{
+						bson.M{"hash": hash},
+						bson.M{"txstatus": bson.M{"$in": []int{store.TxStatusAppearedInMempoolIncoming,
+							store.TxStatusAppearedInBlockIncoming,
+							store.TxStatusInBlockConfirmedIncoming}}},
+					}}
 					update := bson.M{
 						"$set": bson.M{
 							"txstatus": store.TxStatusTxRejectedIncoming,
@@ -357,13 +355,12 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 					}
 
 					// reject outcoming
-					query = bson.M{
-						"$or": []bson.M{
-							bson.M{"txstatus": store.TxStatusAppearedInMempoolOutcoming, "hash": hash},
-							bson.M{"txstatus": store.TxStatusAppearedInBlockOutcoming, "hash": hash},
-							bson.M{"txstatus": store.TxStatusInBlockConfirmedOutcoming, "hash": hash},
-						},
-					}
+					query = bson.M{"$and": []bson.M{
+						bson.M{"hash": hash},
+						bson.M{"txstatus": bson.M{"$in": []int{store.TxStatusAppearedInMempoolOutcoming,
+							store.TxStatusAppearedInBlockOutcoming,
+							store.TxStatusInBlockConfirmedOutcoming}}},
+					}}
 					update = bson.M{
 						"$set": bson.M{
 							"txstatus": store.TxStatusTxRejectedOutgoing,

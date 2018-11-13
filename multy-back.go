@@ -131,7 +131,7 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 
 		switch conCred.СurrencyID {
 		case currencies.Bitcoin:
-			var cli btcpb.NodeCommuunicationsClient
+			var cli btcpb.NodeCommunicationsClient
 			switch conCred.NetworkID {
 			case currencies.Main:
 				cli = m.BTC.CliMain
@@ -197,7 +197,7 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 			})
 
 		case currencies.Ether:
-			var cli ethpb.NodeCommuunicationsClient
+			var cli ethpb.NodeCommunicationsClient
 			switch conCred.NetworkID {
 			case currencies.ETHMain:
 				cli = m.ETH.CliMain

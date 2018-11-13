@@ -23,8 +23,8 @@ import (
 // BTCConn is a main struct of package
 type BTCConn struct {
 	NsqProducer      *nsq.Producer // a producer for sending data to clients
-	CliTest          pb.NodeCommuunicationsClient
-	CliMain          pb.NodeCommuunicationsClient
+	CliTest          pb.NodeCommunicationsClient
+	CliMain          pb.NodeCommunicationsClient
 	WatchAddressTest chan pb.WatchAddress
 	WatchAddressMain chan pb.WatchAddress
 
@@ -101,39 +101,39 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	restoreState = db.DB(dbConf.DBRestoreState).C(dbConf.TableState)
 
 	// setup main net
-	ctMain, err := fethCoinType(coinTypes, currencies.Bitcoin, currencies.Main)
+	coinTypeMain, err := store.FetchCoinType(coinTypes, currencies.Bitcoin, currencies.Main)
 	if err != nil {
 		return cli, fmt.Errorf("fethCoinType: %s", err.Error())
 	}
 
-	cliMain, err := initGrpcClient(ctMain.GRPCUrl)
+	cliMain, err := initGrpcClient(coinTypeMain.GRPCUrl)
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
 	cli.CliMain = cliMain
 
 	// setup testnet
-	ctTest, err := fethCoinType(coinTypes, currencies.Bitcoin, currencies.Test)
+	coinTypeTest, err := store.FetchCoinType(coinTypes, currencies.Bitcoin, currencies.Test)
 	if err != nil {
 		return cli, fmt.Errorf("fethCoinType: %s", err.Error())
 	}
-	cliTest, err := initGrpcClient(ctTest.GRPCUrl)
+	cliTest, err := initGrpcClient(coinTypeTest.GRPCUrl)
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
 
 	cli.CliTest = cliTest
 
-	cli.setGRPCHandlers(currencies.Test, ctTest.AccuracyRange)
+	cli.setGRPCHandlers(currencies.Test, coinTypeTest.AccuracyRange)
 	log.Infof("InitHandlers: initGrpcClient: Test: √")
 
-	cli.setGRPCHandlers(currencies.Main, ctMain.AccuracyRange)
+	cli.setGRPCHandlers(currencies.Main, coinTypeMain.AccuracyRange)
 	log.Infof("InitHandlers: initGrpcClient: Main: √")
 
 	return cli, nil
 }
 
-func initGrpcClient(url string) (pb.NodeCommuunicationsClient, error) {
+func initGrpcClient(url string) (pb.NodeCommunicationsClient, error) {
 	conn, err := grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
 		log.Errorf("initGrpcClient: grpc.Dial: %s", err.Error())
@@ -141,15 +141,6 @@ func initGrpcClient(url string) (pb.NodeCommuunicationsClient, error) {
 	}
 
 	// Create a new  client
-	client := pb.NewNodeCommuunicationsClient(conn)
+	client := pb.NewNodeCommunicationsClient(conn)
 	return client, nil
-}
-
-func fethCoinType(coinTypes []store.CoinType, currencyID, networkID int) (store.CoinType, error) {
-	for _, ct := range coinTypes {
-		if ct.СurrencyID == currencyID && ct.NetworkID == networkID {
-			return ct, nil
-		}
-	}
-	return store.CoinType{}, fmt.Errorf("fethCoinType: no such coin in config")
 }
