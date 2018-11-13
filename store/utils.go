@@ -8,5 +8,5 @@ func FetchCoinType(coinTypes []CoinType, currencyID, networkID int) (CoinType, e
 			return ct, nil
 		}
 	}
-	return CoinType{}, fmt.Errorf("fethCoinType: no such coin in config")
+	return CoinType{}, fmt.Errorf("fetchCoinType: no such coin in config")
 }

@@ -103,7 +103,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	// setup main net
 	coinTypeMain, err := store.FetchCoinType(coinTypes, currencies.Bitcoin, currencies.Main)
 	if err != nil {
-		return cli, fmt.Errorf("fethCoinType: %s", err.Error())
+		return cli, fmt.Errorf("fetchCoinType: %s", err.Error())
 	}
 
 	cliMain, err := initGrpcClient(coinTypeMain.GRPCUrl)
@@ -115,7 +115,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	// setup testnet
 	coinTypeTest, err := store.FetchCoinType(coinTypes, currencies.Bitcoin, currencies.Test)
 	if err != nil {
-		return cli, fmt.Errorf("fethCoinType: %s", err.Error())
+		return cli, fmt.Errorf("fetchCoinType: %s", err.Error())
 	}
 	cliTest, err := initGrpcClient(coinTypeTest.GRPCUrl)
 	if err != nil {

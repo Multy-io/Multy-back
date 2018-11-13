@@ -71,10 +71,6 @@ func Init(conf *Configuration) (*Multy, error) {
 	multy.userStore = userStore
 	log.Infof("UserStore initialization done on %s √", conf.Database)
 
-	// exchange rates
-	// exchange := &exchanger.Exchanger{}
-	// exchange.InitExchanger(conf.ExchangerConfiguration)
-
 	//BTC
 	btcCli, err := btc.InitHandlers(&conf.Database, conf.SupportedNodes, conf.NSQAddress)
 	if err != nil {
@@ -142,32 +138,7 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 			}
 
 			//TODO: Re State
-			go func() {
-				if conCred.AccuracyRange > 0 {
-					h, err := m.userStore.FethLastSyncBlockState(conCred.NetworkID, conCred.СurrencyID)
-					if err != nil {
-						log.Errorf("SetUserData:btcCli.CliMain.cli.FethLastSyncBlockState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
-					}
-					log.Debugf("BTC Last height recorded %v last trusted block %v net:%v ", h, h-int64(conCred.AccuracyRange), conCred.NetworkID)
-					// Set block height to last trusted a.k.a last recorded block minus accuracy range
-					h = h - int64(conCred.AccuracyRange)
-					if h > 0 {
-						rp, err := cli.SyncState(context.Background(), &btcpb.BlockHeight{Height: h})
-						if err != nil {
-							log.Errorf("SetUserData:  btcCli.CliMain.cli.SyncState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
-						}
-						if strings.Contains("err:", rp.GetMessage()) {
-							log.Errorf("SetUserData:  Contains err : curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
-						}
-					} else {
-						log.Errorf("FethLastSyncBlockState : h > 0")
-					}
-
-					log.Debugf("Restored state processing on curid =%v netid =%v", conCred.СurrencyID, conCred.NetworkID)
-				} else {
-					log.Warnf("Restore last state is disabled for c = %v n = %v ", conCred.СurrencyID, conCred.NetworkID)
-				}
-			}()
+			go m.restoreState(conCred, cli)
 
 			genUd := btcpb.UsersData{
 				Map: map[string]*btcpb.AddressExtended{},
@@ -208,27 +179,7 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 			}
 
 			//TODO: Restore state
-			go func() {
-				if conCred.AccuracyRange > 0 {
-					h, err := m.userStore.FethLastSyncBlockState(conCred.NetworkID, conCred.СurrencyID)
-					if err != nil {
-						log.Warnf("SetUserData:  btcCli.CliMain.cli.FethLastSyncBlockState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
-					}
-					log.Debugf("ETH Last height recorded %v last trusted block %v net:%v", h, h-int64(conCred.AccuracyRange), conCred.NetworkID)
-					// Set block height to last trusted a.k.a last recorded block minus accuracy range
-					h = h - int64(conCred.AccuracyRange)
-					rp, err := cli.SyncState(context.Background(), &ethpb.BlockHeight{Height: h})
-					if err != nil {
-						log.Errorf("SetUserData:  btcCli.CliMain.cli.SyncState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
-					}
-					if strings.Contains("err:", rp.GetMessage()) {
-						log.Errorf("SetUserData:  Contains err : curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
-					}
-					log.Debugf("Restored state processing on curid =%v netid =%v", conCred.СurrencyID, conCred.NetworkID)
-				} else {
-					log.Warnf("Restore last state is disabled for c = %v n = %v ", conCred.СurrencyID, conCred.NetworkID)
-				}
-			}()
+			go m.restoreState(conCred, cli)
 
 			genUd := ethpb.UsersData{
 				Map:            map[string]*ethpb.AddressExtended{},
@@ -337,11 +288,57 @@ func (multy *Multy) Run() error {
 	return nil
 }
 
-func fethCoinType(coinTypes []store.CoinType, currencyID, networkID int) (*store.CoinType, error) {
+func fetchCoinType(coinTypes []store.CoinType, currencyID, networkID int) (*store.CoinType, error) {
 	for _, ct := range coinTypes {
 		if ct.СurrencyID == currencyID && ct.NetworkID == networkID {
 			return &ct, nil
 		}
 	}
-	return nil, fmt.Errorf("fethCoinType: no such coin in config")
+	return nil, fmt.Errorf("fetchCoinType: no such coin in config")
+}
+
+func (m *Multy) restoreState(coinType store.CoinType, ncClient interface{}) {
+	if coinType.AccuracyRange > 0 {
+		var height int64
+		height, err := m.userStore.FetchLastSyncBlockState(coinType.NetworkID, coinType.СurrencyID)
+		if err != nil {
+			log.Warnf("SetUserData:  btcCli.CliMain.cli.FetchLastSyncBlockState: curID :%d netID :%d err =%s", coinType.СurrencyID, coinType.NetworkID, err.Error())
+		}
+		log.Debugf("Last height recorded %v last trusted block %v netid:%v curid", height, height-int64(coinType.AccuracyRange), coinType.NetworkID, coinType.СurrencyID)
+		height = height - int64(coinType.AccuracyRange)
+
+		if height > 0 {
+			switch coinType.СurrencyID {
+			case currencies.Ether:
+				var cli ethpb.NodeCommunicationsClient
+				cli = ncClient.(ethpb.NodeCommunicationsClient)
+				rp, err := cli.SyncState(context.Background(), &ethpb.BlockHeight{Height: height})
+				if err != nil {
+					log.Errorf("SetUserData:  restoreState:cli.SyncState: curID :%d netID :%d err =%s", coinType.СurrencyID, coinType.NetworkID, err.Error())
+				}
+				if strings.Contains("err:", rp.GetMessage()) {
+					log.Errorf("SetUserData:  Contains err : curID :%d netID :%d err =%s", coinType.СurrencyID, coinType.NetworkID, err.Error())
+				}
+				log.Debugf("Restored state processing on curid =%v netid =%v", coinType.СurrencyID, coinType.NetworkID)
+			case currencies.Bitcoin:
+				var cli btcpb.NodeCommunicationsClient
+				cli = ncClient.(btcpb.NodeCommunicationsClient)
+				rp, err := cli.SyncState(context.Background(), &btcpb.BlockHeight{Height: height})
+				if err != nil {
+					log.Errorf("SetUserData:  btcCli.CliMain.cli.SyncState: curID :%d netID :%d err =%s", coinType.СurrencyID, coinType.NetworkID, err.Error())
+				}
+				if strings.Contains("err:", rp.GetMessage()) {
+					log.Errorf("SetUserData:  Contains err : curID :%d netID :%d err =%s", coinType.СurrencyID, coinType.NetworkID, err.Error())
+				}
+				log.Debugf("Restored state processing on curid =%v netid =%v", coinType.СurrencyID, coinType.NetworkID)
+			default:
+				log.Errorf("setGRPCHandlers: wrong СurrencyID")
+			}
+		} else {
+			log.Errorf("FetchLastSyncBlockState : h > 0")
+		}
+	} else {
+		log.Warnf("Restore last state is disabled for c = %v n = %v ", coinType.СurrencyID, coinType.NetworkID)
+	}
+
 }

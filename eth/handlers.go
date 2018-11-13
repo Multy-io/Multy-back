@@ -168,9 +168,9 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 
 			if !doubleInvited && !emptyCode {
 				for _, user := range users {
-					addrs, err := FethUserAddresses(currencies.Ether, multisig.NetworkID, user, multisigTx.Addresses)
+					addrs, err := FetchUserAddresses(currencies.Ether, multisig.NetworkID, user, multisigTx.Addresses)
 					if err != nil {
-						log.Errorf("createMultisig:FethUserAddresses: %v", err.Error())
+						log.Errorf("createMultisig:FetchUserAddresses: %v", err.Error())
 					}
 
 					for _, addr := range addrs {

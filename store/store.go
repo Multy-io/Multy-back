@@ -91,7 +91,7 @@ type UserStore interface {
 	FindUserDataChain(CurrencyID, NetworkID int) (map[string]AddressExtended, error)
 	FindUsersContractsChain(CurrencyID, NetworkID int) (map[string]string, error)
 
-	FethUserAddresses(currencyID, networkID int, userid string, addreses []string) (AddressExtended, error)
+	FetchUserAddresses(currencyID, networkID int, userid string, addreses []string) (AddressExtended, error)
 
 	FindMultisig(userid, invitecode string) (*Multisig, error)
 	JoinMultisig(userid string, multisig *Multisig) error
@@ -111,7 +111,7 @@ type UserStore interface {
 	DeleteHistory(CurrencyID, NetworkID int, Address string) error
 	ConvertToBroken(addresses []string, userid string)
 
-	FethLastSyncBlockState(networkid, currencyid int) (int64, error)
+	FetchLastSyncBlockState(networkid, currencyid int) (int64, error)
 	// MsToUserData(addresses []string) map[string]User
 	// sToUserData(addresses []string) map[string]store.User
 
@@ -260,7 +260,7 @@ func (mStore *MongoUserStore) FindUsersContractsChain(CurrencyID, NetworkID int)
 	return UsersContracts, nil
 }
 
-func (mStore *MongoUserStore) FethUserAddresses(currencyID, networkID int, userid string, addreses []string) (AddressExtended, error) {
+func (mStore *MongoUserStore) FetchUserAddresses(currencyID, networkID int, userid string, addreses []string) (AddressExtended, error) {
 	user := User{}
 	err := mStore.usersData.Find(bson.M{"userID": userid}).One(&user)
 	if err != nil {
@@ -271,13 +271,13 @@ func (mStore *MongoUserStore) FethUserAddresses(currencyID, networkID int, useri
 	for _, wallet := range user.Wallets {
 		for _, addres := range wallet.Adresses {
 			if wallet.CurrencyID == currencyID && wallet.NetworkID == networkID {
-				for _, fethAddr := range addreses {
+				for _, fetchAddr := range addreses {
 
 					ae := AddressExtended{
-						Address:    fethAddr,
+						Address:    fetchAddr,
 						Associated: false,
 					}
-					if fethAddr == addres.Address {
+					if fetchAddr == addres.Address {
 						ae.Associated = true
 						ae.WalletIndex = wallet.WalletIndex
 						ae.AddressIndex = addres.AddressIndex
@@ -339,7 +339,7 @@ func (mStore *MongoUserStore) DeleteHistory(CurrencyID, NetworkID int, Address s
 	return nil
 }
 
-func (mStore *MongoUserStore) FethLastSyncBlockState(networkid, currencyid int) (int64, error) {
+func (mStore *MongoUserStore) FetchLastSyncBlockState(networkid, currencyid int) (int64, error) {
 	ls := LastState{}
 	sel := bson.M{"networkid": networkid, "currencyid": currencyid}
 	err := mStore.RestoreState.Find(sel).One(&ls)

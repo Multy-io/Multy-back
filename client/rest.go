@@ -2841,7 +2841,7 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 					})
 					return
 				}
-				fethedHistory := []store.TransactionETH{}
+				fetchedHistory := []store.TransactionETH{}
 				for i := 0; i < len(userTxs); i++ {
 					if userTxs[i].BlockTime == 0 {
 						userTxs[i].Confirmations = 0
@@ -2851,23 +2851,23 @@ func (restClient *RestClient) getWalletTransactionsHistory() gin.HandlerFunc {
 					if userTxs[i].Multisig.MethodInvoked == "0xc6427474" && userTxs[i].Multisig.Contract == derivationPath && userTxs[i].IsInternal {
 						txhistory := userTxs[i]
 						txhistory.Multisig = nil
-						fethedHistory = append(fethedHistory, txhistory)
+						fetchedHistory = append(fetchedHistory, txhistory)
 					}
 					if userTxs[i].Multisig.MethodInvoked == "0xc6427474" && userTxs[i].Multisig.Contract == derivationPath && !userTxs[i].IsInternal {
 						txhistory := userTxs[i]
-						fethedHistory = append(fethedHistory, txhistory)
+						fetchedHistory = append(fetchedHistory, txhistory)
 					}
 					if userTxs[i].Multisig.MethodInvoked == "0x" {
 						txhistory := userTxs[i]
 						txhistory.Multisig = nil
-						fethedHistory = append(fethedHistory, txhistory)
+						fetchedHistory = append(fetchedHistory, txhistory)
 					}
 				}
 
 				c.JSON(http.StatusOK, gin.H{
 					"code":    http.StatusOK,
 					"message": http.StatusText(http.StatusOK),
-					"history": fethedHistory,
+					"history": fetchedHistory,
 				})
 				return
 

@@ -393,19 +393,19 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 
 func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore, txStore *mgo.Collection, nsqProducer *nsq.Producer, ethcli *ETHConn) *store.TransactionETH { // method
 
-	owners, _ := FethContractOwners(currencies.Ether, networtkID, tx.Multisig.Contract)
+	owners, _ := FetchContractOwners(currencies.Ether, networtkID, tx.Multisig.Contract)
 	tx.Multisig.Owners = owners
-	tx.Multisig.MethodInvoked = fethMethod(tx.Multisig.Input)
+	tx.Multisig.MethodInvoked = fetchMethod(tx.Multisig.Input)
 
 	users := findContractOwners(tx.To)
-	contract, err := fethMultisig(users, tx.To)
+	contract, err := fetchMultisig(users, tx.To)
 	if err != nil {
-		log.Errorf("ParseMultisigInput:fethMultisig: %v", err.Error())
+		log.Errorf("ParseMultisigInput:fetchMultisig: %v", err.Error())
 	}
 
 	switch tx.Multisig.MethodInvoked {
 	case submitTransaction: // "c6427474": "submitTransaction(address,uint256,bytes)"
-		// Feth contract owners, send notfy to owners about transation. status: waiting for confirmations
+		// Fetch contract owners, send notfy to owners about transation. status: waiting for confirmations
 		// find in db if one one confirmation needed DONE internal transaction
 		log.Debugf("submitTransaction:  Input :%v Return :%v ", tx.Multisig.Input, tx.Multisig.Return)
 		if tx.BlockTime != 0 {
@@ -799,12 +799,12 @@ func generatedMultisigTxToStore(mul *ethpb.Multisig, currenyid, networkid int) s
 	}
 }
 
-func FethUserAddresses(currencyID, networkID int, user store.User, addreses []string) ([]store.AddressExtended, error) {
+func FetchUserAddresses(currencyID, networkID int, user store.User, addreses []string) ([]store.AddressExtended, error) {
 	addresses := []store.AddressExtended{}
-	fethed := map[string]store.AddressExtended{}
+	fetched := map[string]store.AddressExtended{}
 
 	for _, address := range addreses {
-		fethed[address] = store.AddressExtended{
+		fetched[address] = store.AddressExtended{
 			Address:    address,
 			Associated: false,
 		}
@@ -813,27 +813,27 @@ func FethUserAddresses(currencyID, networkID int, user store.User, addreses []st
 	for _, wallet := range user.Wallets {
 		for _, addres := range wallet.Adresses {
 			if wallet.CurrencyID == currencyID && wallet.NetworkID == networkID {
-				for addr, fethAddr := range fethed {
+				for addr, fetchAddr := range fetched {
 					if addr == addres.Address {
-						fethAddr.Associated = true
-						fethAddr.WalletIndex = wallet.WalletIndex
-						fethAddr.AddressIndex = addres.AddressIndex
-						fethAddr.UserID = user.UserID
-						fethed[addres.Address] = fethAddr
+						fetchAddr.Associated = true
+						fetchAddr.WalletIndex = wallet.WalletIndex
+						fetchAddr.AddressIndex = addres.AddressIndex
+						fetchAddr.UserID = user.UserID
+						fetched[addres.Address] = fetchAddr
 					}
 				}
 			}
 		}
 	}
 
-	for _, addr := range fethed {
+	for _, addr := range fetched {
 		addresses = append(addresses, addr)
 	}
 
 	return addresses, nil
 }
 
-func FethContractOwners(currencyID, networkID int, contractaddress string) ([]store.OwnerHistory, error) {
+func FetchContractOwners(currencyID, networkID int, contractaddress string) ([]store.OwnerHistory, error) {
 	oh := []store.OwnerHistory{}
 
 	sel := bson.M{"multisig.contractAddress": contractaddress}
@@ -852,7 +852,7 @@ func FethContractOwners(currencyID, networkID int, contractaddress string) ([]st
 	return oh, nil
 }
 
-func fethMethod(input string) string {
+func fetchMethod(input string) string {
 	method := input
 	if len(input) < 10 {
 		method = "0x"
@@ -863,7 +863,7 @@ func fethMethod(input string) string {
 	return method
 }
 
-func fethMultisig(users []store.User, contract string) (*store.Multisig, error) {
+func fetchMultisig(users []store.User, contract string) (*store.Multisig, error) {
 	if len(users) > 0 {
 		for _, m := range users[0].Multisigs {
 			if m.ContractAddress == contract {
@@ -872,7 +872,7 @@ func fethMultisig(users []store.User, contract string) (*store.Multisig, error) 
 		}
 	}
 
-	return &store.Multisig{}, errors.New("fethMultisig: contract have no multy users :" + contract)
+	return &store.Multisig{}, errors.New("fetchMultisig: contract have no multy users :" + contract)
 }
 
 func findContractOwners(contractAddress string) []store.User {
