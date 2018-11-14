@@ -2,6 +2,7 @@ package btc
 
 import (
 	pb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
+	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
@@ -39,6 +40,28 @@ func (c *Client) BlockTransactions(hash *chainhash.Hash) {
 			continue
 		}
 
+		c.ProcessTransaction(blockHeight, blockTxVerbose, false)
+	}
+}
+
+func (c *Client) ResyncBlock(blockVerbose *btcjson.GetBlockVerboseResult) {
+	blockHeight := blockVerbose.Height
+	log.Debugf("ResyncBlock on height %v", blockVerbose.Height)
+
+	//parse all block transactions
+	hash, _ := chainhash.NewHashFromStr(blockVerbose.Hash)
+	rawBlock, err := c.RPCClient.GetBlock(hash)
+	allBlockTransactions, err := rawBlock.TxHashes()
+	if err != nil {
+		log.Errorf("parseNewBlock:rawBlock.TxHashes: %s", err.Error())
+	}
+
+	for _, txHash := range allBlockTransactions {
+		blockTxVerbose, err := c.RPCClient.GetRawTransactionVerbose(&txHash)
+		if err != nil {
+			log.Errorf("parseNewBlock:RPCClient.GetRawTransactionVerbose: %s", err.Error())
+			continue
+		}
 		c.ProcessTransaction(blockHeight, blockTxVerbose, false)
 	}
 }

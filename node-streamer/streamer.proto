@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package btc;
 
-service NodeCommuunications {
+service NodeCommunications {
 
     rpc ServiceInfo (Empty) returns (ServiceVersion){
     }

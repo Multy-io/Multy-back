@@ -15,6 +15,7 @@ import (
 	pb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/blockcypher/gobcy"
+	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/jekabolt/slf"
 	_ "github.com/jekabolt/slflog"
@@ -104,7 +105,7 @@ func (s *Server) EventGetBlockHeight(ctx context.Context, in *pb.Empty) (*pb.Blo
 }
 
 // EventAddNewAddress us used to add new watch address to existing pairs
-func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventGetAllMempoolServer) error {
+func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommunications_EventGetAllMempoolServer) error {
 	mp, err := s.BtcCli.GetAllMempool()
 	if err != nil {
 		return err
@@ -120,32 +121,47 @@ func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommuunications_E
 }
 
 func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyInfo, error) {
-	// s.BtcCli.RPCClient.GetTxOut()
-	// var blocks []*chainhash.Hash
-	currentH, err := s.BtcCli.RPCClient.GetBlockCount()
+
+	hash, height, err := s.BtcCli.RPCClient.GetBestBlock()
 	if err != nil {
-		log.Errorf("s.BtcCli.RPCClient.GetBlockCount: %v ", err.Error())
+		log.Errorf("SyncState:GetBestBlock: %v", err.Error())
 	}
 
-	log.Debugf("currentH %v lastH %v", currentH, in.GetHeight())
+	blockVerbose, err := s.BtcCli.RPCClient.GetBlockVerbose(hash)
+	if err != nil {
+		log.Errorf("SyncState:GetBlockVerbose: %v", err.Error())
+		return &pb.ReplyInfo{
+			Message: "err:SyncState:GetBlockVerbose: " + err.Error(),
+		}, err
+	}
 
-	// for lastH := int64(in.GetHeight()); lastH < currentH; lastH++ {
-	// 	hash, err := s.BtcCli.RPCClient.GetBlockHash(lastH)
-	// 	if err != nil {
-	// 		log.Errorf("s.BtcCli.RPCClient.GetBlockHash: %v", err.Error())
-	// 	}
-	// 	log.Debugf("currentH %v lastH %v cur %v", currentH, lastH, int64(in.GetHeight()))
-	// 	fmt.Println("hash", hash.String())
-	// 	go s.BtcCli.BlockTransactions(hash)
-	// }
+	blocksToSync := []*btcjson.GetBlockVerboseResult{blockVerbose}
 
-	// for i := in.GetHeight(); i <= currentH; i++ {
-	// hash, err := s.BtcCli.RPCClient.GetBlockHash(i)
-	// if err != nil {
-	// 	log.Errorf("s.BtcCli.RPCClient.GetBlockHash: %v", err.Error())
-	// }
-	// go s.BtcCli.BlockTransactions(hash)
-	// }
+	dif := int(int64(height) - in.GetHeight())
+	log.Debugf("currentH %v lastH %v dif %v", height, in.GetHeight(), dif)
+
+	for i := 0; i < dif; i++ {
+		prevHash, err := chainhash.NewHashFromStr(blocksToSync[i].PreviousHash)
+		if err != nil {
+			log.Errorf("SyncState:NewHashFromStr: %v", err.Error())
+		}
+		prevBlockVerbose, err := s.BtcCli.RPCClient.GetBlockVerbose(prevHash)
+		if err != nil {
+			log.Errorf("SyncState:GetBlockVerbose: %v", err.Error())
+		}
+		blocksToSync = append(blocksToSync, prevBlockVerbose)
+	}
+
+	// reverse
+	for i, j := 0, len(blocksToSync)-1; i < j; i, j = i+1, j-1 {
+		blocksToSync[i], blocksToSync[j] = blocksToSync[j], blocksToSync[i]
+	}
+
+	go func() {
+		for _, block := range blocksToSync {
+			s.BtcCli.ResyncBlock(block)
+		}
+	}()
 
 	return &pb.ReplyInfo{
 		Message: "ok",
@@ -306,7 +322,7 @@ func (s *Server) EventSendRawTx(c context.Context, tx *pb.RawTx) (*pb.ReplyInfo,
 
 }
 
-func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommuunications_EventDeleteMempoolServer) error {
+func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommunications_EventDeleteMempoolServer) error {
 	for del := range s.BtcCli.DeleteMempool {
 		err := stream.Send(&del)
 		if err != nil && err.Error() == ErrGrpcTransport {
@@ -317,7 +333,7 @@ func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommuunications_E
 	return nil
 }
 
-func (s *Server) EventAddMempoolRecord(_ *pb.Empty, stream pb.NodeCommuunications_EventAddMempoolRecordServer) error {
+func (s *Server) EventAddMempoolRecord(_ *pb.Empty, stream pb.NodeCommunications_EventAddMempoolRecordServer) error {
 	for add := range s.BtcCli.AddToMempool {
 		err := stream.Send(&add)
 		if err != nil && err.Error() == ErrGrpcTransport {
@@ -328,7 +344,7 @@ func (s *Server) EventAddMempoolRecord(_ *pb.Empty, stream pb.NodeCommuunication
 	return nil
 }
 
-func (s *Server) EventDeleteSpendableOut(_ *pb.Empty, stream pb.NodeCommuunications_EventDeleteSpendableOutServer) error {
+func (s *Server) EventDeleteSpendableOut(_ *pb.Empty, stream pb.NodeCommunications_EventDeleteSpendableOutServer) error {
 	for delSp := range s.BtcCli.DelSpOut {
 		log.Infof("Delete spendable out %v", delSp.String())
 		err := stream.Send(&delSp)
@@ -339,7 +355,7 @@ func (s *Server) EventDeleteSpendableOut(_ *pb.Empty, stream pb.NodeCommuunicati
 	}
 	return nil
 }
-func (s *Server) EventAddSpendableOut(_ *pb.Empty, stream pb.NodeCommuunications_EventAddSpendableOutServer) error {
+func (s *Server) EventAddSpendableOut(_ *pb.Empty, stream pb.NodeCommunications_EventAddSpendableOutServer) error {
 
 	for addSp := range s.BtcCli.AddSpOut {
 		log.Infof("Add spendable out %v", addSp.String())
@@ -352,7 +368,7 @@ func (s *Server) EventAddSpendableOut(_ *pb.Empty, stream pb.NodeCommuunications
 
 	return nil
 }
-func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommuunications_NewTxServer) error {
+func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommunications_NewTxServer) error {
 
 	for tx := range s.BtcCli.TransactionsCh {
 		log.Infof("NewTx history - %v", tx.String())
@@ -365,7 +381,7 @@ func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommuunications_NewTxServer) e
 	return nil
 }
 
-func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommuunications_EventNewBlockServer) error {
+func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommunications_EventNewBlockServer) error {
 	for h := range s.BtcCli.Block {
 		log.Infof("New block height - %v", h.GetHeight())
 		err := stream.Send(&h)
@@ -377,7 +393,7 @@ func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommuunications_EventN
 	return nil
 }
 
-func (s *Server) ResyncAddress(_ *pb.Empty, stream pb.NodeCommuunications_ResyncAddressServer) error {
+func (s *Server) ResyncAddress(_ *pb.Empty, stream pb.NodeCommunications_ResyncAddressServer) error {
 	for res := range s.BtcCli.ResyncCh {
 		log.Infof("Resync address - %v", res.String())
 		err := stream.Send(&res)

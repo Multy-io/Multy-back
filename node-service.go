@@ -92,7 +92,7 @@ func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
 
 	nc.GRPCserver = &srv
 
-	pb.RegisterNodeCommuunicationsServer(s, &srv)
+	pb.RegisterNodeCommunicationsServer(s, &srv)
 
 	go s.Serve(lis)
 
