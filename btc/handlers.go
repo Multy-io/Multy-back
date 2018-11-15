@@ -124,17 +124,16 @@ func (btcCli *BTCConn) setGRPCHandlers(networtkID, accuracyRange int) {
 			var txStore *mgo.Collection
 			var nsCli pb.NodeCommunicationsClient
 			switch networtkID {
-			case currencies.ETHMain:
+			case currencies.Main:
 				txStore = txsData
 				nsCli = btcCli.CliMain
-			case currencies.ETHTest:
+			case currencies.Test:
 				txStore = txsDataTest
 				nsCli = btcCli.CliTest
 			}
 
 			query := bson.M{
 				"$or": []bson.M{
-
 					bson.M{"$and": []bson.M{
 						bson.M{"blockheight": 0},
 						bson.M{"txstatus": bson.M{"$nin": []int{store.TxStatusTxRejectedOutgoing, store.TxStatusTxRejectedIncoming}}},
@@ -388,7 +387,7 @@ func (btcCli *BTCConn) setGRPCHandlers(networtkID, accuracyRange int) {
 				break
 			}
 			if err != nil {
-				log.Errorf("initGrpcClient: cli.NewTx:stream.Recv: %s", err.Error())
+				log.Fatalf("initGrpcClient: cli.NewTx:stream.Recv: %s", err.Error())
 			}
 			tx := generatedTxDataToStore(gTx)
 
@@ -609,8 +608,8 @@ func (btcCli *BTCConn) setGRPCHandlers(networtkID, accuracyRange int) {
 				}
 			}
 
-			if rTxs.Txs != nil && len(rTxs.Txs) > 0 {
-				for _, spout := range rTxs.SpOuts {
+			if rTxs.GetTxs() != nil && len(rTxs.Txs) > 0 {
+				for _, spout := range rTxs.GetSpOuts() {
 					resync.Delete(spout.Address)
 				}
 				if len(rTxs.SpOuts) > 0 {

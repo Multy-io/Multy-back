@@ -39,6 +39,7 @@ const (
 	MultisigOwnerStatusSeen      = 1
 	MultisigOwnerStatusConfirmed = 2
 	MultisigOwnerStatusDeclined  = 3
+	MultisigOwnerStatusRevoked   = 4
 
 	// ws notification topic
 	TopicTransaction = "TransactionUpdate"

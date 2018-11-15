@@ -8,6 +8,7 @@ package eth
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"regexp"
 	"strconv"
@@ -356,6 +357,9 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 		err := multisigStore.Find(sel).One(nil)
 		if err == mgo.ErrNotFound {
 			multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore, nsqProducer, ethcli)
+			if multyTX.Multisig.MethodInvoked == submitTransaction && multyTX.Status == store.TxStatusAppearedInBlockIncoming {
+				multyTX.Status = store.TxStatusInBlockConfirmedOutcoming
+			}
 			err := multisigStore.Insert(multyTX)
 			return "", err
 		}
@@ -714,23 +718,26 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		// TODO: send notfy to owners about -1 confirmation. store confirmations in db
 
 		tx.Multisig.Owners = []store.OwnerHistory{}
-
 		log.Debugf("revokeConfirmation: %v", tx.Multisig.Input)
-		i, _ := new(big.Int).SetString(tx.Multisig.Input, 16)
 
-		sel := bson.M{"multisig.requestid": i.Int64(), "multisig.contract": contract.ContractAddress}
+		requestid, err := parseRevokeInput(tx.Multisig.Input)
+		if err != nil {
+			log.Errorf("ParseMultisigInput:revokeConfirmation: parseRevokeInput %v requestid:%v  contract:%v ", err.Error(), requestid, contract.ContractAddress)
+		}
+
+		sel := bson.M{"multisig.requestid": requestid, "multisig.contract": contract.ContractAddress}
 
 		originTx := store.TransactionETH{}
-		err := multisigStore.Find(sel).One(&originTx)
+		err = multisigStore.Find(sel).One(&originTx)
 		if err != nil {
-			log.Errorf("ParseMultisigInput:revokeConfirmation:multisigStore.Find %v requestid:%v  contract:%v ", err.Error(), i.Int64(), contract.ContractAddress)
+			log.Errorf("ParseMultisigInput:revokeConfirmation:multisigStore.Find %v requestid:%v  contract:%v ", err.Error(), requestid, contract.ContractAddress)
 		}
 		ownerHistorys := []store.OwnerHistory{}
 		for _, ownerHistory := range tx.Multisig.Owners {
 			if ownerHistory.Address == originTx.From {
 				ownerHistorys = append(ownerHistorys, store.OwnerHistory{
 					Address:            tx.From,
-					ConfirmationStatus: store.MultisigOwnerStatusDeclined,
+					ConfirmationStatus: store.MultisigOwnerStatusRevoked,
 					ConfirmationTime:   time.Now().Unix(),
 					SeenTime:           time.Now().Unix(),
 				})
@@ -746,7 +753,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 
 		_, err = multisigStore.UpdateAll(sel, update)
 		if err != nil {
-			log.Errorf("ParseMultisigInput:revokeConfirmation:multisigStore.Update %v requestid:%v  contract:%v ", err.Error(), i.Int64(), contract.ContractAddress)
+			log.Errorf("ParseMultisigInput:revokeConfirmation:multisigStore.Update %v requestid:%v  contract:%v ", err.Error(), requestid, contract.ContractAddress)
 		}
 
 		if tx.BlockTime != 0 && !tx.Multisig.InvocationStatus {
@@ -892,7 +899,7 @@ func parseSubmitInput(input string) (string, string) {
 		re := regexp.MustCompile(`.{64}`) // Every 64 chars
 		parts := re.FindAllString(in, -1) // Split the string into 64 chars blocks.
 
-		if len(parts) == 4 {
+		if len(parts) >= 4 {
 			address = strings.ToLower("0x" + parts[0][24:])
 			a, _ := new(big.Int).SetString(parts[1], 16)
 			amount = a.String()
@@ -900,6 +907,24 @@ func parseSubmitInput(input string) (string, string) {
 	}
 
 	return address, amount
+}
+
+func parseRevokeInput(input string) (int64, error) {
+	in := input[10:]
+	re := regexp.MustCompile(`.{64}`) // Every 64 chars
+	parts := re.FindAllString(in, -1) // Split the string into 64 chars blocks.
+
+	if len(parts) > 0 {
+		i, ok := new(big.Int).SetString(input, 16)
+		if !ok {
+			return 0, fmt.Errorf("bad input %v", input)
+		} else {
+			return i.Int64(), nil
+		}
+
+	}
+
+	return 0, fmt.Errorf("low len input %v", input)
 }
 
 func signatuteToStatus(signature string) int {
