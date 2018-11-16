@@ -822,11 +822,11 @@ func (mStore *MongoUserStore) CheckAddWallet(wp *WalletParams, jwt string) error
 			count++
 		}
 	}
-	if count < 20 {
+	if count < MaximumAvalibeEmptyWallets {
 		return nil
 	}
 
-	if count >= 20 {
+	if count >= MaximumAvalibeEmptyWallets {
 		query := bson.M{"userid": user.UserID}
 		switch wp.CurrencyID {
 		case currencies.Ether:

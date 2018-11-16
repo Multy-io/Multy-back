@@ -73,6 +73,8 @@ const (
 	ConfirmTransaction = "0xc01a8c84"
 	RevokeConfirmation = "0x20ea8d86"
 	ExecuteTransaction = "0xee22610b"
+
+	MaximumAvalibeEmptyWallets = 20
 )
 
 // User represents a single app user

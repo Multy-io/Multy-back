@@ -517,8 +517,8 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 		err = restClient.userStore.CheckAddWallet(&wp, token)
 		if err != nil {
 			restClient.log.Errorf("addWallet: CheckAddWallet: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
+			c.JSON(http.StatusNotAcceptable, gin.H{
+				"code":    http.StatusNotAcceptable,
 				"message": err.Error(),
 			})
 			return
