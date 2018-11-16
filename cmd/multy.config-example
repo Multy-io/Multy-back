@@ -1,6 +1,5 @@
 {
-
-    "type": "service_account",
+ "type": "service_account",
     "project_id": "multy-wallet",
     "private_key_id": "d0c748c96dcd0244444448a12d9",
     "private_key": "-----BEGIN PRIVATE KEY----- -----END PRIVATE KEY-----\n",
@@ -10,19 +9,22 @@
     "token_uri": "https://accounts.google.com/o/oauth2/token",
     "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
     "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/...",
-    
+
+
     "Name": "Multy-Stage",
     "Database": {
         "Address": "localhost:27000",
 
-        "Username": "a",
-        "Password": "4",
+        "Username": "multy",
+        "Password": "17bDaBWHx4r5X",
 
         "TableUsers": "UserCollection",
         "DBUsers": "userDB",
-        "DBFeeRates": "BTCMempool",
         "DBTx": "DBTx",
         "DBStockExchangeRate": "DBStockExchangeRate",
+
+        "DBRestoreState": "RestoreState",
+        "TableState": "LastState",
 
         "TableTxsDataBTCMain": "TableTxsDataBTCMain",
         "TableSpendableOutputsBTCMain": "TableSpendableOutputsBTCMain",
@@ -33,28 +35,67 @@
         "TableSpentOutputsBTCTest": "TableSpentOutputsBTCTest",
 
         "TableTxsDataETHMain": "TableTxsDataETHMain",
+        "TableTxsDataETHTest": "TableTxsDataETHTest",
 
-        "TableMempoolRatesETHTest": "TableMempoolRatesETHTest",
-        "TableTxsDataETHTest": "TableTxsDataETHTest"
+        "TableMultisigTxsTest": "TableMultisigTxsTest",
+        "TableMultisigTxsMain": "TableMultisigTxsMain",
+
+        "TableTxsDataEOSMain": "TableTxsDataEOSMain",
+        "TableTxsDataEOSTest": "TableTxsDataEOSTest"
+
+
     },
+
+    "ios": {
+        "hard": 49,
+        "soft": 66
+    },
+
+    "android": {
+        "hard": 7,
+        "soft": 19
+    },
+
+    "BrowserDefault": {
+        "url": "https://kyber.network/swap",
+        "currencyid": 60,
+        "networkid": 1
+    },
+
+
     "NSQAddress": "0.0.0.0:1150",
     "RestAddress": "0.0.0.0:6778",
     "SocketioAddr": "0.0.0.0:6780",
     "Secretkey": "secret key",
     "Firebase": {
-        "ServerKey": "4"
+        "ServerKey": ""
     },
-    "ExchangerConfiguration": {
-        "TargetCurrencies": ["BTC", "ETH", "GOLOS", "BTS", "STEEM", "WAVES", "LTC", "BCH", "ETC", "DASH", "EOS"],
-        "ReferenceCurrencies": ["USDT", "BTC"],
-        "Exchanges": ["Binance", "Bitfinex", "Gdax", "HitBtc", "Okex", "Poloniex"],
-        "RefreshInterval": "1",
-        "Dbconfiguration":{
-            "User": "1",
-	        "Password": "1",
-	        "Name": "test"
+    "SupportedNodes": [{
+            "СurrencyID": 0,
+            "NetworkID": 1,
+            "AccuracyRange": -1,
+            "GRPCUrl": "localhost:6600"
+        },
+        {
+            "СurrencyID": 0,
+            "NetworkID": 0,
+            "AccuracyRange": -1,
+            "GRPCUrl": "localhost:7700"
+        },
+        {
+            "СurrencyID": 60,
+            "NetworkID": 4,
+            "AccuracyRange": -1,
+            "GRPCUrl": "localhost:6622"
+        },
+        {
+            "СurrencyID": 60,
+            "NetworkID": 1,
+            "AccuracyRange": -1,
+            "GRPCUrl": "localhost:7722"
         }
-    },
+    ],
+
     "Logs": {
         "Handlers": [{
                 "Type": "stderr",
@@ -318,28 +359,6 @@
         {
             "FeatureCode": 20409,
             "DonationAddress": "1KbRaapwNnTJMZcpbTQfb7xJnymKFJDyC1"
-        }
-    ],
-    "SupportedNodes": [
-        {
-            "СurrencyID": 0,
-            "NetworkID": 1,
-            "GRPCUrl": "localhost:6611"
-        },
-        {
-            "СurrencyID": 0,
-            "NetworkID": 0,
-            "GRPCUrl": "localhost:7711"
-        },
-        {
-            "СurrencyID": 60,
-            "NetworkID": 4,
-            "GRPCUrl": "localhost:6622"
-        },
-        {
-            "СurrencyID": 60,
-            "NetworkID": 1,
-            "GRPCUrl": "localhost:7722"
         }
     ]
 }

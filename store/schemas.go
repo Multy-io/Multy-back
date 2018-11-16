@@ -39,6 +39,7 @@ const (
 	MultisigOwnerStatusSeen      = 1
 	MultisigOwnerStatusConfirmed = 2
 	MultisigOwnerStatusDeclined  = 3
+	MultisigOwnerStatusRevoked   = 4
 
 	// ws notification topic
 	TopicTransaction = "TransactionUpdate"
@@ -72,6 +73,8 @@ const (
 	ConfirmTransaction = "0xc01a8c84"
 	RevokeConfirmation = "0x20ea8d86"
 	ExecuteTransaction = "0xee22610b"
+
+	MaximumAvalibeEmptyWallets = 20
 )
 
 // User represents a single app user
@@ -272,6 +275,26 @@ type SpendableOutputs struct {
 	AddressIndex      int                   `json:"addressindex"`
 	TxStatus          int                   `json:"txstatus"`
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
+}
+
+type WalletParams struct {
+	CurrencyID   int            `json:"currencyID"`
+	NetworkID    int            `json:"networkID"`
+	Address      string         `json:"address"`
+	AddressIndex int            `json:"addressIndex"`
+	WalletIndex  int            `json:"walletIndex"`
+	WalletName   string         `json:"walletName"`
+	IsImported   bool           `json:"isImported"`
+	Multisig     MultisigWallet `json:"multisig"`
+}
+
+type MultisigWallet struct {
+	IsMultisig         bool   `json:"isMultisig"`
+	SignaturesRequired int    `json:"signaturesRequired"`
+	OwnersCount        int    `json:"ownersCount"`
+	InviteCode         string `json:"inviteCode"`
+	IsImported         bool   `json:"isImported"`
+	ContractAddress    string `json:"contractAddress"`
 }
 
 type EtherscanResp struct {

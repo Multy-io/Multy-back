@@ -8,6 +8,7 @@ package eth
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"regexp"
 	"strconv"
@@ -29,12 +30,6 @@ const (
 	confirmTransaction = "0xc01a8c84"
 	revokeConfirmation = "0x20ea8d86"
 	executeTransaction = "0xee22610b"
-	// GasLimit           = map[string]string{
-	// 	submitTransaction:  "7039920",
-	// 	revokeConfirmation: "7039920",
-	// 	confirmTransaction: "7039920",
-	// 	executeTransaction: "7039920",
-	// }
 )
 
 var (
@@ -248,11 +243,6 @@ func generatedTxDataToStore(tx *ethpb.ETHTransaction) store.TransactionETH {
 			Return:           tx.GetReturn(),
 			Input:            tx.GetInput(),
 		},
-		// Contract:         tx.GetContract(),
-		// MethodInvoked:    tx.GetMethodInvoked(),
-		// InvocationStatus: tx.GetInvocationStatus(),
-		// Return:           tx.GetReturn(),
-		// Input:            tx.GetInput(),
 	}
 }
 
@@ -267,10 +257,6 @@ func saveTransaction(tx store.TransactionETH, networtkID int, resync bool) error
 	default:
 		return errors.New("saveMultyTransaction: wrong networkID")
 	}
-
-	// fetchedTxs := []store.MultyTX{}
-	// query := bson.M{"txid": tx.TxID}
-	// txStore.Find(query).All(&fetchedTxs)
 
 	// This is splited transaction! That means that transaction's WalletsInputs and WalletsOutput have the same WalletIndex!
 	//Here we have outgoing transaction for exact wallet!
@@ -356,6 +342,9 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 		err := multisigStore.Find(sel).One(nil)
 		if err == mgo.ErrNotFound {
 			multyTX = ParseMultisigInput(tx, networtkID, multisigStore, txStore, nsqProducer, ethcli)
+			if multyTX.Multisig.MethodInvoked == submitTransaction && multyTX.Status == store.TxStatusAppearedInBlockIncoming {
+				multyTX.Status = store.TxStatusInBlockConfirmedOutcoming
+			}
 			err := multisigStore.Insert(multyTX)
 			return "", err
 		}
@@ -393,19 +382,19 @@ func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.
 
 func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore, txStore *mgo.Collection, nsqProducer *nsq.Producer, ethcli *ETHConn) *store.TransactionETH { // method
 
-	owners, _ := FethContractOwners(currencies.Ether, networtkID, tx.Multisig.Contract)
+	owners, _ := FetchContractOwners(currencies.Ether, networtkID, tx.Multisig.Contract)
 	tx.Multisig.Owners = owners
-	tx.Multisig.MethodInvoked = fethMethod(tx.Multisig.Input)
+	tx.Multisig.MethodInvoked = fetchMethod(tx.Multisig.Input)
 
 	users := findContractOwners(tx.To)
-	contract, err := fethMultisig(users, tx.To)
+	contract, err := fetchMultisig(users, tx.To)
 	if err != nil {
-		log.Errorf("ParseMultisigInput:fethMultisig: %v", err.Error())
+		log.Errorf("ParseMultisigInput:fetchMultisig: %v", err.Error())
 	}
 
 	switch tx.Multisig.MethodInvoked {
 	case submitTransaction: // "c6427474": "submitTransaction(address,uint256,bytes)"
-		// Feth contract owners, send notfy to owners about transation. status: waiting for confirmations
+		// Fetch contract owners, send notfy to owners about transation. status: waiting for confirmations
 		// find in db if one one confirmation needed DONE internal transaction
 		log.Debugf("submitTransaction:  Input :%v Return :%v ", tx.Multisig.Input, tx.Multisig.Return)
 		if tx.BlockTime != 0 {
@@ -714,39 +703,42 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 		// TODO: send notfy to owners about -1 confirmation. store confirmations in db
 
 		tx.Multisig.Owners = []store.OwnerHistory{}
-
 		log.Debugf("revokeConfirmation: %v", tx.Multisig.Input)
-		i, _ := new(big.Int).SetString(tx.Multisig.Input, 16)
 
-		sel := bson.M{"multisig.requestid": i.Int64(), "multisig.contract": contract.ContractAddress}
-
-		originTx := store.TransactionETH{}
-		err := multisigStore.Find(sel).One(&originTx)
+		requestid, err := parseRevokeInput(tx.Multisig.Input)
 		if err != nil {
-			log.Errorf("ParseMultisigInput:revokeConfirmation:multisigStore.Find %v requestid:%v  contract:%v ", err.Error(), i.Int64(), contract.ContractAddress)
-		}
-		ownerHistorys := []store.OwnerHistory{}
-		for _, ownerHistory := range tx.Multisig.Owners {
-			if ownerHistory.Address == originTx.From {
-				ownerHistorys = append(ownerHistorys, store.OwnerHistory{
-					Address:            tx.From,
-					ConfirmationStatus: store.MultisigOwnerStatusDeclined,
-					ConfirmationTime:   time.Now().Unix(),
-					SeenTime:           time.Now().Unix(),
-				})
+			log.Errorf("ParseMultisigInput:revokeConfirmation: parseRevokeInput %v requestid:%v  contract:%v ", err.Error(), requestid, contract.ContractAddress)
+		} else {
+			sel := bson.M{"multisig.requestid": requestid, "multisig.contract": contract.ContractAddress}
+
+			originTx := store.TransactionETH{}
+			err = multisigStore.Find(sel).One(&originTx)
+			if err != nil {
+				log.Errorf("ParseMultisigInput:revokeConfirmation:multisigStore.Find %v requestid:%v  contract:%v ", err.Error(), requestid, contract.ContractAddress)
 			}
-			ownerHistorys = append(ownerHistorys, ownerHistory)
-		}
+			ownerHistorys := []store.OwnerHistory{}
+			for _, ownerHistory := range tx.Multisig.Owners {
+				if ownerHistory.Address == originTx.From {
+					ownerHistorys = append(ownerHistorys, store.OwnerHistory{
+						Address:            tx.From,
+						ConfirmationStatus: store.MultisigOwnerStatusRevoked,
+						ConfirmationTime:   time.Now().Unix(),
+						SeenTime:           time.Now().Unix(),
+					})
+				}
+				ownerHistorys = append(ownerHistorys, ownerHistory)
+			}
 
-		update := bson.M{
-			"$set": bson.M{
-				"multisig.owners": ownerHistorys,
-			},
-		}
+			update := bson.M{
+				"$set": bson.M{
+					"multisig.owners": ownerHistorys,
+				},
+			}
 
-		_, err = multisigStore.UpdateAll(sel, update)
-		if err != nil {
-			log.Errorf("ParseMultisigInput:revokeConfirmation:multisigStore.Update %v requestid:%v  contract:%v ", err.Error(), i.Int64(), contract.ContractAddress)
+			_, err = multisigStore.UpdateAll(sel, update)
+			if err != nil {
+				log.Errorf("ParseMultisigInput:revokeConfirmation:multisigStore.Update %v requestid:%v  contract:%v ", err.Error(), requestid, contract.ContractAddress)
+			}
 		}
 
 		if tx.BlockTime != 0 && !tx.Multisig.InvocationStatus {
@@ -799,12 +791,12 @@ func generatedMultisigTxToStore(mul *ethpb.Multisig, currenyid, networkid int) s
 	}
 }
 
-func FethUserAddresses(currencyID, networkID int, user store.User, addreses []string) ([]store.AddressExtended, error) {
+func FetchUserAddresses(currencyID, networkID int, user store.User, addreses []string) ([]store.AddressExtended, error) {
 	addresses := []store.AddressExtended{}
-	fethed := map[string]store.AddressExtended{}
+	fetched := map[string]store.AddressExtended{}
 
 	for _, address := range addreses {
-		fethed[address] = store.AddressExtended{
+		fetched[address] = store.AddressExtended{
 			Address:    address,
 			Associated: false,
 		}
@@ -813,27 +805,27 @@ func FethUserAddresses(currencyID, networkID int, user store.User, addreses []st
 	for _, wallet := range user.Wallets {
 		for _, addres := range wallet.Adresses {
 			if wallet.CurrencyID == currencyID && wallet.NetworkID == networkID {
-				for addr, fethAddr := range fethed {
+				for addr, fetchAddr := range fetched {
 					if addr == addres.Address {
-						fethAddr.Associated = true
-						fethAddr.WalletIndex = wallet.WalletIndex
-						fethAddr.AddressIndex = addres.AddressIndex
-						fethAddr.UserID = user.UserID
-						fethed[addres.Address] = fethAddr
+						fetchAddr.Associated = true
+						fetchAddr.WalletIndex = wallet.WalletIndex
+						fetchAddr.AddressIndex = addres.AddressIndex
+						fetchAddr.UserID = user.UserID
+						fetched[addres.Address] = fetchAddr
 					}
 				}
 			}
 		}
 	}
 
-	for _, addr := range fethed {
+	for _, addr := range fetched {
 		addresses = append(addresses, addr)
 	}
 
 	return addresses, nil
 }
 
-func FethContractOwners(currencyID, networkID int, contractaddress string) ([]store.OwnerHistory, error) {
+func FetchContractOwners(currencyID, networkID int, contractaddress string) ([]store.OwnerHistory, error) {
 	oh := []store.OwnerHistory{}
 
 	sel := bson.M{"multisig.contractAddress": contractaddress}
@@ -852,7 +844,7 @@ func FethContractOwners(currencyID, networkID int, contractaddress string) ([]st
 	return oh, nil
 }
 
-func fethMethod(input string) string {
+func fetchMethod(input string) string {
 	method := input
 	if len(input) < 10 {
 		method = "0x"
@@ -863,7 +855,7 @@ func fethMethod(input string) string {
 	return method
 }
 
-func fethMultisig(users []store.User, contract string) (*store.Multisig, error) {
+func fetchMultisig(users []store.User, contract string) (*store.Multisig, error) {
 	if len(users) > 0 {
 		for _, m := range users[0].Multisigs {
 			if m.ContractAddress == contract {
@@ -872,7 +864,7 @@ func fethMultisig(users []store.User, contract string) (*store.Multisig, error) 
 		}
 	}
 
-	return &store.Multisig{}, errors.New("fethMultisig: contract have no multy users :" + contract)
+	return &store.Multisig{}, errors.New("fetchMultisig: contract have no multy users :" + contract)
 }
 
 func findContractOwners(contractAddress string) []store.User {
@@ -887,12 +879,15 @@ func findContractOwners(contractAddress string) []store.User {
 func parseSubmitInput(input string) (string, string) {
 	address := ""
 	amount := ""
+	// 266 is minimal length of valid input for this kind of transactions
 	if len(input) >= 266 {
+		// crop method name from input data
 		in := input[10:]
 		re := regexp.MustCompile(`.{64}`) // Every 64 chars
 		parts := re.FindAllString(in, -1) // Split the string into 64 chars blocks.
 
-		if len(parts) == 4 {
+		// 4 is minimal count of parts for correct method invocation
+		if len(parts) >= 4 {
 			address = strings.ToLower("0x" + parts[0][24:])
 			a, _ := new(big.Int).SetString(parts[1], 16)
 			amount = a.String()
@@ -900,6 +895,24 @@ func parseSubmitInput(input string) (string, string) {
 	}
 
 	return address, amount
+}
+
+func parseRevokeInput(input string) (int64, error) {
+	in := input[10:]
+	re := regexp.MustCompile(`.{64}`) // Every 64 chars
+	parts := re.FindAllString(in, -1) // Split the string into 64 chars blocks.
+
+	if len(parts) > 0 {
+		i, ok := new(big.Int).SetString(input, 16)
+		if !ok {
+			return 0, fmt.Errorf("bad input %v", input)
+		} else {
+			return i.Int64(), nil
+		}
+
+	}
+
+	return 0, fmt.Errorf("low len input %v", input)
 }
 
 func signatuteToStatus(signature string) int {

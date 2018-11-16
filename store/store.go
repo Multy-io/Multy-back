@@ -91,7 +91,7 @@ type UserStore interface {
 	FindUserDataChain(CurrencyID, NetworkID int) (map[string]AddressExtended, error)
 	FindUsersContractsChain(CurrencyID, NetworkID int) (map[string]string, error)
 
-	FethUserAddresses(currencyID, networkID int, userid string, addreses []string) (AddressExtended, error)
+	FetchUserAddresses(currencyID, networkID int, userid string, addreses []string) (AddressExtended, error)
 
 	FindMultisig(userid, invitecode string) (*Multisig, error)
 	JoinMultisig(userid string, multisig *Multisig) error
@@ -111,9 +111,11 @@ type UserStore interface {
 	DeleteHistory(CurrencyID, NetworkID int, Address string) error
 	ConvertToBroken(addresses []string, userid string)
 
-	FethLastSyncBlockState(networkid, currencyid int) (int64, error)
+	FetchLastSyncBlockState(networkid, currencyid int) (int64, error)
 	// MsToUserData(addresses []string) map[string]User
 	// sToUserData(addresses []string) map[string]store.User
+
+	CheckAddWallet(wp *WalletParams, jwt string) error
 
 	CheckTx(tx string) bool
 }
@@ -260,7 +262,7 @@ func (mStore *MongoUserStore) FindUsersContractsChain(CurrencyID, NetworkID int)
 	return UsersContracts, nil
 }
 
-func (mStore *MongoUserStore) FethUserAddresses(currencyID, networkID int, userid string, addreses []string) (AddressExtended, error) {
+func (mStore *MongoUserStore) FetchUserAddresses(currencyID, networkID int, userid string, addreses []string) (AddressExtended, error) {
 	user := User{}
 	err := mStore.usersData.Find(bson.M{"userID": userid}).One(&user)
 	if err != nil {
@@ -271,13 +273,13 @@ func (mStore *MongoUserStore) FethUserAddresses(currencyID, networkID int, useri
 	for _, wallet := range user.Wallets {
 		for _, addres := range wallet.Adresses {
 			if wallet.CurrencyID == currencyID && wallet.NetworkID == networkID {
-				for _, fethAddr := range addreses {
+				for _, fetchAddr := range addreses {
 
 					ae := AddressExtended{
-						Address:    fethAddr,
+						Address:    fetchAddr,
 						Associated: false,
 					}
-					if fethAddr == addres.Address {
+					if fetchAddr == addres.Address {
 						ae.Associated = true
 						ae.WalletIndex = wallet.WalletIndex
 						ae.AddressIndex = addres.AddressIndex
@@ -339,7 +341,7 @@ func (mStore *MongoUserStore) DeleteHistory(CurrencyID, NetworkID int, Address s
 	return nil
 }
 
-func (mStore *MongoUserStore) FethLastSyncBlockState(networkid, currencyid int) (int64, error) {
+func (mStore *MongoUserStore) FetchLastSyncBlockState(networkid, currencyid int) (int64, error) {
 	ls := LastState{}
 	sel := bson.M{"networkid": networkid, "currencyid": currencyid}
 	err := mStore.RestoreState.Find(sel).One(&ls)
@@ -803,5 +805,55 @@ func (mStore *MongoUserStore) UpdateMultisigOwners(userid, invitecode string, ow
 
 func (mStore *MongoUserStore) Close() error {
 	mStore.session.Close()
+	return nil
+}
+
+func (mStore *MongoUserStore) CheckAddWallet(wp *WalletParams, jwt string) error {
+	user := User{}
+	query := bson.M{"devices.JWT": jwt}
+	err := mStore.usersData.Find(query).One(&user)
+	if err != nil {
+		return err
+	}
+
+	count := 0
+	for _, wallet := range user.Wallets {
+		if wallet.CurrencyID == wp.CurrencyID && wallet.NetworkID == wp.NetworkID {
+			count++
+		}
+	}
+	if count < MaximumAvalibeEmptyWallets {
+		return nil
+	}
+
+	if count >= MaximumAvalibeEmptyWallets {
+		query := bson.M{"userid": user.UserID}
+		switch wp.CurrencyID {
+		case currencies.Ether:
+			txs := []TransactionETH{}
+			switch wp.NetworkID {
+			case currencies.ETHMain:
+				mStore.ETHMainTxsData.Find(query).All(&txs)
+			case currencies.ETHTest:
+				mStore.ETHTestTxsData.Find(query).All(&txs)
+			}
+			if len(txs) == 0 {
+				return fmt.Errorf("maximum available wallets count")
+			}
+
+		case currencies.Bitcoin:
+			txs := []MultyTX{}
+			switch wp.NetworkID {
+			case currencies.Main:
+				mStore.BTCMainTxsData.Find(query).All(&txs)
+			case currencies.Test:
+				mStore.BTCTestTxsData.Find(query).All(&txs)
+			}
+			if len(txs) == 0 {
+				return fmt.Errorf("maximum available wallets count")
+			}
+		}
+	}
+
 	return nil
 }

@@ -14,19 +14,35 @@ import (
 	pb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
 	"github.com/Multy-io/Multy-back/currencies"
 	"github.com/Multy-io/Multy-back/store"
-	nsq "github.com/bitly/go-nsq"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
-func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer, networtkID int, wa chan pb.WatchAddress, mempool sync.Map, resync *sync.Map, btcCli *BTCConn) {
+func (btcCli *BTCConn) setGRPCHandlers(networtkID, accuracyRange int) {
+
+	var client pb.NodeCommunicationsClient
+	var wa chan pb.WatchAddress
+	var mempool sync.Map
+
+	nsqProducer := btcCli.NsqProducer
+	resync := btcCli.Resync
+
+	switch networtkID {
+	case currencies.Main:
+		client = btcCli.CliMain
+		wa = btcCli.WatchAddressMain
+		mempool = btcCli.BtcMempool
+	case currencies.Test:
+		client = btcCli.CliTest
+		wa = btcCli.WatchAddressTest
+		mempool = btcCli.BtcMempoolTest
+
+	}
 
 	mempoolCh := make(chan interface{})
 	// initial fill mempool respectively network id
 	go func() {
-		// 		clientDeadline := time.Now().Add(time.Duration(100) * time.Second)
-		//      c, _ := context.WithDeadline(context.Background(), clientDeadline)
-		stream, err := cli.EventGetAllMempool(context.Background(), &pb.Empty{})
+		stream, err := client.EventGetAllMempool(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())
 		}
@@ -50,7 +66,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 	// add transaction on every new tx on node
 	go func() {
-		stream, err := cli.EventAddMempoolRecord(context.Background(), &pb.Empty{})
+		stream, err := client.EventAddMempoolRecord(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventAddMempoolRecord: %s", err.Error())
 			// return nil, err
@@ -77,7 +93,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 	}()
 
 	go func() {
-		stream, err := cli.EventNewBlock(context.Background(), &pb.Empty{})
+		stream, err := client.EventNewBlock(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventNewBlock: %s", err.Error())
 			// return nil, err
@@ -92,31 +108,108 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				log.Errorf("setGRPCHandlers: client.EventNewBlock:stream.Recv: %s", err.Error())
 			}
 
-			query := bson.M{"currencyid": currencies.Bitcoin, "networkid": networtkID}
+			sel := bson.M{"currencyid": currencies.Bitcoin, "networkid": networtkID}
 			update := bson.M{
 				"$set": bson.M{
 					"blockheight": h.GetHeight(),
 				},
 			}
 
-			err = restoreState.Update(query, update)
-			if err == mgo.ErrNotFound {
-				restoreState.Insert(store.LastState{
-					BlockHeight: h.GetHeight(),
-					CurrencyID:  currencies.Bitcoin,
-					NetworkID:   networtkID,
-				})
+			_, err = restoreState.Upsert(sel, update)
+			if err != nil {
+				log.Errorf("restoreState.Upsert: %v", err.Error())
 			}
 
-			if err != nil {
-				log.Errorf("initGrpcClient: cli.EventNewBlock: %s", err.Error())
+			// check for rejected transactions
+			var txStore *mgo.Collection
+			var nsCli pb.NodeCommunicationsClient
+			switch networtkID {
+			case currencies.Main:
+				txStore = txsData
+				nsCli = btcCli.CliMain
+			case currencies.Test:
+				txStore = txsDataTest
+				nsCli = btcCli.CliTest
 			}
+
+			query := bson.M{
+				"$or": []bson.M{
+					bson.M{"$and": []bson.M{
+						bson.M{"blockheight": 0},
+						bson.M{"txstatus": bson.M{"$nin": []int{store.TxStatusTxRejectedOutgoing, store.TxStatusTxRejectedIncoming}}},
+					}},
+
+					bson.M{"$and": []bson.M{
+						bson.M{"blockheight": bson.M{"$lt": h.GetHeight()}},
+						bson.M{"blockheight": bson.M{"$gt": h.GetHeight() - int64(accuracyRange)}},
+					}},
+				},
+			}
+
+			txs := []store.TransactionETH{}
+			txStore.Find(query).All(&txs)
+
+			hashes := &pb.TxsToCheck{}
+
+			for _, tx := range txs {
+				hashes.Hash = append(hashes.Hash, tx.Hash)
+			}
+
+			txToReject, err := nsCli.CheckRejectTxs(context.Background(), hashes)
+			if err != nil {
+				log.Errorf("setGRPCHandlers: CheckRejectTxs: %s", err.Error())
+			}
+
+			// Set status to rejected in db
+			if len(txToReject.GetRejectedTxs()) > 0 {
+
+				for _, hash := range txToReject.GetRejectedTxs() {
+					// reject incoming
+					query := bson.M{"$and": []bson.M{
+						bson.M{"hash": hash},
+						bson.M{"txstatus": bson.M{"$in": []int{store.TxStatusAppearedInMempoolIncoming,
+							store.TxStatusAppearedInBlockIncoming,
+							store.TxStatusInBlockConfirmedIncoming}}},
+					}}
+
+					update := bson.M{
+						"$set": bson.M{
+							"txstatus": store.TxStatusTxRejectedIncoming,
+						},
+					}
+					_, err := txStore.UpdateAll(query, update)
+					if err != nil {
+						log.Errorf("setGRPCHandlers: cli.EventNewBlock:txStore.UpdateAll:Incoming: %s", err.Error())
+					}
+
+					query = bson.M{"$and": []bson.M{
+						bson.M{"hash": hash},
+						bson.M{"txstatus": bson.M{"$in": []int{store.TxStatusAppearedInMempoolOutcoming,
+							store.TxStatusAppearedInBlockOutcoming,
+							store.TxStatusInBlockConfirmedOutcoming}}},
+					}}
+					update = bson.M{
+						"$set": bson.M{
+							"txstatus": store.TxStatusTxRejectedOutgoing,
+						},
+					}
+					_, err = txStore.UpdateAll(query, update)
+					if err != nil {
+						log.Errorf("setGRPCHandlers: cli.EventNewBlock:txStore.UpdateAll:Outcoming: %s", err.Error())
+					}
+				}
+
+				if err != nil {
+					log.Errorf("initGrpcClient: restoreState.Update: %s", err.Error())
+				}
+			}
+
 		}
 	}()
 
 	//deleting mempool record on block
 	go func() {
-		stream, err := cli.EventDeleteMempool(context.Background(), &pb.Empty{})
+		stream, err := client.EventDeleteMempool(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())
 			// return nil, err
@@ -144,7 +237,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 	// new spendable output
 	go func() {
-		stream, err := cli.EventAddSpendableOut(context.Background(), &pb.Empty{})
+		stream, err := client.EventAddSpendableOut(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())
 		}
@@ -225,7 +318,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 	// delete spendable output
 	go func() {
-		stream, err := cli.EventDeleteSpendableOut(context.Background(), &pb.Empty{})
+		stream, err := client.EventDeleteSpendableOut(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())
 		}
@@ -283,7 +376,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 
 	// add to transaction history record and send ws notification on tx
 	go func() {
-		stream, err := cli.NewTx(context.Background(), &pb.Empty{})
+		stream, err := client.NewTx(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())
 		}
@@ -294,7 +387,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				break
 			}
 			if err != nil {
-				log.Errorf("initGrpcClient: cli.NewTx:stream.Recv: %s", err.Error())
+				log.Fatalf("initGrpcClient: cli.NewTx:stream.Recv: %s", err.Error())
 			}
 			tx := generatedTxDataToStore(gTx)
 
@@ -368,7 +461,7 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			log.Errorf("setGRPCHandlers: wrong networkID:")
 		}
 
-		stream, err := cli.ResyncAddress(context.Background(), &pb.Empty{})
+		stream, err := client.ResyncAddress(context.Background(), &pb.Empty{})
 		if err != nil {
 			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())
 		}
@@ -515,8 +608,8 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 				}
 			}
 
-			if rTxs.Txs != nil && len(rTxs.Txs) > 0 {
-				for _, spout := range rTxs.SpOuts {
+			if rTxs.GetTxs() != nil && len(rTxs.Txs) > 0 {
+				for _, spout := range rTxs.GetSpOuts() {
 					resync.Delete(spout.Address)
 				}
 				if len(rTxs.SpOuts) > 0 {
@@ -541,13 +634,13 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 			select {
 			case addr := <-wa:
 				a := addr
-				rp, err := cli.EventAddNewAddress(context.Background(), &a)
+				rp, err := client.EventAddNewAddress(context.Background(), &a)
 				if err != nil {
 					log.Errorf("NewAddressNode: cli.EventAddNewAddress %s\n", err.Error())
 				}
 				log.Debugf("EventAddNewAddress Reply %s", rp)
 
-				rp, err = cli.EventResyncAddress(context.Background(), &pb.AddressToResync{
+				rp, err = client.EventResyncAddress(context.Background(), &pb.AddressToResync{
 					Address:      addr.GetAddress(),
 					UserID:       addr.GetUserID(),
 					WalletIndex:  addr.GetWalletIndex(),
@@ -565,8 +658,6 @@ func setGRPCHandlers(cli pb.NodeCommuunicationsClient, nsqProducer *nsq.Producer
 	go func() {
 		for {
 			switch v := (<-mempoolCh).(type) {
-			// default:
-			// 	log.Errorf("Not found type: %v", v)
 			case string:
 				// delete tx from pool
 				mempool.Delete(v)
