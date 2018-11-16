@@ -115,6 +115,8 @@ type UserStore interface {
 	// MsToUserData(addresses []string) map[string]User
 	// sToUserData(addresses []string) map[string]store.User
 
+	CheckAddWallet(wp *WalletParams, jwt string) error
+
 	CheckTx(tx string) bool
 }
 
@@ -803,5 +805,55 @@ func (mStore *MongoUserStore) UpdateMultisigOwners(userid, invitecode string, ow
 
 func (mStore *MongoUserStore) Close() error {
 	mStore.session.Close()
+	return nil
+}
+
+func (mStore *MongoUserStore) CheckAddWallet(wp *WalletParams, jwt string) error {
+	user := User{}
+	query := bson.M{"devices.JWT": jwt}
+	err := mStore.usersData.Find(query).One(&user)
+	if err != nil {
+		return err
+	}
+
+	count := 0
+	for _, wallet := range user.Wallets {
+		if wallet.CurrencyID == wp.CurrencyID && wallet.NetworkID == wp.NetworkID {
+			count++
+		}
+	}
+	if count < 20 {
+		return nil
+	}
+
+	if count >= 20 {
+		query := bson.M{"userid": user.UserID}
+		switch wp.CurrencyID {
+		case currencies.Ether:
+			txs := []TransactionETH{}
+			switch wp.NetworkID {
+			case currencies.ETHMain:
+				mStore.ETHMainTxsData.Find(query).All(&txs)
+			case currencies.ETHTest:
+				mStore.ETHTestTxsData.Find(query).All(&txs)
+			}
+			if len(txs) == 0 {
+				return fmt.Errorf("maximum avalible wallets count")
+			}
+
+		case currencies.Bitcoin:
+			txs := []MultyTX{}
+			switch wp.NetworkID {
+			case currencies.Main:
+				mStore.BTCMainTxsData.Find(query).All(&txs)
+			case currencies.Test:
+				mStore.BTCTestTxsData.Find(query).All(&txs)
+			}
+			if len(txs) == 0 {
+				return fmt.Errorf("maximum avalible wallets count")
+			}
+		}
+	}
+
 	return nil
 }

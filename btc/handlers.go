@@ -658,8 +658,6 @@ func (btcCli *BTCConn) setGRPCHandlers(networtkID, accuracyRange int) {
 	go func() {
 		for {
 			switch v := (<-mempoolCh).(type) {
-			// default:
-			// 	log.Errorf("Not found type: %v", v)
 			case string:
 				// delete tx from pool
 				mempool.Delete(v)

@@ -27,16 +27,11 @@ type ETHConn struct {
 	CliMain          pb.NodeCommunicationsClient
 	WatchAddressTest chan pb.WatchAddress
 	WatchAddressMain chan pb.WatchAddress
-	// Mempool          *map[string]int
-	// MempoolTest      *map[string]int
 
 	Mempool     sync.Map
 	MempoolTest sync.Map
 
 	WsServer *gosocketio.Server
-
-	// M     *sync.Mutex
-	// MTest *sync.Mutex
 }
 
 var log = slf.WithContext("eth")

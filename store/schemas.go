@@ -275,6 +275,26 @@ type SpendableOutputs struct {
 	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
 }
 
+type WalletParams struct {
+	CurrencyID   int            `json:"currencyID"`
+	NetworkID    int            `json:"networkID"`
+	Address      string         `json:"address"`
+	AddressIndex int            `json:"addressIndex"`
+	WalletIndex  int            `json:"walletIndex"`
+	WalletName   string         `json:"walletName"`
+	IsImported   bool           `json:"isImported"`
+	Multisig     MultisigWallet `json:"multisig"`
+}
+
+type MultisigWallet struct {
+	IsMultisig         bool   `json:"isMultisig"`
+	SignaturesRequired int    `json:"signaturesRequired"`
+	OwnersCount        int    `json:"ownersCount"`
+	InviteCode         string `json:"inviteCode"`
+	IsImported         bool   `json:"isImported"`
+	ContractAddress    string `json:"contractAddress"`
+}
+
 type EtherscanResp struct {
 	Status  string               `json:"status"`
 	Message string               `json:"message"`

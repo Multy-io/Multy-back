@@ -30,12 +30,6 @@ const (
 	confirmTransaction = "0xc01a8c84"
 	revokeConfirmation = "0x20ea8d86"
 	executeTransaction = "0xee22610b"
-	// GasLimit           = map[string]string{
-	// 	submitTransaction:  "7039920",
-	// 	revokeConfirmation: "7039920",
-	// 	confirmTransaction: "7039920",
-	// 	executeTransaction: "7039920",
-	// }
 )
 
 var (
@@ -249,11 +243,6 @@ func generatedTxDataToStore(tx *ethpb.ETHTransaction) store.TransactionETH {
 			Return:           tx.GetReturn(),
 			Input:            tx.GetInput(),
 		},
-		// Contract:         tx.GetContract(),
-		// MethodInvoked:    tx.GetMethodInvoked(),
-		// InvocationStatus: tx.GetInvocationStatus(),
-		// Return:           tx.GetReturn(),
-		// Input:            tx.GetInput(),
 	}
 }
 
@@ -268,10 +257,6 @@ func saveTransaction(tx store.TransactionETH, networtkID int, resync bool) error
 	default:
 		return errors.New("saveMultyTransaction: wrong networkID")
 	}
-
-	// fetchedTxs := []store.MultyTX{}
-	// query := bson.M{"txid": tx.TxID}
-	// txStore.Find(query).All(&fetchedTxs)
 
 	// This is splited transaction! That means that transaction's WalletsInputs and WalletsOutput have the same WalletIndex!
 	//Here we have outgoing transaction for exact wallet!

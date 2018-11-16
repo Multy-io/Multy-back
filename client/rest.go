@@ -175,26 +175,6 @@ func initMiddlewareJWT(restClient *RestClient) {
 	}
 }
 
-type WalletParams struct {
-	CurrencyID   int            `json:"currencyID"`
-	NetworkID    int            `json:"networkID"`
-	Address      string         `json:"address"`
-	AddressIndex int            `json:"addressIndex"`
-	WalletIndex  int            `json:"walletIndex"`
-	WalletName   string         `json:"walletName"`
-	IsImported   bool           `json:"isImported"`
-	Multisig     MultisigWallet `json:"multisig"`
-}
-
-type MultisigWallet struct {
-	IsMultisig         bool   `json:"isMultisig"`
-	SignaturesRequired int    `json:"signaturesRequired"`
-	OwnersCount        int    `json:"ownersCount"`
-	InviteCode         string `json:"inviteCode"`
-	IsImported         bool   `json:"isImported"`
-	ContractAddress    string `json:"contractAddress"`
-}
-
 type SelectWallet struct {
 	CurrencyID   int    `json:"currencyID"`
 	NetworkID    int    `json:"networkID"`
@@ -249,7 +229,7 @@ func getToken(c *gin.Context) (string, error) {
 	return authHeader[1], nil
 }
 
-func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c *gin.Context) error {
+func createCustomWallet(wp store.WalletParams, token string, restClient *RestClient, c *gin.Context) error {
 
 	user := store.User{}
 	query := bson.M{"devices.JWT": token}
@@ -321,7 +301,7 @@ func createCustomWallet(wp WalletParams, token string, restClient *RestClient, c
 	return nil
 }
 
-func createCustomMultisig(wp WalletParams, token string, restClient *RestClient, c *gin.Context) (*store.Multisig, error) {
+func createCustomMultisig(wp store.WalletParams, token string, restClient *RestClient, c *gin.Context) (*store.Multisig, error) {
 	user := store.User{}
 	query := bson.M{"devices.JWT": token}
 
@@ -522,7 +502,7 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 			message = http.StatusText(http.StatusOK)
 		)
 
-		var wp WalletParams
+		var wp store.WalletParams
 
 		err = decodeBody(c, &wp)
 		if err != nil {
@@ -534,9 +514,18 @@ func (restClient *RestClient) addWallet() gin.HandlerFunc {
 			return
 		}
 
+		err = restClient.userStore.CheckAddWallet(&wp, token)
+		if err != nil {
+			restClient.log.Errorf("addWallet: CheckAddWallet: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"code":    http.StatusBadRequest,
+				"message": err.Error(),
+			})
+			return
+		}
+
 		// New multisig
 		if wp.Multisig.IsMultisig {
-
 			// Create multisig
 			if !wp.Multisig.IsImported {
 				if wp.Multisig.OwnersCount < wp.Multisig.SignaturesRequired || wp.Multisig.OwnersCount < 2 {
