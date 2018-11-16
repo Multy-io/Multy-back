@@ -838,7 +838,7 @@ func (mStore *MongoUserStore) CheckAddWallet(wp *WalletParams, jwt string) error
 				mStore.ETHTestTxsData.Find(query).All(&txs)
 			}
 			if len(txs) == 0 {
-				return fmt.Errorf("maximum avalible wallets count")
+				return fmt.Errorf("maximum available wallets count")
 			}
 
 		case currencies.Bitcoin:
@@ -850,7 +850,7 @@ func (mStore *MongoUserStore) CheckAddWallet(wp *WalletParams, jwt string) error
 				mStore.BTCTestTxsData.Find(query).All(&txs)
 			}
 			if len(txs) == 0 {
-				return fmt.Errorf("maximum avalible wallets count")
+				return fmt.Errorf("maximum available wallets count")
 			}
 		}
 	}
