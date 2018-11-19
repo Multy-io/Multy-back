@@ -61,6 +61,7 @@ const (
 	msgErrAdressBalance         = "empty address or 3-rd party server error"
 	msgErrChainIsNotImplemented = "current chain is not implemented"
 	msgErrUserHaveNoTxs         = "user have no transactions"
+	msgErrWrongSeedPhraseType   = "seed phrase type is not supported"
 )
 
 type RestClient struct {
@@ -154,7 +155,7 @@ func initMiddlewareJWT(restClient *RestClient) {
 		Key:        []byte(restClient.Secretkey), // config
 		Timeout:    time.Hour,
 		MaxRefresh: time.Hour,
-		Authenticator: func(userId, deviceId, pushToken string, deviceType int, c *gin.Context) (store.User, bool) {
+		Authenticator: func(userId, deviceId, pushToken string, deviceType int, seedPhraseType int, c *gin.Context) (store.User, bool) {
 			query := bson.M{"userID": userId}
 
 			user := store.User{}
