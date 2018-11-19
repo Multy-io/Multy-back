@@ -154,7 +154,7 @@ func initMiddlewareJWT(restClient *RestClient) {
 		Key:        []byte(restClient.Secretkey), // config
 		Timeout:    time.Hour,
 		MaxRefresh: time.Hour,
-		Authenticator: func(userId, deviceId, pushToken string, deviceType int, c *gin.Context) (store.User, bool) {
+		Authenticator: func(userId, deviceId, pushToken string, deviceType int, seedPhraseType int, c *gin.Context) (store.User, bool) {
 			query := bson.M{"userID": userId}
 
 			user := store.User{}

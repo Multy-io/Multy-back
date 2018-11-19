@@ -12,12 +12,12 @@ RUN mkdir $GOPATH/src/github.com && \
 RUN cd $GOPATH/src/github.com/Multy-io && \
     git clone https://github.com/Multy-io/Multy-BTC-node-service.git && \
     cd $GOPATH/src/github.com/Multy-io/Multy-BTC-node-service && \
-    git checkout reconnect
+    git checkout resync
 
 RUN cd $GOPATH/src/github.com/Multy-io && \
     git clone https://github.com/Multy-io/Multy-ETH-node-service.git && \
     cd $GOPATH/src/github.com/Multy-io/Multy-ETH-node-service && \
-    git checkout reconnect
+    git checkout resync
 
 RUN cd $GOPATH/src/github.com/Multy-io && \ 
     git clone https://github.com/Multy-io/Multy-back.git && \ 

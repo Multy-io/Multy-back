@@ -38,7 +38,7 @@ func (restClient *RestClient) LoginHandler() gin.HandlerFunc {
 			return
 		}
 
-		user, ok := restClient.middlewareJWT.Authenticator(loginVals.UserID, loginVals.DeviceID, loginVals.PushToken, loginVals.DeviceType, c) // user can be empty
+		user, ok := restClient.middlewareJWT.Authenticator(loginVals.UserID, loginVals.DeviceID, loginVals.PushToken, loginVals.DeviceType, loginVals.SeedPhraseType, c) // user can be empty
 
 		userID := loginVals.UserID
 
@@ -70,7 +70,7 @@ func (restClient *RestClient) LoginHandler() gin.HandlerFunc {
 			var devices []store.Device
 			devices = append(devices, device)
 
-			newUser := createUser(loginVals.UserID, devices, wallet)
+			newUser := createUser(loginVals.UserID, devices, wallet, loginVals.SeedPhraseType)
 			err = restClient.userStore.Insert(newUser)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
