@@ -65,7 +65,8 @@ func (restClient *RestClient) LoginHandler() gin.HandlerFunc {
 
 		if !ok {
 			//verify supporting of concrete SeedPhraseType
-			if !currencies.SeedPhraseTypes[loginVals.SeedPhraseType] {
+
+			if !currencies.IsSeedPhraseTypeValid(loginVals.SeedPhraseType) {
 				c.JSON(http.StatusNotAcceptable, gin.H{
 					"err":    msgErrWrongSeedPhraseType,
 					"token":  "",

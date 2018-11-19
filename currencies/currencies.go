@@ -379,8 +379,3 @@ var CurrencyNames = map[int]string{
 func String(code int) string {
 	return CurrencyNames[code]
 }
-
-var SeedPhraseTypes = map[int]bool{
-	0: true, // multy seed
-	1: true, // metamask seed
-}
