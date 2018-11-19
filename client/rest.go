@@ -61,6 +61,7 @@ const (
 	msgErrAdressBalance         = "empty address or 3-rd party server error"
 	msgErrChainIsNotImplemented = "current chain is not implemented"
 	msgErrUserHaveNoTxs         = "user have no transactions"
+	msgErrWrongSeedPhraseType   = "seed phrase type is not supported"
 )
 
 type RestClient struct {

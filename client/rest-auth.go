@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Multy-io/Multy-back/currencies"
 	"github.com/Multy-io/Multy-back/store"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -63,6 +64,16 @@ func (restClient *RestClient) LoginHandler() gin.HandlerFunc {
 		}
 
 		if !ok {
+			//verify supporting of concrete SeedPhraseType
+			if !currencies.SeedPhraseTypes[loginVals.SeedPhraseType] {
+				c.JSON(http.StatusNotAcceptable, gin.H{
+					"err":    msgErrWrongSeedPhraseType,
+					"token":  "",
+					"expire": "",
+				})
+				return
+			}
+
 			// new User with new Device
 			device := createDevice(loginVals.DeviceID, c.ClientIP(), tokenString, loginVals.PushToken, loginVals.AppVersion, loginVals.DeviceType)
 
