@@ -6,11 +6,20 @@ See LICENSE for details
 package currencies
 
 const (
-	MultySeed    = 0
-	MetamaskSeed = 1
+	MultySeed = iota
+	MetamaskSeed
 )
 
-var SeedPhraseTypes = map[int]bool{
-	MultySeed:    true, // multy seed
-	MetamaskSeed: true, // metamask seed
+var seeds = []int{
+	MultySeed,
+	MetamaskSeed,
+}
+
+func IsSeedPhraseTypeValid(seedPhraseType int) bool {
+	switch seedPhraseType {
+	case MultySeed,
+		MetamaskSeed:
+		return true
+	}
+	return false
 }
