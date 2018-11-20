@@ -122,7 +122,6 @@ func (m *Multy) registerWebSocketEvents() error {
 
 func (m *Multy) setupConfiguredNodes() {
 	for _, nodeConfig := range m.config.SupportedNodes {
-		//fmt.Printf("iterated nodeConfig currency is %s \n", nodeConfig.СurrencyID)
 		switch nodeConfig.СurrencyID {
 		case currencies.Bitcoin:
 			//BTC
