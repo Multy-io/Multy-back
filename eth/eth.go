@@ -39,7 +39,7 @@ var log = slf.WithContext("eth")
 //InitHandlers init nsq mongo and ws connection to node
 // return main client , test client , err
 func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string) (*ETHConn, error) {
-	//declare pacakge struct
+	//declare package struct
 	cli := &ETHConn{
 		Mempool:     sync.Map{},
 		MempoolTest: sync.Map{},
@@ -98,29 +98,28 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	if err != nil {
 		return cli, fmt.Errorf("fetchCoinType: %s", err.Error())
 	}
+
 	cliMain, err := initGrpcClient(coinTypeMain.GRPCUrl)
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
 
 	cli.CliMain = cliMain
-
-	// setup testnet
-	coinTypeTest, err := store.FetchCoinType(coinTypes, currencies.Ether, currencies.ETHTest)
-	if err != nil {
-		return cli, fmt.Errorf("fetchCoinType: %s", err.Error())
-	}
-	cliTest, err := initGrpcClient(coinTypeTest.GRPCUrl)
-	if err != nil {
-		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
-	}
-	cli.CliTest = cliTest
-
 	cli.setGRPCHandlers(currencies.ETHMain, coinTypeMain.AccuracyRange)
 	log.Infof("InitHandlers: initGrpcClient: Main: √")
 
-	cli.setGRPCHandlers(currencies.ETHTest, coinTypeTest.AccuracyRange)
-	log.Infof("InitHandlers: initGrpcClient: Test: √")
+	// setup testnet
+	//coinTypeTest, err := store.FetchCoinType(coinTypes, currencies.Ether, currencies.ETHTest)
+	//if err != nil {
+	//	return cli, fmt.Errorf("fetchCoinType: %s", err.Error())
+	//}
+	//cliTest, err := initGrpcClient(coinTypeTest.GRPCUrl)
+	//if err != nil {
+	//	return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
+	//}
+	//cli.CliTest = cliTest
+	//cli.setGRPCHandlers(currencies.ETHTest, coinTypeTest.AccuracyRange)
+	//log.Infof("InitHandlers: initGrpcClient: Test: √")
 
 	return cli, nil
 }

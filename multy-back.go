@@ -71,39 +71,85 @@ func Init(conf *Configuration) (*Multy, error) {
 	multy.userStore = userStore
 	log.Infof("UserStore initialization done on %s √", conf.Database)
 
-	//BTC
-	btcCli, err := btc.InitHandlers(&conf.Database, conf.SupportedNodes, conf.NSQAddress)
-	if err != nil {
-		return nil, fmt.Errorf("Init: btc.InitHandlers: %s", err.Error())
-	}
-	btcVer, err := btcCli.CliMain.ServiceInfo(context.Background(), &btcpb.Empty{})
-	multy.BTC = btcCli
-	log.Infof(" BTC initialization done on %v √", btcVer)
-
-	// ETH
-	ethCli, err := eth.InitHandlers(&conf.Database, conf.SupportedNodes, conf.NSQAddress)
-	if err != nil {
-		return nil, fmt.Errorf("Init: btc.InitHandlers: %s", err.Error())
-	}
-	ethVer, err := ethCli.CliMain.ServiceInfo(context.Background(), &ethpb.Empty{})
-	multy.ETH = ethCli
-	log.Infof(" ETH initialization done on %v √", ethVer)
+	multy.setupConfiguredNodes()
 
 	//users data set
-	sv, err := multy.SetUserData(multy.userStore, conf.SupportedNodes)
+	sv, err := multy.SetUserData(multy.userStore, multy.config.SupportedNodes)
 	if err != nil {
-		return nil, fmt.Errorf("Init: multy.SetUserData: %s", err.Error())
+		return nil, fmt.Errorf("Init: multy.SetUserData: %s ", err.Error())
 	}
-	log.Infof("Users data  initialization done √")
+	log.Infof("Users data initialization done √")
 
 	log.Debugf("Server versions %v", sv)
 
 	// REST handlers
-	if err = multy.initHttpRoutes(conf); err != nil {
-		return nil, fmt.Errorf("Router initialization: %s", err.Error())
+	if err = multy.initHttpRoutes(); err != nil {
+		return nil, fmt.Errorf("Router initialization: %s ", err.Error())
 	}
+
+	if err = multy.registerWebSocketEvents(); err != nil {
+		return nil, fmt.Errorf("Failed to register websocket events: [%s] ", err.Error())
+	}
+
 	return multy, nil
 }
+
+
+func (m *Multy) registerWebSocketEvents() error {
+	// socketIO server initialization. server -> mobile client
+	socketIORoute := m.route.Group("/socketio")
+	socketIOPool, err := client.SetSocketIOHandlers(m.restClient, m.BTC, m.ETH, socketIORoute, m.config.SocketioAddr,
+		m.config.NSQAddress, m.userStore)
+	if err != nil {
+		return err
+	}
+	m.clientPool = socketIOPool
+
+	for _, nodeConfig := range m.config.SupportedNodes {
+		switch nodeConfig.СurrencyID {
+		case currencies.Bitcoin:
+			m.BTC.WsServer = m.clientPool.Server
+			break
+		case currencies.Ether:
+			m.ETH.WsServer = m.clientPool.Server
+			break
+		}
+	}
+
+	return nil
+}
+
+
+func (m *Multy) setupConfiguredNodes() {
+	for _, nodeConfig := range m.config.SupportedNodes {
+		//fmt.Printf("iterated nodeConfig currency is %s \n", nodeConfig.СurrencyID)
+		switch nodeConfig.СurrencyID {
+		case currencies.Bitcoin:
+			//BTC
+			btcCli, err := btc.InitHandlers(&m.config.Database, m.config.SupportedNodes, m.config.NSQAddress)
+			if err != nil {
+				log.Errorf("Init: btc.InitHandlers: %s", err.Error())
+				break
+			}
+			btcVer, err := btcCli.CliMain.ServiceInfo(context.Background(), &btcpb.Empty{})
+			m.BTC = btcCli
+			log.Infof(" BTC initialization done on %v √", btcVer)
+			break
+		case currencies.Ether:
+			// ETH
+			ethCli, err := eth.InitHandlers(&m.config.Database, m.config.SupportedNodes, m.config.NSQAddress)
+			if err != nil {
+				log.Errorf("Init: btc.InitHandlers: [%s] ", err.Error())
+				break
+			}
+			ethVer, err := ethCli.CliMain.ServiceInfo(context.Background(), &ethpb.Empty{})
+			m.ETH = ethCli
+			log.Infof(" ETH initialization done on %v √", ethVer)
+			break
+		}
+	}
+}
+
 
 // SetUserData make initial userdata to node service
 func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]store.ServiceInfo, error) {
@@ -227,13 +273,12 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 // - http
 // - socketio
 // - firebase
-func (multy *Multy) initHttpRoutes(conf *Configuration) error {
+func (m *Multy) initHttpRoutes() error {
 	router := gin.Default()
-	multy.route = router
+	m.route = router
 	gin.SetMode(gin.DebugMode)
 
 	f, err := os.OpenFile("../currencies/erc20tokens.json", os.O_RDONLY, os.FileMode(0644))
-	// f, err := os.OpenFile("/currencies/erc20tokens.json")
 	if err != nil {
 		return err
 	}
@@ -246,56 +291,37 @@ func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 	_ = json.Unmarshal(bs, &tokenList)
 
 	restClient, err := client.SetRestHandlers(
-		multy.userStore,
+		m.userStore,
 		router,
-		conf.DonationAddresses,
-		multy.BTC,
-		multy.ETH,
-		conf.MultyVerison,
-		conf.Secretkey,
-		conf.MobileVersions,
+		m.config.DonationAddresses,
+		m.BTC,
+		m.ETH,
+		m.config.MultyVerison,
+		m.config.Secretkey,
+		m.config.MobileVersions,
 		tokenList,
-		conf.BrowserDefault,
+		m.config.BrowserDefault,
 	)
 	if err != nil {
 		return err
 	}
-	multy.restClient = restClient
-
-	// socketIO server initialization. server -> mobile client
-	socketIORoute := router.Group("/socketio")
-	socketIOPool, err := client.SetSocketIOHandlers(multy.restClient, multy.BTC, multy.ETH, socketIORoute, conf.SocketioAddr, conf.NSQAddress, multy.userStore)
+	m.restClient = restClient
+	firebaseClient, err := client.InitFirebaseConn(&m.config.Firebase, m.route, m.config.NSQAddress)
 	if err != nil {
 		return err
 	}
-	multy.clientPool = socketIOPool
-	multy.ETH.WsServer = multy.clientPool.Server
-	multy.BTC.WsServer = multy.clientPool.Server
-
-	firebaseClient, err := client.InitFirebaseConn(&conf.Firebase, multy.route, conf.NSQAddress)
-	if err != nil {
-		return err
-	}
-	multy.firebaseClient = firebaseClient
+	m.firebaseClient = firebaseClient
 
 	return nil
 }
+
 
 // Run runs service
-func (multy *Multy) Run() error {
+func (m *Multy) Run() {
 	log.Info("Running server")
-	multy.route.Run(multy.config.RestAddress)
-	return nil
+	m.route.Run(m.config.RestAddress)
 }
 
-func fetchCoinType(coinTypes []store.CoinType, currencyID, networkID int) (*store.CoinType, error) {
-	for _, ct := range coinTypes {
-		if ct.СurrencyID == currencyID && ct.NetworkID == networkID {
-			return &ct, nil
-		}
-	}
-	return nil, fmt.Errorf("fetchCoinType: no such coin in config")
-}
 
 func (m *Multy) restoreState(coinType store.CoinType, ncClient interface{}) {
 	if coinType.AccuracyRange > 0 {

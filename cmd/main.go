@@ -65,8 +65,6 @@ func main() {
 		log.Fatalf("Server initialization: %s\n", err.Error())
 	}
 
-	if err = mu.Run(); err != nil {
-		log.Fatalf("Server running: %s\n", err.Error())
-	}
-
+	mu.Run()
+	log.Infof("Server started successfully")
 }
