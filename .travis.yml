@@ -1,3 +1,4 @@
+language: bash
 env:
   global:
     - DOCKER_USERNAME=multyio
@@ -20,3 +21,11 @@ deploy:
             docker push "$IMAGE"
     on:
       branch: master
+
+  - provider: script
+    script: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
+            docker tag "$IMAGE" "$IMAGE:$TRAVIS_TAG" &&
+            docker push "$IMAGE:$TRAVIS_TAG" 
+    on:
+       tags: true
+       all_branches: true
