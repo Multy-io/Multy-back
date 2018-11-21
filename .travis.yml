@@ -10,6 +10,9 @@ env:
 services:
   - docker
 
+before_script:
+  - docker info
+
 script:
   - docker build -t "$IMAGE" .
 
@@ -18,4 +21,12 @@ deploy:
     script: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
             docker push "$IMAGE"
     on:
-branch: master
+      branch: master
+
+  - provider: script
+    script: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
+            docker tag "$IMAGE" "$IMAGE:$TRAVIS_TAG" &&
+            docker push "$IMAGE:$TRAVIS_TAG"
+    on:
+      tags: true
+      all_branches: true
