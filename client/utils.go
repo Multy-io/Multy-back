@@ -24,11 +24,12 @@ func decodeBody(c *gin.Context, to interface{}) error {
 	return err
 }
 
-func createUser(userid string, device []store.Device, wallets []store.Wallet) store.User {
+func createUser(userid string, device []store.Device, wallets []store.Wallet, seedPhraseType int) store.User {
 	return store.User{
-		UserID:  userid,
-		Devices: device,
-		Wallets: wallets,
+		UserID:         userid,
+		Devices:        device,
+		Wallets:        wallets,
+		SeedPhraseType: seedPhraseType,
 	}
 }
 func createDevice(deviceid, ip, jwt, pushToken, appVersion string, deviceType int) store.Device {
