@@ -15,8 +15,8 @@
     "Database": {
         "Address": "localhost:27000",
 
-        "Username": "multy",
-        "Password": "17bDaBWHx4r5X",
+        "Username": "",
+        "Password": "",
 
         "TableUsers": "UserCollection",
         "DBUsers": "userDB",
@@ -42,7 +42,6 @@
 
         "TableTxsDataEOSMain": "TableTxsDataEOSMain",
         "TableTxsDataEOSTest": "TableTxsDataEOSTest"
-
 
     },
 
