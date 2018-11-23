@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/Multy-io/Multy-back/store"
-	"github.com/bitly/go-nsq"
+	nsq "github.com/bitly/go-nsq"
 	"github.com/graarh/golang-socketio"
 
 	"github.com/jekabolt/slf"
