@@ -44,7 +44,7 @@ func createDevice(deviceid, ip, jwt, pushToken, appVersion string, deviceType in
 	}
 }
 
-func createWallet(currencyID, networkID int, address string, addressIndex int, walletIndex int, walletName string, isImported bool) store.Wallet {
+func createWallet(currencyID, networkID int, address string, addressIndex int, walletIndex int, walletName string, isImported bool, status string) store.Wallet {
 	return store.Wallet{
 		CurrencyID:     currencyID,
 		NetworkID:      networkID,
@@ -52,7 +52,7 @@ func createWallet(currencyID, networkID int, address string, addressIndex int, w
 		WalletName:     walletName,
 		LastActionTime: time.Now().Unix(),
 		DateOfCreation: time.Now().UnixNano(),
-		Status:         store.WalletStatusOK,
+		Status:         status,
 		IsImported:     isImported,
 		Adresses: []store.Address{
 			store.Address{

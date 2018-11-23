@@ -303,14 +303,6 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 					}
 
 					ratesDB.FindMultisig(msgMultisig.UserID, multisigToJoin.InviteCode)
-					// if err != nil {
-					// 	for {
-					// 		_, err := ratesDB.FindMultisig(msgMultisig.UserID, multisigToJoin.InviteCode)
-					// 		if err == nil {
-					// 			break
-					// 		}
-					// 	}
-					// }
 
 					return store.WsMessage{
 						Type:    store.JoinMultisig,
