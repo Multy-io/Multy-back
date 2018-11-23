@@ -259,7 +259,7 @@ func createCustomWallet(wp store.WalletParams, token string, restClient *RestCli
 			walletStatus = store.WalletStatusDeleted
 		}
 		wallet = createWallet(wp.CurrencyID, wp.NetworkID, wp.Address, wp.AddressIndex, wp.WalletIndex, wp.WalletName, wp.IsImported, walletStatus)
-		NewAddressNode(wp.Address, user.UserID, wp.CurrencyID, wp.NetworkID, wp.WalletIndex, wp.AddressIndex, restClient)
+		go NewAddressNode(wp.Address, user.UserID, wp.CurrencyID, wp.NetworkID, wp.WalletIndex, wp.AddressIndex, restClient)
 	}
 
 	// imported wallet
@@ -275,7 +275,7 @@ func createCustomWallet(wp store.WalletParams, token string, restClient *RestCli
 			return errors.New(msgErrWrongBadAddress)
 		}
 		wallet = createWallet(wp.CurrencyID, wp.NetworkID, strings.ToLower(wp.Address), 0, -1, wp.WalletName, wp.IsImported, store.WalletStatusOK)
-		NewAddressNode(wp.Address, "imported", wp.CurrencyID, wp.NetworkID, -1, 0, restClient)
+		go NewAddressNode(wp.Address, "imported", wp.CurrencyID, wp.NetworkID, -1, 0, restClient)
 	}
 
 	sel := bson.M{"devices.JWT": token}
@@ -798,8 +798,8 @@ func (restClient *RestClient) discoverWallets() gin.HandlerFunc {
 			return
 		}
 
-		var dw DiscoverWallets
-		err = decodeBody(c, &dw)
+		var discoverWallet DiscoverWallets
+		err = decodeBody(c, &discoverWallet)
 		if err != nil {
 			restClient.log.Errorf("discoverWallets: decodeBody: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -809,10 +809,10 @@ func (restClient *RestClient) discoverWallets() gin.HandlerFunc {
 			return
 		}
 
-		for _, address := range dw.Addresses {
+		for _, address := range discoverWallet.Addresses {
 			wp := store.WalletParams{
-				CurrencyID:   dw.CurrencyID,
-				NetworkID:    dw.NetworkID,
+				CurrencyID:   discoverWallet.CurrencyID,
+				NetworkID:    discoverWallet.NetworkID,
 				Address:      address.Address,
 				AddressIndex: address.AddressIndex,
 				WalletIndex:  address.WalletIndex,
