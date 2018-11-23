@@ -179,7 +179,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 		if len(userIds) > 0 {
 			nearReceivers, err = ratesDB.GetUsersReceiverAddressesByUserIds(userIds)
 			if err != nil {
-				pool.log.Errorf("An error occurred on GetUsersReceiverAddresses: %+v\n", err)
+				pool.log.Errorf("An error occurred on GetUsersReceiverAddresses: %+v\n", err.Error())
 			}
 		}
 
