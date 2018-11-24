@@ -34,6 +34,7 @@ dist: TARGET_ARCH=amd64
 dist: build
 
 build: $(TARGETS)
+	ls -lah $(TARGETS)
 
 $(TARGETS):
 	cd $(@D) && \

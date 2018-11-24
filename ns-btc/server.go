@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Multy-io/Multy-back/btc"
+	pb "github.com/Multy-io/Multy-back/ns-btc-protobuf"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/blockcypher/gobcy"
 	"github.com/btcsuite/btcd/btcjson"
@@ -27,7 +27,7 @@ import (
 type Server struct {
 	UsersData  *sync.Map
 	BtcAPI     *gobcy.API
-	BtcCli     *btc.Client
+	BtcCli     *Client
 	M          *sync.Mutex
 	Info       *store.ServiceInfo
 	GRPCserver *grpc.Server
@@ -35,8 +35,8 @@ type Server struct {
 	ReloadChan chan struct{}
 }
 
-func (s *Server) ServiceInfo(c context.Context, in *Empty) (*ServiceVersion, error) {
-	return &ServiceVersion{
+func (s *Server) ServiceInfo(c context.Context, in *pb.Empty) (*pb.ServiceVersion, error) {
+	return &pb.ServiceVersion{
 		Branch:    s.Info.Branch,
 		Commit:    s.Info.Commit,
 		Buildtime: s.Info.Buildtime,
@@ -45,7 +45,7 @@ func (s *Server) ServiceInfo(c context.Context, in *Empty) (*ServiceVersion, err
 }
 
 // EventInitialAdd us used to add initial pairs of watch addresses
-func (s *Server) EventInitialAdd(c context.Context, ud *UsersData) (*ReplyInfo, error) {
+func (s *Server) EventInitialAdd(c context.Context, ud *pb.UsersData) (*pb.ReplyInfo, error) {
 	log.Debugf("EventInitialAdd len - %v", len(ud.Map))
 
 	udMap := sync.Map{}
@@ -60,13 +60,13 @@ func (s *Server) EventInitialAdd(c context.Context, ud *UsersData) (*ReplyInfo, 
 
 	*s.UsersData = udMap
 
-	return &ReplyInfo{
+	return &pb.ReplyInfo{
 		Message: "ok",
 	}, nil
 }
 
 // EventAddNewAddress us used to add new watch address to existing pairs
-func (s *Server) EventAddNewAddress(c context.Context, wa *WatchAddress) (*ReplyInfo, error) {
+func (s *Server) EventAddNewAddress(c context.Context, wa *pb.WatchAddress) (*pb.ReplyInfo, error) {
 	newMap := *s.UsersData
 	// if newMap == nil {
 	// 	newMap = map[string]store.AddressExtended{}
@@ -74,7 +74,7 @@ func (s *Server) EventAddNewAddress(c context.Context, wa *WatchAddress) (*Reply
 	//TODO: binded address fix
 	_, ok := newMap.Load(wa.Address)
 	if ok {
-		return &ReplyInfo{
+		return &pb.ReplyInfo{
 			Message: "err: Address already binded",
 		}, nil
 	}
@@ -86,31 +86,31 @@ func (s *Server) EventAddNewAddress(c context.Context, wa *WatchAddress) (*Reply
 
 	*s.UsersData = newMap
 
-	return &ReplyInfo{
+	return &pb.ReplyInfo{
 		Message: "ok",
 	}, nil
 
 }
 
-func (s *Server) EventGetBlockHeight(ctx context.Context, in *Empty) (*BlockHeight, error) {
+func (s *Server) EventGetBlockHeight(ctx context.Context, in *pb.Empty) (*pb.BlockHeight, error) {
 	h, err := s.BtcCli.RPCClient.GetBlockCount()
 	if err != nil {
-		return &BlockHeight{}, err
+		return &pb.BlockHeight{}, err
 	}
-	return &BlockHeight{
+	return &pb.BlockHeight{
 		Height: h,
 	}, nil
 }
 
 // EventAddNewAddress us used to add new watch address to existing pairs
-func (s *Server) EventGetAllMempool(_ *Empty, stream NodeCommunications_EventGetAllMempoolServer) error {
+func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommunications_EventGetAllMempoolServer) error {
 	mp, err := s.BtcCli.GetAllMempool()
 	if err != nil {
 		return err
 	}
 
 	for _, rec := range mp {
-		stream.Send(&MempoolRecord{
+		stream.Send(&pb.MempoolRecord{
 			Category: int32(rec.Category),
 			HashTX:   rec.HashTX,
 		})
@@ -118,7 +118,7 @@ func (s *Server) EventGetAllMempool(_ *Empty, stream NodeCommunications_EventGet
 	return nil
 }
 
-func (s *Server) SyncState(ctx context.Context, in *BlockHeight) (*ReplyInfo, error) {
+func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyInfo, error) {
 
 	hash, height, err := s.BtcCli.RPCClient.GetBestBlock()
 	if err != nil {
@@ -128,7 +128,7 @@ func (s *Server) SyncState(ctx context.Context, in *BlockHeight) (*ReplyInfo, er
 	blockVerbose, err := s.BtcCli.RPCClient.GetBlockVerbose(hash)
 	if err != nil {
 		log.Errorf("SyncState:GetBlockVerbose: %v", err.Error())
-		return &ReplyInfo{
+		return &pb.ReplyInfo{
 			Message: "err:SyncState:GetBlockVerbose: " + err.Error(),
 		}, err
 	}
@@ -161,13 +161,13 @@ func (s *Server) SyncState(ctx context.Context, in *BlockHeight) (*ReplyInfo, er
 		}
 	}()
 
-	return &ReplyInfo{
+	return &pb.ReplyInfo{
 		Message: "ok",
 	}, nil
 }
 
-func (s *Server) CheckRejectTxs(c context.Context, txs *TxsToCheck) (*RejectedTxs, error) {
-	reTxs := &RejectedTxs{}
+func (s *Server) CheckRejectTxs(c context.Context, txs *pb.TxsToCheck) (*pb.RejectedTxs, error) {
+	reTxs := &pb.RejectedTxs{}
 	for _, tx := range txs.Hash {
 		hash, err := chainhash.NewHashFromStr(tx)
 		if err != nil {
@@ -182,7 +182,7 @@ func (s *Server) CheckRejectTxs(c context.Context, txs *TxsToCheck) (*RejectedTx
 	return reTxs, nil
 }
 
-func (s *Server) EventResyncAddress(c context.Context, address *AddressToResync) (*ReplyInfo, error) {
+func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResync) (*pb.ReplyInfo, error) {
 	log.Debugf("EventResyncAddress")
 	allResync := []store.ResyncTx{}
 	delFromResyncQ := ""
@@ -299,28 +299,28 @@ func (s *Server) EventResyncAddress(c context.Context, address *AddressToResync)
 
 	s.BtcCli.ResyncAddresses(allResync, address, delFromResyncQ)
 
-	return &ReplyInfo{
+	return &pb.ReplyInfo{
 		Message: "ok",
 	}, nil
 }
 
-func (s *Server) EventSendRawTx(c context.Context, tx *RawTx) (*ReplyInfo, error) {
+func (s *Server) EventSendRawTx(c context.Context, tx *pb.RawTx) (*pb.ReplyInfo, error) {
 	hash, err := s.BtcCli.RPCClient.SendCyberRawTransaction(tx.Transaction, true)
 	if err != nil {
 		log.Errorf("EventSendRawTx:s.BtcCli.RPCClient.SendCyberRawTransaction: %v", err.Error())
-		return &ReplyInfo{
+		return &pb.ReplyInfo{
 			Message: "err: wrong raw tx",
 		}, fmt.Errorf("err: wrong raw tx %s", err.Error())
 
 	}
 
-	return &ReplyInfo{
+	return &pb.ReplyInfo{
 		Message: hash.String(),
 	}, nil
 
 }
 
-func (s *Server) EventDeleteMempool(_ *Empty, stream NodeCommunications_EventDeleteMempoolServer) error {
+func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommunications_EventDeleteMempoolServer) error {
 	for del := range s.BtcCli.DeleteMempool {
 		err := stream.Send(&del)
 		if err != nil && err.Error() == ErrGrpcTransport {
@@ -331,7 +331,7 @@ func (s *Server) EventDeleteMempool(_ *Empty, stream NodeCommunications_EventDel
 	return nil
 }
 
-func (s *Server) EventAddMempoolRecord(_ *Empty, stream NodeCommunications_EventAddMempoolRecordServer) error {
+func (s *Server) EventAddMempoolRecord(_ *pb.Empty, stream pb.NodeCommunications_EventAddMempoolRecordServer) error {
 	for add := range s.BtcCli.AddToMempool {
 		err := stream.Send(&add)
 		if err != nil && err.Error() == ErrGrpcTransport {
@@ -342,7 +342,7 @@ func (s *Server) EventAddMempoolRecord(_ *Empty, stream NodeCommunications_Event
 	return nil
 }
 
-func (s *Server) EventDeleteSpendableOut(_ *Empty, stream NodeCommunications_EventDeleteSpendableOutServer) error {
+func (s *Server) EventDeleteSpendableOut(_ *pb.Empty, stream pb.NodeCommunications_EventDeleteSpendableOutServer) error {
 	for delSp := range s.BtcCli.DelSpOut {
 		log.Infof("Delete spendable out %v", delSp.String())
 		err := stream.Send(&delSp)
@@ -353,7 +353,7 @@ func (s *Server) EventDeleteSpendableOut(_ *Empty, stream NodeCommunications_Eve
 	}
 	return nil
 }
-func (s *Server) EventAddSpendableOut(_ *Empty, stream NodeCommunications_EventAddSpendableOutServer) error {
+func (s *Server) EventAddSpendableOut(_ *pb.Empty, stream pb.NodeCommunications_EventAddSpendableOutServer) error {
 
 	for addSp := range s.BtcCli.AddSpOut {
 		log.Infof("Add spendable out %v", addSp.String())
@@ -366,7 +366,7 @@ func (s *Server) EventAddSpendableOut(_ *Empty, stream NodeCommunications_EventA
 
 	return nil
 }
-func (s *Server) NewTx(_ *Empty, stream NodeCommunications_NewTxServer) error {
+func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommunications_NewTxServer) error {
 
 	for tx := range s.BtcCli.TransactionsCh {
 		log.Infof("NewTx history - %v", tx.String())
@@ -379,7 +379,7 @@ func (s *Server) NewTx(_ *Empty, stream NodeCommunications_NewTxServer) error {
 	return nil
 }
 
-func (s *Server) EventNewBlock(_ *Empty, stream NodeCommunications_EventNewBlockServer) error {
+func (s *Server) EventNewBlock(_ *pb.Empty, stream pb.NodeCommunications_EventNewBlockServer) error {
 	for h := range s.BtcCli.Block {
 		log.Infof("New block height - %v", h.GetHeight())
 		err := stream.Send(&h)
@@ -391,7 +391,7 @@ func (s *Server) EventNewBlock(_ *Empty, stream NodeCommunications_EventNewBlock
 	return nil
 }
 
-func (s *Server) ResyncAddress(_ *Empty, stream NodeCommunications_ResyncAddressServer) error {
+func (s *Server) ResyncAddress(_ *pb.Empty, stream pb.NodeCommunications_ResyncAddressServer) error {
 	for res := range s.BtcCli.ResyncCh {
 		log.Infof("Resync address - %v", res.String())
 		err := stream.Send(&res)

@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Multy-io/Multy-back/btc"
+	pb "github.com/Multy-io/Multy-back/ns-btc-protobuf"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/blockcypher/gobcy"
 	"github.com/jekabolt/slf"
@@ -30,7 +30,7 @@ var (
 // NodeClient is a main struct of service
 type NodeClient struct {
 	Config     *Configuration
-	Instance   *btc.Client
+	Instance   *Client
 	GRPCserver *Server
 	Clients    *sync.Map // address to userid
 	BtcApi     *gobcy.API
@@ -68,7 +68,7 @@ func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
 		return nil, fmt.Errorf("failed to listen: %v", err.Error())
 	}
 
-	btcClient, err := btc.NewClient(getCertificate(conf.BTCSertificate), conf.BTCNodeAddress, nc.Clients)
+	btcClient, err := NewClient(getCertificate(conf.BTCSertificate), conf.BTCNodeAddress, nc.Clients)
 	if err != nil {
 		return nil, fmt.Errorf("Blockchain api initialization: %s", err.Error())
 	}
@@ -90,7 +90,7 @@ func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
 
 	nc.GRPCserver = &srv
 
-	RegisterNodeCommunicationsServer(s, &srv)
+	pb.RegisterNodeCommunicationsServer(s, &srv)
 
 	go s.Serve(lis)
 

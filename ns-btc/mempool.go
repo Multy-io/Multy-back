@@ -1,4 +1,4 @@
-package btc
+package nsbtc
 
 import (
 	pb "github.com/Multy-io/Multy-back/ns-btc-protobuf"

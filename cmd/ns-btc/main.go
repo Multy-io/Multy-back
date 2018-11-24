@@ -8,7 +8,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/Multy-io/Multy-BTC-node-service"
+	nsbtc "github.com/Multy-io/Multy-back/ns-btc"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/jekabolt/config"
 	"github.com/jekabolt/slf"
@@ -24,7 +24,7 @@ var (
 )
 
 // TODO: add all default params
-var globalOpt = node.Configuration{
+var globalOpt = nsbtc.Configuration{
 	Name: "my-test-back",
 }
 
@@ -40,7 +40,7 @@ func main() {
 		Buildtime: buildtime,
 	}
 
-	nc := node.NodeClient{}
+	nc := nsbtc.NodeClient{}
 	node, err := nc.Init(&globalOpt)
 	if err != nil {
 		log.Fatalf("Server initialization: %s\n", err.Error())
