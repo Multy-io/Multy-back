@@ -1,0 +1,226 @@
+syntax = "proto3";
+
+package eth;
+
+service NodeCommuunications {
+
+    rpc ServiceInfo (Empty) returns (ServiceVersion){
+    }
+
+    rpc EventGetGasPrice (Empty) returns (GasPrice){
+    }
+
+    rpc EventInitialAdd (UsersData) returns (ReplyInfo){
+    }
+        
+    rpc EventAddNewAddress (WatchAddress) returns (ReplyInfo){
+    }
+    
+    rpc EventAddNewMultisig (WatchAddress) returns (ReplyInfo){
+    }
+
+    rpc EventGetBlockHeight (Empty) returns (BlockHeight){
+    }
+
+    rpc EventGetCode (AddressToResync) returns (ReplyInfo){
+    }
+
+    rpc EventGetAdressNonce (AddressToResync) returns (Nonce){
+    }
+
+    rpc EventGetAdressBalance (AddressToResync) returns (Balance){
+    }
+
+    rpc EventGetAllMempool (Empty) returns (stream MempoolRecord){
+    }
+
+    rpc EventAddMempoolRecord (Empty) returns (stream MempoolRecord){
+    }
+
+    rpc EventDeleteMempool (Empty) returns (stream MempoolToDelete){
+    }
+
+    rpc EventResyncAddress (AddressToResync) returns (ReplyInfo){
+    }
+
+    rpc EventNewBlock (Empty) returns (stream BlockHeight){
+    }
+
+    rpc CheckRejectTxs (TxsToCheck) returns (RejectedTxs){
+    }
+
+    rpc EventSendRawTx (RawTx) returns (ReplyInfo){
+    }
+
+    rpc NewTx (Empty) returns (stream ETHTransaction){
+    }
+
+    rpc SyncState (BlockHeight) returns (ReplyInfo){
+    }
+
+    //  Multisig methods
+    rpc AddMultisig (Empty) returns (stream Multisig){
+    }
+
+    rpc GetMultisigInfo (AddressToResync) returns (ContractInfo){
+    }
+    
+    // erc20 methods
+    rpc GetERC20Info (ERC20Address) returns (ERC20Info){
+    }
+
+}
+
+message ContractInfo  {
+    int64 ConfirmationsRequired  = 1;
+    repeated string ContractOwners  = 2;
+}
+
+message TokenInfo  {
+    string ContractAddress  = 1;
+    string Balance  = 2;
+}
+
+message RejectedTxs  {
+    repeated string RejectedTxs  = 1;
+}
+message TxsToCheck  {
+    repeated string Hash  = 1;
+}
+
+//  Multisig messages
+
+message Multisig  {
+	int64 Confirmations        = 1; 
+	string FactoryAddress      = 2; 
+	string TxOfCreation        = 3; 
+	string Contract            = 4; 
+    int64 DeployStatus          = 5;
+	repeated string Addresses  = 6; 
+}
+
+message Balance {
+    string Balance = 1;
+    string PendingBalance = 2;
+}
+message Nonce {
+    int64 Nonce = 1;
+}
+
+message GasPrice {
+    string Gas = 1;
+}
+
+message BlockHeight{
+    int64 height = 1;
+}
+
+
+message ETHTransaction {
+    string UserID = 1;
+    int32 WalletIndex = 2;
+    int32 AddressIndex =3;                        
+	string Hash = 4;                       
+	string From = 5;                      
+	string To = 6;  
+    string Amount = 7;
+    string input = 8;
+	int64 GasPrice = 9;        
+	int64 GasLimit = 10;          
+	int32 Nonce = 11;         
+	int32 Status = 12;      
+    int64 BlockTime = 13;         
+	int64 TxpoolTime = 14;        
+	int64 BlockHeight = 15;
+    bool Resync = 16;
+    bool Multisig = 17;
+    string Contract = 18;
+    string MethodInvoked = 19;
+    string return = 20;
+    bool InvocationStatus = 21;
+
+}
+
+message ERC20Info{
+    repeated ERC20History History = 1;
+    repeated ERC20Balances Balances = 2;
+}
+
+message ERC20Balances{
+    string Address = 1;
+    string Balance = 2;
+}
+
+message ERC20History{
+    string BlockNumber = 1;
+    string TimeStamp = 2;
+    string Hash = 3;
+    string Nonce = 4;
+    string From = 5;
+    string To = 6;
+    string ContractAddress = 7;
+    string Value = 8;
+    string GasPrice = 9;
+    string Gas = 10;
+    string Input = 11;
+}
+
+message MultisigInfo{
+    int64 height = 1 ;
+}
+
+message MempoolToDelete {
+   string hash = 1;
+}
+
+message WatchAddress {
+   string address = 1;
+   string userID = 2;
+   int32 WalletIndex = 3; 
+   int32 AddressIndex = 4;
+}
+
+ message MempoolRecord {
+   int32 category = 1;    
+   string hashTX = 2;
+}
+
+message Empty {
+}
+
+message RawTx {
+   string transaction = 1;
+}
+
+message AddressToResync {
+   string address = 1;
+}
+
+
+message ERC20Address {
+   string address = 1;
+   bool onlyBalances = 2;
+}
+
+message UsersData {
+    map<string, AddressExtended> map = 1;
+    map<string, string> UsersContracts = 2;
+}
+
+message AddressExtended {
+    string UserID = 1;    
+	int32 WalletIndex = 2; 
+	int32 AddressIndex = 3;
+}
+
+
+message ReplyInfo {
+    string message = 1;
+}
+
+message ServiceVersion {
+    string branch = 1;    
+	string commit = 2;  
+	string buildtime = 3; 
+	string lasttag = 4;    
+}
