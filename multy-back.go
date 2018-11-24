@@ -14,8 +14,8 @@ import (
 	"strings"
 
 	// exchanger "github.com/Multy-io/Multy-back-exchange-service"
-	btcpb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
-	ethpb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
+	btcpb "github.com/Multy-io/Multy-back/ns-btc-protobuf"
+	ethpb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
 	"github.com/Multy-io/Multy-back/btc"
 	"github.com/Multy-io/Multy-back/client"
 	"github.com/Multy-io/Multy-back/currencies"

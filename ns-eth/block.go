@@ -1,9 +1,9 @@
-package eth
+package nseth
 
 import (
 	"strings"
 
-	pb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
+	pb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
 
 	"github.com/onrik/ethrpc"
 )
@@ -47,5 +47,4 @@ func (c *Client) BlockTransaction(hash string) {
 			}(rawTx.Hash)
 		}
 	}
-
 }

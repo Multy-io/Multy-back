@@ -3,7 +3,7 @@ Copyright 2017 Idealnaya rabota LLC
 Licensed under Multy.io license.
 See LICENSE for details
 */
-package eth
+package nseth
 
 import (
 	"context"
@@ -11,14 +11,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	pb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
+	pb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/jekabolt/slf"
 	_ "github.com/jekabolt/slflog"
 	"github.com/onrik/ethrpc"
 )
-
-var log = slf.WithContext("eth")
 
 type Client struct {
 	Rpc                 *ethrpc.EthRPC

@@ -3,7 +3,7 @@ Copyright 2018 Idealnaya rabota LLC
 Licensed under Multy.io license.
 See LICENSE for details
 */
-package eth
+package nseth
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
+	pb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/onrik/ethrpc"
 	"gopkg.in/mgo.v2/bson"
@@ -246,7 +246,7 @@ func (client *Client) parseETHMultisig(rawTX ethrpc.Transaction, blockHeight int
 
 	switch input {
 	case submitTransaction: // "c6427474": "submitTransaction(address,uint256,bytes)"
-		// TODO: feth contract owners, send notfy to owners about transation. status: waiting for confirmations
+		// TODO: fetch contract owners, send notfy to owners about transation. status: waiting for confirmations
 		// find in db if one one confirmation needed DONE internal transaction
 		log.Debugf("submitTransaction: %v", rawTX.Input)
 	case confirmTransaction: // "c01a8c84": "confirmTransaction(uint256)"
@@ -256,7 +256,7 @@ func (client *Client) parseETHMultisig(rawTX ethrpc.Transaction, blockHeight int
 		// TODO: send notfy to owners about -1 confirmation. store confirmations in db
 		log.Debugf("revokeConfirmation: %v", rawTX.Input)
 	case executeTransaction: // "ee22610b": "executeTransaction(uint256)"
-		// TODO: feth contract owners, send notfy to owners about transation. status: conformed transatcion
+		// TODO: fetch contract owners, send notfy to owners about transation. status: conformed transatcion
 		log.Debugf("executeTransaction: %v", rawTX.Input)
 	case "0x": // incoming transaction
 		// TODO: notify owners about new transation

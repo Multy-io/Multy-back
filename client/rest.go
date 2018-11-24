@@ -27,8 +27,8 @@ import (
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/jekabolt/slf"
 
-	btcpb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
-	ethpb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
+	btcpb "github.com/Multy-io/Multy-back/ns-btc-protobuf"
+	ethpb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
 	mgo "gopkg.in/mgo.v2"

@@ -1,4 +1,4 @@
-package eth
+package nseth
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"regexp"
 
-	pb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
+	pb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
 	"github.com/Multy-io/Multy-back/store"
 )
 
@@ -119,13 +119,13 @@ func (c *Client) GetInvocationStatus(hash, method string) (bool, string, error) 
 
 	// 	switch rawTx.Input[:10] {
 	// 	case submitTransaction: // "c6427474": "submitTransaction(address,uint256,bytes)"
-	// 		// TODO: feth contract owners, send notfy to owners about transation. status: waiting for confirmations
+	// 		// TODO: fetch contract owners, send notfy to owners about transation. status: waiting for confirmations
 	// 	case confirmTransaction: // "c01a8c84": "confirmTransaction(uint256)"
 	// 		// TODO: send notfy to owners about +1 confirmation. store confiramtions id db
 	// 	case revokeConfirmation: // "20ea8d86": "revokeConfirmation(uint256)"
 	// 		// TODO: send notfy to owners about -1 confirmation. store confirmations in db
 	// 	case executeTransaction: // "ee22610b": "executeTransaction(uint256)"
-	// 		// TODO: feth contract owners, send notfy to owners about transation. status: conformed transatcion
+	// 		// TODO: fetch contract owners, send notfy to owners about transation. status: conformed transatcion
 	// 	case "": // simple transaction
 	// 		// TODO: notify owners about new transation
 	// 	default:

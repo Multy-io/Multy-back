@@ -3,7 +3,7 @@ Copyright 2018 Idealnaya rabota LLC
 Licensed under Multy.io license.
 See LICENSE for details
 */
-package node
+package nsbtc
 
 import (
 	"bytes"
@@ -13,9 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Multy-io/Multy-BTC-node-service/btc"
-	pb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
-	"github.com/Multy-io/Multy-BTC-node-service/streamer"
+	"github.com/Multy-io/Multy-back/btc"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/blockcypher/gobcy"
 	"github.com/jekabolt/slf"
@@ -33,7 +31,7 @@ var (
 type NodeClient struct {
 	Config     *Configuration
 	Instance   *btc.Client
-	GRPCserver *streamer.Server
+	GRPCserver *Server
 	Clients    *sync.Map // address to userid
 	BtcApi     *gobcy.API
 }
@@ -79,7 +77,7 @@ func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
 
 	// Creates a new gRPC server
 	s := grpc.NewServer()
-	srv := streamer.Server{
+	srv := Server{
 		UsersData:  nc.Clients,
 		BtcAPI:     nc.BtcApi,
 		M:          &sync.Mutex{},
@@ -92,7 +90,7 @@ func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
 
 	nc.GRPCserver = &srv
 
-	pb.RegisterNodeCommunicationsServer(s, &srv)
+	RegisterNodeCommunicationsServer(s, &srv)
 
 	go s.Serve(lis)
 

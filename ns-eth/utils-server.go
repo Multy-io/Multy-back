@@ -1,4 +1,4 @@
-package streamer
+package nseth
 
 var (
 	ErrGrpcTransport = "rpc error: code = Unavailable desc = transport is closing"

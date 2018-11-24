@@ -12,7 +12,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
-	"github.com/Multy-io/Multy-ETH-node-service"
+	ns "github.com/Multy-io/Multy-back/ns-eth"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/jekabolt/config"
 	"github.com/jekabolt/slf"
@@ -28,7 +28,7 @@ var (
 	memprofile = flag.String("memprofile", "", "write memory profile to `file`")
 )
 
-var globalOpt = node.Configuration{
+var globalOpt = ns.Configuration{
 	Name: "eth-node-service",
 }
 
@@ -45,7 +45,7 @@ func main() {
 		Buildtime: buildtime,
 	}
 
-	nc := node.NodeClient{}
+	nc := ns.NodeClient{}
 	node, err := nc.Init(&globalOpt)
 	if err != nil {
 		log.Fatalf("Server initialization: %s\n", err.Error())

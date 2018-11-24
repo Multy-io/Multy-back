@@ -3,7 +3,7 @@ Copyright 2018 Idealnaya rabota LLC
 Licensed under Multy.io license.
 See LICENSE for details
 */
-package node
+package nseth
 
 import (
 	"fmt"
@@ -11,9 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Multy-io/Multy-ETH-node-service/eth"
-	pb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
-	"github.com/Multy-io/Multy-ETH-node-service/streamer"
+	pb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/jekabolt/slf"
@@ -26,10 +24,10 @@ var log = slf.WithContext("NodeClient")
 // NodeClient is a main struct of service
 type NodeClient struct {
 	Config      *Configuration
-	Instance    *eth.Client
-	GRPCserver  *streamer.Server
+	Instance    *Client
+	GRPCserver  *Server
 	Clients     *sync.Map // address to userid
-	CliMultisig *eth.Multisig
+	CliMultisig *Multisig
 }
 
 // Init initializes Multy instance
@@ -52,7 +50,7 @@ func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
 	nc.Clients = &usersData
 
 	//TODO: init contract clients
-	multisig := eth.Multisig{
+	multisig := Multisig{
 		FactoryAddress: conf.MultisigFactory,
 		UsersContracts: sync.Map{},
 	}
@@ -71,7 +69,7 @@ func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
 	}
 
 	// Creates a new gRPC server
-	ethCli := eth.NewClient(&conf.EthConf, nc.Clients, nc.CliMultisig)
+	ethCli := NewClient(&conf.EthConf, nc.Clients, nc.CliMultisig)
 	if err != nil {
 		return nil, fmt.Errorf("eth.NewClient initialization: %s", err.Error())
 	}
@@ -86,7 +84,7 @@ func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
 	}
 
 	s := grpc.NewServer()
-	srv := streamer.Server{
+	srv := Server{
 		UsersData:       nc.Clients,
 		EthCli:          nc.Instance,
 		Info:            &conf.ServiceInfo,
@@ -103,7 +101,7 @@ func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
 
 	nc.GRPCserver = &srv
 
-	pb.RegisterNodeCommuunicationsServer(s, &srv)
+	pb.RegisterNodeCommunicationsServer(s, &srv)
 	go s.Serve(lis)
 
 	go WathReload(srv.ReloadChan, nc)

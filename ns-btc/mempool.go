@@ -1,7 +1,7 @@
 package btc
 
 import (
-	pb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
+	pb "github.com/Multy-io/Multy-back/ns-btc-protobuf"
 	"github.com/btcsuite/btcd/btcjson"
 )
 

@@ -1,4 +1,4 @@
-package streamer
+package nsbtc
 
 import "github.com/Multy-io/Multy-back/store"
 

@@ -9,12 +9,11 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
+	pb "github.com/Multy-io/Multy-back/ns-btc-protobuf"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/jekabolt/slf"
 	_ "github.com/jekabolt/slflog"
 )
 
@@ -31,7 +30,7 @@ type Client struct {
 	rpcConf        *rpcclient.ConnConfig
 }
 
-var log = slf.WithContext("btc")
+// var log = slf.WithContext("btc")
 
 func NewClient(certFromConf []byte, btcNodeAddress string, usersData *sync.Map) (*Client, error) {
 
