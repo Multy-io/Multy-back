@@ -13,7 +13,7 @@ TARGETS=cmd/multy-back/multy-back cmd/ns-btc/ns-btc cmd/ns-eth/ns-eth
 TARGET_OS=
 TARGET_ARCH=
 
-all: proto build
+all: proto build test
 
 all-with-deps: setup deps dist
 
@@ -40,6 +40,10 @@ $(TARGETS):
 	cd $(@D) && \
 	GOOS=$(TARGET_OS) GOARCH=$(TARGET_ARCH) go build $(LD_OPTS) -o $(@F) . && \
 	cd -
+
+.PHONY: test
+test:
+	go test ./...
 
 proto-btc-ns:
 	cd ./ns-btc-protobuf && protoc --go_out=plugins=grpc:. *.proto
