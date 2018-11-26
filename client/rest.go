@@ -122,7 +122,6 @@ func SetRestHandlers(
 	r.GET("/server/config", restClient.getServerConfig())
 
 	r.GET("/donations", restClient.donations())
-	// r.GET("/", restClient.resynctxs())
 
 	v1 := r.Group("/api/v1")
 	v1.Use(restClient.middlewareJWT.MiddlewareFunc())
@@ -1348,25 +1347,16 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 				"message": http.StatusText(http.StatusOK),
 			})
 		case currencies.Ether:
-
-			//TODO: make eth feerate
-			//var rate *ethpb.GasPrice
-			var err error
-			// switch networkid {
-			// case currencies.ETHMain:
-			// 	rate, err = restClient.ETH.CliMain.EventGetGasPrice(context.Background(), &ethpb.Empty{})
-			// case currencies.ETHTest:
-			// 	rate, err = restClient.ETH.CliTest.EventGetGasPrice(context.Background(), &ethpb.Empty{})
-			// default:
-			// 	restClient.log.Errorf("getFeeRate:currencies.Ether: no such networkid")
-			// }
-
-			if err != nil {
-				restClient.log.Errorf("getFeeRate:currencies.Ether:restClient.ETH.Cli: %v ", err.Error())
-			}
-			//speed, _ := strconv.Atoi(rate.GetGas())
 			switch networkid {
 			case currencies.ETHMain:
+				var cp int
+				restClient.ETH.MempoolTest.Range(func(k, v interface{}) bool {
+					if cp < v.(int) {
+						cp = v.(int)
+					}
+					return true // if false, Range stops
+				})
+				restClient.log.Errorf("------ %v", cp)
 				if len(address) > 0 {
 					code, err := restClient.ETH.CliMain.EventGetCode(context.Background(), &ethpb.AddressToResync{
 						Address: address,
