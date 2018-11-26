@@ -13,11 +13,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	//
@@ -1349,14 +1351,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 		case currencies.Ether:
 			switch networkid {
 			case currencies.ETHMain:
-				var cp int
-				restClient.ETH.MempoolTest.Range(func(k, v interface{}) bool {
-					if cp < v.(int) {
-						cp = v.(int)
-					}
-					return true // if false, Range stops
-				})
-				restClient.log.Errorf("------ %v", cp)
+				memppolTopFee := fetchMempool(restClient.ETH.Mempool)
 				if len(address) > 0 {
 					code, err := restClient.ETH.CliMain.EventGetCode(context.Background(), &ethpb.AddressToResync{
 						Address: address,
@@ -1367,11 +1362,11 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 					if len(code.GetMessage()) > 10 {
 						c.JSON(http.StatusOK, gin.H{
 							"speeds": EstimationSpeeds{
-								VerySlow: 9 * 1000000000,
-								Slow:     10 * 1000000000,
-								Medium:   14 * 1000000000,
-								Fast:     20 * 1000000000,
-								VeryFast: 25 * 1000000000,
+								VerySlow: int(float64(0.3) * float64(memppolTopFee)),
+								Slow:     int(float64(0.4) * float64(memppolTopFee)),
+								Medium:   int(float64(0.6) * float64(memppolTopFee)),
+								Fast:     int(float64(0.8) * float64(memppolTopFee)),
+								VeryFast: int(memppolTopFee),
 							},
 							"gaslimit": "40000",
 							"code":     http.StatusOK,
@@ -1383,11 +1378,11 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 
 				c.JSON(http.StatusOK, gin.H{
 					"speeds": EstimationSpeeds{
-						VerySlow: 9 * 1000000000,
-						Slow:     10 * 1000000000,
-						Medium:   14 * 1000000000,
-						Fast:     20 * 1000000000,
-						VeryFast: 25 * 1000000000,
+						VerySlow: int(float64(0.3) * float64(memppolTopFee)),
+						Slow:     int(float64(0.4) * float64(memppolTopFee)),
+						Medium:   int(float64(0.6) * float64(memppolTopFee)),
+						Fast:     int(float64(0.8) * float64(memppolTopFee)),
+						VeryFast: int(memppolTopFee),
 					},
 					"code":    http.StatusOK,
 					"message": http.StatusText(http.StatusOK),
@@ -1450,15 +1445,29 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 	}
 }
 
-func avg(arr []store.MempoolRecord) int {
-	total := 0
-	for _, value := range arr {
-		total += value.Category
+func fetchMempool(mempool sync.Map) int64 {
+	var fees []int64
+	var maxFee int64
+	mempool.Range(func(k, v interface{}) bool {
+		fee, ok := v.(int64)
+		if ok {
+			fees = append(fees, int64(fee))
+		}
+		return true
+	})
+	sort.Slice(fees, func(i, j int) bool { return fees[i] > fees[j] })
+	// take the average of n first feerate values to prevent ultra high rates
+	var quantile int64 = 5
+	fmt.Println(fees[:quantile])
+	if int64(len(fees)) > quantile {
+		for _, fee := range fees[:quantile] {
+			maxFee += fee
+		}
+		return maxFee / quantile
 	}
-	if total == 0 {
-		return 0
-	}
-	return total / len(arr)
+
+	// standard very fast fee value if mempool is small
+	return int64(5 * 1000000000)
 }
 
 func (restClient *RestClient) getSpendableOutputs() gin.HandlerFunc {

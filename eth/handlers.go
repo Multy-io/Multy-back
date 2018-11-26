@@ -58,10 +58,10 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 				log.Errorf("setGRPCHandlers: client.EventGetAllMempool: %s", err.Error())
 			}
 			mempoolCh <- store.MempoolRecord{
-				Category: int(mpRec.Category),
+				Category: mpRec.Category,
 				HashTX:   mpRec.HashTX,
 			}
-			mempool.Store(mpRec.HashTX, int(mpRec.Category))
+
 		}
 	}()
 
@@ -82,10 +82,9 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 				log.Errorf("setGRPCHandlers: client.EventAddMempoolRecord:stream.Recv: %s", err.Error())
 			}
 			mempoolCh <- store.MempoolRecord{
-				Category: int(mpRec.Category),
+				Category: mpRec.Category,
 				HashTX:   mpRec.HashTX,
 			}
-			mempool.Store(mpRec.HashTX, int(mpRec.Category))
 		}
 	}()
 
@@ -108,7 +107,6 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 			}
 
 			mempoolCh <- mpRec.Hash
-			mempool.Delete(mpRec.Hash)
 
 			if err != nil {
 				log.Errorf("setGRPCHandlers:mpRates.Remove: %s", err.Error())
@@ -210,7 +208,7 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 	go func() {
 		stream, err := client.NewTx(context.Background(), &pb.Empty{})
 		if err != nil {
-			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())
+			log.Errorf("setGRPCHandlers: cli.NewTx: %s", err.Error())
 		}
 
 		for {

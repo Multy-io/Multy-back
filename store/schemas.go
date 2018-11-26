@@ -410,7 +410,7 @@ type CoinType struct {
 }
 
 type MempoolRecord struct {
-	Category int    `json:"category"`
+	Category int64  `json:"category"`
 	HashTX   string `json:"hashTX"`
 }
 

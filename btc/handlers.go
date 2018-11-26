@@ -57,7 +57,7 @@ func (btcCli *BTCConn) setGRPCHandlers(networtkID, accuracyRange int) {
 			}
 
 			mempoolCh <- store.MempoolRecord{
-				Category: int(mpRec.GetCategory()),
+				Category: int64(mpRec.GetCategory()),
 				HashTX:   mpRec.GetHashTX(),
 			}
 
@@ -82,7 +82,7 @@ func (btcCli *BTCConn) setGRPCHandlers(networtkID, accuracyRange int) {
 			}
 
 			mempoolCh <- store.MempoolRecord{
-				Category: int(mpRec.GetCategory()),
+				Category: int64(mpRec.GetCategory()),
 				HashTX:   mpRec.GetHashTX(),
 			}
 
