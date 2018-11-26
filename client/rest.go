@@ -7,13 +7,10 @@ package client
 
 import (
 	"context"
-	"crypto/hmac"
 	"crypto/sha512"
-	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"github.com/Multy-io/Multy-back/exchanger"
 	"net/http"
 	"sort"
 	"strconv"
@@ -82,11 +79,12 @@ type RestClient struct {
 	mobileVersions    store.MobileVersions
 	ERC20TokenList    store.VerifiedTokenList
 
-	BTC            *btc.BTCConn
-	ETH            *eth.ETHConn
-	MultyVersion   store.ServerConfig
-	BrowserDefault store.BrowserDefault
-	Secretkey      string
+	BTC              *btc.BTCConn
+	ETH              *eth.ETHConn
+	MultyVersion     store.ServerConfig
+	BrowserDefault   store.BrowserDefault
+	Secretkey        string
+	ExchangerFactory *exchanger.FactoryExchanger
 }
 
 type BTCApiConf struct {
@@ -94,6 +92,7 @@ type BTCApiConf struct {
 }
 
 func SetRestHandlers(
+	// TODO: reduce properties amount and get desired services directly from multy container
 	userDB store.UserStore,
 	r *gin.Engine,
 	donationAddresses []store.DonationInfo,
@@ -104,6 +103,7 @@ func SetRestHandlers(
 	mobileVer store.MobileVersions,
 	tl store.VerifiedTokenList,
 	bd store.BrowserDefault,
+	exchangerFactory *exchanger.FactoryExchanger,
 ) (*RestClient, error) {
 	restClient := &RestClient{
 		userStore:         userDB,
@@ -116,6 +116,7 @@ func SetRestHandlers(
 		mobileVersions:    mobileVer,
 		ERC20TokenList:    tl,
 		BrowserDefault:    bd,
+		ExchangerFactory:  exchangerFactory,
 	}
 	initMiddlewareJWT(restClient)
 
@@ -143,9 +144,12 @@ func SetRestHandlers(
 		v1.GET("/wallets/transactions/:currencyid/:networkid/:walletindex", restClient.getWalletTransactionsHistory())
 		v1.POST("/wallet/name", restClient.changeWalletName())
 		v1.POST("/resync/wallet/:currencyid/:networkid/:walletindex/*type", restClient.resyncWallet())
-		v1.GET("/exchange/changelly/list", restClient.changellyListCurrencies())
 		v1.GET("/multisig/estimate/:contractaddress", restClient.estimateMultisig())
 		v1.POST("/wallet/convert/broken", restClient.convertToBroken())
+
+		v1.GET("/exchanger/supported_currencies", restClient.GetExchangerSupportedCurrencies())
+		v1.POST("/exchanger/exchange_amount", restClient.GetExchangerAmountExchange())
+		v1.POST("/exchanger/transaction", restClient.CreateExchangerTransaction())
 	}
 	return restClient, nil
 }
@@ -2267,27 +2271,37 @@ func fetchUndeletedWallets(walletsBTC []store.Wallet) []store.Wallet {
 	return okWalletsBTC
 }
 
+func (restClient *RestClient) GetUserByContext(c *gin.Context) (store.User, error) {
+	var user store.User
+
+	token, err := getToken(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": msgErrHeaderError,
+		})
+		return user, err
+	}
+
+	query := bson.M{"devices.JWT": token}
+	if err := restClient.userStore.FindUser(query, &user); err != nil {
+		restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": msgErrUserNotFound,
+			"wallets": []interface{}{},
+		})
+	}
+
+	return user, err
+}
+
 func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var wv []interface{}
-		//var wv []WalletVerbose
-		token, err := getToken(c)
+		user, err := restClient.GetUserByContext(c)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrHeaderError,
-			})
-			return
-		}
-		user := store.User{}
-		query := bson.M{"devices.JWT": token}
-		if err := restClient.userStore.FindUser(query, &user); err != nil {
-			restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code":    http.StatusUnauthorized,
-				"message": msgErrUserNotFound,
-				"wallets": wv,
-			})
+			restClient.log.Errorf("Failed to get user from context creds, [%s]", err.Error())
 			return
 		}
 
@@ -3098,63 +3112,4 @@ func (restClient *RestClient) convertToBroken() gin.HandlerFunc {
 
 type brokenWallets struct {
 	Addresses []string `json:"addresses"`
-}
-
-func (restClient *RestClient) changellyListCurrencies() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		apiUrl := "https://api.changelly.com"
-		apiKey := "8015e09ba78243ad889db470ec48fed4"
-		apiSecret := "712bfcf899dd235b0af1d66922d5962e8c85a909635f838688a38b5f12c4d03a"
-		cr := ChangellyReqest{
-			JsonRpc: "2.0",
-			ID:      1,
-			Method:  "getCurrencies",
-			Params:  []string{},
-		}
-		bs, err := json.Marshal(cr)
-		if err != nil {
-			restClient.log.Errorf("changellyListCurrencies: json.Marshal: %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			//
-			return
-		}
-
-		sign := ComputeHmac512(bs, apiSecret)
-		req, err := http.NewRequest("GET", apiUrl, nil)
-		if err != nil {
-			restClient.log.Errorf("changellyListCurrencies: http.NewRequest: %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			//
-			return
-		}
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("api-key", apiKey)
-		req.Header.Set("sign", sign)
-
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			restClient.log.Errorf("changellyListCurrencies: http.Client.Do: %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			//
-			return
-		}
-		defer resp.Body.Close()
-		body, _ := ioutil.ReadAll(resp.Body)
-		c.JSON(http.StatusOK, gin.H{
-			"code":    resp.StatusCode,
-			"message": string(body),
-		})
-	}
-}
-
-func ComputeHmac512(message []byte, secret string) string {
-	key := []byte(secret)
-	h := hmac.New(sha512.New, key)
-	h.Write(message)
-	return base64.StdEncoding.EncodeToString(h.Sum(nil))
-}
-
-type ChangellyReqest struct {
-	JsonRpc string   `json:"jsonrpc"`
-	ID      int      `json:"id"`
-	Method  string   `json:"method"`
-	Params  []string `json:"params"`
 }
