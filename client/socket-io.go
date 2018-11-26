@@ -168,7 +168,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 	})
 
 	//feature logic
-	server.On(StartupReceiverOn, func(c *gosocketio.Channel, data store.Receiver) string {
+	server.On(StartupReceiverOn, func(c *gosocketio.Channel, data store.StartupReceiver) string {
 		pool.log.Infof("Got message Startup Receiver On:", data)
 		c.Join(WirelessRoom)
 
