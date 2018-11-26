@@ -481,6 +481,20 @@ type Receiver struct {
 	Socket     *gosocketio.Channel
 }
 
+type StartupReceiver struct {
+	ID             		string `json:"userid"`
+	UserCode       		string `json:"usercode"`
+	SupportedAddresses 	[]SupportedAddress `json:"supportedAddresses,omitempty"`
+	Socket     *gosocketio.Channel
+}
+
+type SupportedAddress struct {
+	CurrencyID int    `json:"currencyid"`
+	NetworkID  int    `json:"networkid"`
+	Address    string `json:"address"`
+}
+
+
 type Sender struct {
 	ID       string `json:"userid"`
 	UserCode string `json:"usercode"`

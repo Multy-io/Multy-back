@@ -2459,7 +2459,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 						AddressIndex:   address.AddressIndex,
 						Amount:         totalBalance,
 						Nonce:          walletNonce,
-						ERC20Balances:  erc20Info.Balances,
+						ERC20Balances:  erc20Info.GetBalances(),
 					})
 
 				}
