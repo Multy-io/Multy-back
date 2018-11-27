@@ -24,7 +24,7 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 
 	var client pb.NodeCommunicationsClient
 	var wa chan pb.WatchAddress
-	var mempool sync.Map
+	var mempool *sync.Map
 
 	nsqProducer := ethcli.NsqProducer
 
@@ -32,11 +32,11 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 	case currencies.ETHMain:
 		client = ethcli.CliMain
 		wa = ethcli.WatchAddressMain
-		mempool = ethcli.Mempool
+		mempool = &ethcli.Mempool
 	case currencies.ETHTest:
 		client = ethcli.CliTest
 		wa = ethcli.WatchAddressTest
-		mempool = ethcli.MempoolTest
+		mempool = &ethcli.MempoolTest
 
 	}
 
@@ -57,14 +57,11 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 			if err != nil {
 				log.Errorf("setGRPCHandlers: client.EventGetAllMempool: %s", err.Error())
 			}
-
 			mempoolCh <- store.MempoolRecord{
-				Category: int(mpRec.Category),
+				Category: mpRec.Category,
 				HashTX:   mpRec.HashTX,
 			}
-			if err != nil {
-				log.Errorf("initGrpcClient: mpRates.Insert: %s", err.Error())
-			}
+
 		}
 	}()
 
@@ -85,7 +82,7 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 				log.Errorf("setGRPCHandlers: client.EventAddMempoolRecord:stream.Recv: %s", err.Error())
 			}
 			mempoolCh <- store.MempoolRecord{
-				Category: int(mpRec.Category),
+				Category: mpRec.Category,
 				HashTX:   mpRec.HashTX,
 			}
 		}
@@ -211,7 +208,7 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 	go func() {
 		stream, err := client.NewTx(context.Background(), &pb.Empty{})
 		if err != nil {
-			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())
+			log.Errorf("setGRPCHandlers: cli.NewTx: %s", err.Error())
 		}
 
 		for {

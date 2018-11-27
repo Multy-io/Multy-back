@@ -75,6 +75,8 @@ const (
 	ExecuteTransaction = "0xee22610b"
 
 	MaximumAvalibeEmptyWallets = 20
+
+	ETHStandardVeryFastFeeRate = 5000000000
 )
 
 // User represents a single app user
@@ -410,7 +412,7 @@ type CoinType struct {
 }
 
 type MempoolRecord struct {
-	Category int    `json:"category"`
+	Category int64  `json:"category"`
 	HashTX   string `json:"hashTX"`
 }
 

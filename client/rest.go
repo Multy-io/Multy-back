@@ -18,6 +18,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	//
@@ -122,7 +123,6 @@ func SetRestHandlers(
 	r.GET("/server/config", restClient.getServerConfig())
 
 	r.GET("/donations", restClient.donations())
-	// r.GET("/", restClient.resynctxs())
 
 	v1 := r.Group("/api/v1")
 	v1.Use(restClient.middlewareJWT.MiddlewareFunc())
@@ -1348,25 +1348,11 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 				"message": http.StatusText(http.StatusOK),
 			})
 		case currencies.Ether:
-
-			//TODO: make eth feerate
-			//var rate *ethpb.GasPrice
-			var err error
-			// switch networkid {
-			// case currencies.ETHMain:
-			// 	rate, err = restClient.ETH.CliMain.EventGetGasPrice(context.Background(), &ethpb.Empty{})
-			// case currencies.ETHTest:
-			// 	rate, err = restClient.ETH.CliTest.EventGetGasPrice(context.Background(), &ethpb.Empty{})
-			// default:
-			// 	restClient.log.Errorf("getFeeRate:currencies.Ether: no such networkid")
-			// }
-
-			if err != nil {
-				restClient.log.Errorf("getFeeRate:currencies.Ether:restClient.ETH.Cli: %v ", err.Error())
-			}
-			//speed, _ := strconv.Atoi(rate.GetGas())
+			// first "quantile" sorted in descending order of mempool for definition of highest rate
+			quantile := 5
 			switch networkid {
 			case currencies.ETHMain:
+				mempoolTopFee := fetchMempool(restClient.ETH.Mempool, quantile)
 				if len(address) > 0 {
 					code, err := restClient.ETH.CliMain.EventGetCode(context.Background(), &ethpb.AddressToResync{
 						Address: address,
@@ -1377,11 +1363,11 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 					if len(code.GetMessage()) > 10 {
 						c.JSON(http.StatusOK, gin.H{
 							"speeds": EstimationSpeeds{
-								VerySlow: 9 * 1000000000,
-								Slow:     10 * 1000000000,
-								Medium:   14 * 1000000000,
-								Fast:     20 * 1000000000,
-								VeryFast: 25 * 1000000000,
+								VerySlow: int(float64(0.3) * float64(mempoolTopFee)),
+								Slow:     int(float64(0.4) * float64(mempoolTopFee)),
+								Medium:   int(float64(0.6) * float64(mempoolTopFee)),
+								Fast:     int(float64(0.8) * float64(mempoolTopFee)),
+								VeryFast: int(mempoolTopFee),
 							},
 							"gaslimit": "40000",
 							"code":     http.StatusOK,
@@ -1390,32 +1376,18 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 						return
 					}
 				}
-
 				c.JSON(http.StatusOK, gin.H{
 					"speeds": EstimationSpeeds{
-						VerySlow: 9 * 1000000000,
-						Slow:     10 * 1000000000,
-						Medium:   14 * 1000000000,
-						Fast:     20 * 1000000000,
-						VeryFast: 25 * 1000000000,
+						VerySlow: int(float64(0.3) * float64(mempoolTopFee)),
+						Slow:     int(float64(0.4) * float64(mempoolTopFee)),
+						Medium:   int(float64(0.6) * float64(mempoolTopFee)),
+						Fast:     int(float64(0.8) * float64(mempoolTopFee)),
+						VeryFast: int(mempoolTopFee),
 					},
 					"code":    http.StatusOK,
 					"message": http.StatusText(http.StatusOK),
 				})
-			case 3:
-				c.JSON(http.StatusOK, gin.H{
-					"speeds": EstimationSpeeds{
-						VerySlow: 1000000000,
-						Slow:     2000000000,
-						Medium:   3000000000,
-						Fast:     4000000000,
-						VeryFast: 5000000000,
-					},
-					"code":    http.StatusOK,
-					"message": http.StatusText(http.StatusOK),
-				})
-
-			case 4:
+			case currencies.ETHTest:
 				if len(address) > 0 {
 					code, err := restClient.ETH.CliTest.EventGetCode(context.Background(), &ethpb.AddressToResync{
 						Address: address,
@@ -1460,15 +1432,27 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 	}
 }
 
-func avg(arr []store.MempoolRecord) int {
-	total := 0
-	for _, value := range arr {
-		total += value.Category
+func fetchMempool(mempool sync.Map, quantile int) int64 {
+	var fees []int64
+	var maxFee int64
+	mempool.Range(func(k, v interface{}) bool {
+		fee, ok := v.(int64)
+		if ok {
+			fees = append(fees, int64(fee))
+		}
+		return true
+	})
+	sort.Slice(fees, func(i, j int) bool { return fees[i] > fees[j] })
+	// take the average of first n feerate values to prevent ultra high rates
+	if len(fees) > quantile {
+		for _, fee := range fees[:quantile] {
+			maxFee += fee
+		}
+		return maxFee / int64(quantile)
 	}
-	if total == 0 {
-		return 0
-	}
-	return total / len(arr)
+
+	// if mempool capacity is less than quantile (a.k.a case of syncing mempool data) set gas price to empirical evidence number
+	return int64(store.ETHStandardVeryFastFeeRate)
 }
 
 func (restClient *RestClient) getSpendableOutputs() gin.HandlerFunc {
