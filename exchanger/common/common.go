@@ -6,9 +6,9 @@ type Exchanger struct {
 }
 
 type CurrencyExchanger struct {
-	name string
+	Name string
 }
 
 type ExchangeTransaction struct {
-	id string
+	Id string
 }

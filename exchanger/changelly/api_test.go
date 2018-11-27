@@ -1,9 +1,22 @@
 package changelly
 
 import (
-	"fmt"
+	"math/rand"
 	"testing"
+	"time"
 )
+
+func TestExchangerChangelly_GetName(t *testing.T) {
+	testName := "testName"
+
+	api := ExchangerChangelly{
+		name: testName,
+	}
+
+	if api.GetName() != testName {
+		t.Errorf("Invalid exchanger api name, expected [%s], got [%s] ", testName, api.GetName())
+	}
+}
 
 func TestExchangerChangelly_GetRequestHash(t *testing.T) {
 	testName := "testName"
@@ -13,7 +26,7 @@ func TestExchangerChangelly_GetRequestHash(t *testing.T) {
 		"fc8add9f837f7341ecb11c41a369c4ab3d55685a201d59111e"
 
 	requestPacket := rpcPacket{
-		Id: 1,
+		Id: "1",
 		Jsonrpc: "2.0",
 		Method: "testMethod",
 		Params: map[string]string{},
@@ -39,15 +52,58 @@ func TestExchangerChangelly_GetRequestHash(t *testing.T) {
 }
 
 func TestExchangerChangelly_GetSupportedCurrencies(t *testing.T) {
+	t.Skip("skipping testing in DEV")
+
 	api := ExchangerChangelly{
 		name: "testName",
 		config: InitConfig{
-			apiUrl: "http://api.changelly.com",
-			apiKey: "e277668dacd24629836b4c5f289aa52d",
-			apiSecret: "57ef86f42d6790fc9b02f281a43e500a5639f067e4b25dc043240d891fc4e400",
+			apiUrl: "https://api.changelly.com",
+			apiKey: "testKey",
+			apiSecret: "testSecret",
 		},
 	}
 
-	response, _ := api.GetSupportedCurrencies()
-	fmt.Println(response)
+	supportedCurrencies, err := api.GetSupportedCurrencies()
+	if err != nil {
+		t.Errorf("Got error in api response, [%s]", err.Error())
+	}
+
+	if len(supportedCurrencies) < 1 {
+		t.Errorf("At least one  currency should be returned from api")
+	}
+}
+
+func TestExchangerChangelly_GetExchangeAmount(t *testing.T) {
+	t.Skip("skipping testing in DEV")
+
+	api := ExchangerChangelly{
+		name: "testName",
+		config: InitConfig{
+			apiUrl: "https://api.changelly.com",
+			apiKey: "testKey",
+			apiSecret: "testSecret",
+		},
+	}
+
+	supportedCurrencies, err := api.GetSupportedCurrencies()
+	if err != nil {
+		t.Errorf("Got error in api response, [%s]", err.Error())
+	}
+
+	rand.Seed(time.Now().Unix())
+	indexCurrencyFrom := rand.Intn(len(supportedCurrencies))
+	currencyFrom := supportedCurrencies[indexCurrencyFrom]
+	supportedCurrencies = append(supportedCurrencies[:indexCurrencyFrom], supportedCurrencies[indexCurrencyFrom+1:]...)
+	indexCurrencyTo := rand.Intn(len(supportedCurrencies))
+	currencyTo := supportedCurrencies[indexCurrencyTo]
+
+	exchangeAmountOrigin := 100.0
+	exchangeAmountConverted, err := api.GetExchangeAmount(currencyFrom, currencyTo, exchangeAmountOrigin)
+	if err != nil {
+		t.Errorf("Got error in api response, [%s]", err.Error())
+	}
+
+	if exchangeAmountConverted < 0 {
+		t.Errorf("Converted amount could not be less than 0, got [%v]", exchangeAmountConverted)
+	}
 }
