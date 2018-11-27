@@ -183,7 +183,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 		return "ok"
 	})
 
-	server.On(StartupReceiversAvailable, func(c *gosocketio.Channel, nearIDs store.NearVisible) string {
+	server.On(StartupReceiversAvailable, func(c *gosocketio.Channel, nearIDs store.NearVisible) []store.StartupReceiver {
 		pool.log.Debug("GetReceiversAvailableWallets event requested")
 
 		nearReceivers := []store.StartupReceiver{}
@@ -204,7 +204,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 
 		c.Emit(StartupReceiversAvailable, nearReceivers)
 
-		return "ok"
+		return nearReceivers
 	})
 
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
