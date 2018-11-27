@@ -75,6 +75,8 @@ const (
 	ExecuteTransaction = "0xee22610b"
 
 	MaximumAvalibeEmptyWallets = 20
+
+	ETHStandardVeryFastFeeRate = 5000000000
 )
 
 // User represents a single app user

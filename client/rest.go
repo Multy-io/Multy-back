@@ -13,7 +13,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -1349,9 +1348,11 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 				"message": http.StatusText(http.StatusOK),
 			})
 		case currencies.Ether:
+			// first "quantile" sotrted in descending order of mempool for definition of highest rate
+			var quantile int = 5
 			switch networkid {
 			case currencies.ETHMain:
-				memppolTopFee := fetchMempool(restClient.ETH.Mempool)
+				mempolTopFee := fetchMempool(restClient.ETH.Mempool, quantile)
 				if len(address) > 0 {
 					code, err := restClient.ETH.CliMain.EventGetCode(context.Background(), &ethpb.AddressToResync{
 						Address: address,
@@ -1362,11 +1363,11 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 					if len(code.GetMessage()) > 10 {
 						c.JSON(http.StatusOK, gin.H{
 							"speeds": EstimationSpeeds{
-								VerySlow: int(float64(0.3) * float64(memppolTopFee)),
-								Slow:     int(float64(0.4) * float64(memppolTopFee)),
-								Medium:   int(float64(0.6) * float64(memppolTopFee)),
-								Fast:     int(float64(0.8) * float64(memppolTopFee)),
-								VeryFast: int(memppolTopFee),
+								VerySlow: int(float64(0.3) * float64(mempolTopFee)),
+								Slow:     int(float64(0.4) * float64(mempolTopFee)),
+								Medium:   int(float64(0.6) * float64(mempolTopFee)),
+								Fast:     int(float64(0.8) * float64(mempolTopFee)),
+								VeryFast: int(mempolTopFee),
 							},
 							"gaslimit": "40000",
 							"code":     http.StatusOK,
@@ -1375,32 +1376,18 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 						return
 					}
 				}
-
 				c.JSON(http.StatusOK, gin.H{
 					"speeds": EstimationSpeeds{
-						VerySlow: int(float64(0.3) * float64(memppolTopFee)),
-						Slow:     int(float64(0.4) * float64(memppolTopFee)),
-						Medium:   int(float64(0.6) * float64(memppolTopFee)),
-						Fast:     int(float64(0.8) * float64(memppolTopFee)),
-						VeryFast: int(memppolTopFee),
+						VerySlow: int(float64(0.3) * float64(mempolTopFee)),
+						Slow:     int(float64(0.4) * float64(mempolTopFee)),
+						Medium:   int(float64(0.6) * float64(mempolTopFee)),
+						Fast:     int(float64(0.8) * float64(mempolTopFee)),
+						VeryFast: int(mempolTopFee),
 					},
 					"code":    http.StatusOK,
 					"message": http.StatusText(http.StatusOK),
 				})
-			case 3:
-				c.JSON(http.StatusOK, gin.H{
-					"speeds": EstimationSpeeds{
-						VerySlow: 1000000000,
-						Slow:     2000000000,
-						Medium:   3000000000,
-						Fast:     4000000000,
-						VeryFast: 5000000000,
-					},
-					"code":    http.StatusOK,
-					"message": http.StatusText(http.StatusOK),
-				})
-
-			case 4:
+			case currencies.ETHTest:
 				if len(address) > 0 {
 					code, err := restClient.ETH.CliTest.EventGetCode(context.Background(), &ethpb.AddressToResync{
 						Address: address,
@@ -1445,7 +1432,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 	}
 }
 
-func fetchMempool(mempool sync.Map) int64 {
+func fetchMempool(mempool sync.Map, quantile int) int64 {
 	var fees []int64
 	var maxFee int64
 	mempool.Range(func(k, v interface{}) bool {
@@ -1456,18 +1443,16 @@ func fetchMempool(mempool sync.Map) int64 {
 		return true
 	})
 	sort.Slice(fees, func(i, j int) bool { return fees[i] > fees[j] })
-	// take the average of n first feerate values to prevent ultra high rates
-	var quantile int64 = 5
-	fmt.Println(fees[:quantile])
-	if int64(len(fees)) > quantile {
+	// take the average of first n feerate values to prevent ultra high rates
+	if len(fees) > quantile {
 		for _, fee := range fees[:quantile] {
 			maxFee += fee
 		}
-		return maxFee / quantile
+		return maxFee / int64(quantile)
 	}
 
-	// standard very fast fee value if mempool is small
-	return int64(5 * 1000000000)
+	// if mempool capasity is less than quantile (a.k.a case of syncing mempool data) set gas price to empirical evidence number
+	return int64(store.ETHStandardVeryFastFeeRate)
 }
 
 func (restClient *RestClient) getSpendableOutputs() gin.HandlerFunc {
