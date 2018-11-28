@@ -5,9 +5,9 @@ import (
 	"crypto/hmac"
 	"crypto/sha512"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"github.com/Multy-io/Multy-back/exchanger/common"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -18,6 +18,7 @@ const (
 	RpcGetCurrencies = "getCurrencies"
 	RpcGetTransactionMinimumAmount = "getMinAmount"
 	RpcGetExchangeAmount = "getExchangeAmount"
+	RpcCreateTransaction = "createTransaction"
 )
 
 type InitConfig struct {
@@ -37,6 +38,10 @@ type rpcPacketResponse struct {
 	Id string					`json:"id"`
 	Jsonrpc string				`json:"jsonrpc"`
 	Result interface{}			`json:"result"`
+	Error struct{
+		Code int32 		`json:"code"`
+		Message string	`json:"message"`
+	}							`json:"error,omitempty"`
 }
 
 type ExchangerChangelly struct {
@@ -111,7 +116,33 @@ func (ec *ExchangerChangelly) GetExchangeAmount(from common.CurrencyExchanger,
 
 func (ec *ExchangerChangelly) CreateTransaction(from common.CurrencyExchanger, to common.CurrencyExchanger,
 	amount float64, address string) (common.ExchangeTransaction, error) {
-		return common.ExchangeTransaction{}, nil
+		var transaction common.ExchangeTransaction
+
+		responseData, err := ec.sendRequest(RpcCreateTransaction, map[string]string{
+			"from": from.Name,
+			"to": to.Name,
+			"amount": fmt.Sprintf("%f", amount),
+			"address": address,
+		})
+
+		if err == nil {
+			var responsePacket rpcPacketResponse
+			err = json.Unmarshal(responseData, &responsePacket)
+			if err != nil {
+				return transaction, err
+			}
+
+			if responsePacket.Error.Code != 0 {
+				transaction.Error = responsePacket.Error
+			} else {
+				responsePacketDict := responsePacket.Result.(map[string]interface{})
+				transaction.Id = responsePacketDict["id"].(string)
+				transaction.PayInAddress = responsePacketDict["payinAddress"].(string)
+				transaction.PayOutAddress = responsePacketDict["payoutAddress"].(string)
+			}
+		}
+
+		return transaction, nil
 }
 
 func (ec *ExchangerChangelly) sendRequest(methodName string, params map[string]string) ([]byte, error) {

@@ -10,5 +10,8 @@ type CurrencyExchanger struct {
 }
 
 type ExchangeTransaction struct {
-	Id string
+	Id string				`json:"id"`
+	PayInAddress string		`json:"payinAddress"`
+	PayOutAddress string	`json:"payoutAddress"`
+	Error interface{}		`json:"error"`
 }

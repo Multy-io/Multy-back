@@ -1,6 +1,7 @@
 package changelly
 
 import (
+	"github.com/Multy-io/Multy-back/exchanger/common"
 	"math/rand"
 	"testing"
 	"time"
@@ -52,16 +53,8 @@ func TestExchangerChangelly_GetRequestHash(t *testing.T) {
 }
 
 func TestExchangerChangelly_GetSupportedCurrencies(t *testing.T) {
-	t.Skip("skipping testing in DEV")
-
-	api := ExchangerChangelly{
-		name: "testName",
-		config: InitConfig{
-			apiUrl: "https://api.changelly.com",
-			apiKey: "testKey",
-			apiSecret: "testSecret",
-		},
-	}
+	t.Skip("integration test, SKIP")
+	api := getSemiConfiguredApi()
 
 	supportedCurrencies, err := api.GetSupportedCurrencies()
 	if err != nil {
@@ -74,28 +67,15 @@ func TestExchangerChangelly_GetSupportedCurrencies(t *testing.T) {
 }
 
 func TestExchangerChangelly_GetExchangeAmount(t *testing.T) {
-	t.Skip("skipping testing in DEV")
-
-	api := ExchangerChangelly{
-		name: "testName",
-		config: InitConfig{
-			apiUrl: "https://api.changelly.com",
-			apiKey: "testKey",
-			apiSecret: "testSecret",
-		},
-	}
+	t.Skip("integration test, SKIP")
+	api := getSemiConfiguredApi()
 
 	supportedCurrencies, err := api.GetSupportedCurrencies()
 	if err != nil {
 		t.Errorf("Got error in api response, [%s]", err.Error())
 	}
 
-	rand.Seed(time.Now().Unix())
-	indexCurrencyFrom := rand.Intn(len(supportedCurrencies))
-	currencyFrom := supportedCurrencies[indexCurrencyFrom]
-	supportedCurrencies = append(supportedCurrencies[:indexCurrencyFrom], supportedCurrencies[indexCurrencyFrom+1:]...)
-	indexCurrencyTo := rand.Intn(len(supportedCurrencies))
-	currencyTo := supportedCurrencies[indexCurrencyTo]
+	currencyFrom, currencyTo := getRandomCurrencyPairFromSlice(supportedCurrencies)
 
 	exchangeAmountOrigin := 100.0
 	exchangeAmountConverted, err := api.GetExchangeAmount(currencyFrom, currencyTo, exchangeAmountOrigin)
@@ -105,5 +85,52 @@ func TestExchangerChangelly_GetExchangeAmount(t *testing.T) {
 
 	if exchangeAmountConverted < 0 {
 		t.Errorf("Converted amount could not be less than 0, got [%v]", exchangeAmountConverted)
+	}
+}
+
+func TestExchangerChangelly_CreateTransaction(t *testing.T) {
+	t.Skip("integration test, SKIP")
+	api := getSemiConfiguredApi()
+
+	currencyFrom := common.CurrencyExchanger{ Name: "btc" }
+	currencyTo := common.CurrencyExchanger{ Name: "eth"}
+	exchangeAmount := 1000.0
+	dummyAddress := "0xe6001AEb462B880A202597CAA3ad064093dD4880"
+
+	transaction, err := api.CreateTransaction(currencyFrom, currencyTo, exchangeAmount, dummyAddress)
+	if err != nil {
+		t.Errorf("Got error on transaction creation, [%s]", err.Error())
+	}
+
+	if len(transaction.PayInAddress) < 10 {
+		t.Errorf("PayIn Address is too short and pretty strange, [%s]", transaction.PayInAddress)
+	}
+
+	if transaction.PayOutAddress != dummyAddress {
+		t.Errorf("PayOut Address miss match, expected [%s], got [%s]", dummyAddress, transaction.PayOutAddress)
+	}
+}
+
+
+func getRandomCurrencyPairFromSlice(supportedCurrencies []common.CurrencyExchanger) (common.CurrencyExchanger,
+	common.CurrencyExchanger) {
+	rand.Seed(time.Now().Unix())
+	indexCurrencyFrom := rand.Intn(len(supportedCurrencies))
+	currencyFrom := supportedCurrencies[indexCurrencyFrom]
+	supportedCurrencies = append(supportedCurrencies[:indexCurrencyFrom], supportedCurrencies[indexCurrencyFrom+1:]...)
+	indexCurrencyTo := rand.Intn(len(supportedCurrencies))
+	currencyTo := supportedCurrencies[indexCurrencyTo]
+
+	return currencyFrom, currencyTo
+}
+
+func getSemiConfiguredApi() ExchangerChangelly {
+	return ExchangerChangelly{
+		name: "testName",
+		config: InitConfig{
+			apiUrl: "https://api.changelly.com",
+			apiKey: "testKey",
+			apiSecret: "testSecret",
+		},
 	}
 }
