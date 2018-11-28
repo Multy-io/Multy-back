@@ -18,9 +18,9 @@ script:
 deploy:
   - provider: script
     script: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
-            docker push "$IMAGE"
+            docker push "$IMAGE:$TRAVIS_BRANCH"
     on:
-      branch: master
+       all_branches: true
 
   - provider: script
     script: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
