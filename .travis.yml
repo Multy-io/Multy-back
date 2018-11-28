@@ -18,6 +18,7 @@ script:
 deploy:
   - provider: script
     script: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
+            docker tag "$IMAGE" "$IMAGE:$TRAVIS_BRANCH" &&
             docker push "$IMAGE:$TRAVIS_BRANCH"
     on:
        all_branches: true
@@ -27,4 +28,4 @@ deploy:
             docker tag "$IMAGE" "$IMAGE:$TRAVIS_TAG" &&
             docker push "$IMAGE:$TRAVIS_TAG" 
     on:
-       all_branches: true
+       tags: true
