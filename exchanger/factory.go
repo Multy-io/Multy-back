@@ -37,7 +37,7 @@ func (fe *FactoryExchanger) GetExchanger(exchangerName string) (CommonExchangerI
 type CommonExchangerInterface interface {
 	Init(config interface{}) error
 	GetName() string
-	GetSupportedCurrencies() []common.CurrencyExchanger
+	GetSupportedCurrencies() ([]common.CurrencyExchanger, error)
 	GetTransactionMinimumAmount(from common.CurrencyExchanger, to common.CurrencyExchanger) (float64, error)
 	GetExchangeAmount(from common.CurrencyExchanger, to common.CurrencyExchanger, amount float64) (float64, error)
 	CreateTransaction(from common.CurrencyExchanger, to common.CurrencyExchanger, amount float64, address string) (
