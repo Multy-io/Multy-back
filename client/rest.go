@@ -37,7 +37,7 @@ import (
 )
 
 const (
-	msgErrMissingRequestParams  = "missing request parametrs"
+	msgErrMissingRequestParams  = "missing request parameters"
 	msgErrServerError           = "internal server error"
 	msgErrNoWallet              = "no such wallet"
 	msgErrWalletNonZeroBalance  = "can't delete non zero balance wallet"
@@ -84,7 +84,7 @@ type RestClient struct {
 
 	BTC            *btc.BTCConn
 	ETH            *eth.ETHConn
-	MultyVerison   store.ServerConfig
+	MultyVersion   store.ServerConfig
 	BrowserDefault store.BrowserDefault
 	Secretkey      string
 }
@@ -111,7 +111,7 @@ func SetRestHandlers(
 		donationAddresses: donationAddresses,
 		BTC:               btc,
 		ETH:               eth,
-		MultyVerison:      mv,
+		MultyVersion:      mv,
 		Secretkey:         secretkey,
 		mobileVersions:    mobileVer,
 		ERC20TokenList:    tl,
@@ -923,16 +923,6 @@ func (restClient *RestClient) donations() gin.HandlerFunc {
 	}
 }
 
-// func (restClient *RestClient) resynctxs() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-
-// 		c.JSON(http.StatusOK, gin.H{
-// 			"code":    http.StatusOK,
-// 			"message": restClient.BTC.Resync,
-// 		})
-// 	}
-// }
-
 func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		resp := map[string]interface{}{
@@ -942,7 +932,7 @@ func (restClient *RestClient) getServerConfig() gin.HandlerFunc {
 			},
 			"servertime": time.Now().UTC().Unix(),
 			"api":        "1.2",
-			"version":    restClient.MultyVerison,
+			"version":    restClient.MultyVersion,
 			"donate":     restClient.donationAddresses,
 			"multisigfactory": map[string]string{
 				"ethtestnet": "0x04f68589f53cfdf408025cd7cea8a40dbf488e49",
@@ -1001,7 +991,7 @@ func (restClient *RestClient) deleteWallet() gin.HandlerFunc {
 		}
 		var derivationPath string
 		walletIndex, err := strconv.Atoi(c.Param("walletindex"))
-		restClient.log.Debugf("resyncWallet [%d] \t[walletindexr=%s]", walletIndex, c.Request.RemoteAddr)
+		restClient.log.Debugf("resyncWallet [%d] \t[walletindex=%s]", walletIndex, c.Request.RemoteAddr)
 		if err != nil {
 			derivationPath = strings.ToLower(c.Param("walletindex"))
 		}
@@ -1547,10 +1537,11 @@ func (restClient *RestClient) sendRawHDTransaction() gin.HandlerFunc {
 
 		var rawTx RawHDTx
 		if err := decodeBody(c, &rawTx); err != nil {
-			c.JSON(http.StatusOK, gin.H{
+			c.JSON(http.StatusBadRequest, gin.H{
 				"code":    http.StatusBadRequest,
 				"message": msgErrRequestBodyError,
 			})
+			return
 		}
 
 		token, err := getToken(c)
