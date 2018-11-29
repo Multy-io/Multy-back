@@ -10,6 +10,10 @@ LD_OPTS = -ldflags="-X main.branch=${BRANCH} -X main.commit=${COMMIT} -X main.la
 # List of all binary targets we expect from make to produce
 TARGETS=cmd/multy-back/multy-back cmd/ns-btc/ns-btc cmd/ns-eth/ns-eth
 
+# List of all docker images to build and tag
+DOCKER_IMAGES=multy-back multy-btc-node-service multy-eth-node-service
+DOCKER_TAG?=latest
+
 TARGET_OS=
 TARGET_ARCH=
 
@@ -40,6 +44,11 @@ $(TARGETS):
 	cd $(@D) && \
 	GOOS=$(TARGET_OS) GOARCH=$(TARGET_ARCH) go build $(LD_OPTS) -o $(@F) . && \
 	cd -
+
+build-docker-images: $(DOCKER_IMAGES)
+
+$(DOCKER_IMAGES):
+	docker build --target $@ --tag $@:$(DOCKER_TAG) .
 
 .PHONY: test
 test:
