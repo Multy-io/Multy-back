@@ -17,8 +17,8 @@ all: proto build test
 
 all-with-deps: setup deps dist
 
-# run:
-# 	cd cmd && ./$(NAME) && ../
+run:
+	cd cmd && ./$(NAME) && ../
 
 # memprofiler:
 # 	cd $(GOPATH)/src/github.com/Multy-io/Multy-back/cmd && rm -rf multy && cd .. && make build  && cd cmd && ./$(NAME) -memprofile mem.prof && ../
