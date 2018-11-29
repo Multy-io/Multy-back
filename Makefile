@@ -7,17 +7,18 @@ LASTTAG = $(shell git describe --tags --abbrev=0 --dirty)
 GOPATH = $(shell echo "$$GOPATH")
 LD_OPTS = -ldflags="-X main.branch=${BRANCH} -X main.commit=${COMMIT} -X main.lasttag=${LASTTAG} -X main.buildtime=${BUILDTIME} -w "
 
-all:  build run
+# List of all binary targets we expect from make to produce
+TARGETS=cmd/multy-back/multy-back cmd/ns-btc/ns-btc cmd/ns-eth/ns-eth
 
-all-with-deps: setup deps
-	cd cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
+TARGET_OS=
+TARGET_ARCH=
 
+all: proto build test
 
-all-docker:  setup deps
-	cd cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
+all-with-deps: setup deps dist
 
-run:
-	cd $(GOPATH)/src/github.com/Multy-io/Multy-back/cmd && rm -rf multy && cd .. && make build  && cd cmd && ./$(NAME) && ../
+# run:
+# 	cd cmd && ./$(NAME) && ../
 
 # memprofiler:
 # 	cd $(GOPATH)/src/github.com/Multy-io/Multy-back/cmd && rm -rf multy && cd .. && make build  && cd cmd && ./$(NAME) -memprofile mem.prof && ../
@@ -28,13 +29,27 @@ setup:
 deps:
 	govendor sync
 
+dist: TARGET_OS=linux
+dist: TARGET_ARCH=amd64
+dist: build
 
-	
-build:
-	cd cmd/ && go build $(LD_OPTS) -o $(NAME) . && cd -
+build: $(TARGETS)
+	ls -lah $(TARGETS)
 
-race:
-	cd node-streamer/btc/ && protoc --go_out=plugins=grpc:. *.proto && cd ../../cmd/ && go build $(LD_OPTS) -o $(NAME) -race . && cd -
+$(TARGETS):
+	cd $(@D) && \
+	GOOS=$(TARGET_OS) GOARCH=$(TARGET_ARCH) go build $(LD_OPTS) -o $(@F) . && \
+	cd -
+
+.PHONY: test
+test:
+	go test ./...
+
+proto-btc-ns:
+	cd ./ns-btc-protobuf && protoc --go_out=plugins=grpc:. *.proto
+	cd ./ns-eth-protobuf && protoc --go_out=plugins=grpc:. *.proto
+
+proto: proto-btc-ns
 
 # Show to-do items per file.
 todo:
@@ -46,13 +61,3 @@ todo:
 		--color \
 		-nRo -E ' TODO:.*|SkipNow|nolint:.*' .
 .PHONY: todo
-
-dist:
-	cd ./cmd && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o $(NAME) .
-
-test: dist
-	cd cmd && scp  multy multy@test.multy.io:/mnt/hdd/back && cd ..
-
-stage:
-	cd cmd/ && GOOS=linux GOARCH=amd64 go build $(LD_OPTS)  -o stage .
-

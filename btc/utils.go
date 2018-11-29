@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	btcpb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
+	btcpb "github.com/Multy-io/Multy-back/ns-btc-protobuf"
 	"github.com/Multy-io/Multy-back/currencies"
 	"github.com/Multy-io/Multy-back/store"
 	nsq "github.com/bitly/go-nsq"

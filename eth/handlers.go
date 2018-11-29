@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
+	pb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
 	"github.com/Multy-io/Multy-back/currencies"
 	"github.com/Multy-io/Multy-back/store"
 	mgo "gopkg.in/mgo.v2"

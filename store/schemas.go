@@ -11,7 +11,7 @@ import (
 	"reflect"
 	"time"
 
-	ethpb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
+	ethpb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
 	"github.com/graarh/golang-socketio"
 )
 
