@@ -1,4 +1,8 @@
 /*
+Copyright 2018 Idealnaya rabota LLC
+Licensed under Multy.io license.
+See LICENSE for details
+
 Currency implementation is abstractly support multiple exchangers functionality, so API user can compare
 available exchanger services and choose any.
 For not we support only Changelly exchanger 3rd party.
