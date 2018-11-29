@@ -7,11 +7,19 @@ See LICENSE for details
 package exchanger
 
 import (
+	"github.com/Multy-io/Multy-back/exchanger/changelly"
+	"github.com/Multy-io/Multy-back/exchanger/common"
 	"testing"
 )
 
 func TestFactoryExchanger_GetSupportedExchangers(t *testing.T) {
 	factory := FactoryExchanger{}
+	config := common.BasicExchangeConfiguration{Name: "testName", IsActive: true, Config: map[string]string{
+		"apiUrl": "testUrl",
+		"apiKey": "testApiKey",
+		"apiSecret": "testApiSecret",
+	}}
+	factory.Config = append(factory.Config, config)
 	exchangers := factory.GetSupportedExchangers()
 
 	// for correct feature support, at least 1 exchange should be configured
@@ -27,6 +35,16 @@ func TestFactoryExchanger_GetSupportedExchangers(t *testing.T) {
 
 func TestFactoryExchanger_GetExchanger(t *testing.T) {
 	factory := FactoryExchanger{}
+	config := common.BasicExchangeConfiguration{
+		Name: changelly.ExchangeChangellyCanonicalName,
+		IsActive: true,
+		Config: map[string]interface{}{
+			"apiUrl": "testUrl",
+			"apiKey": "testApiKey",
+			"apiSecret": "testApiSecret",
+		},
+	}
+	factory.Config = append(factory.Config, config)
 	exchangers := factory.GetSupportedExchangers()
 
 	targetExchanger := exchangers[0]
@@ -40,7 +58,7 @@ func TestFactoryExchanger_GetExchanger(t *testing.T) {
 	}
 
 	checkExchangerApi, err := factory.GetExchanger(targetExchanger.Name)
-	if &targetExchangerApi !=  &checkExchangerApi {
+	if targetExchangerApi.GetName() !=  checkExchangerApi.GetName() {
 		t.Errorf("Factory should not re-create objects")
 	}
 }

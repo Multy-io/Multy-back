@@ -32,9 +32,9 @@ func (fe *FactoryExchanger) GetSupportedExchangers() []common.Exchanger {
 }
 
 func (fe *FactoryExchanger) GetExchanger(exchangerName string) (CommonExchangerInterface, error) {
-	for _, _exchanger := range fe.Exchangers {
-		if _exchanger.GetName() == exchangerName {
-			return _exchanger, nil
+	for _, exchanger := range fe.Exchangers {
+		if exchanger.GetName() == exchangerName {
+			return exchanger, nil
 		}
 	}
 

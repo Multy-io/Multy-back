@@ -57,6 +57,7 @@ type ExchangerChangelly struct {
 
 func (ec *ExchangerChangelly) Init(config interface{}) error {
 	ec.name = ExchangeChangellyCanonicalName
+	fmt.Printf("!!! %+v \n", config)
 	configMap := config.(map[string]interface{})
 
 	ec.config = InitConfig{
