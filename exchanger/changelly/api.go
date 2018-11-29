@@ -22,9 +22,9 @@ const (
 )
 
 type InitConfig struct {
-	apiUrl string
-	apiKey string
-	apiSecret string
+	ApiUrl string
+	ApiKey string
+	ApiSecret string
 }
 
 type rpcPacket struct {
@@ -51,7 +51,13 @@ type ExchangerChangelly struct {
 
 func (ec *ExchangerChangelly) Init(config interface{}) error {
 	ec.name = ExchangeChangellyCanonicalName
-	ec.config = config.(InitConfig)
+	configMap := config.(map[string]interface{})
+
+	ec.config = InitConfig{
+		ApiUrl: configMap["apiUrl"].(string),
+		ApiKey: configMap["apiKey"].(string),
+		ApiSecret: configMap["apiSecret"].(string),
+	}
 
 	return nil
 }
@@ -163,12 +169,12 @@ func (ec *ExchangerChangelly) sendRequest(methodName string, params map[string]s
 		return []byte{}, err
 	}
 
-	request, err := http.NewRequest("POST", ec.config.apiUrl, bytes.NewBuffer(requestDataJson))
+	request, err := http.NewRequest("POST", ec.config.ApiUrl, bytes.NewBuffer(requestDataJson))
 	if err != nil {
 		return []byte{}, err
 	}
 
-	request.Header.Set("api-key", ec.config.apiKey)
+	request.Header.Set("api-key", ec.config.ApiKey)
 	request.Header.Set("sign", requestHash)
 	request.Header.Set("Content-type", "application/json")
 
@@ -188,7 +194,7 @@ func (ec *ExchangerChangelly) GetRequestHash(request rpcPacket) (string, error) 
 	inputBytes, err := json.Marshal(request)
 
 	if err == nil {
-		hmac512 := hmac.New(sha512.New, []byte(ec.config.apiSecret))
+		hmac512 := hmac.New(sha512.New, []byte(ec.config.ApiSecret))
 		hmac512.Write(inputBytes)
 
 		encodedHash = hex.EncodeToString(hmac512.Sum(nil))

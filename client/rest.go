@@ -13,6 +13,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"github.com/Multy-io/Multy-back/exchanger"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -85,7 +86,8 @@ type RestClient struct {
 	ETH            *eth.ETHConn
 	MultyVerison   store.ServerConfig
 	BrowserDefault store.BrowserDefault
-	Secretkey      string
+	Secretkey 	   string
+	ExchangerFactory *exchanger.FactoryExchanger
 }
 
 type BTCApiConf struct {
@@ -93,6 +95,7 @@ type BTCApiConf struct {
 }
 
 func SetRestHandlers(
+	// TODO: reduce properties amount and get desired services directly from multy container
 	userDB store.UserStore,
 	r *gin.Engine,
 	donationAddresses []store.DonationInfo,
@@ -103,6 +106,7 @@ func SetRestHandlers(
 	mobileVer store.MobileVersions,
 	tl store.VerifiedTokenList,
 	bd store.BrowserDefault,
+	exchangerFactory *exchanger.FactoryExchanger,
 ) (*RestClient, error) {
 	restClient := &RestClient{
 		userStore:         userDB,
@@ -115,6 +119,7 @@ func SetRestHandlers(
 		mobileVersions:    mobileVer,
 		ERC20TokenList:    tl,
 		BrowserDefault:    bd,
+		ExchangerFactory:  exchangerFactory,
 	}
 	initMiddlewareJWT(restClient)
 
@@ -145,6 +150,10 @@ func SetRestHandlers(
 		v1.GET("/exchange/changelly/list", restClient.changellyListCurrencies())
 		v1.GET("/multisig/estimate/:contractaddress", restClient.estimateMultisig())
 		v1.POST("/wallet/convert/broken", restClient.convertToBroken())
+
+		v1.GET("/exchanger/supported_currencies", restClient.GetExchangerSupportedCurrencies())
+		v1.POST("/exchanger/exchange_amount", restClient.GetExchangerAmountExchange())
+		v1.POST("/exchanger/transaction", restClient.CreateExchangerTransaction())
 	}
 	return restClient, nil
 }
@@ -2285,27 +2294,37 @@ func fetchUndeletedWallets(walletsBTC []store.Wallet) []store.Wallet {
 	return okWalletsBTC
 }
 
+func (restClient *RestClient) GetUserByContext(c *gin.Context) (store.User, error) {
+	var user store.User
+
+	token, err := getToken(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": msgErrHeaderError,
+		})
+		return user, err
+	}
+
+	query := bson.M{"devices.JWT": token}
+	if err := restClient.userStore.FindUser(query, &user); err != nil {
+		restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    http.StatusUnauthorized,
+			"message": msgErrUserNotFound,
+			"wallets": []interface{}{},
+		})
+	}
+
+	return user, err
+}
+
 func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var wv []interface{}
-		//var wv []WalletVerbose
-		token, err := getToken(c)
+		user, err := restClient.GetUserByContext(c)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"code":    http.StatusBadRequest,
-				"message": msgErrHeaderError,
-			})
-			return
-		}
-		user := store.User{}
-		query := bson.M{"devices.JWT": token}
-		if err := restClient.userStore.FindUser(query, &user); err != nil {
-			restClient.log.Errorf("getAllWalletsVerbose: restClient.userStore.FindUser: %s\t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code":    http.StatusUnauthorized,
-				"message": msgErrUserNotFound,
-				"wallets": wv,
-			})
+			restClient.log.Errorf("Failed to get user from context creds, [%s]", err.Error())
 			return
 		}
 
@@ -2432,7 +2451,7 @@ func (restClient *RestClient) getAllWalletsVerbose() gin.HandlerFunc {
 						AddressIndex:   address.AddressIndex,
 						Amount:         totalBalance,
 						Nonce:          walletNonce,
-						ERC20Balances:  erc20Info.Balances,
+						ERC20Balances:  erc20Info.GetBalances(),
 					})
 
 				}

@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Multy-io/Multy-back/exchanger"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -56,12 +57,15 @@ type Multy struct {
 
 	BTC *btc.BTCConn
 	ETH *eth.ETHConn
+
+	ExchangerFactory *exchanger.FactoryExchanger
 }
 
 // Init initializes Multy instance
 func Init(conf *Configuration) (*Multy, error) {
 	multy := &Multy{
 		config: conf,
+		ExchangerFactory: &exchanger.FactoryExchanger{},
 	}
 	// DB initialization
 	userStore, err := store.InitUserStore(conf.Database)
@@ -102,7 +106,31 @@ func Init(conf *Configuration) (*Multy, error) {
 	if err = multy.initHttpRoutes(conf); err != nil {
 		return nil, fmt.Errorf("Router initialization: %s", err.Error())
 	}
+
+	err = multy.ConfigureExchangers()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to configure exchangers, [%s]", err.Error())
+	}
+
 	return multy, nil
+}
+
+func (m *Multy) ConfigureExchangers() error {
+	m.ExchangerFactory.SetExchangersConfig(m.config.Exchangers)
+
+	for _, exchangerConfig := range m.config.Exchangers {
+		if exchangerConfig.IsActive {
+			// exchanger warm-up
+			_, err := m.ExchangerFactory.GetExchanger(exchangerConfig.Name)
+			if err != nil {
+				log.Errorf("Failed to initialize [%s] exchanger, [%s]", exchangerConfig.Name, err.Error())
+			}
+
+			log.Infof("Exchanger: name [%s] init completed", exchangerConfig.Name)
+		}
+	}
+
+	return nil
 }
 
 // SetUserData make initial userdata to node service
@@ -256,6 +284,7 @@ func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 		conf.MobileVersions,
 		tokenList,
 		conf.BrowserDefault,
+		multy.ExchangerFactory,
 	)
 	if err != nil {
 		return err

@@ -6,8 +6,8 @@ See LICENSE for details
 package multyback
 
 import (
-	// "github.com/Multy-io/Multy-back-exchange-service/core"
 	"github.com/Multy-io/Multy-back/client"
+	exchangerCommon "github.com/Multy-io/Multy-back/exchanger/common"
 	"github.com/Multy-io/Multy-back/store"
 )
 
@@ -22,11 +22,11 @@ type Configuration struct {
 	BTCNodeAddress    string
 	DonationAddresses []store.DonationInfo
 	MultyVerison      store.ServerConfig
-	// ExchangerConfiguration core.ManagerConfiguration
 	ServicesInfo []store.ServiceInfo
 	Secretkey    string
 	store.MobileVersions
 	BrowserDefault store.BrowserDefault
 
 	SupportedNodes []store.CoinType
+	Exchangers	[]exchangerCommon.BasicExchangeConfiguration
 }

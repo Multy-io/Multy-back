@@ -32,4 +32,9 @@ func TestFactoryExchanger_GetExchanger(t *testing.T) {
 	if targetExchangerApi.GetName() == "" {
 		t.Errorf("Failed to get desired exchanger from factory, got [%+v] \n", targetExchangerApi)
 	}
+
+	checkExchangerApi, err := factory.GetExchanger(targetExchanger.Name)
+	if &targetExchangerApi !=  &checkExchangerApi {
+		t.Errorf("Factory should not re-create objects")
+	}
 }

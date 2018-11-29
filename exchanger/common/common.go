@@ -15,3 +15,9 @@ type ExchangeTransaction struct {
 	PayOutAddress string	`json:"payoutAddress"`
 	Error interface{}		`json:"error"`
 }
+
+type BasicExchangeConfiguration struct {
+	Name string			`json:"name"`
+	IsActive bool		`json:"isActive"`
+	Config interface{}	`json:"config"`
+}

@@ -7,10 +7,15 @@ import (
 
 
 type FactoryExchanger struct {
-	exchangers []CommonExchangerInterface
+	Exchangers 	[]CommonExchangerInterface
+	Config 		[]common.BasicExchangeConfiguration
 }
 
-func (fe FactoryExchanger) GetSupportedExchangers() []common.Exchanger {
+func (fe *FactoryExchanger) SetExchangersConfig(config []common.BasicExchangeConfiguration) {
+	fe.Config = config
+}
+
+func (fe *FactoryExchanger) GetSupportedExchangers() []common.Exchanger {
 	var exchangers []common.Exchanger
 	// TODO: it might be a good idea to configure this list via .config file when exchangers will be > 1
 	exchangers = append(exchangers, common.Exchanger{
@@ -21,17 +26,37 @@ func (fe FactoryExchanger) GetSupportedExchangers() []common.Exchanger {
 }
 
 func (fe *FactoryExchanger) GetExchanger(exchangerName string) (CommonExchangerInterface, error) {
+	for _, _exchanger := range fe.Exchangers {
+		if _exchanger.GetName() == exchangerName {
+			return _exchanger, nil
+		}
+	}
+
 	var exchanger CommonExchangerInterface
 
 	switch exchangerName {
 	case changelly.ExchangeChangellyCanonicalName:
 		exchanger = &changelly.ExchangerChangelly{}
-		var dummy changelly.InitConfig
-		exchanger.Init(dummy)
 		break
 	}
 
+	exchanger.Init(fe.getConfigByExchangerName(exchangerName))
+	fe.Exchangers = append(fe.Exchangers, exchanger)
+
 	return exchanger, nil
+}
+
+func (fe *FactoryExchanger) getConfigByExchangerName(exchangerName string) interface{} {
+	var targetConfig interface{}
+
+	for _, config := range fe.Config {
+		if config.Name == exchangerName {
+			targetConfig = config.Config
+			break
+		}
+	}
+
+	return targetConfig
 }
 
 type CommonExchangerInterface interface {

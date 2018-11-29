@@ -36,9 +36,9 @@ func TestExchangerChangelly_GetRequestHash(t *testing.T) {
 	api := ExchangerChangelly{
 		name: testName,
 		config: InitConfig{
-			apiUrl: "",
-			apiKey: testApiKey,
-			apiSecret: testApiSecret,
+			ApiUrl: "",
+			ApiKey: testApiKey,
+			ApiSecret: testApiSecret,
 		},
 	}
 
@@ -128,9 +128,9 @@ func getSemiConfiguredApi() ExchangerChangelly {
 	return ExchangerChangelly{
 		name: "testName",
 		config: InitConfig{
-			apiUrl: "https://api.changelly.com",
-			apiKey: "testKey",
-			apiSecret: "testSecret",
+			ApiUrl: "https://api.changelly.com",
+			ApiKey: "testKey",
+			ApiSecret: "testSecret",
 		},
 	}
 }
