@@ -22,11 +22,11 @@ type Configuration struct {
 	BTCNodeAddress    string
 	DonationAddresses []store.DonationInfo
 	MultyVerison      store.ServerConfig
-	ServicesInfo []store.ServiceInfo
-	Secretkey    string
+	ServicesInfo      []store.ServiceInfo
+	Secretkey         string
 	store.MobileVersions
 	BrowserDefault store.BrowserDefault
 
 	SupportedNodes []store.CoinType
-	Exchangers	[]exchanger.BasicExchangeConfiguration
+	Exchangers     []exchanger.BasicExchangeConfiguration
 }

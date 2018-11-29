@@ -15,12 +15,12 @@ import (
 	"strings"
 
 	// exchanger "github.com/Multy-io/Multy-back-exchange-service"
-	btcpb "github.com/Multy-io/Multy-back/ns-btc-protobuf"
-	ethpb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
 	"github.com/Multy-io/Multy-back/btc"
 	"github.com/Multy-io/Multy-back/client"
 	"github.com/Multy-io/Multy-back/currencies"
 	"github.com/Multy-io/Multy-back/eth"
+	btcpb "github.com/Multy-io/Multy-back/ns-btc-protobuf"
+	ethpb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/gin-gonic/gin"
 	"github.com/jekabolt/slf"
@@ -64,7 +64,7 @@ type Multy struct {
 // Init initializes Multy instance
 func Init(conf *Configuration) (*Multy, error) {
 	multy := &Multy{
-		config: conf,
+		config:           conf,
 		ExchangerFactory: &exchanger.FactoryExchanger{},
 	}
 	// DB initialization
