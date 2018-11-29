@@ -4,10 +4,9 @@ Licensed under Multy.io license.
 See LICENSE for details
 */
 
-package changelly
+package exchanger
 
 import (
-	"github.com/Multy-io/Multy-back/exchanger/common"
 	"math/rand"
 	"testing"
 	"time"
@@ -98,8 +97,8 @@ func TestExchangerChangelly_CreateTransaction(t *testing.T) {
 	t.Skip("integration test, SKIP")
 	api := getSemiConfiguredApi()
 
-	currencyFrom := common.CurrencyExchanger{ Name: "btc" }
-	currencyTo := common.CurrencyExchanger{ Name: "eth"}
+	currencyFrom := CurrencyExchanger{ Name: "btc" }
+	currencyTo := CurrencyExchanger{ Name: "eth"}
 	exchangeAmount := 1000.0
 	dummyAddress := "0xe6001AEb462B880A202597CAA3ad064093dD4880"
 
@@ -118,8 +117,7 @@ func TestExchangerChangelly_CreateTransaction(t *testing.T) {
 }
 
 
-func getRandomCurrencyPairFromSlice(supportedCurrencies []common.CurrencyExchanger) (common.CurrencyExchanger,
-	common.CurrencyExchanger) {
+func getRandomCurrencyPairFromSlice(supportedCurrencies []CurrencyExchanger) (CurrencyExchanger, CurrencyExchanger) {
 	rand.Seed(time.Now().Unix())
 	indexCurrencyFrom := rand.Intn(len(supportedCurrencies))
 	currencyFrom := supportedCurrencies[indexCurrencyFrom]

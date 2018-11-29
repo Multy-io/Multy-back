@@ -10,8 +10,7 @@ For not we support only Changelly exchanger 3rd party.
 package client
 
 import (
-	"github.com/Multy-io/Multy-back/exchanger/changelly"
-	"github.com/Multy-io/Multy-back/exchanger/common"
+	"github.com/Multy-io/Multy-back/exchanger"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -21,7 +20,7 @@ func (restClient *RestClient) GetExchangerSupportedCurrencies() gin.HandlerFunc 
 	return func(c *gin.Context) {
 		changellyExchanger, _ := restClient.
 			ExchangerFactory.
-			GetExchanger(changelly.ExchangeChangellyCanonicalName)
+			GetExchanger(exchanger.ExchangeChangellyCanonicalName)
 		supportedCurrencies, err := changellyExchanger.GetSupportedCurrencies()
 
 		if err != nil {
@@ -61,10 +60,10 @@ func (restClient *RestClient) GetExchangerAmountExchange() gin.HandlerFunc {
 		}
 		changellyExchanger, _ := restClient.
 			ExchangerFactory.
-			GetExchanger(changelly.ExchangeChangellyCanonicalName)
+			GetExchanger(exchanger.ExchangeChangellyCanonicalName)
 		exchangeAmount, err := changellyExchanger.GetExchangeAmount(
-			common.CurrencyExchanger{ Name: requestData.From},
-			common.CurrencyExchanger{ Name: requestData.To},
+			exchanger.CurrencyExchanger{ Name: requestData.From},
+			exchanger.CurrencyExchanger{ Name: requestData.To},
 			requestData.Amount,
 		)
 
@@ -101,10 +100,10 @@ func (restClient *RestClient) CreateExchangerTransaction() gin.HandlerFunc {
 
 		changellyExchanger, _ := restClient.
 			ExchangerFactory.
-			GetExchanger(changelly.ExchangeChangellyCanonicalName)
+			GetExchanger(exchanger.ExchangeChangellyCanonicalName)
 		transaction, err := changellyExchanger.CreateTransaction(
-			common.CurrencyExchanger{ Name: requestData.From},
-			common.CurrencyExchanger{ Name: requestData.To},
+			exchanger.CurrencyExchanger{ Name: requestData.From},
+			exchanger.CurrencyExchanger{ Name: requestData.To},
 			requestData.Amount,
 			requestData.Address,
 		)

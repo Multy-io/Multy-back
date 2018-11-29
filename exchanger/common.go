@@ -4,7 +4,7 @@ Licensed under Multy.io license.
 See LICENSE for details
 */
 
-package common
+package exchanger
 
 
 type Exchanger struct {

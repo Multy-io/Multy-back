@@ -7,7 +7,7 @@ package multyback
 
 import (
 	"github.com/Multy-io/Multy-back/client"
-	exchangerCommon "github.com/Multy-io/Multy-back/exchanger/common"
+	"github.com/Multy-io/Multy-back/exchanger"
 	"github.com/Multy-io/Multy-back/store"
 )
 
@@ -28,5 +28,5 @@ type Configuration struct {
 	BrowserDefault store.BrowserDefault
 
 	SupportedNodes []store.CoinType
-	Exchangers	[]exchangerCommon.BasicExchangeConfiguration
+	Exchangers	[]exchanger.BasicExchangeConfiguration
 }

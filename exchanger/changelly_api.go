@@ -4,7 +4,7 @@ Licensed under Multy.io license.
 See LICENSE for details
 */
 
-package changelly
+package exchanger
 
 import (
 	"bytes"
@@ -13,7 +13,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/Multy-io/Multy-back/exchanger/common"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -57,7 +56,6 @@ type ExchangerChangelly struct {
 
 func (ec *ExchangerChangelly) Init(config interface{}) error {
 	ec.name = ExchangeChangellyCanonicalName
-	fmt.Printf("!!! %+v \n", config)
 	configMap := config.(map[string]interface{})
 
 	ec.config = InitConfig{
@@ -73,8 +71,8 @@ func (ec *ExchangerChangelly) GetName() string {
 	return ec.name
 }
 
-func (ec *ExchangerChangelly) GetSupportedCurrencies() ([]common.CurrencyExchanger, error) {
-	var supportedCurrencies []common.CurrencyExchanger
+func (ec *ExchangerChangelly) GetSupportedCurrencies() ([]CurrencyExchanger, error) {
+	var supportedCurrencies []CurrencyExchanger
 
 	responseData, err := ec.sendRequest(RpcGetCurrencies, map[string]string{})
 	if err == nil {
@@ -85,7 +83,7 @@ func (ec *ExchangerChangelly) GetSupportedCurrencies() ([]common.CurrencyExchang
 		}
 
 		for _, currencyName := range responsePacket.Result.([]interface{}) {
-			supportedCurrencies = append(supportedCurrencies, common.CurrencyExchanger{
+			supportedCurrencies = append(supportedCurrencies, CurrencyExchanger{
 				Name: currencyName.(string),
 			})
 		}
@@ -94,14 +92,14 @@ func (ec *ExchangerChangelly) GetSupportedCurrencies() ([]common.CurrencyExchang
 	return supportedCurrencies, err
 }
 
-func (ec *ExchangerChangelly) GetTransactionMinimumAmount(from common.CurrencyExchanger,
-	to common.CurrencyExchanger) (float64, error) {
+func (ec *ExchangerChangelly) GetTransactionMinimumAmount(from CurrencyExchanger,
+	to CurrencyExchanger) (float64, error) {
 
 		return 0.0, nil
 }
 
-func (ec *ExchangerChangelly) GetExchangeAmount(from common.CurrencyExchanger,
-	to common.CurrencyExchanger, amount float64) (float64, error) {
+func (ec *ExchangerChangelly) GetExchangeAmount(from CurrencyExchanger,
+	to CurrencyExchanger, amount float64) (float64, error) {
 		var amountConverted float64
 
 		responseData, err := ec.sendRequest(RpcGetExchangeAmount, map[string]string{
@@ -127,9 +125,9 @@ func (ec *ExchangerChangelly) GetExchangeAmount(from common.CurrencyExchanger,
 		return amountConverted, nil
 }
 
-func (ec *ExchangerChangelly) CreateTransaction(from common.CurrencyExchanger, to common.CurrencyExchanger,
-	amount float64, address string) (common.ExchangeTransaction, error) {
-		var transaction common.ExchangeTransaction
+func (ec *ExchangerChangelly) CreateTransaction(from CurrencyExchanger, to CurrencyExchanger,
+	amount float64, address string) (ExchangeTransaction, error) {
+		var transaction ExchangeTransaction
 
 		responseData, err := ec.sendRequest(RpcCreateTransaction, map[string]string{
 			"from": from.Name,

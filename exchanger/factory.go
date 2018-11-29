@@ -6,26 +6,21 @@ See LICENSE for details
 
 package exchanger
 
-import (
-	"github.com/Multy-io/Multy-back/exchanger/changelly"
-	"github.com/Multy-io/Multy-back/exchanger/common"
-)
-
 
 type FactoryExchanger struct {
 	Exchangers 	[]CommonExchangerInterface
-	Config 		[]common.BasicExchangeConfiguration
+	Config 		[]BasicExchangeConfiguration
 }
 
-func (fe *FactoryExchanger) SetExchangersConfig(config []common.BasicExchangeConfiguration) {
+func (fe *FactoryExchanger) SetExchangersConfig(config []BasicExchangeConfiguration) {
 	fe.Config = config
 }
 
-func (fe *FactoryExchanger) GetSupportedExchangers() []common.Exchanger {
-	var exchangers []common.Exchanger
+func (fe *FactoryExchanger) GetSupportedExchangers() []Exchanger {
+	var exchangers []Exchanger
 	// TODO: it might be a good idea to configure this list via .config file when exchangers will be > 1
-	exchangers = append(exchangers, common.Exchanger{
-		Name: changelly.ExchangeChangellyCanonicalName,
+	exchangers = append(exchangers, Exchanger{
+		Name: ExchangeChangellyCanonicalName,
 	})
 
 	return exchangers
@@ -41,8 +36,8 @@ func (fe *FactoryExchanger) GetExchanger(exchangerName string) (CommonExchangerI
 	var exchanger CommonExchangerInterface
 
 	switch exchangerName {
-	case changelly.ExchangeChangellyCanonicalName:
-		exchanger = &changelly.ExchangerChangelly{}
+	case ExchangeChangellyCanonicalName:
+		exchanger = &ExchangerChangelly{}
 		break
 	}
 
@@ -68,9 +63,9 @@ func (fe *FactoryExchanger) getConfigByExchangerName(exchangerName string) inter
 type CommonExchangerInterface interface {
 	Init(config interface{}) error
 	GetName() string
-	GetSupportedCurrencies() ([]common.CurrencyExchanger, error)
-	GetTransactionMinimumAmount(from common.CurrencyExchanger, to common.CurrencyExchanger) (float64, error)
-	GetExchangeAmount(from common.CurrencyExchanger, to common.CurrencyExchanger, amount float64) (float64, error)
-	CreateTransaction(from common.CurrencyExchanger, to common.CurrencyExchanger, amount float64, address string) (
-		common.ExchangeTransaction, error)
+	GetSupportedCurrencies() ([]CurrencyExchanger, error)
+	GetTransactionMinimumAmount(from CurrencyExchanger, to CurrencyExchanger) (float64, error)
+	GetExchangeAmount(from CurrencyExchanger, to CurrencyExchanger, amount float64) (float64, error)
+	CreateTransaction(from CurrencyExchanger, to CurrencyExchanger, amount float64, address string) (
+		ExchangeTransaction, error)
 }

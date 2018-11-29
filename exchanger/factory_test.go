@@ -6,15 +6,11 @@ See LICENSE for details
 
 package exchanger
 
-import (
-	"github.com/Multy-io/Multy-back/exchanger/changelly"
-	"github.com/Multy-io/Multy-back/exchanger/common"
-	"testing"
-)
+import "testing"
 
 func TestFactoryExchanger_GetSupportedExchangers(t *testing.T) {
 	factory := FactoryExchanger{}
-	config := common.BasicExchangeConfiguration{Name: "testName", IsActive: true, Config: map[string]string{
+	config := BasicExchangeConfiguration{Name: "testName", IsActive: true, Config: map[string]string{
 		"apiUrl": "testUrl",
 		"apiKey": "testApiKey",
 		"apiSecret": "testApiSecret",
@@ -35,8 +31,8 @@ func TestFactoryExchanger_GetSupportedExchangers(t *testing.T) {
 
 func TestFactoryExchanger_GetExchanger(t *testing.T) {
 	factory := FactoryExchanger{}
-	config := common.BasicExchangeConfiguration{
-		Name: changelly.ExchangeChangellyCanonicalName,
+	config := BasicExchangeConfiguration{
+		Name: ExchangeChangellyCanonicalName,
 		IsActive: true,
 		Config: map[string]interface{}{
 			"apiUrl": "testUrl",
