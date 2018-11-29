@@ -1,0 +1,183 @@
+syntax = "proto3";
+
+package nsbtcprotobuf;
+
+service NodeCommunications {
+
+    rpc ServiceInfo (Empty) returns (ServiceVersion){
+    }
+
+    rpc EventInitialAdd (UsersData) returns (ReplyInfo){
+    }
+
+    rpc SyncState (BlockHeight) returns (ReplyInfo){
+    }
+        
+    rpc EventAddNewAddress (WatchAddress) returns (ReplyInfo){
+    }
+
+    rpc EventGetBlockHeight (Empty) returns (BlockHeight){
+    }
+
+    rpc EventGetAllMempool (Empty) returns (stream MempoolRecord){
+    }
+
+    rpc EventAddMempoolRecord (Empty) returns (stream MempoolRecord){
+    }
+
+    rpc EventDeleteMempool (Empty) returns (stream MempoolToDelete){
+    }
+
+    rpc EventResyncAddress (AddressToResync) returns (ReplyInfo){
+    }
+
+    rpc EventSendRawTx (RawTx) returns (ReplyInfo){
+    }
+
+    rpc EventDeleteSpendableOut (Empty) returns (stream ReqDeleteSpOut){
+    }
+
+    rpc EventNewBlock (Empty) returns (stream BlockHeight){
+    }
+
+    rpc EventAddSpendableOut (Empty) returns (stream AddSpOut){
+    }
+
+    rpc NewTx (Empty) returns (stream BTCTransaction){
+    }
+
+	rpc ResyncAddress (Empty) returns (stream Resync){
+    }
+
+    rpc CheckRejectTxs (TxsToCheck) returns (RejectedTxs){
+    }
+
+}
+
+// continious resync
+message TxsToCheck  {
+    repeated string Hash  = 1;
+}
+
+message RejectedTxs  {
+    repeated string RejectedTxs  = 1;
+}
+
+message BTCTransaction {
+    string userID = 1;                        
+	string txID = 2;                       
+	string txHash = 3;                      
+	string txOutScript = 4;  
+    repeated string txAddress = 5;   
+	int32 txStatus = 6;        
+	int64 txOutAmount = 7;          
+	int64 blockTime = 8;         
+	int64 blockHeight = 9;      
+    int32 confirmations = 10;         
+	int64 txFee = 11;        
+	int64 mempoolTime = 12;        
+
+    message AddresAmount {
+        string address = 1;
+        int64 amount = 2;
+    }   
+
+	repeated AddresAmount txInputs = 13;
+    repeated AddresAmount TxOutputs = 14;
+
+    message WalletForTx {
+        string userid = 1;
+        string address = 2;
+        int32 txOutIndex = 3;
+        int64 amount = 4;
+    }   
+
+    repeated WalletForTx WalletsInput = 15;
+    repeated WalletForTx WalletsOutput = 16;
+    bool resync = 17;
+}
+
+message AddSpOut {
+    string txID = 1;
+	int32 txOutID = 2;
+	int64 txOutAmount = 3;
+    string txOutScript = 4;
+    string address = 5;
+    string userID = 6;
+    int32 txStatus = 7;
+    int32 walletIndex = 8;
+	int32 addressIndex = 9;
+}
+
+message Resync {
+	repeated	BTCTransaction Txs = 1;
+	repeated	AddSpOut SpOuts = 2;
+	repeated    ReqDeleteSpOut SpOutDelete = 3;
+    string DeleteFromQueue = 4;
+}
+
+message BlockHeight{
+    int64 height = 1;
+}
+
+
+message ReqDeleteSpOut {
+    string userID = 1;
+	string txID = 2;
+	string address = 3;
+}
+
+message MempoolToDelete {
+   string hash = 1;
+}
+
+message WatchAddress {
+   string address = 1;
+   string userID = 2;
+   int32 WalletIndex = 3; 
+   int32 AddressIndex = 4;
+}
+
+ message MempoolRecord {
+   int32 category = 1;    
+   string hashTX = 2;
+}
+
+
+message Empty {
+
+}
+
+message RawTx {
+	string transaction = 1;
+}
+
+message AddressToResync {
+   string Address = 1;
+   string UserID = 2;    
+   int32 WalletIndex = 3; 
+   int32 AddressIndex = 4;
+}
+
+
+message UsersData {
+    map<string, AddressExtended> map = 1;
+}
+
+message AddressExtended {
+    string UserID = 1;    
+	int32 WalletIndex = 2; 
+	int32 AddressIndex = 3;
+}
+
+
+message ReplyInfo {
+    string message = 1;
+}
+
+message ServiceVersion {
+    string branch = 1;    
+	string commit = 2;  
+	string buildtime = 3; 
+	string lasttag = 4;  
+}

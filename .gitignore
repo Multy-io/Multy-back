@@ -8,6 +8,9 @@ cmd/back-*
 cmd/logs
 cmd/rpc.cert
 cmd/state.json
+cmd/ns-eth/ns-eth
+cmd/ns-btc/ns-btc
+cmd/multy-back/multy-back
 
 rpc.cert
 data-db

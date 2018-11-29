@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc"
 	mgo "gopkg.in/mgo.v2"
 
-	pb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
+	pb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
 	"github.com/Multy-io/Multy-back/currencies"
 	"github.com/Multy-io/Multy-back/store"
 	nsq "github.com/bitly/go-nsq"
