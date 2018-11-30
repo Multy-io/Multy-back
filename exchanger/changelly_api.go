@@ -12,10 +12,8 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 )
 
 const (
@@ -93,46 +91,42 @@ func (ec *ExchangerChangelly) GetSupportedCurrencies() ([]CurrencyExchanger, err
 }
 
 func (ec *ExchangerChangelly) GetTransactionMinimumAmount(from CurrencyExchanger,
-	to CurrencyExchanger) (float64, error) {
+	to CurrencyExchanger) (string, error) {
 
-	return 0.0, nil
+	return "1.0", nil
 }
 
 func (ec *ExchangerChangelly) GetExchangeAmount(from CurrencyExchanger,
-	to CurrencyExchanger, amount float64) (float64, error) {
-	var amountConverted float64
+	to CurrencyExchanger, amount string) (string, error) {
+	var responseResult string
 
 	responseData, err := ec.sendRequest(RpcGetExchangeAmount, map[string]string{
 		"from":   from.Name,
 		"to":     to.Name,
-		"amount": fmt.Sprintf("%f", amount),
+		"amount": amount,
 	})
 
 	if err == nil {
 		var responsePacket rpcPacketResponse
 		err = json.Unmarshal(responseData, &responsePacket)
 		if err != nil {
-			return amountConverted, err
+			return responseResult, err
 		}
 
-		responseResult, _ := responsePacket.Result.(string)
-		amountConverted, err = strconv.ParseFloat(responseResult, 64)
-		if err != nil {
-			return amountConverted, err
-		}
+		responseResult, _ = responsePacket.Result.(string)
 	}
 
-	return amountConverted, nil
+	return responseResult, nil
 }
 
 func (ec *ExchangerChangelly) CreateTransaction(from CurrencyExchanger, to CurrencyExchanger,
-	amount float64, address string) (ExchangeTransaction, error) {
+	amount string, address string) (ExchangeTransaction, error) {
 	var transaction ExchangeTransaction
 
 	responseData, err := ec.sendRequest(RpcCreateTransaction, map[string]string{
 		"from":    from.Name,
 		"to":      to.Name,
-		"amount":  fmt.Sprintf("%f", amount),
+		"amount":  amount,
 		"address": address,
 	})
 

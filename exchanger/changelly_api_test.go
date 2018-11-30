@@ -82,13 +82,13 @@ func TestExchangerChangelly_GetExchangeAmount(t *testing.T) {
 
 	currencyFrom, currencyTo := getRandomCurrencyPairFromSlice(supportedCurrencies)
 
-	exchangeAmountOrigin := 100.0
+	exchangeAmountOrigin := "100.0"
 	exchangeAmountConverted, err := api.GetExchangeAmount(currencyFrom, currencyTo, exchangeAmountOrigin)
 	if err != nil {
 		t.Errorf("Got error in api response, [%s]", err.Error())
 	}
 
-	if exchangeAmountConverted < 0 {
+	if exchangeAmountConverted == "" {
 		t.Errorf("Converted amount could not be less than 0, got [%v]", exchangeAmountConverted)
 	}
 }
@@ -99,7 +99,7 @@ func TestExchangerChangelly_CreateTransaction(t *testing.T) {
 
 	currencyFrom := CurrencyExchanger{Name: "btc"}
 	currencyTo := CurrencyExchanger{Name: "eth"}
-	exchangeAmount := 1000.0
+	exchangeAmount := "1000.0"
 	dummyAddress := "0xe6001AEb462B880A202597CAA3ad064093dD4880"
 
 	transaction, err := api.CreateTransaction(currencyFrom, currencyTo, exchangeAmount, dummyAddress)
