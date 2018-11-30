@@ -1,4 +1,8 @@
-cmd/rpc.cert
-cmd/multy.config
+*/*.cert
+*/*.config
+*/*secret*
+*/*.tar
+*/*.tar.gz
+*/*.zip
 .drone.yml
 .drone/

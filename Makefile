@@ -12,7 +12,11 @@ TARGETS=cmd/multy-back/multy-back cmd/ns-btc/ns-btc cmd/ns-eth/ns-eth
 
 # List of all docker images to build and tag
 DOCKER_IMAGES=multy-back multy-btc-node-service multy-eth-node-service
-DOCKER_TAG?=latest
+
+# The default tag, used for building images, to remove ambigulty of ':latest'
+DOCKER_BUILD_TAG=$(COMMIT)
+# The tag image is pushed with
+DOCKER_TAG?=$(DOCKER_BUILD_TAG)
 
 TARGET_OS=
 TARGET_ARCH=
@@ -45,10 +49,31 @@ $(TARGETS):
 	GOOS=$(TARGET_OS) GOARCH=$(TARGET_ARCH) go build $(LD_OPTS) -o $(@F) . && \
 	cd -
 
-build-docker-images: $(DOCKER_IMAGES)
+.PHONY: docker-build-images
+.PHONY: docker-retag-images
+.PHONY: docker-push-images
 
+docker-all: docker-build-images docker-retag-images docker-push-images
+
+docker-build-images: $(DOCKER_IMAGES)
+
+# Builds an image with tag:git_commit_hash
 $(DOCKER_IMAGES):
-	docker build --target $@ --tag $@:$(DOCKER_TAG) .
+	docker build --target $@ \
+		--tag $@:$(DOCKER_BUILD_TAG) \
+		--build-arg BUILD_DATE=$(BUILDTIME) \
+		--build-arg GIT_COMMIT=$(COMMIT) \
+		--build-arg GIT_BRANCH=$(BRANCH) \
+		--build-arg GIT_TAG=$(LASTTAG) \
+		.
+
+# Explicitly set the tag: changes tag from git_commit_hash to $(DOCKER_TAG) for all images
+docker-retag-images:
+	$(foreach docker_image,$(DOCKER_IMAGES), docker tag $(docker_image):$(DOCKER_BUILD_TAG) $(docker_image):$(DOCKER_TAG);)
+
+# pushes images tagged with $(DOCKER_TAG) to dockerhub
+docker-push-images:
+	$(foreach docker_image,$(DOCKER_IMAGES), focker push $(docker_image):$(DOCKER_TAG);)
 
 .PHONY: test
 test:
