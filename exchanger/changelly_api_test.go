@@ -32,17 +32,17 @@ func TestExchangerChangelly_GetRequestHash(t *testing.T) {
 		"fc8add9f837f7341ecb11c41a369c4ab3d55685a201d59111e"
 
 	requestPacket := rpcPacket{
-		Id: "1",
+		Id:      "1",
 		Jsonrpc: "2.0",
-		Method: "testMethod",
-		Params: map[string]string{},
+		Method:  "testMethod",
+		Params:  map[string]string{},
 	}
 
 	api := ExchangerChangelly{
 		name: testName,
 		config: InitConfig{
-			ApiUrl: "",
-			ApiKey: testApiKey,
+			ApiUrl:    "",
+			ApiKey:    testApiKey,
 			ApiSecret: testApiSecret,
 		},
 	}
@@ -97,8 +97,8 @@ func TestExchangerChangelly_CreateTransaction(t *testing.T) {
 	t.Skip("integration test, SKIP")
 	api := getSemiConfiguredApi()
 
-	currencyFrom := CurrencyExchanger{ Name: "btc" }
-	currencyTo := CurrencyExchanger{ Name: "eth"}
+	currencyFrom := CurrencyExchanger{Name: "btc"}
+	currencyTo := CurrencyExchanger{Name: "eth"}
 	exchangeAmount := 1000.0
 	dummyAddress := "0xe6001AEb462B880A202597CAA3ad064093dD4880"
 
@@ -116,7 +116,6 @@ func TestExchangerChangelly_CreateTransaction(t *testing.T) {
 	}
 }
 
-
 func getRandomCurrencyPairFromSlice(supportedCurrencies []CurrencyExchanger) (CurrencyExchanger, CurrencyExchanger) {
 	rand.Seed(time.Now().Unix())
 	indexCurrencyFrom := rand.Intn(len(supportedCurrencies))
@@ -132,8 +131,8 @@ func getSemiConfiguredApi() ExchangerChangelly {
 	return ExchangerChangelly{
 		name: "testName",
 		config: InitConfig{
-			ApiUrl: "https://api.changelly.com",
-			ApiKey: "testKey",
+			ApiUrl:    "https://api.changelly.com",
+			ApiKey:    "testKey",
 			ApiSecret: "testSecret",
 		},
 	}

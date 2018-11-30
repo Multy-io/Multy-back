@@ -6,7 +6,6 @@ See LICENSE for details
 
 package exchanger
 
-
 type Exchanger struct {
 	Name string
 }
@@ -16,14 +15,14 @@ type CurrencyExchanger struct {
 }
 
 type ExchangeTransaction struct {
-	Id string				`json:"id"`
-	PayInAddress string		`json:"payinAddress"`
-	PayOutAddress string	`json:"payoutAddress"`
-	Error interface{}		`json:"error"`
+	Id            string      `json:"id"`
+	PayInAddress  string      `json:"payinAddress"`
+	PayOutAddress string      `json:"payoutAddress"`
+	Error         interface{} `json:"error"`
 }
 
 type BasicExchangeConfiguration struct {
-	Name string			`json:"name"`
-	IsActive bool		`json:"isActive"`
-	Config interface{}	`json:"config"`
+	Name     string      `json:"name"`
+	IsActive bool        `json:"isActive"`
+	Config   interface{} `json:"config"`
 }

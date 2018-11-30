@@ -82,11 +82,11 @@ type RestClient struct {
 	mobileVersions    store.MobileVersions
 	ERC20TokenList    store.VerifiedTokenList
 
-	BTC            *btc.BTCConn
-	ETH            *eth.ETHConn
-	MultyVerison   store.ServerConfig
-	BrowserDefault store.BrowserDefault
-	Secretkey 	   string
+	BTC              *btc.BTCConn
+	ETH              *eth.ETHConn
+	MultyVerison     store.ServerConfig
+	BrowserDefault   store.BrowserDefault
+	Secretkey        string
 	ExchangerFactory *exchanger.FactoryExchanger
 }
 

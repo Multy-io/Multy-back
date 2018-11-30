@@ -40,7 +40,7 @@ const (
 	ReceiverOn = "event:receiver:on"
 	SenderOn   = "event:sender:on"
 
-	SenderCheck = "event:sender:check"
+	SenderCheck                  = "event:sender:check"
 	GetReceiversAvailableWallets = "event:receiver:wallets:available"
 
 	Filter = "event:filter"

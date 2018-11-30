@@ -6,10 +6,9 @@ See LICENSE for details
 
 package exchanger
 
-
 type FactoryExchanger struct {
-	Exchangers 	[]CommonExchangerInterface
-	Config 		[]BasicExchangeConfiguration
+	Exchangers []CommonExchangerInterface
+	Config     []BasicExchangeConfiguration
 }
 
 func (fe *FactoryExchanger) SetExchangersConfig(config []BasicExchangeConfiguration) {

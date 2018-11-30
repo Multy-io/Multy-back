@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/Multy-io/Multy-back/ns-btc-protobuf"
 	"github.com/Multy-io/Multy-back/currencies"
+	pb "github.com/Multy-io/Multy-back/ns-btc-protobuf"
 	"github.com/Multy-io/Multy-back/store"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"

@@ -6,7 +6,7 @@ See LICENSE for details
 Currency implementation is abstractly support multiple exchangers functionality, so API user can compare
 available exchanger services and choose any.
 For not we support only Changelly exchanger 3rd party.
- */
+*/
 package client
 
 import (
@@ -14,7 +14,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
-
 
 func (restClient *RestClient) GetExchangerSupportedCurrencies() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -35,8 +34,8 @@ func (restClient *RestClient) GetExchangerSupportedCurrencies() gin.HandlerFunc 
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"code": http.StatusOK,
-			"message": http.StatusText(http.StatusOK),
+			"code":       http.StatusOK,
+			"message":    http.StatusText(http.StatusOK),
 			"currencies": currencyNames,
 		})
 	}
@@ -45,9 +44,9 @@ func (restClient *RestClient) GetExchangerSupportedCurrencies() gin.HandlerFunc 
 func (restClient *RestClient) GetExchangerAmountExchange() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		type RequestGetExchangeAmount struct {
-			From string			`json:"from"`
-			To string			`json:"to"`
-			Amount float64		`json:"amount"`
+			From   string  `json:"from"`
+			To     string  `json:"to"`
+			Amount float64 `json:"amount"`
 		}
 
 		var requestData RequestGetExchangeAmount
@@ -62,8 +61,8 @@ func (restClient *RestClient) GetExchangerAmountExchange() gin.HandlerFunc {
 			ExchangerFactory.
 			GetExchanger(exchanger.ExchangeChangellyCanonicalName)
 		exchangeAmount, err := changellyExchanger.GetExchangeAmount(
-			exchanger.CurrencyExchanger{ Name: requestData.From},
-			exchanger.CurrencyExchanger{ Name: requestData.To},
+			exchanger.CurrencyExchanger{Name: requestData.From},
+			exchanger.CurrencyExchanger{Name: requestData.To},
 			requestData.Amount,
 		)
 
@@ -72,9 +71,9 @@ func (restClient *RestClient) GetExchangerAmountExchange() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": msgErrServerError})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
-				"code": http.StatusOK,
+				"code":    http.StatusOK,
 				"message": http.StatusText(http.StatusOK),
-				"amount": exchangeAmount,
+				"amount":  exchangeAmount,
 			})
 		}
 	}
@@ -83,10 +82,10 @@ func (restClient *RestClient) GetExchangerAmountExchange() gin.HandlerFunc {
 func (restClient *RestClient) CreateExchangerTransaction() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		type RequestCreateTransaction struct {
-			From string			`json:"from"`
-			To string			`json:"to"`
-			Amount float64		`json:"amount"`
-			Address string		`json:"address"`
+			From    string  `json:"from"`
+			To      string  `json:"to"`
+			Amount  float64 `json:"amount"`
+			Address string  `json:"address"`
 		}
 
 		var requestData RequestCreateTransaction
@@ -102,8 +101,8 @@ func (restClient *RestClient) CreateExchangerTransaction() gin.HandlerFunc {
 			ExchangerFactory.
 			GetExchanger(exchanger.ExchangeChangellyCanonicalName)
 		transaction, err := changellyExchanger.CreateTransaction(
-			exchanger.CurrencyExchanger{ Name: requestData.From},
-			exchanger.CurrencyExchanger{ Name: requestData.To},
+			exchanger.CurrencyExchanger{Name: requestData.From},
+			exchanger.CurrencyExchanger{Name: requestData.To},
 			requestData.Amount,
 			requestData.Address,
 		)
@@ -113,10 +112,10 @@ func (restClient *RestClient) CreateExchangerTransaction() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": msgErrServerError})
 		} else {
 			c.JSON(http.StatusOK, gin.H{
-				"code": http.StatusOK,
-				"message": http.StatusText(http.StatusOK),
+				"code":          http.StatusOK,
+				"message":       http.StatusText(http.StatusOK),
 				"transactionId": transaction.Id,
-				"payinAddress": transaction.PayInAddress,
+				"payinAddress":  transaction.PayInAddress,
 				"payoutAddress": transaction.PayOutAddress,
 			})
 		}

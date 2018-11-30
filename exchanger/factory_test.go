@@ -11,8 +11,8 @@ import "testing"
 func TestFactoryExchanger_GetSupportedExchangers(t *testing.T) {
 	factory := FactoryExchanger{}
 	config := BasicExchangeConfiguration{Name: "testName", IsActive: true, Config: map[string]string{
-		"apiUrl": "testUrl",
-		"apiKey": "testApiKey",
+		"apiUrl":    "testUrl",
+		"apiKey":    "testApiKey",
 		"apiSecret": "testApiSecret",
 	}}
 	factory.Config = append(factory.Config, config)
@@ -32,11 +32,11 @@ func TestFactoryExchanger_GetSupportedExchangers(t *testing.T) {
 func TestFactoryExchanger_GetExchanger(t *testing.T) {
 	factory := FactoryExchanger{}
 	config := BasicExchangeConfiguration{
-		Name: ExchangeChangellyCanonicalName,
+		Name:     ExchangeChangellyCanonicalName,
 		IsActive: true,
 		Config: map[string]interface{}{
-			"apiUrl": "testUrl",
-			"apiKey": "testApiKey",
+			"apiUrl":    "testUrl",
+			"apiKey":    "testApiKey",
 			"apiSecret": "testApiSecret",
 		},
 	}
@@ -54,7 +54,7 @@ func TestFactoryExchanger_GetExchanger(t *testing.T) {
 	}
 
 	checkExchangerApi, err := factory.GetExchanger(targetExchanger.Name)
-	if targetExchangerApi.GetName() !=  checkExchangerApi.GetName() {
+	if targetExchangerApi.GetName() != checkExchangerApi.GetName() {
 		t.Errorf("Factory should not re-create objects")
 	}
 }

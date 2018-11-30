@@ -19,38 +19,38 @@ import (
 )
 
 const (
-	ExchangeChangellyCanonicalName  = "changelly"
-	RpcGetCurrencies = "getCurrencies"
+	ExchangeChangellyCanonicalName = "changelly"
+	RpcGetCurrencies               = "getCurrencies"
 	RpcGetTransactionMinimumAmount = "getMinAmount"
-	RpcGetExchangeAmount = "getExchangeAmount"
-	RpcCreateTransaction = "createTransaction"
+	RpcGetExchangeAmount           = "getExchangeAmount"
+	RpcCreateTransaction           = "createTransaction"
 )
 
 type InitConfig struct {
-	ApiUrl string
-	ApiKey string
+	ApiUrl    string
+	ApiKey    string
 	ApiSecret string
 }
 
 type rpcPacket struct {
-	Id string					`json:"id"`
-	Jsonrpc string				`json:"jsonrpc"`
-	Method string				`json:"method""`
-	Params map[string]string	`json:"params"`
+	Id      string            `json:"id"`
+	Jsonrpc string            `json:"jsonrpc"`
+	Method  string            `json:"method""`
+	Params  map[string]string `json:"params"`
 }
 
 type rpcPacketResponse struct {
-	Id string					`json:"id"`
-	Jsonrpc string				`json:"jsonrpc"`
-	Result interface{}			`json:"result"`
-	Error struct{
-		Code int32 		`json:"code"`
-		Message string	`json:"message"`
-	}							`json:"error,omitempty"`
+	Id      string      `json:"id"`
+	Jsonrpc string      `json:"jsonrpc"`
+	Result  interface{} `json:"result"`
+	Error   struct {
+		Code    int32  `json:"code"`
+		Message string `json:"message"`
+	} `json:"error,omitempty"`
 }
 
 type ExchangerChangelly struct {
-	name string
+	name   string
 	config InitConfig
 }
 
@@ -59,8 +59,8 @@ func (ec *ExchangerChangelly) Init(config interface{}) error {
 	configMap := config.(map[string]interface{})
 
 	ec.config = InitConfig{
-		ApiUrl: configMap["apiUrl"].(string),
-		ApiKey: configMap["apiKey"].(string),
+		ApiUrl:    configMap["apiUrl"].(string),
+		ApiKey:    configMap["apiKey"].(string),
 		ApiSecret: configMap["apiSecret"].(string),
 	}
 
@@ -95,73 +95,73 @@ func (ec *ExchangerChangelly) GetSupportedCurrencies() ([]CurrencyExchanger, err
 func (ec *ExchangerChangelly) GetTransactionMinimumAmount(from CurrencyExchanger,
 	to CurrencyExchanger) (float64, error) {
 
-		return 0.0, nil
+	return 0.0, nil
 }
 
 func (ec *ExchangerChangelly) GetExchangeAmount(from CurrencyExchanger,
 	to CurrencyExchanger, amount float64) (float64, error) {
-		var amountConverted float64
+	var amountConverted float64
 
-		responseData, err := ec.sendRequest(RpcGetExchangeAmount, map[string]string{
-			"from": from.Name,
-			"to": to.Name,
-			"amount": fmt.Sprintf("%f", amount),
-		})
+	responseData, err := ec.sendRequest(RpcGetExchangeAmount, map[string]string{
+		"from":   from.Name,
+		"to":     to.Name,
+		"amount": fmt.Sprintf("%f", amount),
+	})
 
-		if err == nil {
-			var responsePacket rpcPacketResponse
-			err = json.Unmarshal(responseData, &responsePacket)
-			if err != nil {
-				return amountConverted, err
-			}
-
-			responseResult, _ := responsePacket.Result.(string)
-			amountConverted, err = strconv.ParseFloat(responseResult, 64)
-			if err != nil {
-				return amountConverted, err
-			}
+	if err == nil {
+		var responsePacket rpcPacketResponse
+		err = json.Unmarshal(responseData, &responsePacket)
+		if err != nil {
+			return amountConverted, err
 		}
 
-		return amountConverted, nil
+		responseResult, _ := responsePacket.Result.(string)
+		amountConverted, err = strconv.ParseFloat(responseResult, 64)
+		if err != nil {
+			return amountConverted, err
+		}
+	}
+
+	return amountConverted, nil
 }
 
 func (ec *ExchangerChangelly) CreateTransaction(from CurrencyExchanger, to CurrencyExchanger,
 	amount float64, address string) (ExchangeTransaction, error) {
-		var transaction ExchangeTransaction
+	var transaction ExchangeTransaction
 
-		responseData, err := ec.sendRequest(RpcCreateTransaction, map[string]string{
-			"from": from.Name,
-			"to": to.Name,
-			"amount": fmt.Sprintf("%f", amount),
-			"address": address,
-		})
+	responseData, err := ec.sendRequest(RpcCreateTransaction, map[string]string{
+		"from":    from.Name,
+		"to":      to.Name,
+		"amount":  fmt.Sprintf("%f", amount),
+		"address": address,
+	})
 
-		if err == nil {
-			var responsePacket rpcPacketResponse
-			err = json.Unmarshal(responseData, &responsePacket)
-			if err != nil {
-				return transaction, err
-			}
-
-			if responsePacket.Error.Code != 0 {
-				transaction.Error = responsePacket.Error
-			} else {
-				responsePacketDict := responsePacket.Result.(map[string]interface{})
-				transaction.Id = responsePacketDict["id"].(string)
-				transaction.PayInAddress = responsePacketDict["payinAddress"].(string)
-				transaction.PayOutAddress = responsePacketDict["payoutAddress"].(string)
-			}
+	if err == nil {
+		var responsePacket rpcPacketResponse
+		err = json.Unmarshal(responseData, &responsePacket)
+		if err != nil {
+			return transaction, err
 		}
 
-		return transaction, nil
+		if responsePacket.Error.Code != 0 {
+			transaction.Error = responsePacket.Error
+		} else {
+			responsePacketDict := responsePacket.Result.(map[string]interface{})
+			transaction.Id = responsePacketDict["id"].(string)
+			transaction.PayInAddress = responsePacketDict["payinAddress"].(string)
+			transaction.PayOutAddress = responsePacketDict["payoutAddress"].(string)
+		}
+	}
+
+	return transaction, nil
 }
 
 func (ec *ExchangerChangelly) sendRequest(methodName string, params map[string]string) ([]byte, error) {
 	var requestData = rpcPacket{
-		Id: "1",
+		Id:      "1",
 		Jsonrpc: "2.0",
-		Method: methodName,
-		Params: params,
+		Method:  methodName,
+		Params:  params,
 	}
 
 	requestHash, err := ec.GetRequestHash(requestData)
@@ -207,4 +207,3 @@ func (ec *ExchangerChangelly) GetRequestHash(request rpcPacket) (string, error) 
 
 	return encodedHash, err
 }
-

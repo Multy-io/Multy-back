@@ -308,10 +308,10 @@ func (mStore *MongoUserStore) GetUsersReceiverAddressesByUserIds(userIds []strin
 		for _, wallet := range user.Wallets {
 			for _, address := range wallet.Adresses {
 				receiverStruct := Receiver{
-					ID: user.UserID,
+					ID:         user.UserID,
 					CurrencyID: wallet.CurrencyID,
-					NetworkID: wallet.NetworkID,
-					Address: address.Address,
+					NetworkID:  wallet.NetworkID,
+					Address:    address.Address,
 				}
 				receivers = append(receivers, receiverStruct)
 			}
