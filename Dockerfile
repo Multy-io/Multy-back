@@ -22,15 +22,18 @@ ONBUILD LABEL org.label-schema.git-tag="$GIT_TAG"
 
 
 FROM base as multy-back
-COPY --from=builder /go/src/github.com/Multy-io/Multy-back/cmd/multy-back/multy-back /multy-back
-ENTRYPOINT /multy-back
+WORKDIR /multy
+COPY --from=builder /go/src/github.com/Multy-io/Multy-back/cmd/multy-back/multy-back /multy/multy-back
+ENTRYPOINT /multy/multy-back
 
 
 FROM base as multy-btc-node-service
-COPY --from=builder /go/src/github.com/Multy-io/Multy-back/cmd/ns-btc/ns-btc /ns-btc
-ENTRYPOINT /ns-btc
+WORKDIR /multy
+COPY --from=builder /go/src/github.com/Multy-io/Multy-back/cmd/ns-btc/ns-btc /multy/ns-btc
+ENTRYPOINT /multy/ns-btc
 
 
 FROM base as multy-eth-node-service
-COPY --from=builder /go/src/github.com/Multy-io/Multy-back/cmd/ns-eth/ns-eth /ns-eth
-ENTRYPOINT /ns-eth
+WORKDIR /multy
+COPY --from=builder /go/src/github.com/Multy-io/Multy-back/cmd/ns-eth/ns-eth /multy/ns-eth
+ENTRYPOINT /multy/ns-eth
