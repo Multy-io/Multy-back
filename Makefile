@@ -61,7 +61,7 @@ docker-build-images: $(DOCKER_IMAGES)
 # Builds an image with tag:git_commit_hash
 $(DOCKER_IMAGES):
 	docker build --target $@ \
-		--tag $@:$(DOCKER_BUILD_TAG) \
+		--tag $(DOCKERHUB_ACCOUNT)/$@:$(DOCKER_BUILD_TAG) \
 		--build-arg BUILD_DATE=$(BUILDTIME) \
 		--build-arg GIT_COMMIT=$(COMMIT) \
 		--build-arg GIT_BRANCH=$(BRANCH) \
@@ -70,7 +70,7 @@ $(DOCKER_IMAGES):
 
 # Explicitly set the tag: changes tag from git_commit_hash to $(DOCKER_TAG) for all images
 docker-retag-images:
-	$(foreach docker_image,$(DOCKER_IMAGES), docker tag $(docker_image):$(DOCKER_BUILD_TAG) $(docker_image):$(DOCKER_TAG);)
+	$(foreach docker_image,$(DOCKER_IMAGES), docker tag $(DOCKERHUB_ACCOUNT)/$(docker_image):$(DOCKER_BUILD_TAG) $(DOCKERHUB_ACCOUNT)/$(docker_image):$(DOCKER_TAG);)
 
 # pushes images tagged with $(DOCKER_TAG) to dockerhub
 docker-push-images:
