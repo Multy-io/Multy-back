@@ -46,7 +46,7 @@ func (restClient *RestClient) GetExchangerAmountExchange() gin.HandlerFunc {
 		type RequestGetExchangeAmount struct {
 			From   string  `json:"from"`
 			To     string  `json:"to"`
-			Amount float64 `json:"amount"`
+			Amount string  `json:"amount"`
 		}
 
 		var requestData RequestGetExchangeAmount
@@ -57,6 +57,7 @@ func (restClient *RestClient) GetExchangerAmountExchange() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": msgErrRequestBodyError})
 			return
 		}
+
 		changellyExchanger, _ := restClient.
 			ExchangerFactory.
 			GetExchanger(exchanger.ExchangeChangellyCanonicalName)
@@ -84,7 +85,7 @@ func (restClient *RestClient) CreateExchangerTransaction() gin.HandlerFunc {
 		type RequestCreateTransaction struct {
 			From    string  `json:"from"`
 			To      string  `json:"to"`
-			Amount  float64 `json:"amount"`
+			Amount  string  `json:"amount"`
 			Address string  `json:"address"`
 		}
 

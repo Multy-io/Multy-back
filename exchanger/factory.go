@@ -63,8 +63,8 @@ type CommonExchangerInterface interface {
 	Init(config interface{}) error
 	GetName() string
 	GetSupportedCurrencies() ([]CurrencyExchanger, error)
-	GetTransactionMinimumAmount(from CurrencyExchanger, to CurrencyExchanger) (float64, error)
-	GetExchangeAmount(from CurrencyExchanger, to CurrencyExchanger, amount float64) (float64, error)
-	CreateTransaction(from CurrencyExchanger, to CurrencyExchanger, amount float64, address string) (
+	GetTransactionMinimumAmount(from CurrencyExchanger, to CurrencyExchanger) (string, error)
+	GetExchangeAmount(from CurrencyExchanger, to CurrencyExchanger, amount string) (string, error)
+	CreateTransaction(from CurrencyExchanger, to CurrencyExchanger, amount string, address string) (
 		ExchangeTransaction, error)
 }
