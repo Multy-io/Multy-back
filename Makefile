@@ -73,7 +73,7 @@ docker-retag-images:
 
 # pushes images tagged with $(DOCKER_TAG) to dockerhub
 docker-push-images:
-	$(foreach docker_image,$(DOCKER_IMAGES), focker push $(docker_image):$(DOCKER_TAG);)
+	$(foreach docker_image,$(DOCKER_IMAGES), docker push $(docker_image):$(DOCKER_TAG);)
 
 .PHONY: test
 test:
