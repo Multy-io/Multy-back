@@ -13,6 +13,7 @@ import (
 	"github.com/Multy-io/Multy-back/exchanger"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
 func (restClient *RestClient) GetExchangerSupportedCurrencies() gin.HandlerFunc {
@@ -46,7 +47,7 @@ func (restClient *RestClient) GetExchangerAmountExchange() gin.HandlerFunc {
 		type RequestGetExchangeAmount struct {
 			From   string  `json:"from"`
 			To     string  `json:"to"`
-			Amount float64 `json:"amount"`
+			Amount string  `json:"amount"`
 		}
 
 		var requestData RequestGetExchangeAmount
@@ -57,6 +58,15 @@ func (restClient *RestClient) GetExchangerAmountExchange() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": msgErrRequestBodyError})
 			return
 		}
+
+		//parsedAmount, err := strconv.ParseFloat(requestData.Amount, 64)
+		//if err != nil {
+		//	restClient.log.Errorf("CreateExchangerTransaction: Failed to parse amount: %s\t[addr=%s]",
+		//		err.Error(), c.Request.RemoteAddr)
+		//	c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": msgErrRequestBodyError})
+		//	return
+		//}
+
 		changellyExchanger, _ := restClient.
 			ExchangerFactory.
 			GetExchanger(exchanger.ExchangeChangellyCanonicalName)
@@ -84,7 +94,7 @@ func (restClient *RestClient) CreateExchangerTransaction() gin.HandlerFunc {
 		type RequestCreateTransaction struct {
 			From    string  `json:"from"`
 			To      string  `json:"to"`
-			Amount  float64 `json:"amount"`
+			Amount  string  `json:"amount"`
 			Address string  `json:"address"`
 		}
 
@@ -97,13 +107,21 @@ func (restClient *RestClient) CreateExchangerTransaction() gin.HandlerFunc {
 			return
 		}
 
+		parsedAmount, err := strconv.ParseFloat(requestData.Amount, 64)
+		if err != nil {
+			restClient.log.Errorf("CreateExchangerTransaction: Failed to parse amount: %s\t[addr=%s]",
+				err.Error(), c.Request.RemoteAddr)
+			c.JSON(http.StatusBadRequest, gin.H{"code": http.StatusBadRequest, "message": msgErrRequestBodyError})
+			return
+		}
+
 		changellyExchanger, _ := restClient.
 			ExchangerFactory.
 			GetExchanger(exchanger.ExchangeChangellyCanonicalName)
 		transaction, err := changellyExchanger.CreateTransaction(
 			exchanger.CurrencyExchanger{Name: requestData.From},
 			exchanger.CurrencyExchanger{Name: requestData.To},
-			requestData.Amount,
+			parsedAmount,
 			requestData.Address,
 		)
 
