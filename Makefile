@@ -17,6 +17,7 @@ DOCKER_IMAGES=multy-back multy-btc-node-service multy-eth-node-service
 DOCKER_BUILD_TAG=$(COMMIT)
 # The tag image is pushed with
 DOCKER_TAG?=$(DOCKER_BUILD_TAG)
+DOCKERHUB_ACCOUNT=multyio
 
 TARGET_OS=
 TARGET_ARCH=
@@ -73,7 +74,7 @@ docker-retag-images:
 
 # pushes images tagged with $(DOCKER_TAG) to dockerhub
 docker-push-images:
-	$(foreach docker_image,$(DOCKER_IMAGES), docker push $(docker_image):$(DOCKER_TAG);)
+	$(foreach docker_image,$(DOCKER_IMAGES), docker push $(DOCKERHUB_ACCOUNT)/$(docker_image):$(DOCKER_TAG);)
 
 .PHONY: test
 test:
