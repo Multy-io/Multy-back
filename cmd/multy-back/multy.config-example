@@ -15,8 +15,8 @@
     "Database": {
         "Address": "localhost:27000",
 
-        "Username": "multy",
-        "Password": "17bDaBWHx4r5X",
+        "Username": "",
+        "Password": "",
 
         "TableUsers": "UserCollection",
         "DBUsers": "userDB",
@@ -42,7 +42,6 @@
 
         "TableTxsDataEOSMain": "TableTxsDataEOSMain",
         "TableTxsDataEOSTest": "TableTxsDataEOSTest"
-
 
     },
 
@@ -93,6 +92,18 @@
             "NetworkID": 1,
             "AccuracyRange": -1,
             "GRPCUrl": "localhost:7722"
+        }
+    ],
+
+    "Exchangers": [
+        {
+            "name": "changelly",
+            "isActive": true,
+            "config": {
+                "apiUrl": "https://api.changelly.com",
+                "apiKey": "testApiKey",
+                "apiSecret": "testApiSecret"
+            }
         }
     ],
 

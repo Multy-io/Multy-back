@@ -40,7 +40,8 @@ const (
 	ReceiverOn = "event:receiver:on"
 	SenderOn   = "event:sender:on"
 
-	SenderCheck = "event:sender:check"
+	SenderCheck                  = "event:sender:check"
+	GetReceiversAvailableWallets = "event:receiver:wallets:available"
 
 	Filter = "event:filter"
 
@@ -161,6 +162,28 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 		}
 		c.Emit(SenderCheck, nearReceivers)
 		return nearReceivers
+	})
+
+	server.On(GetReceiversAvailableWallets, func(c *gosocketio.Channel, nearIDs store.NearVisible) {
+		pool.log.Debug("GetReceiversAvailableWallets event requested")
+
+		nearReceivers := []store.Receiver{}
+		userIds := []string{}
+
+		for _, id := range nearIDs.IDs {
+			if receiverProto, ok := receivers.Load(id); ok {
+				userIds = append(userIds, receiverProto.(store.Receiver).ID)
+			}
+		}
+
+		if len(userIds) > 0 {
+			nearReceivers, err = ratesDB.GetUsersReceiverAddressesByUserIds(userIds)
+			if err != nil {
+				pool.log.Errorf("An error occurred on GetUsersReceiverAddresses: %+v\n", err.Error())
+			}
+		}
+
+		c.Emit(GetReceiversAvailableWallets, nearReceivers)
 	})
 
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {

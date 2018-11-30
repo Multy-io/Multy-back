@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/jekabolt/slf"
 	"github.com/gorilla/websocket"
+	"github.com/jekabolt/slf"
 )
 
 const (
