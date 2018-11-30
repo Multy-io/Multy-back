@@ -4,7 +4,6 @@ env:
     - DOCKER_USERNAME=multyio
     # encrypted DOCKER_PASSWORD
     - secure: "OKcE03797iARW9aW+VTEhxagVJN6Zx8eJMLqz0kPd4HrI7P1zYcOvB2XauHLf2rslCXQ7mUvNjoe2YLiTy4lR0OKh1+04HPFCt190FntOvp4B3FR445fE2wTgiOnELqI6efr8kjCb2wPj0v5/ki6vzhUbpwu76QEzA9DpLJSt8IvH4V5rqfdYJAdAZYFSpTeT5eZzPXZFGFPUv9Qo7cJbZFpFU3puz+NtrKOAMA/Y0IzagGMb+vJ9gHeHOyDKfDDWRVyG6+ZWVIL2vwbxcfLPWuCwqsi7n9xOLvVyJ2fLtNaYKMtN9zro3IWcE3Elqs9loDML/plAROK1JKtFzGZhEDMOHWqlI2YmrGjJ8b5kpvBRr/do7MuL0Hd/m+jUuGsZ8Zoq1UWdKleGURj+1pxjQ4T5l6YIwiI1LIw0nPpDu8JAHov7pLVvjvDH5H1jDqwy3DZnReDlTZA5HcHf2EwG6MmwIZcBf+1QbS7F0pvi59RoGjgVTzvRQVEfoLoaDf/UJv6q7CVVXnCRf2cpPbATsoenLZJnE+OK1a8jlElm9j8Bgy+lSdIMiwyBfAQsRDW+ivejB7HqNv5wFZZwTFjXcewC3Or5V64A9XtlUHn3AqMnUkLVoU1ygdPRZfO5roQfJvZADpQSL26ceD1sfSPHIh1aH46NRKXJvfaZbkZN70="
-    - IMAGE=multyio/multy-back
 
 services:
   - docker
@@ -13,19 +12,18 @@ before_script:
   - docker info
 
 script:
-  - docker build -t "$IMAGE" .
+  - make docker-build-images
 
 deploy:
   - provider: script
     script: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
-            docker push "$IMAGE"
+            DOCKER_TAG=latest make docker-retag-images docker-push-images
     on:
-      branch: master
+      branch: dev
 
   - provider: script
     script: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
-            docker tag "$IMAGE" "$IMAGE:$TRAVIS_TAG" &&
-            docker push "$IMAGE:$TRAVIS_TAG" 
+            DOCKER_TAG="$TRAVIS_TAG" make docker-retag-images docker-push-images
     on:
        tags: true
        all_branches: true
