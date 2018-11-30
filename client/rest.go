@@ -7,14 +7,10 @@ package client
 
 import (
 	"context"
-	"crypto/hmac"
 	"crypto/sha512"
-	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"github.com/Multy-io/Multy-back/exchanger"
-	"io/ioutil"
 	"net/http"
 	"sort"
 	"strconv"
@@ -32,7 +28,7 @@ import (
 	ethpb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
-	mgo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -147,7 +143,6 @@ func SetRestHandlers(
 		v1.GET("/wallets/transactions/:currencyid/:networkid/:walletindex", restClient.getWalletTransactionsHistory())
 		v1.POST("/wallet/name", restClient.changeWalletName())
 		v1.POST("/resync/wallet/:currencyid/:networkid/:walletindex/*type", restClient.resyncWallet())
-		v1.GET("/exchange/changelly/list", restClient.changellyListCurrencies())
 		v1.GET("/multisig/estimate/:contractaddress", restClient.estimateMultisig())
 		v1.POST("/wallet/convert/broken", restClient.convertToBroken())
 
@@ -3135,63 +3130,4 @@ func (restClient *RestClient) convertToBroken() gin.HandlerFunc {
 
 type brokenWallets struct {
 	Addresses []string `json:"addresses"`
-}
-
-func (restClient *RestClient) changellyListCurrencies() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		apiUrl := "https://api.changelly.com"
-		apiKey := "8015e09ba78243ad889db470ec48fed4"
-		apiSecret := "712bfcf899dd235b0af1d66922d5962e8c85a909635f838688a38b5f12c4d03a"
-		cr := ChangellyReqest{
-			JsonRpc: "2.0",
-			ID:      1,
-			Method:  "getCurrencies",
-			Params:  []string{},
-		}
-		bs, err := json.Marshal(cr)
-		if err != nil {
-			restClient.log.Errorf("changellyListCurrencies: json.Marshal: %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			//
-			return
-		}
-
-		sign := ComputeHmac512(bs, apiSecret)
-		req, err := http.NewRequest("GET", apiUrl, nil)
-		if err != nil {
-			restClient.log.Errorf("changellyListCurrencies: http.NewRequest: %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			//
-			return
-		}
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("api-key", apiKey)
-		req.Header.Set("sign", sign)
-
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			restClient.log.Errorf("changellyListCurrencies: http.Client.Do: %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
-			//
-			return
-		}
-		defer resp.Body.Close()
-		body, _ := ioutil.ReadAll(resp.Body)
-		c.JSON(http.StatusOK, gin.H{
-			"code":    resp.StatusCode,
-			"message": string(body),
-		})
-	}
-}
-
-func ComputeHmac512(message []byte, secret string) string {
-	key := []byte(secret)
-	h := hmac.New(sha512.New, key)
-	h.Write(message)
-	return base64.StdEncoding.EncodeToString(h.Sum(nil))
-}
-
-type ChangellyReqest struct {
-	JsonRpc string   `json:"jsonrpc"`
-	ID      int      `json:"id"`
-	Method  string   `json:"method"`
-	Params  []string `json:"params"`
 }
