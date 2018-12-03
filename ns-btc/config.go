@@ -9,6 +9,7 @@ import "github.com/Multy-io/Multy-back/store"
 
 // Configuration is a struct with all service options
 type Configuration struct {
+	CanaryTest          bool
 	Name                string
 	GrpcPort            string
 	BTCSertificate      string

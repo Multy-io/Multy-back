@@ -17,15 +17,18 @@ import (
 )
 
 var (
-	log = slf.WithContext("main")
+	log = slf.WithContext("multy-back")
 
+	// Set externaly during build
 	branch    string
 	commit    string
-	buildtime string
 	lasttag   string
+	buildtime string
+
 	// TODO: add all default params
 	globalOpt = multy.Configuration{
-		Name: "my-test-back",
+		CanaryTest: false,
+		Name:       "my-test-back",
 		Database: store.Conf{
 			Address:             "localhost:27017",
 			DBUsers:             "userDB-test",
@@ -43,13 +46,19 @@ var (
 )
 
 func main() {
-	config.ReadGlobalConfig(&globalOpt, "multy configuration")
-	log.Infof("CONFIGURATION=%+v", globalOpt.SupportedNodes)
-
+	log.Info("============================================================")
 	log.Infof("branch: %s", branch)
 	log.Infof("commit: %s", commit)
 	log.Infof("build time: %s", buildtime)
 	log.Infof("tag: %s", lasttag)
+
+	config.ReadGlobalConfig(&globalOpt, "multy configuration")
+	log.Infof("CONFIGURATION=%+v", globalOpt.SupportedNodes)
+
+	if globalOpt.CanaryTest == true {
+		log.Info("This is a CanaryTest run, quitting immediatelly...")
+		return
+	}
 
 	sc := store.ServerConfig{
 		BranchName: branch,

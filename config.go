@@ -13,6 +13,7 @@ import (
 
 // Configuration is a struct with all service options
 type Configuration struct {
+	CanaryTest        bool
 	Name              string
 	Database          store.Conf
 	SocketioAddr      string

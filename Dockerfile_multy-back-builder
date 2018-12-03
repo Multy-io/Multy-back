@@ -1,0 +1,37 @@
+# golang:1-alpine3.8 can't be used as base image since apline-based gcc
+# fails to compile github.com/ethereum/go-ethereum/crypto/secp256k1/secp256.go
+FROM golang:1.9.4 as multy-back-builder
+LABEL org.label-schema.schema-version = "1.0"
+LABEL org.label-schema.url = "http://multy.io"
+LABEL org.label-schema.vcs-url = "https://github.com//multy-io/multy-back"
+LABEL org.label-schema.name = "Multy Back builder image"
+LABEL org.label-schema.description = "Collection of cached dependencies and build tools to simplify and speed up building multy-back on both CI/CD server and machine."
+LABEL org.label-schema.usage = "Use as a base image: 'FROM multyio/multy-back-builder'"
+
+ARG BUILD_DATE
+ARG GIT_COMMIT
+ARG GIT_BRANCH
+ARG GIT_TAG
+LABEL org.label-schema.build-date="$BUILD_DATE"
+LABEL org.label-schema.git-branch="$GIT_BRANCH"
+LABEL org.label-schema.vcs-ref="$GIT_COMMIT"
+LABEL org.label-schema.version="$GIT_TAG"
+
+# Get a version of multy-back from current sources, fetch all dependencies, clear multy-back sources
+COPY . $GOPATH/src/github.com/Multy-io/Multy-back
+WORKDIR $GOPATH/src/github.com/Multy-io/Multy-back
+
+# Download all dependencies of the multy-back
+RUN go get -v ./...
+
+# Get, build and install musl-gcc - a compiler wrapper and libc implementation 
+# that allows static builds with cgo to run in alpine-based dockers.
+RUN curl http://www.musl-libc.org/releases/musl-1.1.20.tar.gz | tar -xz \
+    && cd ./musl-1.1.20 \
+    && ./configure --prefix=/usr && make && make install
+
+# Check that project can be built and binaries appear to work Ok on this platform.
+RUN make build -B && make canary-test && make test
+
+# Cleanup
+RUN rm -rf ./*
