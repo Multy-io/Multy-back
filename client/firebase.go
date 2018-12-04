@@ -111,6 +111,11 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 				Topic: topic,
 			}
 
+<<<<<<< HEAD
+=======
+			fClient.log.Debugf("\n\n MessageToSend : %v\n\n", messageToSend)
+
+>>>>>>> release_1.3
 			ctx := context.Background()
 			client, err := service.Messaging(ctx)
 			if err != nil {

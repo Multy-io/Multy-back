@@ -6,11 +6,8 @@ See LICENSE for details
 package client
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
-	"net/http"
 	"sync"
 	"time"
 
@@ -24,8 +21,7 @@ var (
 )
 
 const (
-	saveToDBInterval       = time.Second * 10
-	updateForExchangeChart = time.Hour
+	saveToDBInterval = time.Second * 10
 )
 
 // StockRate stores rates from specific stock and protected with mutex
@@ -78,9 +74,6 @@ func newExchangeChart(db store.UserStore) (*exchangeChart, error) {
 	}
 	chart.log.Debug("new exchange chart")
 
-	//moved to next release
-	//chart.getDayAPIBitstamp()
-
 	gDaxConn, err := chart.newGdaxAPI(chart.log)
 	if err != nil {
 		return nil, fmt.Errorf("initGdaxAPI: %s", err)
@@ -127,7 +120,6 @@ func (eChart *exchangeChart) run() error {
 
 func (eChart *exchangeChart) saveToDB() {
 	eChart.rates.exchangeGdax.m.Lock()
-	//eChart.log.Debugf("gdax=%+v", eChart.rates.exchangeGdax.exchange)
 	eChart.db.InsertExchangeRate(*eChart.rates.exchangeGdax.exchange, exchangeDdax)
 	eChart.rates.exchangeGdax.m.Unlock()
 
@@ -140,6 +132,7 @@ func (eChart *exchangeChart) saveToDB() {
 	eChart.rates.exchangeBitfinex.m.Unlock()
 }
 
+<<<<<<< HEAD
 func (eChart *exchangeChart) updateDayRates() {
 	eChart.rates.mDay.Lock()
 	_, err := eChart.db.GetExchangeRatesDay()
@@ -201,17 +194,17 @@ func (eChart *exchangeChart) getExchangeDay() []store.RatesAPIBitstamp {
 	return eChart.rates.BTCtoUSDDay
 }
 
+=======
+>>>>>>> release_1.3
 func (eChart *exchangeChart) getExchangeGdax() *store.ExchangeRates {
 	eChart.rates.exchangeGdax.m.Lock()
 	defer eChart.rates.exchangeGdax.m.Unlock()
-
 	return eChart.rates.exchangeGdax.exchange
 }
 
 func (eChart *exchangeChart) getExchangePoloniex() *store.ExchangeRates {
 	eChart.rates.exchangePoloniex.m.Lock()
 	defer eChart.rates.exchangePoloniex.m.Unlock()
-
 	return eChart.rates.exchangePoloniex.exchange
 }
 

@@ -12,28 +12,35 @@ import (
 	"google.golang.org/grpc"
 	mgo "gopkg.in/mgo.v2"
 
+	pb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
 	"github.com/Multy-io/Multy-back/currencies"
-	pb "github.com/Multy-io/Multy-back/node-streamer/btc"
 	"github.com/Multy-io/Multy-back/store"
 	nsq "github.com/bitly/go-nsq"
+	"github.com/graarh/golang-socketio"
 	"github.com/jekabolt/slf"
 )
 
 // BTCConn is a main struct of package
 type BTCConn struct {
 	NsqProducer      *nsq.Producer // a producer for sending data to clients
-	CliTest          pb.NodeCommuunicationsClient
-	CliMain          pb.NodeCommuunicationsClient
+	CliTest          pb.NodeCommunicationsClient
+	CliMain          pb.NodeCommunicationsClient
 	WatchAddressTest chan pb.WatchAddress
 	WatchAddressMain chan pb.WatchAddress
 
 	BtcMempool     sync.Map
 	BtcMempoolTest sync.Map
 
+<<<<<<< HEAD
 	VersionMain store.NodeVersion
 	VersionTest store.NodeVersion
 
 	Resync sync.Map
+=======
+	Resync *sync.Map
+
+	WsServer *gosocketio.Server
+>>>>>>> release_1.3
 }
 
 var log = slf.WithContext("btc")
@@ -45,7 +52,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	cli := &BTCConn{
 		BtcMempool:     sync.Map{},
 		BtcMempoolTest: sync.Map{},
-		Resync:         sync.Map{},
+		Resync:         &sync.Map{},
 	}
 
 	cli.WatchAddressMain = make(chan pb.WatchAddress)
@@ -72,6 +79,13 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	if err != nil {
 		return nil, err
 	}
+
+	// HACK: this made to acknowledge that queried data has already inserted to db
+	db.SetSafe(&mgo.Safe{
+		W:        1,
+		WTimeout: 100,
+		J:        true,
+	})
 	if err != nil {
 		log.Errorf("RunProcess: can't connect to DB: %s", err.Error())
 		return cli, fmt.Errorf("mgo.Dial: %s", err.Error())
@@ -94,39 +108,39 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	restoreState = db.DB(dbConf.DBRestoreState).C(dbConf.TableState)
 
 	// setup main net
-	urlMain, err := fethCoinType(coinTypes, currencies.Bitcoin, currencies.Main)
+	coinTypeMain, err := store.FetchCoinType(coinTypes, currencies.Bitcoin, currencies.Main)
 	if err != nil {
-		return cli, fmt.Errorf("fethCoinType: %s", err.Error())
+		return cli, fmt.Errorf("fetchCoinType: %s", err.Error())
 	}
 
-	cliMain, err := initGrpcClient(urlMain)
+	cliMain, err := initGrpcClient(coinTypeMain.GRPCUrl)
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
-
-	setGRPCHandlers(cliMain, cli.NsqProducer, currencies.Main, cli.WatchAddressMain, cli.BtcMempool, cli.Resync)
-
 	cli.CliMain = cliMain
-	log.Infof("InitHandlers: initGrpcClient: Main: √")
 
 	// setup testnet
-	urlTest, err := fethCoinType(coinTypes, currencies.Bitcoin, currencies.Test)
+	coinTypeTest, err := store.FetchCoinType(coinTypes, currencies.Bitcoin, currencies.Test)
 	if err != nil {
-		return cli, fmt.Errorf("fethCoinType: %s", err.Error())
+		return cli, fmt.Errorf("fetchCoinType: %s", err.Error())
 	}
-	cliTest, err := initGrpcClient(urlTest)
+	cliTest, err := initGrpcClient(coinTypeTest.GRPCUrl)
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}
-	setGRPCHandlers(cliTest, cli.NsqProducer, currencies.Test, cli.WatchAddressTest, cli.BtcMempoolTest, cli.Resync)
 
 	cli.CliTest = cliTest
+
+	cli.setGRPCHandlers(currencies.Test, coinTypeTest.AccuracyRange)
 	log.Infof("InitHandlers: initGrpcClient: Test: √")
+
+	cli.setGRPCHandlers(currencies.Main, coinTypeMain.AccuracyRange)
+	log.Infof("InitHandlers: initGrpcClient: Main: √")
 
 	return cli, nil
 }
 
-func initGrpcClient(url string) (pb.NodeCommuunicationsClient, error) {
+func initGrpcClient(url string) (pb.NodeCommunicationsClient, error) {
 	conn, err := grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
 		log.Errorf("initGrpcClient: grpc.Dial: %s", err.Error())
@@ -134,29 +148,6 @@ func initGrpcClient(url string) (pb.NodeCommuunicationsClient, error) {
 	}
 
 	// Create a new  client
-	client := pb.NewNodeCommuunicationsClient(conn)
+	client := pb.NewNodeCommunicationsClient(conn)
 	return client, nil
 }
-
-func fethCoinType(coinTypes []store.CoinType, currencyID, networkID int) (string, error) {
-	for _, ct := range coinTypes {
-		if ct.СurrencyID == currencyID && ct.NetworkID == networkID {
-			return ct.GRPCUrl, nil
-		}
-	}
-	return "", fmt.Errorf("fethCoinType: no such coin in config")
-}
-
-// // BtcTransaction stuct for ws notifications
-// type BtcTransaction struct {
-// 	TransactionType int    `json:"transactionType"`
-// 	Amount          int64  `json:"amount"`
-// 	TxID            string `json:"txid"`
-// 	Address         string `json:"address"`
-// }
-
-// // BtcTransactionWithUserID sub-stuct for ws notifications
-// type BtcTransactionWithUserID struct {
-// 	NotificationMsg *BtcTransaction
-// 	UserID          string
-// }

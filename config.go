@@ -23,8 +23,16 @@ type Configuration struct {
 	DonationAddresses []store.DonationInfo
 	MultyVerison      store.ServerConfig
 	// ExchangerConfiguration core.ManagerConfiguration
+<<<<<<< HEAD
 	ServicesInfo   []store.ServiceInfo
 	Secretkey      string
+=======
+	ServicesInfo []store.ServiceInfo
+	Secretkey    string
+	store.MobileVersions
+	BrowserDefault store.BrowserDefault
+
+>>>>>>> release_1.3
 	SupportedNodes []store.CoinType
 	DeviceVersions store.Versions
 	NSVersions     store.NodeVersion

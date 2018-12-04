@@ -46,7 +46,7 @@ type GinJWTMiddleware struct {
 	// Callback function that should perform the authentication of the user based on userID and
 	// password. Must return true on success, false on failure. Required.
 	// Option return user id, if so, user id will be stored in Claim Array.
-	Authenticator func(userID string, deviceID string, pushToken string, deviceType int, c *gin.Context) (store.User, bool)
+	Authenticator func(userID string, deviceID string, pushToken string, deviceType int, seedPhraseType int, c *gin.Context) (store.User, bool)
 
 	// Callback function that should perform the authorization of the authenticated user. Called
 	// only after an authentication success. Must return true on success, false on failure.
@@ -85,11 +85,12 @@ type GinJWTMiddleware struct {
 
 // Login form structure.
 type Login struct {
-	UserID     string `form:"userID" json:"userID" binding:"required"`
-	DeviceID   string `form:"deviceID" json:"deviceID" binding:"required"`
-	PushToken  string `form:"pushToken" json:"pushToken" binding:"required"`
-	AppVersion string `form:"appVersion" json:"appVersion" binding:"required"`
-	DeviceType int    `form:"deviceType" json:"deviceType" binding:"required"`
+	UserID         string `form:"userID" json:"userID" binding:"required"`
+	DeviceID       string `form:"deviceID" json:"deviceID" binding:"required"`
+	PushToken      string `form:"pushToken" json:"pushToken" binding:"required"`
+	AppVersion     string `form:"appVersion" json:"appVersion" binding:"required"`
+	DeviceType     int    `form:"deviceType" json:"deviceType" binding:"required"`
+	SeedPhraseType int    `form:"seedPhraseType" json:"seedPhraseType"`
 }
 
 // MiddlewareInit initialize jwt configs.
@@ -302,6 +303,7 @@ func (mw *GinJWTMiddleware) jwtFromCookie(c *gin.Context, key string) (string, e
 func (mw *GinJWTMiddleware) parseToken(c *gin.Context) (*jwt.Token, error) {
 	var token string
 	var err error
+
 	fmt.Println("[HEADERS] - parseToken : ", c.Request.Header)
 	parts := strings.Split(mw.TokenLookup, ":")
 	switch parts[0] {

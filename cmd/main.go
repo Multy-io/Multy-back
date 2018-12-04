@@ -6,10 +6,6 @@ See LICENSE for details
 package main
 
 import (
-	"os"
-	"os/signal"
-	"syscall"
-
 	"github.com/jekabolt/config"
 	_ "github.com/jekabolt/slflog"
 
@@ -42,26 +38,26 @@ var (
 		SocketioAddr:   "localhost:7780",
 		NSQAddress:     "nsq:4150",
 		BTCNodeAddress: "localhost:18334",
-		// Etherium: ethereum.Conf{
-		// 	Address: "88.198.47.112",
-		// 	RpcPort: ":18545",
-		// 	WsPort:  ":8545",
-		// },
 	}
 )
 
 func main() {
 	config.ReadGlobalConfig(&globalOpt, "multy configuration")
+<<<<<<< HEAD
 
 	log.Error("--------------------------------new multy back server session")
 
 	log.Infof("CONFIGURATION=%+v", globalOpt)
+=======
+	log.Infof("CONFIGURATION=%+v", globalOpt.SupportedNodes)
+>>>>>>> release_1.3
 
 	log.Infof("branch: %s", branch)
 	log.Infof("commit: %s", commit)
 	log.Infof("build time: %s", buildtime)
 	log.Infof("tag: %s", lasttag)
 
+<<<<<<< HEAD
 	gracefulStop := make(chan os.Signal)
 
 	signal.Notify(gracefulStop, os.Interrupt, syscall.SIGTERM)
@@ -74,6 +70,8 @@ func main() {
 		os.Exit(1)
 	}()
 
+=======
+>>>>>>> release_1.3
 	sc := store.ServerConfig{
 		BranchName: branch,
 		CommitHash: commit,
@@ -87,73 +85,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Server initialization: %s\n", err.Error())
 	}
-
-	// TODO: Last state
-	// go func() {
-	// var ls store.LastState
-
-	// raw, err := ioutil.ReadFile("./state.json")
-	// if err != nil {
-	// 	log.Errorf("ioutil.ReadFile: %v", err.Error())
-	// }
-	// log.Errorf("\n\n\nLAT STATE\n\n\n %v", string(raw))
-	// json.Unmarshal(raw, &ls)
-
-	// rp, err := mu.BTC.CliMain.SyncState(context.Background(), &btcpb.BlockHeight{
-	// 	Height: ls.BTCMainBlock,
-	// })
-
-	// log.Errorf("\n\n\nmu.BTC.CliMain\n\n\n %v", ls.BTCMainBlock)
-
-	// if err != nil {
-	// 	log.Errorf("mu.BTC.CliMain.SyncState %v", err.Error())
-	// }
-	// log.Debugf("mu.BTC.CliMainSyncState: Reply: %v", rp)
-
-	// rp, err = mu.BTC.CliTest.SyncState(context.Background(), &btcpb.BlockHeight{
-	// 	Height: ls.BTCTestBlock,
-	// })
-
-	// log.Errorf("\n\n\nmu.BTC.CliTest\n\n\n %v", ls.BTCTestBlock)
-	// if err != nil {
-	// 	log.Errorf("mu.BTC.CliTest.SyncState %v", err.Error())
-	// }
-	// log.Debugf("mu.BTC.CliMainSyncState: Reply: %v", rp)
-	// // }()
-
-	// go func() {
-	// 	sig := <-gracefulStop
-	// 	fmt.Printf("caught sig: %+v", sig)
-	// 	fmt.Println("Gracefull stop")
-	// 	time.Sleep(time.Second)
-	// 	main, err := mu.BTC.CliMain.EventGetBlockHeight(context.Background(), &btcpb.Empty{})
-	// 	if err != nil {
-	// 		log.Errorf("mu.BTC.CliMain.EventGetBlockHeight %v", err.Error())
-	// 	}
-	// 	test, _ := mu.BTC.CliTest.EventGetBlockHeight(context.Background(), &btcpb.Empty{})
-	// 	if err != nil {
-	// 		log.Errorf("mu.BTC.CliTest.EventGetBlockHeight %v", err.Error())
-	// 	}
-
-	// 	ls := store.LastState{
-	// 		BTCMainBlock: main.GetHeight(),
-	// 		BTCTestBlock: test.GetHeight(),
-	// 		OffTime:      time.Now().String(),
-	// 	}
-
-	// 	fileState, err := json.Marshal(&ls)
-	// 	if err != nil {
-	// 		log.Errorf("json.Marshal %v", err.Error())
-	// 	}
-	// 	err = ioutil.WriteFile("state.json", fileState, 0644)
-	// 	if err != nil {
-	// 		log.Errorf("json.Marshal %v", err.Error())
-	// 	}
-
-	// 	log.Infof("\n\noff state main : %v test: %v\n\n", main, test)
-
-	// 	os.Exit(0)
-	// }()
 
 	if err = mu.Run(); err != nil {
 		log.Fatalf("Server running: %s\n", err.Error())

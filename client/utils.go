@@ -23,11 +23,12 @@ func decodeBody(c *gin.Context, to interface{}) error {
 	return err
 }
 
-func createUser(userid string, device []store.Device, wallets []store.Wallet) store.User {
+func createUser(userid string, device []store.Device, wallets []store.Wallet, seedPhraseType int) store.User {
 	return store.User{
-		UserID:  userid,
-		Devices: device,
-		Wallets: wallets,
+		UserID:         userid,
+		Devices:        device,
+		Wallets:        wallets,
+		SeedPhraseType: seedPhraseType,
 	}
 }
 func createDevice(deviceid, ip, jwt, pushToken, appVersion string, deviceType int) store.Device {
@@ -42,8 +43,12 @@ func createDevice(deviceid, ip, jwt, pushToken, appVersion string, deviceType in
 	}
 }
 
+<<<<<<< HEAD
 func createWallet(currencyID, networkID int, address string, addressIndex int, walletIndex int, walletName string) store.Wallet {
 
+=======
+func createWallet(currencyID, networkID int, address string, addressIndex int, walletIndex int, walletName string, isImported bool, status string) store.Wallet {
+>>>>>>> release_1.3
 	return store.Wallet{
 		CurrencyID:     currencyID,
 		NetworkID:      networkID,
@@ -51,7 +56,12 @@ func createWallet(currencyID, networkID int, address string, addressIndex int, w
 		WalletName:     walletName,
 		LastActionTime: time.Now().Unix(),
 		DateOfCreation: time.Now().UnixNano(),
+<<<<<<< HEAD
 		Status:         store.WalletStatusOK,
+=======
+		Status:         status,
+		IsImported:     isImported,
+>>>>>>> release_1.3
 		Adresses: []store.Address{
 			store.Address{
 				Address:        address,
@@ -60,7 +70,48 @@ func createWallet(currencyID, networkID int, address string, addressIndex int, w
 			},
 		},
 	}
+}
+func createMultisig(currencyID, networkID, addressIndex, walletIndex, signaturesRequired, ownerscount int, userid, address, walletName, invitecode string) store.Multisig {
+	return store.Multisig{
+		CurrencyID:     currencyID,
+		NetworkID:      networkID,
+		WalletName:     walletName,
+		LastActionTime: time.Now().Unix(),
+		DateOfCreation: time.Now().Unix(),
+		Status:         store.WalletStatusOK,
+		Confirmations:  signaturesRequired,
+		OwnersCount:    ownerscount,
+		Owners: []store.AddressExtended{
+			store.AddressExtended{
+				UserID:       userid,
+				Address:      address,
+				Associated:   true,
+				WalletIndex:  walletIndex,
+				AddressIndex: addressIndex,
+				Creator:      true,
+			},
+		},
+		DeployStatus: store.MultisigStatusWaitingForJoin,
+		InviteCode:   invitecode,
+	}
+}
 
+func importMultisig(currencyID, networkID, confirmationsRequired int, invitecode, contractAddress, walletName string, owners []store.AddressExtended) store.Multisig {
+	return store.Multisig{
+		CurrencyID:      currencyID,
+		NetworkID:       networkID,
+		Confirmations:   confirmationsRequired,
+		WalletName:      walletName,
+		ContractAddress: contractAddress,
+		LastActionTime:  time.Now().Unix(),
+		DateOfCreation:  time.Now().Unix(),
+		Owners:          owners,
+		DeployStatus:    store.MultisigStatusDeployed,
+		Status:          store.WalletStatusOK,
+		OwnersCount:     len(owners),
+		InviteCode:      invitecode,
+		Imported:        true,
+	}
 }
 
 func newEmptyTx(userID string) store.TxRecord {

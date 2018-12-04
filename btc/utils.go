@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"time"
 
+	btcpb "github.com/Multy-io/Multy-BTC-node-service/node-streamer"
 	"github.com/Multy-io/Multy-back/currencies"
-	btcpb "github.com/Multy-io/Multy-back/node-streamer/btc"
 	"github.com/Multy-io/Multy-back/store"
 	nsq "github.com/bitly/go-nsq"
 	_ "github.com/jekabolt/slflog"
@@ -156,7 +156,10 @@ func setExchangeRates(tx *store.MultyTX, isReSync bool, TxTime int64) {
 }
 
 func sendNotifyToClients(tx store.MultyTX, nsqProducer *nsq.Producer, netid int) {
+<<<<<<< HEAD
 
+=======
+>>>>>>> release_1.3
 	for _, walletOutput := range tx.WalletsOutput {
 		txMsq := store.TransactionWithUserID{
 			UserID: walletOutput.UserId,
@@ -248,7 +251,10 @@ func sendNotify(txMsq *store.TransactionWithUserID, nsqProducer *nsq.Producer) {
 		log.Errorf("sendNotifyToClients: [%+v] %s\n", txMsq, err.Error())
 		return
 	}
+<<<<<<< HEAD
 
+=======
+>>>>>>> release_1.3
 	err = nsqProducer.Publish(store.TopicTransaction, newTxJSON)
 	if err != nil {
 		log.Errorf("nsq publish new transaction: [%+v] %s\n", txMsq, err.Error())
@@ -260,58 +266,61 @@ func sendNotify(txMsq *store.TransactionWithUserID, nsqProducer *nsq.Producer) {
 
 func generatedTxDataToStore(gSpOut *btcpb.BTCTransaction) store.MultyTX {
 	outs := []store.AddresAmount{}
-	for _, output := range gSpOut.TxOutputs {
-		outs = append(outs, store.AddresAmount{
-			Address: output.Address,
-			Amount:  output.Amount,
-		})
-	}
-
-	ins := []store.AddresAmount{}
-	for _, inputs := range gSpOut.TxInputs {
-		ins = append(ins, store.AddresAmount{
-			Address: inputs.Address,
-			Amount:  inputs.Amount,
-		})
-	}
-
 	wInputs := []store.WalletForTx{}
-	for _, walletOutputs := range gSpOut.WalletsOutput {
-		wInputs = append(wInputs, store.WalletForTx{
-			UserId: walletOutputs.Userid,
-			Address: store.AddressForWallet{
-				Address:         walletOutputs.Address,
-				Amount:          walletOutputs.Amount,
-				AddressOutIndex: int(walletOutputs.TxOutIndex),
-			},
-		})
-	}
-
 	wOutputs := []store.WalletForTx{}
-	for _, walletInputs := range gSpOut.WalletsInput {
-		wOutputs = append(wOutputs, store.WalletForTx{
-			UserId: walletInputs.Userid,
-			Address: store.AddressForWallet{
-				Address:         walletInputs.Address,
-				Amount:          walletInputs.Amount,
-				AddressOutIndex: int(walletInputs.TxOutIndex),
-			},
-		})
+	ins := []store.AddresAmount{}
+	if gSpOut != nil {
+		for _, output := range gSpOut.TxOutputs {
+			outs = append(outs, store.AddresAmount{
+				Address: output.Address,
+				Amount:  output.Amount,
+			})
+		}
+
+		for _, inputs := range gSpOut.TxInputs {
+			ins = append(ins, store.AddresAmount{
+				Address: inputs.Address,
+				Amount:  inputs.Amount,
+			})
+		}
+
+		for _, walletOutputs := range gSpOut.WalletsOutput {
+			wInputs = append(wInputs, store.WalletForTx{
+				UserId: walletOutputs.Userid,
+				Address: store.AddressForWallet{
+					Address:         walletOutputs.Address,
+					Amount:          walletOutputs.Amount,
+					AddressOutIndex: int(walletOutputs.TxOutIndex),
+				},
+			})
+		}
+
+		for _, walletInputs := range gSpOut.WalletsInput {
+			wOutputs = append(wOutputs, store.WalletForTx{
+				UserId: walletInputs.Userid,
+				Address: store.AddressForWallet{
+					Address:         walletInputs.Address,
+					Amount:          walletInputs.Amount,
+					AddressOutIndex: int(walletInputs.TxOutIndex),
+				},
+			})
+		}
+
 	}
 
 	return store.MultyTX{
-		UserId:        gSpOut.UserID,
-		TxID:          gSpOut.TxID,
-		TxHash:        gSpOut.TxHash,
-		TxOutScript:   gSpOut.TxOutScript,
-		TxAddress:     gSpOut.TxAddress,
-		TxStatus:      int(gSpOut.TxStatus),
-		TxOutAmount:   gSpOut.TxOutAmount,
-		BlockTime:     gSpOut.BlockTime,
-		BlockHeight:   gSpOut.BlockHeight,
-		Confirmations: int(gSpOut.Confirmations),
-		TxFee:         gSpOut.TxFee,
-		MempoolTime:   gSpOut.MempoolTime,
+		UserId:        gSpOut.GetUserID(),
+		TxID:          gSpOut.GetTxID(),
+		TxHash:        gSpOut.GetTxHash(),
+		TxOutScript:   gSpOut.GetTxOutScript(),
+		TxAddress:     gSpOut.GetTxAddress(),
+		TxStatus:      int(gSpOut.GetTxStatus()),
+		TxOutAmount:   gSpOut.GetTxOutAmount(),
+		BlockTime:     gSpOut.GetBlockTime(),
+		BlockHeight:   gSpOut.GetBlockHeight(),
+		Confirmations: int(gSpOut.GetConfirmations()),
+		TxFee:         gSpOut.GetTxFee(),
+		MempoolTime:   gSpOut.GetMempoolTime(),
 		TxInputs:      ins,
 		TxOutputs:     outs,
 		WalletsInput:  wInputs,
@@ -321,15 +330,15 @@ func generatedTxDataToStore(gSpOut *btcpb.BTCTransaction) store.MultyTX {
 
 func generatedSpOutsToStore(gSpOut *btcpb.AddSpOut) store.SpendableOutputs {
 	return store.SpendableOutputs{
-		TxID:         gSpOut.TxID,
-		TxOutID:      int(gSpOut.TxOutID),
-		TxOutAmount:  gSpOut.TxOutAmount,
-		TxOutScript:  gSpOut.TxOutScript,
-		Address:      gSpOut.Address,
-		UserID:       gSpOut.UserID,
-		TxStatus:     int(gSpOut.TxStatus),
-		WalletIndex:  int(gSpOut.WalletIndex),
-		AddressIndex: int(gSpOut.AddressIndex),
+		TxID:         gSpOut.GetTxID(),
+		TxOutID:      int(gSpOut.GetTxOutID()),
+		TxOutAmount:  gSpOut.GetTxOutAmount(),
+		TxOutScript:  gSpOut.GetTxOutScript(),
+		Address:      gSpOut.GetAddress(),
+		UserID:       gSpOut.GetUserID(),
+		TxStatus:     int(gSpOut.GetTxStatus()),
+		WalletIndex:  int(gSpOut.GetWalletIndex()),
+		AddressIndex: int(gSpOut.GetAddressIndex()),
 	}
 }
 
@@ -344,10 +353,6 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int, resync bool) error {
 	default:
 		return errors.New("saveMultyTransaction: wrong networkID")
 	}
-
-	// fetchedTxs := []store.MultyTX{}
-	// query := bson.M{"txid": tx.TxID}
-	// txStore.Find(query).All(&fetchedTxs)
 
 	// Doubling txs fix on -1
 	if tx.BlockHeight == -1 {
@@ -418,8 +423,6 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int, resync bool) error {
 		}
 		return err
 
-		// sel := bson.M{"userid": tx.WalletsInput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
-		// sel := bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex} // last
 		sel = bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsoutput.walletindex": tx.WalletsInput[0].WalletIndex}
 		if tx.BlockHeight != -1 {
 			sel = bson.M{"userid": tx.WalletsInput[0].UserId, "txid": tx.TxID, "walletsinput.walletindex": tx.WalletsInput[0].WalletIndex}
@@ -449,7 +452,7 @@ func saveMultyTransaction(tx store.MultyTX, networtkID int, resync bool) error {
 		err = txStore.Update(sel, update)
 		return err
 	} else if tx.WalletsOutput != nil && len(tx.WalletsOutput) > 0 {
-		// sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "transactions.txid": tx.TxID, "transactions.walletsoutput.walletindex": tx.WalletsOutput[0].WalletIndex}
+
 		sel := bson.M{"userid": tx.WalletsOutput[0].UserId, "txid": tx.TxID, "txaddress": tx.TxAddress[0]}
 		err := txStore.Find(sel).One(&multyTX)
 		if err == mgo.ErrNotFound {
