@@ -433,7 +433,7 @@ func (btcCli *BTCConn) setGRPCHandlers(networtkID, accuracyRange int) {
 				}
 			}
 
-			log.Infof("New tx history in: %v out: %v", tx.WalletsInput, tx.WalletsOutput)
+			log.Infof("New tx history in- %v out-%v\n", tx.WalletsInput, tx.WalletsOutput)
 
 			err = saveMultyTransaction(tx, networtkID, gTx.Resync)
 			if err != nil {

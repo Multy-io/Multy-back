@@ -100,7 +100,7 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 					Payload: &messaging.APNSPayload{
 						Aps: &messaging.Aps{
 							Alert: &messaging.ApsAlert{
-								// Title: "You have a new transaction",
+								Title: "",
 								// Body:  msg.NotificationMsg.Amount + " " + currencies.CurrencyNames[msg.NotificationMsg.CurrencyID],
 								LocKey:  store.TopicNewIncoming,
 								LocArgs: []string{convertToHuman(msg.NotificationMsg.Amount, currencies.Dividers[msg.NotificationMsg.CurrencyID]), currencies.CurrencyNames[msg.NotificationMsg.CurrencyID]},
@@ -111,22 +111,20 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 				Topic: topic,
 			}
 
-<<<<<<< HEAD
-=======
 			fClient.log.Debugf("\n\n MessageToSend : %v\n\n", messageToSend)
 
->>>>>>> release_1.3
 			ctx := context.Background()
 			client, err := service.Messaging(ctx)
 			if err != nil {
 				fClient.log.Errorf("service.Messaging: %v", err.Error())
 			}
 
-			_, err = client.Send(ctx, messageToSend)
+			response, err := client.Send(ctx, messageToSend)
 			if err != nil {
 				fClient.log.Errorf("client.Send : %v", err.Error())
 			}
-			fClient.log.Debugf("push to user: %v", msg.UserID)
+
+			fClient.log.Errorf("\n\nFirebase push resp : %v\n\n", response)
 		}
 
 		return nil

@@ -31,16 +31,9 @@ type BTCConn struct {
 	BtcMempool     sync.Map
 	BtcMempoolTest sync.Map
 
-<<<<<<< HEAD
-	VersionMain store.NodeVersion
-	VersionTest store.NodeVersion
-
-	Resync sync.Map
-=======
 	Resync *sync.Map
 
 	WsServer *gosocketio.Server
->>>>>>> release_1.3
 }
 
 var log = slf.WithContext("btc")

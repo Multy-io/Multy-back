@@ -12,7 +12,8 @@ import (
 	multy "github.com/Multy-io/Multy-back"
 	"github.com/Multy-io/Multy-back/store"
 	"github.com/jekabolt/slf"
-	"fmt"
+	_ "github.com/swaggo/gin-swagger"              // gin-swagger middleware
+	_ "github.com/swaggo/gin-swagger/swaggerFiles" // swagger embed files
 )
 
 var (
@@ -43,35 +44,13 @@ var (
 
 func main() {
 	config.ReadGlobalConfig(&globalOpt, "multy configuration")
-<<<<<<< HEAD
-
-	log.Error("--------------------------------new multy back server session")
-
-	log.Infof("CONFIGURATION=%+v", globalOpt)
-=======
 	log.Infof("CONFIGURATION=%+v", globalOpt.SupportedNodes)
->>>>>>> release_1.3
 
 	log.Infof("branch: %s", branch)
 	log.Infof("commit: %s", commit)
 	log.Infof("build time: %s", buildtime)
 	log.Infof("tag: %s", lasttag)
 
-<<<<<<< HEAD
-	gracefulStop := make(chan os.Signal)
-
-	signal.Notify(gracefulStop, os.Interrupt, syscall.SIGTERM)
-
-	go func() {
-		<-gracefulStop
-		fmt.Println("")
-		log.Infof("Got shutting down signal")
-		log.Infof("Shutting down")
-		os.Exit(1)
-	}()
-
-=======
->>>>>>> release_1.3
 	sc := store.ServerConfig{
 		BranchName: branch,
 		CommitHash: commit,

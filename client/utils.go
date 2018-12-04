@@ -7,6 +7,7 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -43,12 +44,7 @@ func createDevice(deviceid, ip, jwt, pushToken, appVersion string, deviceType in
 	}
 }
 
-<<<<<<< HEAD
-func createWallet(currencyID, networkID int, address string, addressIndex int, walletIndex int, walletName string) store.Wallet {
-
-=======
 func createWallet(currencyID, networkID int, address string, addressIndex int, walletIndex int, walletName string, isImported bool, status string) store.Wallet {
->>>>>>> release_1.3
 	return store.Wallet{
 		CurrencyID:     currencyID,
 		NetworkID:      networkID,
@@ -56,12 +52,8 @@ func createWallet(currencyID, networkID int, address string, addressIndex int, w
 		WalletName:     walletName,
 		LastActionTime: time.Now().Unix(),
 		DateOfCreation: time.Now().UnixNano(),
-<<<<<<< HEAD
-		Status:         store.WalletStatusOK,
-=======
 		Status:         status,
 		IsImported:     isImported,
->>>>>>> release_1.3
 		Adresses: []store.Address{
 			store.Address{
 				Address:        address,
@@ -121,8 +113,8 @@ func newEmptyTx(userID string) store.TxRecord {
 	}
 }
 
-func newWebSocketConn(addr string, log slf.StructuredLogger) (*websocket.Conn, error) {
-	log.Debugf("addr = %s", addr)
+func newWebSocketConn(addr string) (*websocket.Conn, error) {
+	fmt.Printf("addr=%s", addr)
 	c, _, err := websocket.DefaultDialer.Dial(addr, nil)
 	if err != nil {
 		return nil, err
@@ -140,7 +132,7 @@ func reconnectWebSocketConn(addr string, log slf.StructuredLogger) (*websocket.C
 	)
 
 	for {
-		c, err = newWebSocketConn(addr, log)
+		c, err = newWebSocketConn(addr)
 		if err == nil {
 			return c, nil
 		}

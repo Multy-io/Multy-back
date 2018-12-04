@@ -8,13 +8,11 @@ package eth
 import (
 	"encoding/json"
 	"errors"
-<<<<<<< HEAD
-=======
 	"fmt"
 	"math/big"
 	"regexp"
->>>>>>> release_1.3
 	"strconv"
+	"strings"
 	"time"
 
 	ethpb "github.com/Multy-io/Multy-ETH-node-service/node-streamer"
@@ -26,17 +24,23 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+const (
+	MultiSigFactory    = "0xf8f73808"
+	submitTransaction  = "0xc6427474"
+	confirmTransaction = "0xc01a8c84"
+	revokeConfirmation = "0x20ea8d86"
+	executeTransaction = "0xee22610b"
+)
+
 var (
 	exRate    *mgo.Collection
 	usersData *mgo.Collection
 
-	txsData          *mgo.Collection
-	spendableOutputs *mgo.Collection
-	spentOutputs     *mgo.Collection
+	txsData      *mgo.Collection
+	multisigData *mgo.Collection
 
-	txsDataTest          *mgo.Collection
-	spendableOutputsTest *mgo.Collection
-	spentOutputsTest     *mgo.Collection
+	txsDataTest      *mgo.Collection
+	multisigDataTest *mgo.Collection
 
 	restoreState *mgo.Collection
 )
@@ -207,10 +211,6 @@ func sendNotify(txMsq *store.TransactionWithUserID, nsqProducer *nsq.Producer) {
 		log.Errorf("sendNotifyToClients: [%+v] %s\n", txMsq, err.Error())
 		return
 	}
-<<<<<<< HEAD
-
-=======
->>>>>>> release_1.3
 	err = nsqProducer.Publish(store.TopicTransaction, newTxJSON)
 	if err != nil {
 		log.Errorf("nsq publish new transaction: [%+v] %s\n", txMsq, err.Error())
@@ -222,22 +222,6 @@ func sendNotify(txMsq *store.TransactionWithUserID, nsqProducer *nsq.Producer) {
 
 func generatedTxDataToStore(tx *ethpb.ETHTransaction) store.TransactionETH {
 	return store.TransactionETH{
-<<<<<<< HEAD
-		UserID:       tx.UserID,
-		WalletIndex:  int(tx.WalletIndex),
-		AddressIndex: int(tx.AddressIndex),
-		Hash:         tx.Hash,
-		From:         tx.From,
-		To:           tx.To,
-		Amount:       tx.Amount,
-		GasPrice:     tx.GasPrice,
-		GasLimit:     tx.GasLimit,
-		Nonce:        int(tx.Nonce),
-		Status:       int(tx.Status),
-		BlockTime:    tx.BlockTime,
-		PoolTime:     tx.TxpoolTime,
-		BlockHeight:  tx.BlockHeight,
-=======
 		UserID:       tx.GetUserID(),
 		WalletIndex:  int(tx.GetWalletIndex()),
 		AddressIndex: int(tx.GetAddressIndex()),
@@ -259,7 +243,6 @@ func generatedTxDataToStore(tx *ethpb.ETHTransaction) store.TransactionETH {
 			Return:           tx.GetReturn(),
 			Input:            tx.GetInput(),
 		},
->>>>>>> release_1.3
 	}
 }
 
@@ -334,8 +317,6 @@ func saveTransaction(tx store.TransactionETH, networtkID int, resync bool) error
 	}
 	return nil
 }
-<<<<<<< HEAD
-=======
 
 func processMultisig(tx *store.TransactionETH, networtkID int, nsqProducer *nsq.Producer, ethcli *ETHConn) (string, error) {
 
@@ -989,4 +970,3 @@ func fetchInviteUndeployed(users map[string]store.User) string {
 	return invitecode
 
 }
->>>>>>> release_1.3

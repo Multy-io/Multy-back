@@ -20,10 +20,6 @@ import (
 
 func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 	mempoolCh := make(chan interface{})
-<<<<<<< HEAD
-
-=======
->>>>>>> release_1.3
 	// initial fill mempool respectively network id
 
 	var client pb.NodeCommunicationsClient
@@ -53,9 +49,11 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 
 		for {
 			mpRec, err := stream.Recv()
+
 			if err == io.EOF {
 				break
 			}
+
 			if err != nil {
 				log.Errorf("setGRPCHandlers: client.EventGetAllMempool: %s", err.Error())
 			}
@@ -119,8 +117,6 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 
 	}()
 
-<<<<<<< HEAD
-=======
 	go func() {
 		stream, err := client.AddMultisig(context.Background(), &pb.Empty{})
 		if err != nil {
@@ -208,7 +204,6 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 		log.Panicf("AddMultisig")
 	}()
 
->>>>>>> release_1.3
 	// add to transaction history record and send ws notification on tx
 	go func() {
 		stream, err := client.NewTx(context.Background(), &pb.Empty{})
@@ -224,12 +219,9 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 			if err != nil {
 				log.Errorf("initGrpcClient: cli.NewTx:stream.Recv: %s", err.Error())
 			}
-<<<<<<< HEAD
-=======
 
 			log.Warnf("new tx for uid %v ", gTx.GetUserID())
 
->>>>>>> release_1.3
 			tx := generatedTxDataToStore(gTx)
 			setExchangeRates(&tx, gTx.Resync, tx.BlockTime)
 
@@ -237,8 +229,6 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 			updateWalletAndAddressDate(tx, networtkID)
 			if err != nil {
 				log.Errorf("initGrpcClient: saveMultyTransaction: %s", err)
-<<<<<<< HEAD
-=======
 			}
 
 			if !gTx.GetResync() {
@@ -268,12 +258,8 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 				if err != nil {
 					log.Errorf("initGrpcClient: processMultisig: %s", err.Error())
 				}
->>>>>>> release_1.3
 			}
 
-			if !gTx.GetResync() {
-				sendNotifyToClients(tx, nsqProducer, networtkID)
-			}
 		}
 	}()
 

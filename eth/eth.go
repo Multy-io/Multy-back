@@ -31,15 +31,7 @@ type ETHConn struct {
 	Mempool     sync.Map
 	MempoolTest sync.Map
 
-<<<<<<< HEAD
-	VersionMain store.NodeVersion
-	VersionTest store.NodeVersion
-
-	// M     *sync.Mutex
-	// MTest *sync.Mutex
-=======
 	WsServer *gosocketio.Server
->>>>>>> release_1.3
 }
 
 var log = slf.WithContext("eth")
@@ -92,9 +84,11 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 
 	// main
 	txsData = db.DB(dbConf.DBTx).C(dbConf.TableTxsDataETHMain)
+	multisigData = db.DB(dbConf.DBTx).C(dbConf.TableMultisigTxsMain)
 
 	// test
 	txsDataTest = db.DB(dbConf.DBTx).C(dbConf.TableTxsDataETHTest)
+	multisigDataTest = db.DB(dbConf.DBTx).C(dbConf.TableMultisigTxsTest)
 
 	//restore state
 	restoreState = db.DB(dbConf.DBRestoreState).C(dbConf.TableState)
@@ -104,12 +98,7 @@ func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string
 	if err != nil {
 		return cli, fmt.Errorf("fetchCoinType: %s", err.Error())
 	}
-<<<<<<< HEAD
-
-	cliMain, err := initGrpcClient(urlMain)
-=======
 	cliMain, err := initGrpcClient(coinTypeMain.GRPCUrl)
->>>>>>> release_1.3
 	if err != nil {
 		return cli, fmt.Errorf("initGrpcClient: %s", err.Error())
 	}

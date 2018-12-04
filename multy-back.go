@@ -76,52 +76,18 @@ func Init(conf *Configuration) (*Multy, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Init: btc.InitHandlers: %s", err.Error())
 	}
-
-	//BTC Main ver
-	btcMainVer, err := btcCli.CliMain.ServiceInfo(context.Background(), &btcpb.Empty{})
+	btcVer, err := btcCli.CliMain.ServiceInfo(context.Background(), &btcpb.Empty{})
 	multy.BTC = btcCli
-	log.Infof(" BTC mainnet initialization done on %v √", btcMainVer)
-
-	multy.BTC.VersionMain = store.NodeVersion{
-		Branch: btcMainVer.Branch,
-		Commit: btcMainVer.Commit,
-	}
-
-	//BTC Test ver
-	btcTestVer, err := btcCli.CliTest.ServiceInfo(context.Background(), &btcpb.Empty{})
-	log.Infof(" BTC testnet initialization done on %v √", btcTestVer)
-
-	multy.BTC.VersionTest = store.NodeVersion{
-		Branch: btcTestVer.Branch,
-		Commit: btcTestVer.Commit,
-	}
+	log.Infof(" BTC initialization done on %v √", btcVer)
 
 	// ETH
 	ethCli, err := eth.InitHandlers(&conf.Database, conf.SupportedNodes, conf.NSQAddress)
 	if err != nil {
 		return nil, fmt.Errorf("Init: btc.InitHandlers: %s", err.Error())
 	}
-
-	//ETH Main ver
-	ethMainVer, err := ethCli.CliMain.ServiceInfo(context.Background(), &ethpb.Empty{})
+	ethVer, err := ethCli.CliMain.ServiceInfo(context.Background(), &ethpb.Empty{})
 	multy.ETH = ethCli
-
-	log.Infof(" ETH mainnet initialization done on %v √", ethMainVer)
-
-	multy.ETH.VersionMain = store.NodeVersion{
-		Branch: ethMainVer.Branch,
-		Commit: ethMainVer.Commit,
-	}
-
-	//ETH Test ver
-	ethTestVer, err := ethCli.CliTest.ServiceInfo(context.Background(), &ethpb.Empty{})
-	multy.ETH = ethCli
-	log.Infof(" ETH testnet initialization done on %v √", ethTestVer)
-
-	multy.ETH.VersionTest = store.NodeVersion{
-		Branch: ethTestVer.Branch,
-		Commit: ethTestVer.Commit,
-	}
+	log.Infof(" ETH initialization done on %v √", ethVer)
 
 	//users data set
 	sv, err := multy.SetUserData(multy.userStore, conf.SupportedNodes)
@@ -149,6 +115,14 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 		}
 		if len(usersData) == 0 {
 			log.Infof("Empty userdata")
+		}
+
+		usersContracts, err := userStore.FindUsersContractsChain(conCred.СurrencyID, conCred.NetworkID)
+		if err != nil {
+			return servicesInfo, fmt.Errorf("SetUserData: userStore.FindUsersContractsChain: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
+		}
+		if len(usersData) == 0 {
+			log.Infof("Empty userscontracts")
 		}
 
 		switch conCred.СurrencyID {
@@ -204,40 +178,12 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 				log.Errorf("setGRPCHandlers: wrong networkID:")
 			}
 
-<<<<<<< HEAD
-			//TODO: Re State
-			// var height int64
-			// states, err := m.userStore.FethLastSyncBlockState(conCred.СurrencyID, conCred.NetworkID)
-			// for _, state := range states {
-			// 	if state.CurrencyID == conCred.СurrencyID && state.NetworkID == conCred.NetworkID {
-			// 		height = state.BlockHeight
-			// 	}
-			// }
-			// bh, _ := cli.EventGetBlockHeight(context.Background(), &ethpb.Empty{})
-			// if err != nil {
-			// 	log.Errorf("SetUserData:  btcCli.CliMain.cli.FethLastSyncBlockState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
-			// 	height = bh.GetHeight()
-			// }
-
-			// log.Warnf("ETH Re state last stored block = %v current block height = %v", height, bh.GetHeight())
-			// if height == 0 {
-			// 	height = bh.GetHeight()
-			// 	log.Errorf("SetUserData:  btcCli.CliMain.cli.FethLastSyncBlockState:no such record in db curID :%d netID :%d", conCred.СurrencyID, conCred.NetworkID)
-			// }
-			// _, err = cli.SyncState(context.Background(), &ethpb.BlockHeight{
-			// 	Height: height,
-			// })
-
-			// if err != nil {
-			// 	log.Errorf("SetUserData:  btcCli.CliMain.cli.SyncState: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
-			// }
-=======
 			//TODO: Restore state
 			go m.restoreState(conCred, cli)
->>>>>>> release_1.3
 
 			genUd := ethpb.UsersData{
-				Map: map[string]*ethpb.AddressExtended{},
+				Map:            map[string]*ethpb.AddressExtended{},
+				UsersContracts: usersContracts,
 			}
 
 			for address, ex := range usersData {
@@ -307,13 +253,9 @@ func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 		multy.ETH,
 		conf.MultyVerison,
 		conf.Secretkey,
-<<<<<<< HEAD
-		conf.DeviceVersions,
-=======
 		conf.MobileVersions,
 		tokenList,
 		conf.BrowserDefault,
->>>>>>> release_1.3
 	)
 	if err != nil {
 		return err

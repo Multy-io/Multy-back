@@ -81,17 +81,11 @@ const (
 
 // User represents a single app user
 type User struct {
-<<<<<<< HEAD
-	UserID  string   `bson:"userID"`  // User uqnique identifier
-	Devices []Device `bson:"devices"` // All user devices
-	Wallets []Wallet `bson:"wallets"` // All user addresses in all chains
-=======
 	UserID         string     `bson:"userID"` // User uqnique identifier
 	SeedPhraseType int        `bson:"seedPhraseType"`
 	Devices        []Device   `bson:"devices"` // All user devices
 	Wallets        []Wallet   `bson:"wallets"` // All user addresses in all chains
 	Multisigs      []Multisig `bson:"multisig"`
->>>>>>> release_1.3
 }
 
 type BTCTransaction struct {
@@ -153,21 +147,8 @@ type Wallet struct {
 
 	Status string `bson:"status"`
 
-<<<<<<< HEAD
-type Multisig struct {
-	CurrencyID      int               `bson:"currencyID"`
-	NetworkID       int               `bson:"networkID"`
-	WalletName      string            `bson:"walletName"`
-	ContractAddress string            `bson:"walletName"`
-	TxOfCreation    string            `bson:"txofcreation"`
-	LastActionTime  int64             `bson:"lastActionTime"`
-	DateOfCreation  int64             `bson:"dateOfCreation"`
-	Owners          []AddressExtended `bson:"owners"`
-	Status          string            `bson:"status"`
-=======
 	IsImported   bool `bson:"isImported"`
 	BrokenStatus int  `bson:"brokenStatus"`
->>>>>>> release_1.3
 }
 
 type RatesRecord struct {
@@ -280,7 +261,6 @@ type ExchangeRates struct {
 	ETHtoEUR float64 `json:"eth_eur"`
 
 	BTCtoUSD float64 `json:"btc_usd"`
-	EOStoUSD float64 `json:"eos_usd"`
 }
 
 type RatesAPIBitstamp struct {
@@ -354,9 +334,9 @@ type TokenBalance struct {
 }
 
 type TransactionETH struct {
-	UserID            string                `json:"userid"`
-	WalletIndex       int                   `json:"walletindex"`
-	AddressIndex      int                   `json:"addressindex"`
+	UserID            string                `json:"userid,omitempty"`
+	WalletIndex       int                   `json:"walletindex,omitempty"`
+	AddressIndex      int                   `json:"addressindex,omitempty"`
 	Hash              string                `json:"txhash"`
 	From              string                `json:"from"`
 	To                string                `json:"to"`
@@ -369,11 +349,6 @@ type TransactionETH struct {
 	PoolTime          int64                 `json:"mempooltime"`
 	BlockHeight       int64                 `json:"blockheight"`
 	Confirmations     int                   `json:"confirmations"`
-<<<<<<< HEAD
-	StockExchangeRate []ExchangeRatesRecord `json:"stockexchangerate"`
-}
-
-=======
 	IsInternal        bool                  `json:"isinternal"`
 	Multisig          *MultisigTx           `json:"multisig,omitempty"`
 	ERC20Token        *ERC20Tx              `json:"erc20Token,omitempty"`
@@ -429,7 +404,6 @@ type OwnerHistory struct {
 	SeenTime           int64  `bson:"seenTime" json:"seenTime"`
 }
 
->>>>>>> release_1.3
 type CoinType struct {
 	СurrencyID    int `bson:"currencyID"`
 	NetworkID     int `bson:"networkID"`
@@ -467,16 +441,6 @@ type ServerConfig struct {
 	CommitHash string `json:"commit"`
 	Build      string `json:"build_time"`
 	Tag        string `json:"tag"`
-}
-
-type DeviceVersion struct {
-	Hard int `json:"hard"`
-	Soft int `json:"soft"`
-}
-
-type Versions struct {
-	Android DeviceVersion `json:"android"`
-	IOS     DeviceVersion `json:"ios"`
 }
 
 // Donation Statuses
@@ -586,11 +550,6 @@ type LastState struct {
 	NetworkID   int   `bson:"networkid"`
 }
 
-<<<<<<< HEAD
-type NodeVersion struct {
-	Branch string `json:"branch"`
-	Commit string `json:"commit"`
-=======
 type WsMessage struct {
 	Type    int         `json:"type"`
 	From    string      `json:"from"`
@@ -676,5 +635,4 @@ func SetField(obj interface{}, name string, value interface{}) error {
 
 	structFieldValue.Set(val)
 	return nil
->>>>>>> release_1.3
 }

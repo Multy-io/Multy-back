@@ -161,11 +161,9 @@ func newSocketIOUser(id string, newUser *SocketIOUser, conn *gosocketio.Channel,
 func sendExchange(newUser *SocketIOUser, conn *gosocketio.Channel) {
 	gdaxRate := newUser.chart.getExchangeGdax()
 	poloniexRate := newUser.chart.getExchangePoloniex()
-	bitfinexRate := newUser.chart.getExchangeBitfinex()
 
 	conn.Emit(topicExchangeGdax, gdaxRate)
 	conn.Emit(topicExchangePoloniex, poloniexRate)
-	conn.Emit(topicExchangeBitfinex, bitfinexRate)
 }
 
 func (sIOUser *SocketIOUser) runUpdateExchange() {
@@ -177,12 +175,10 @@ func (sIOUser *SocketIOUser) runUpdateExchange() {
 		case _ = <-sIOUser.tickerLastExchange.C:
 			gdaxRate := sIOUser.chart.getExchangeGdax()
 			poloniexRate := sIOUser.chart.getExchangePoloniex()
-			bitfinexRate := sIOUser.chart.getExchangeBitfinex()
 			for _, c := range sIOUser.conns {
 				// sIOUser.log.Debugf("sending updated exchange: conn id=%s", c.Id())
 				c.Emit(topicExchangeGdax, gdaxRate)
 				c.Emit(topicExchangePoloniex, poloniexRate)
-				c.Emit(topicExchangeBitfinex, bitfinexRate)
 			}
 		case connID := <-sIOUser.closeCh:
 			log.Println("disconnecting conn id=", connID)

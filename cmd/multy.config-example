@@ -15,13 +15,8 @@
     "Database": {
         "Address": "localhost:27000",
 
-<<<<<<< HEAD
-        "Username": "username",
-        "Password": "password",
-=======
         "Username": "",
         "Password": "",
->>>>>>> release_1.3
 
         "TableUsers": "UserCollection",
         "DBUsers": "userDB",
@@ -70,31 +65,10 @@
     "NSQAddress": "0.0.0.0:1150",
     "RestAddress": "0.0.0.0:6778",
     "SocketioAddr": "0.0.0.0:6780",
-    "Secretkey": "your_key",
+    "Secretkey": "secret key",
     "Firebase": {
         "ServerKey": ""
     },
-<<<<<<< HEAD
-    "DeviceVersions": {
-		"Android": {
-			"Soft": 7,
-			"Hard": 7
-		},
-		"iOS": {
-			"Soft": 49,
-			"Hard": 49
-		}
-	},
-    "ExchangerConfiguration": {
-        "TargetCurrencies": ["BTC", "ETH", "GOLOS", "BTS", "STEEM", "WAVES", "LTC", "BCH", "ETC", "DASH", "EOS"],
-        "ReferenceCurrencies": ["USDT", "BTC"],
-        "Exchanges": ["Binance", "Bitfinex", "Gdax", "HitBtc", "Okex", "Poloniex"],
-        "RefreshInterval": "1",
-        "Dbconfiguration":{
-            "User": "1",
-	        "Password": "1",
-	        "Name": "test"
-=======
     "SupportedNodes": [{
             "СurrencyID": 0,
             "NetworkID": 1,
@@ -118,7 +92,6 @@
             "NetworkID": 1,
             "AccuracyRange": -1,
             "GRPCUrl": "localhost:7722"
->>>>>>> release_1.3
         }
     ],
 

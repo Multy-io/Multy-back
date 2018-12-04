@@ -11,14 +11,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/jekabolt/slf"
+	"github.com/gorilla/websocket"
 )
 
 const (
 	exchangeDdax     = "Gdax"
 	exchangePoloniex = "Poloniex"
-	exchangeBitfinex = "Bitfinex"
 
 	backOffLimit = time.Duration(time.Second * 600) // reconnection stop
 )
@@ -26,7 +25,6 @@ const (
 const (
 	poloniexAPIAddr = "wss://api.hitbtc.com/api/2/ws"
 	gdaxAPIAddr     = "wss://ws-feed.gdax.com"
-	bitfinexAPIAddr = "wss://api.bitfinex.com/ws"
 )
 
 // GdaxAPI wraps websocket connection for GdaxAPI
@@ -46,7 +44,7 @@ type GDAXSocketEvent struct {
 func (eChart *exchangeChart) newGdaxAPI(log slf.StructuredLogger) (*GdaxAPI, error) {
 	gdaxAPI := &GdaxAPI{rates: eChart.rates.exchangeGdax, log: log.WithField("api", "gdax")}
 
-	c, err := newWebSocketConn(gdaxAPIAddr, log)
+	c, err := newWebSocketConn(gdaxAPIAddr)
 	if err != nil {
 		eChart.log.Errorf("new gdax connection: %s", err.Error())
 		c, err = reconnectWebSocketConn(gdaxAPIAddr, log)
@@ -139,7 +137,7 @@ type PoloniexSocketEvent struct {
 func (eChart *exchangeChart) newPoloniexAPI(log slf.StructuredLogger) (*PoloniexAPI, error) {
 	poloniexAPI := &PoloniexAPI{rates: eChart.rates.exchangePoloniex, log: log.WithField("api", "poloniex")}
 
-	c, err := newWebSocketConn(poloniexAPIAddr, log)
+	c, err := newWebSocketConn(poloniexAPIAddr)
 	if err != nil {
 		eChart.log.Errorf("new poloniex connection: %s", err.Error())
 		c, err = reconnectWebSocketConn(gdaxAPIAddr, log)

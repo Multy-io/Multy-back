@@ -32,7 +32,6 @@ const (
 	topicExchangeDay      = "exchangeDay"
 	topicExchangeGdax     = "exchangeGdax"
 	topicExchangePoloniex = "exchangePoloniex"
-	topicExchangeBitfinex = "exchangeBitfinex"
 )
 
 const (
@@ -142,8 +141,8 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			UserCode:   data.UserCode,
 			CurrencyID: data.CurrencyID,
 			NetworkID:  data.NetworkID,
-			Address:    data.Address,
 			Amount:     data.Amount,
+			Address:    data.Address,
 			Socket:     c,
 		}
 
@@ -194,18 +193,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			if receiverProto, ok := startupReceivers.Load(id); ok {
 				userIds = append(userIds, receiverProto.(store.StartupReceiver).ID)
 			}
-<<<<<<< HEAD
-			if raw.NetworkID == currencies.ETHTest {
-				h, err := restClient.ETH.CliTest.EventSendRawTx(context.Background(), &ethpb.RawTx{
-					Transaction: raw.Transaction,
-				})
-				if err != nil {
-					pool.log.Errorf("sendRawHDTransaction:eth.SendRawTransaction %s", err.Error())
-					return err.Error()
-				}
-=======
 		}
->>>>>>> release_1.3
 
 		if len(userIds) > 0 {
 			nearReceivers, err = ratesDB.GetUsersReceiverAddressesByUserIds(userIds)
@@ -229,9 +217,6 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 					receivers.Delete(userCode)
 				}
 			}
-<<<<<<< HEAD
-		}
-=======
 			return true
 		})
 
@@ -245,7 +230,6 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			return true
 		})
 
->>>>>>> release_1.3
 		for i, sender := range senders {
 			if sender.Socket.Id() == c.Id() {
 				senders = append(senders[:i], senders[i+1:]...)

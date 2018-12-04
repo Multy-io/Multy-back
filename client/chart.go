@@ -37,14 +37,12 @@ type Rates struct {
 
 	exchangeGdax     *StockRate
 	exchangePoloniex *StockRate
-	exchangeBitfinex *StockRate
 }
 
 type exchangeChart struct {
 	rates        *Rates
 	gdaxConn     *GdaxAPI
 	poloniexConn *PoloniexAPI
-	bitfinexConn *BitfinexAPI
 
 	db  store.UserStore
 	log slf.StructuredLogger
@@ -53,10 +51,6 @@ type exchangeChart struct {
 func newExchangeChart(db store.UserStore) (*exchangeChart, error) {
 	chart := &exchangeChart{
 		rates: &Rates{
-			exchangeBitfinex: &StockRate{
-				exchange: &store.ExchangeRates{},
-				m:        &sync.Mutex{},
-			},
 			exchangeGdax: &StockRate{
 				exchange: &store.ExchangeRates{},
 				m:        &sync.Mutex{},
@@ -86,12 +80,6 @@ func newExchangeChart(db store.UserStore) (*exchangeChart, error) {
 	}
 	chart.poloniexConn = poloniexConn
 
-	bitfinexConn, err := chart.newBitfinexAPI(chart.log)
-	if err != nil {
-		return nil, fmt.Errorf("initGdaxAPI: %s", err)
-	}
-	chart.bitfinexConn = bitfinexConn
-
 	go chart.run()
 
 	return chart, nil
@@ -101,12 +89,9 @@ func (eChart *exchangeChart) run() error {
 	tickerSaveToDB := time.NewTicker(saveToDBInterval)
 
 	go eChart.gdaxConn.listen()
-
+	//TODO: fix poloniex
 	go eChart.poloniexConn.listen()
 
-	go eChart.bitfinexConn.listen()
-
-	eChart.bitfinexConn.subscribe()
 	eChart.gdaxConn.subscribe()
 	eChart.poloniexConn.subscribe()
 
@@ -126,76 +111,8 @@ func (eChart *exchangeChart) saveToDB() {
 	eChart.rates.exchangePoloniex.m.Lock()
 	eChart.db.InsertExchangeRate(*eChart.rates.exchangePoloniex.exchange, exchangePoloniex)
 	eChart.rates.exchangePoloniex.m.Unlock()
-
-	eChart.rates.exchangeBitfinex.m.Lock()
-	eChart.db.InsertExchangeRate(*eChart.rates.exchangeBitfinex.exchange, exchangeBitfinex)
-	eChart.rates.exchangeBitfinex.m.Unlock()
 }
 
-<<<<<<< HEAD
-func (eChart *exchangeChart) updateDayRates() {
-	eChart.rates.mDay.Lock()
-	_, err := eChart.db.GetExchangeRatesDay()
-	if err != nil {
-		eChart.log.Errorf("GetExchangeRatesDay: %s", err.Error())
-		return
-	}
-	// TODO: saving to in-memory store
-	eChart.rates.mDay.Unlock()
-}
-
-func (eChart *exchangeChart) getDayAPIBitstamp() {
-	eChart.log.Debug("update rates day")
-
-	reqURI := "https://www.bitstamp.net/api/transactions/?date=hour"
-
-	eChart.log.Debugf("reqURI=%s", reqURI)
-	resp, err := http.Get(reqURI)
-	if err != nil {
-		eChart.log.Errorf("[%s], err=%s", reqURI, err.Error())
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		eChart.log.Errorf("get exchange: response status code=%d", resp.StatusCode)
-		return
-	}
-
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		eChart.log.Errorf("get exchange: get response body: %s", err.Error())
-		return
-	}
-
-	var ratesAll = make([]store.RatesAPIBitstamp, 0)
-	err = json.Unmarshal(bodyBytes, &ratesAll)
-	if err != nil {
-		eChart.log.Errorf("%s\n", err.Error())
-		return
-	}
-
-	eChart.log.Debugf("rates 24h=[%v]", ratesAll)
-
-	eChart.rates.mDay.Lock()
-	eChart.rates.BTCtoUSDDay = ratesAll
-	eChart.rates.mDay.Unlock()
-}
-
-func (eChart *exchangeChart) getExchangeDay() []store.RatesAPIBitstamp {
-	eChart.log.Debug("exchange chart: get exchanges for 24 hours")
-
-	eChart.rates.mDay.Lock()
-	defer eChart.rates.mDay.Unlock()
-
-	/*for _, k := range eChart.rates.BTCtoUSDDay {
-		i, _ := strconv.Atoi(k.Date)
-		log.Println(time.Unix(int64(i), 0).Format(time.RFC3339), "=", k.Price)
-	}*/
-	return eChart.rates.BTCtoUSDDay
-}
-
-=======
->>>>>>> release_1.3
 func (eChart *exchangeChart) getExchangeGdax() *store.ExchangeRates {
 	eChart.rates.exchangeGdax.m.Lock()
 	defer eChart.rates.exchangeGdax.m.Unlock()
@@ -206,10 +123,4 @@ func (eChart *exchangeChart) getExchangePoloniex() *store.ExchangeRates {
 	eChart.rates.exchangePoloniex.m.Lock()
 	defer eChart.rates.exchangePoloniex.m.Unlock()
 	return eChart.rates.exchangePoloniex.exchange
-}
-
-func (eChart *exchangeChart) getExchangeBitfinex() *store.ExchangeRates {
-	eChart.rates.exchangeBitfinex.m.Lock()
-	defer eChart.rates.exchangeBitfinex.m.Unlock()
-	return eChart.rates.exchangeBitfinex.exchange
 }
