@@ -102,17 +102,6 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 
 	senders := []store.Sender{}
 
-	go func() {
-		for {
-			time.Sleep(time.Second * 4)
-			startupReceivers.Range(func(userCode, res interface{}) bool {
-				receiver, _ := res.(store.StartupReceiver)
-				pool.log.Warnf("startupReceivers %v", receiver)
-				return true
-			})
-		}
-	}()
-
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
 		user, err := getHeaderDataSocketIO(c.RequestHeader())
 		if err != nil {
@@ -163,7 +152,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 	})
 
 	server.On(SenderCheck, func(c *gosocketio.Channel, nearIDs store.NearVisible) []store.Receiver {
-		pool.log.Warnf("SenderCheck")
+		pool.log.Debugf("SenderCheck")
 		nearReceivers := []store.Receiver{}
 
 		for _, id := range nearIDs.IDs {
@@ -234,8 +223,6 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			if ok {
 				if receiver.Socket.Id() == c.Id() {
 					pool.log.Debugf("OnDisconnection:startupReceivers: %v", receiver.Socket.Id())
-					v, ok := receivers.Load(userCode)
-					pool.log.Warnf("------ %v %v ", v, ok)
 					startupReceivers.Delete(userCode)
 				}
 			}
@@ -406,7 +393,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			if !ratesDB.CheckInviteCode(msgMultisig.InviteCode) {
 				multisig, msg, err := getMultisig(ratesDB, msgMultisig, store.LeaveMultisig)
 				if err != nil {
-					pool.log.Errorf("server.On:msgSend:leaveMultisigч %v", err.Error())
+					pool.log.Errorf("server.On:msgSend:leaveMultisig %v", err.Error())
 					return msg
 				}
 				exists := false
