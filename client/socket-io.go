@@ -42,12 +42,13 @@ const (
 
 	SenderCheck = "event:sender:check"
 
-	StartupReceiverOn = "event:startup:receiver:on"
+	StartupReceiverOn         = "event:startup:receiver:on"
 	StartupReceiversAvailable = "event:startup:receiver:available"
 
 	Filter = "event:filter"
 
-	// wireless send
+	// Wireless send
+
 	NewReceiver     = "event:new:receiver"
 	SendRaw         = "event:sendraw"
 	PaymentSend     = "event:payment:send"
@@ -101,6 +102,17 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 
 	senders := []store.Sender{}
 
+	go func() {
+		for {
+			time.Sleep(time.Second * 4)
+			startupReceivers.Range(func(userCode, res interface{}) bool {
+				receiver, _ := res.(store.StartupReceiver)
+				pool.log.Warnf("startupReceivers %v", receiver)
+				return true
+			})
+		}
+	}()
+
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
 		user, err := getHeaderDataSocketIO(c.RequestHeader())
 		if err != nil {
@@ -134,8 +146,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 
 	//feature logic
 	server.On(ReceiverOn, func(c *gosocketio.Channel, data store.Receiver) string {
-		pool.log.Infof("Got messeage Receiver On:", data)
-		c.Join(WirelessRoom)
+		pool.log.Infof("Got message Receiver On:", data)
 		receiver := store.Receiver{
 			ID:         data.ID,
 			UserCode:   data.UserCode,
@@ -167,24 +178,20 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 		return nearReceivers
 	})
 
-	//feature logic
+	// startup airdrop logic
 	server.On(StartupReceiverOn, func(c *gosocketio.Channel, data store.StartupReceiver) string {
-		pool.log.Infof("Got message Startup Receiver On:", data)
-		c.Join(WirelessRoom)
-
+		pool.log.Debugf("Got message Startup Receiver On: %v", data)
 		receiver := store.StartupReceiver{
-			ID:         data.ID,
-			UserCode:   data.UserCode,
-			Socket:     c,
+			ID:       data.ID,
+			UserCode: data.UserCode,
+			Socket:   c,
 		}
-
 		startupReceivers.Store(receiver.UserCode, receiver)
-
 		return "ok"
 	})
 
 	server.On(StartupReceiversAvailable, func(c *gosocketio.Channel, nearIDs store.NearVisible) []store.StartupReceiver {
-		pool.log.Debug("GetReceiversAvailableWallets event requested")
+		pool.log.Debugf("GetReceiversAvailableWallets event requested")
 
 		nearReceivers := []store.StartupReceiver{}
 		userIds := []string{}
@@ -207,6 +214,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 		return nearReceivers
 	})
 
+	// on socket disconnection
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
 		pool.log.Infof("Disconnected %s", c.Id())
 		pool.removeUserConn(c.Id())
@@ -214,6 +222,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			receiver, ok := res.(store.Receiver)
 			if ok {
 				if receiver.Socket.Id() == c.Id() {
+					pool.log.Debugf("OnDisconnection:receivers: %v", receiver.Socket.Id())
 					receivers.Delete(userCode)
 				}
 			}
@@ -224,7 +233,10 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			receiver, ok := res.(store.StartupReceiver)
 			if ok {
 				if receiver.Socket.Id() == c.Id() {
-					receivers.Delete(userCode)
+					pool.log.Debugf("OnDisconnection:startupReceivers: %v", receiver.Socket.Id())
+					v, ok := receivers.Load(userCode)
+					pool.log.Warnf("------ %v %v ", v, ok)
+					startupReceivers.Delete(userCode)
 				}
 			}
 			return true
@@ -232,6 +244,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 
 		for i, sender := range senders {
 			if sender.Socket.Id() == c.Id() {
+				pool.log.Debugf("OnDisconnection:sender: %v", sender.Socket.Id())
 				senders = append(senders[:i], senders[i+1:]...)
 				continue
 			}
@@ -244,6 +257,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			receiver, ok := res.(store.Receiver)
 			if ok {
 				if receiver.Socket.Id() == c.Id() {
+					pool.log.Debugf("stopReceive:receivers: %v", receiver.Socket.Id())
 					receivers.Delete(userCode)
 				}
 			}
@@ -254,7 +268,8 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 			receiver, ok := res.(store.StartupReceiver)
 			if ok {
 				if receiver.Socket.Id() == c.Id() {
-					receivers.Delete(userCode)
+					pool.log.Debugf("stopReceive:startupReceivers: %v", receiver.Socket.Id())
+					startupReceivers.Delete(userCode)
 				}
 			}
 			return true
@@ -267,6 +282,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 		pool.log.Infof("Stop send %s", c.Id())
 		for i, sender := range senders {
 			if sender.Socket.Id() == c.Id() {
+				pool.log.Debugf("stopSend:sender: %v", sender.Socket.Id())
 				senders = append(senders[:i], senders[i+1:]...)
 				continue
 			}
