@@ -64,7 +64,7 @@ func newExchangeChart(db store.UserStore) (*exchangeChart, error) {
 			mDay:        &sync.Mutex{},
 		},
 		db:  db,
-		log: slf.WithContext("chart"),
+		log: slf.WithContext("chart").WithCaller(slf.CallerShort),
 	}
 	chart.log.Debug("new exchange chart")
 
