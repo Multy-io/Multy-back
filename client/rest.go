@@ -107,7 +107,7 @@ func SetRestHandlers(
 ) (*RestClient, error) {
 	restClient := &RestClient{
 		userStore:         userDB,
-		log:               slf.WithContext("rest-client"),
+		log:               slf.WithContext("rest-client").WithCaller(slf.CallerShort),
 		donationAddresses: donationAddresses,
 		BTC:               btc,
 		ETH:               eth,
@@ -1660,7 +1660,7 @@ func (restClient *RestClient) sendRawHDTransaction() gin.HandlerFunc {
 
 				c.JSON(http.StatusOK, gin.H{
 					"code":    http.StatusOK,
-					"message": hash,
+					"message": hash.GetMessage(),
 				})
 
 				return
@@ -1681,7 +1681,7 @@ func (restClient *RestClient) sendRawHDTransaction() gin.HandlerFunc {
 
 				c.JSON(http.StatusOK, gin.H{
 					"code":    http.StatusOK,
-					"message": hash,
+					"message": hash.GetMessage(),
 				})
 
 				return

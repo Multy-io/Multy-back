@@ -310,12 +310,14 @@ func (mStore *MongoUserStore) GetUsersReceiverAddressesByUserIds(userIds []strin
 		}
 
 		for _, wallet := range user.Wallets {
-			for _, address := range wallet.Adresses {
-				receiverStruct.SupportedAddresses = append(receiverStruct.SupportedAddresses, SupportedAddress{
-					CurrencyID: wallet.CurrencyID,
-					NetworkID: wallet.NetworkID,
-					Address: address.Address,
-				})
+			if wallet.Status == WalletStatusOK {
+				for _, address := range wallet.Adresses {
+					receiverStruct.SupportedAddresses = append(receiverStruct.SupportedAddresses, SupportedAddress{
+						CurrencyID: wallet.CurrencyID,
+						NetworkID:  wallet.NetworkID,
+						Address:    address.Address,
+					})
+				}
 			}
 		}
 

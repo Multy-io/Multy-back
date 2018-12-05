@@ -34,7 +34,7 @@ type ETHConn struct {
 	WsServer *gosocketio.Server
 }
 
-var log = slf.WithContext("eth")
+var log = slf.WithContext("eth").WithCaller(slf.CallerShort)
 
 //InitHandlers init nsq mongo and ws connection to node
 // return main client , test client , err
