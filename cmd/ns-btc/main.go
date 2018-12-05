@@ -16,24 +16,38 @@ import (
 )
 
 var (
-	log = slf.WithContext("main")
+	log = slf.WithContext("ns-btc")
 
+	// Set externaly during build
 	branch    string
 	commit    string
+	lasttag   string
 	buildtime string
 )
 
 // TODO: add all default params
 var globalOpt = nsbtc.Configuration{
-	Name: "my-test-back",
+	CanaryTest: false,
+	Name:       "my-test-back",
 }
 
 func main() {
-	config.ReadGlobalConfig(&globalOpt, "multy configuration")
-	log.Infof("CONFIGURATION=%+v", globalOpt)
+	log.Info("============================================================")
+	log.Info("Node service BTC starting")
 	log.Infof("branch: %s", branch)
 	log.Infof("commit: %s", commit)
 	log.Infof("build time: %s", buildtime)
+
+	log.Info("Reading configuration...")
+
+	config.ReadGlobalConfig(&globalOpt, "multy configuration")
+	log.Infof("CONFIGURATION=%+v", globalOpt)
+
+	if globalOpt.CanaryTest == true {
+		log.Info("This is a CanaryTest run, quitting immediatelly...")
+		return
+	}
+
 	globalOpt.ServiceInfo = store.ServiceInfo{
 		Branch:    branch,
 		Commit:    commit,

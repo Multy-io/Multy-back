@@ -11,6 +11,7 @@ import (
 
 // Configuration is a struct with all service options
 type Configuration struct {
+	CanaryTest      bool
 	Name            string
 	GrpcPort        string
 	MultisigFactory string

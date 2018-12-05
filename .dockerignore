@@ -4,5 +4,7 @@
 */*.tar
 */*.tar.gz
 */*.zip
+*/*.log
+*/logs/*
 .drone.yml
 .drone/

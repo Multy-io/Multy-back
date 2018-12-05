@@ -4,8 +4,8 @@ cmd/stage
 cmd/multy
 cmd/multy.config
 cmd/btc.cert
-cmd/back-*
-cmd/logs
+*/logs/*
+*/*.log
 cmd/rpc.cert
 cmd/state.json
 cmd/ns-eth/ns-eth
