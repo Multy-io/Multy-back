@@ -53,7 +53,7 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 		// client:    fcm.NewFcmClient(conf.ServerKey),
 		nsqConfig: nsq.NewConfig(),
 
-		log: slf.WithContext("firebase"),
+		log: slf.WithContext("firebase").WithCaller(slf.CallerShort),
 	}
 	fClient.log.Info("Firebase connection initialization")
 

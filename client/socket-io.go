@@ -135,7 +135,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 
 	//feature logic
 	server.On(ReceiverOn, func(c *gosocketio.Channel, data store.Receiver) string {
-		pool.log.Infof("Got message Receiver On:", data)
+		pool.log.Debugf("Got message Receiver On:", data)
 		receiver := store.Receiver{
 			ID:         data.ID,
 			UserCode:   data.UserCode,
@@ -180,7 +180,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 	})
 
 	server.On(StartupReceiversAvailable, func(c *gosocketio.Channel, nearIDs store.NearVisible) []store.StartupReceiver {
-		pool.log.Debugf("GetReceiversAvailableWallets event requested")
+		pool.log.Debugf("StartupReceiversAvailable event requested")
 
 		nearReceivers := []store.StartupReceiver{}
 		userIds := []string{}
@@ -194,7 +194,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 		if len(userIds) > 0 {
 			nearReceivers, err = ratesDB.GetUsersReceiverAddressesByUserIds(userIds)
 			if err != nil {
-				pool.log.Errorf("An error occurred on GetUsersReceiverAddresses: %+v\n", err.Error())
+				pool.log.Errorf("An error occurred on GetUsersReceiverAddressesByUserIds: %+v\n", err.Error())
 			}
 		}
 
@@ -239,7 +239,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 	})
 
 	server.On(stopReceive, func(c *gosocketio.Channel) string {
-		pool.log.Infof("Stop receive %s", c.Id())
+		pool.log.Debugf("Stop receive %s", c.Id())
 		receivers.Range(func(userCode, res interface{}) bool {
 			receiver, ok := res.(store.Receiver)
 			if ok {
@@ -266,7 +266,7 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 	})
 
 	server.On(stopSend, func(c *gosocketio.Channel) string {
-		pool.log.Infof("Stop send %s", c.Id())
+		pool.log.Debugf("Stop send %s", c.Id())
 		for i, sender := range senders {
 			if sender.Socket.Id() == c.Id() {
 				pool.log.Debugf("stopSend:sender: %v", sender.Socket.Id())

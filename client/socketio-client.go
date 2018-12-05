@@ -42,7 +42,7 @@ func InitConnectedPool(server *gosocketio.Server, address, nsqAddr string, db st
 		m:               &sync.RWMutex{},
 		users:           make(map[string]*SocketIOUser, 0),
 		address:         address,
-		log:             slf.WithContext("connectedPool"),
+		log:             slf.WithContext("connectedPool").WithCaller(slf.CallerShort),
 		closeChByConnID: make(map[string]chan string, 0),
 		db:              db,
 	}
