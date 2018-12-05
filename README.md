@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.com/Multy-io/Multy-back.svg?branch=master)](https://travis-ci.com/Multy-io/Multy-back)
+Docker images: https://hub.docker.com/r/multyio/multy-back/tags/
+
 # Multy-back
 
 Back end server for [Multy](https://github.com/Multy-io/Multy/wiki) application
