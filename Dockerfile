@@ -3,12 +3,12 @@ FROM multyio/multy-back-builder
 RUN cd $GOPATH/src/github.com/Multy-io && \
     git clone https://github.com/Multy-io/Multy-BTC-node-service.git && \
     cd $GOPATH/src/github.com/Multy-io/Multy-BTC-node-service && \
-    git checkout master
+    git checkout release_1.4 
 
 RUN cd $GOPATH/src/github.com/Multy-io && \
     git clone https://github.com/Multy-io/Multy-ETH-node-service.git && \
     cd $GOPATH/src/github.com/Multy-io/Multy-ETH-node-service && \
-    git checkout master
+    git checkout release_1.4 
 
 WORKDIR $GOPATH/src/github.com/Multy-io/Multy-back
 COPY . $GOPATH/src/github.com/Multy-io/Multy-back
