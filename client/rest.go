@@ -1243,7 +1243,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 
 			var mp []kv
 			restClient.BTC.BtcMempool.Range(func(k, v interface{}) bool {
-				mp = append(mp, kv{k.(string), v.(int)})
+				mp = append(mp, kv{k.(string), int(v.(int64))})
 				return true
 			})
 
