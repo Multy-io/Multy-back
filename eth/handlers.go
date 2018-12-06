@@ -18,7 +18,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
+func (ethcli *ETHConn) setGRPCHandlers(networkID int, accuracyRange int) {
 	mempoolCh := make(chan interface{})
 	// initial fill mempool respectively network id
 
@@ -28,15 +28,15 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 
 	nsqProducer := ethcli.NsqProducer
 
-	switch networtkID {
+	switch networkID {
 	case currencies.ETHMain:
 		client = ethcli.CliMain
 		wa = ethcli.WatchAddressMain
-		mempool = &ethcli.Mempool
+		mempool = ethcli.Mempool
 	case currencies.ETHTest:
 		client = ethcli.CliTest
 		wa = ethcli.WatchAddressTest
-		mempool = &ethcli.MempoolTest
+		mempool = ethcli.MempoolTest
 
 	}
 
@@ -135,9 +135,9 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 			}
 			log.Debugf("initGrpcClient: cli.AddMultisig:stream.Recv:")
 
-			log.Warnf("Multisig recved on address contract %v ", multisigTx.Contract)
+			log.Warnf("Multisig received on address contract %v ", multisigTx.Contract)
 
-			multisig := generatedMultisigTxToStore(multisigTx, currencies.Ether, networtkID)
+			multisig := generatedMultisigTxToStore(multisigTx, currencies.Ether, networkID)
 
 			log.Warnf("\n\n\n\n\n multisigTx.DeployStatus = %v", multisigTx.DeployStatus)
 
@@ -197,7 +197,7 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 						Date:    time.Now().Unix(),
 						Payload: multisig,
 					}
-					ethcli.WsServer.BroadcastToAll(store.MsgRecieve+":"+user.UserID, msg)
+					ethcli.WsServer.BroadcastToAll(store.MsgReceive+":"+user.UserID, msg)
 				}
 			}
 		}
@@ -225,18 +225,18 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 			tx := generatedTxDataToStore(gTx)
 			setExchangeRates(&tx, gTx.Resync, tx.BlockTime)
 
-			err = saveTransaction(tx, networtkID, gTx.Resync)
-			updateWalletAndAddressDate(tx, networtkID)
+			err = saveTransaction(tx, networkID, gTx.Resync)
+			updateWalletAndAddressDate(tx, networkID)
 			if err != nil {
 				log.Errorf("initGrpcClient: saveMultyTransaction: %s", err)
 			}
 
 			if !gTx.GetResync() {
-				sendNotifyToClients(tx, nsqProducer, networtkID)
+				sendNotifyToClients(tx, nsqProducer, networkID)
 			}
 			// process multisig txs
 			if gTx.Multisig {
-				methodInvoked, err := processMultisig(&tx, networtkID, nsqProducer, ethcli)
+				methodInvoked, err := processMultisig(&tx, networkID, nsqProducer, ethcli)
 				log.Warnf("methodInvoked %v tx.Multisig.Return %v ", methodInvoked, tx.Multisig.Return)
 				// ws notify about all kinds of ms transactions
 				sel := bson.M{"multisig.contractAddress": tx.Multisig.Contract}
@@ -252,7 +252,7 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 						Date:    time.Now().Unix(),
 						Payload: gTx,
 					}
-					ethcli.WsServer.BroadcastToAll(store.MsgRecieve+":"+user.UserID, msg)
+					ethcli.WsServer.BroadcastToAll(store.MsgReceive+":"+user.UserID, msg)
 				}
 
 				if err != nil {
@@ -279,7 +279,7 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 			}
 
 			height := h.GetHeight()
-			sel := bson.M{"currencyid": currencies.Ether, "networkid": networtkID}
+			sel := bson.M{"currencyid": currencies.Ether, "networkid": networkID}
 			update := bson.M{
 				"$set": bson.M{
 					"blockheight": height,
@@ -293,7 +293,7 @@ func (ethcli *ETHConn) setGRPCHandlers(networtkID int, accuracyRange int) {
 			// check for rejected transactions
 			var txStore *mgo.Collection
 			var nsCli pb.NodeCommunicationsClient
-			switch networtkID {
+			switch networkID {
 			case currencies.ETHMain:
 				txStore = txsData
 				nsCli = ethcli.CliMain

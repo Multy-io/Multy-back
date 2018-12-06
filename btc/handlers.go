@@ -22,7 +22,7 @@ func (btcCli *BTCConn) setGRPCHandlers(networtkID, accuracyRange int) {
 
 	var client pb.NodeCommunicationsClient
 	var wa chan pb.WatchAddress
-	var mempool sync.Map
+	mempool := &sync.Map{}
 
 	nsqProducer := btcCli.NsqProducer
 	resync := btcCli.Resync
@@ -620,7 +620,7 @@ func (btcCli *BTCConn) setGRPCHandlers(networtkID, accuracyRange int) {
 						Date:    time.Now().Unix(),
 						Payload: "",
 					}
-					btcCli.WsServer.BroadcastToAll(store.MsgRecieve+":"+rTxs.SpOuts[0].UserID, msg)
+					btcCli.WsServer.BroadcastToAll(store.MsgReceive+":"+rTxs.SpOuts[0].UserID, msg)
 				}
 			}
 
