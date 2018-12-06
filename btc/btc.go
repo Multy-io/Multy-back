@@ -28,8 +28,8 @@ type BTCConn struct {
 	WatchAddressTest chan pb.WatchAddress
 	WatchAddressMain chan pb.WatchAddress
 
-	BtcMempool     sync.Map
-	BtcMempoolTest sync.Map
+	BtcMempool     *sync.Map
+	BtcMempoolTest *sync.Map
 
 	Resync *sync.Map
 
@@ -43,8 +43,8 @@ var log = slf.WithContext("btc").WithCaller(slf.CallerShort)
 func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string) (*BTCConn, error) {
 	//declare pacakge struct
 	cli := &BTCConn{
-		BtcMempool:     sync.Map{},
-		BtcMempoolTest: sync.Map{},
+		BtcMempool:     &sync.Map{},
+		BtcMempoolTest: &sync.Map{},
 		Resync:         &sync.Map{},
 	}
 

@@ -1219,7 +1219,6 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 			})
 			return
 		}
-
 		address := ""
 		if len(c.Param("address")) > 0 {
 			address = c.Param("address")[1:]
@@ -1364,7 +1363,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 	}
 }
 
-func fetchMempool(mempool sync.Map) EstimationSpeeds {
+func fetchMempool(mempool *sync.Map) EstimationSpeeds {
 	var fees []int64
 	mempool.Range(func(k, v interface{}) bool {
 		fee, ok := v.(int64)
