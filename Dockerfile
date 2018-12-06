@@ -17,8 +17,6 @@ RUN make build && \
     rm -r $GOPATH/src/github.com/Multy-io/Multy-ETH-node-service && \ 
     rm -r $GOPATH/src/github.com/Multy-io/Multy-BTC-node-service
 
-RUN rm -rf $GOPATH/src/github.com/Multy-io
-
 WORKDIR /go/src/github.com/Multy-io/Multy-back/cmd
 RUN echo "VERSION 02"
 ENTRYPOINT $GOPATH/src/github.com/Multy-io/Multy-back/cmd/multy
