@@ -1223,7 +1223,6 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 			})
 			return
 		}
-
 		address := ""
 		if len(c.Param("address")) > 0 {
 			address = c.Param("address")[1:]
@@ -1248,7 +1247,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 
 			var mp []kv
 			restClient.BTC.BtcMempool.Range(func(k, v interface{}) bool {
-				mp = append(mp, kv{k.(string), v.(int)})
+				mp = append(mp, kv{k.(string), int(v.(int64))})
 				return true
 			})
 
@@ -1368,7 +1367,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 	}
 }
 
-func fetchMempool(mempool sync.Map) EstimationSpeeds {
+func fetchMempool(mempool *sync.Map) EstimationSpeeds {
 	var fees []int64
 	mempool.Range(func(k, v interface{}) bool {
 		fee, ok := v.(int64)

@@ -46,7 +46,7 @@ const (
 	TopicNewIncoming = "NewIncoming"
 
 	MsgSend    = "message:send"
-	MsgRecieve = "message:recieve"
+	MsgReceive = "message:recieve"
 
 	JoinMultisig       = 1
 	LeaveMultisig      = 2
@@ -484,10 +484,10 @@ type Receiver struct {
 }
 
 type StartupReceiver struct {
-	ID             		string `json:"userid"`
-	UserCode       		string `json:"usercode"`
-	SupportedAddresses 	[]SupportedAddress `json:"supportedAddresses,omitempty"`
-	Socket     *gosocketio.Channel
+	ID                 string             `json:"userid"`
+	UserCode           string             `json:"usercode"`
+	SupportedAddresses []SupportedAddress `json:"supportedAddresses,omitempty"`
+	Socket             *gosocketio.Channel
 }
 
 type SupportedAddress struct {
@@ -495,7 +495,6 @@ type SupportedAddress struct {
 	NetworkID  int    `json:"networkid"`
 	Address    string `json:"address"`
 }
-
 
 type Sender struct {
 	ID       string `json:"userid"`

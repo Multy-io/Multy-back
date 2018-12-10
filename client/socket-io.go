@@ -97,8 +97,8 @@ func SetSocketIOHandlers(restClient *RestClient, BTC *btc.BTCConn, ETH *eth.ETHC
 	}
 	pool.chart = chart
 
-	receivers := sync.Map{} // string UserCode to store.Receiver
-	startupReceivers := sync.Map{}
+	receivers := &sync.Map{} // string UserCode to store.Receiver
+	startupReceivers := &sync.Map{}
 
 	senders := []store.Sender{}
 

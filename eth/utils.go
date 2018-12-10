@@ -503,7 +503,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 						Date:    time.Now().Unix(),
 						Payload: "ok",
 					}
-					ethcli.WsServer.BroadcastToAll(store.MsgRecieve+":"+user.UserID, msg)
+					ethcli.WsServer.BroadcastToAll(store.MsgReceive+":"+user.UserID, msg)
 				}
 
 			}
@@ -682,7 +682,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 					Date:    time.Now().Unix(),
 					Payload: "ok",
 				}
-				ethcli.WsServer.BroadcastToAll(store.MsgRecieve+":"+user.UserID, msg)
+				ethcli.WsServer.BroadcastToAll(store.MsgReceive+":"+user.UserID, msg)
 			}
 		}
 
