@@ -1,6 +1,5 @@
-# golang:1-alpine3.8 can't be used as base image since apline-based gcc
-# fails to compile github.com/ethereum/go-ethereum/crypto/secp256k1/secp256.go
-FROM golang:1.9.4 as multy-back-builder
+# Using alpine-based build image since we run built binaries on alpine too.
+FROM golang:1.11.2-alpine3.8 as multy-back-builder
 LABEL org.label-schema.schema-version = "1.0"
 LABEL org.label-schema.url = "http://multy.io"
 LABEL org.label-schema.vcs-url = "https://github.com//multy-io/multy-back"
@@ -17,21 +16,23 @@ LABEL org.label-schema.git-branch="$GIT_BRANCH"
 LABEL org.label-schema.vcs-ref="$GIT_COMMIT"
 LABEL org.label-schema.version="$GIT_TAG"
 
-# Get a version of multy-back from current sources, fetch all dependencies, clear multy-back sources
+# `git` is for `go get` to function properly.
+# `make` is to build our binaries, with Makefile.
+# `gcc` used to build libscep256k1 (go-ethereum dependecy).
+# `libc-dev` provides headers libscep256k1 relies on.
+RUN apk add git gcc make libc-dev && gcc --version
+
+# Get a version of multy-back from current sources, fetch all dependencies
+# clear multy-back sources, leaving all dependencies as part of the image.
 COPY . $GOPATH/src/github.com/Multy-io/Multy-back
 WORKDIR $GOPATH/src/github.com/Multy-io/Multy-back
 
 # Download all dependencies of the multy-back
 RUN go get -v ./...
 
-# Get, build and install musl-gcc - a compiler wrapper and libc implementation 
-# that allows static builds with cgo to run in alpine-based dockers.
-RUN curl http://www.musl-libc.org/releases/musl-1.1.20.tar.gz | tar -xz \
-    && cd ./musl-1.1.20 \
-    && ./configure --prefix=/usr && make && make install
-
 # Check that project can be built and binaries appear to work Ok on this platform.
 RUN make build -B && make canary-test && make test
 
 # Cleanup
 RUN rm -rf ./*
+WORKDIR /

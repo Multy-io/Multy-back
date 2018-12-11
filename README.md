@@ -1,6 +1,6 @@
 # Multy-back
 
-Back end server for [Multy](https://github.com/Multy-io/Multy/wiki) application
+Back end server and node-services for [Multy](https://github.com/Multy-io/Multy/wiki) application
 
 ## Usage Instructions
 
