@@ -776,7 +776,7 @@ func delSpOutToGenerated(del store.DeleteSpendableOutput) pb.ReqDeleteSpOut {
 
 func newMempoolRecord(category int, hashTX string) store.MempoolRecord {
 	return store.MempoolRecord{
-		Category: category,
+		Category: int64(category),
 		HashTX:   hashTX,
 	}
 }

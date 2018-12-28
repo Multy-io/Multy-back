@@ -36,7 +36,7 @@ type BTCConn struct {
 	WsServer *gosocketio.Server
 }
 
-var log = slf.WithContext("btc")
+var log = slf.WithContext("btc").WithCaller(slf.CallerShort)
 
 //InitHandlers init nsq mongo and ws connection to node
 // return main client , test client , err
