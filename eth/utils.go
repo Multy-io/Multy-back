@@ -56,7 +56,7 @@ func updateWalletAndAddressDate(tx store.TransactionETH, networkID int) error {
 
 	for i := range user.Wallets {
 		for j, addr := range user.Wallets[i].Adresses {
-			if addr.Address == tx.From {
+			if addr.Address == tx.From && user.Wallets[i].NetworkID == networkID {
 				ok = true
 				update = bson.M{
 					"$set": bson.M{
@@ -86,7 +86,7 @@ func updateWalletAndAddressDate(tx store.TransactionETH, networkID int) error {
 
 	for i := range user.Wallets {
 		for j, addr := range user.Wallets[i].Adresses {
-			if addr.Address == tx.To {
+			if addr.Address == tx.To && user.Wallets[i].NetworkID == networkID {
 				ok = true
 				update = bson.M{
 					"$set": bson.M{
@@ -503,7 +503,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 						Date:    time.Now().Unix(),
 						Payload: "ok",
 					}
-					ethcli.WsServer.BroadcastToAll(store.MsgRecieve+":"+user.UserID, msg)
+					ethcli.WsServer.BroadcastToAll(store.MsgReceive+":"+user.UserID, msg)
 				}
 
 			}
@@ -682,7 +682,7 @@ func ParseMultisigInput(tx *store.TransactionETH, networtkID int, multisigStore,
 					Date:    time.Now().Unix(),
 					Payload: "ok",
 				}
-				ethcli.WsServer.BroadcastToAll(store.MsgRecieve+":"+user.UserID, msg)
+				ethcli.WsServer.BroadcastToAll(store.MsgReceive+":"+user.UserID, msg)
 			}
 		}
 

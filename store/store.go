@@ -118,7 +118,7 @@ type UserStore interface {
 	CheckAddWallet(wp *WalletParams, jwt string) error
 
 	CheckTx(tx string) bool
-	GetUsersReceiverAddressesByUserIds(userIds []string) ([]Receiver, error)
+	GetUsersReceiverAddressesByUserIds(userIds []string) ([]StartupReceiver, error)
 }
 
 type MongoUserStore struct {
@@ -295,9 +295,9 @@ func (mStore *MongoUserStore) FetchUserAddresses(currencyID, networkID int, user
 	return AddressExtended{}, nil
 }
 
-func (mStore *MongoUserStore) GetUsersReceiverAddressesByUserIds(userIds []string) ([]Receiver, error) {
+func (mStore *MongoUserStore) GetUsersReceiverAddressesByUserIds(userIds []string) ([]StartupReceiver, error) {
 	users := []User{}
-	receivers := []Receiver{}
+	receivers := []StartupReceiver{}
 
 	err := mStore.usersData.Find(bson.M{"userID": bson.M{"$in": userIds}}).All(&users)
 	if err != nil {
@@ -305,17 +305,23 @@ func (mStore *MongoUserStore) GetUsersReceiverAddressesByUserIds(userIds []strin
 	}
 
 	for _, user := range users {
+		receiverStruct := StartupReceiver{
+			ID: user.UserID,
+		}
+
 		for _, wallet := range user.Wallets {
-			for _, address := range wallet.Adresses {
-				receiverStruct := Receiver{
-					ID:         user.UserID,
-					CurrencyID: wallet.CurrencyID,
-					NetworkID:  wallet.NetworkID,
-					Address:    address.Address,
+			if wallet.Status == WalletStatusOK {
+				for _, address := range wallet.Adresses {
+					receiverStruct.SupportedAddresses = append(receiverStruct.SupportedAddresses, SupportedAddress{
+						CurrencyID: wallet.CurrencyID,
+						NetworkID:  wallet.NetworkID,
+						Address:    address.Address,
+					})
 				}
-				receivers = append(receivers, receiverStruct)
 			}
 		}
+
+		receivers = append(receivers, receiverStruct)
 	}
 
 	return receivers, nil

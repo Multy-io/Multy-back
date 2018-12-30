@@ -1,12 +1,10 @@
 cmd/cmd
 cmd/test
 cmd/stage
-cmd/multy
-cmd/multy.config
-cmd/btc.cert
-*/logs/*
-*/*.log
-cmd/rpc.cert
+cmd/**/*.config
+cmd/**/*.cert
+**/logs/*
+*/**/*.log
 cmd/state.json
 cmd/ns-eth/ns-eth
 cmd/ns-btc/ns-btc
@@ -16,3 +14,4 @@ rpc.cert
 data-db
 
 .env
+.idea/
