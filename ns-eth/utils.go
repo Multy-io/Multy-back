@@ -131,12 +131,10 @@ func (client *Client) parseETHTransaction(rawTX ethrpc.Transaction, blockHeight 
 
 	if udFrom, ok := client.UsersData.Load(rawTX.From); ok {
 		fromUser = udFrom.(store.AddressExtended)
-		log.Warnf("udFrom --  %v ", udFrom)
 	}
 
 	if udTo, ok := client.UsersData.Load(rawTX.To); ok {
 		toUser = udTo.(store.AddressExtended)
-		log.Warnf("udTo --  %v ", udTo)
 	}
 
 	if fromUser.UserID == toUser.UserID && fromUser.UserID == "" {

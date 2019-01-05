@@ -25,7 +25,7 @@ func (c *Client) txpoolTransaction(txHash string) {
 
 	// add txpool record
 	c.AddToMempoolStream <- pb.MempoolRecord{
-		Category: int32(rawTx.Gas),
+		Category: int64(rawTx.Gas),
 		HashTX:   rawTx.Hash,
 	}
 	if strings.ToLower(rawTx.To) == strings.ToLower(c.Multisig.FactoryAddress) {

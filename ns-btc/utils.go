@@ -774,7 +774,7 @@ func delSpOutToGenerated(del store.DeleteSpendableOutput) pb.ReqDeleteSpOut {
 	}
 }
 
-func newMempoolRecord(category int, hashTX string) store.MempoolRecord {
+func newMempoolRecord(category int64, hashTX string) store.MempoolRecord {
 	return store.MempoolRecord{
 		Category: int64(category),
 		HashTX:   hashTX,
@@ -808,7 +808,7 @@ func (c *Client) rawTxToMempoolRec(inTx *btcjson.TxRawResult) store.MempoolRecor
 	floatFee := fee / float64(inTx.Size) * 100000000
 
 	//It's some kind of Round function to prefent 0 FeeRates while casting from float to int
-	intFee := int(math.Floor(floatFee + 0.5))
+	intFee := int64(math.Floor(floatFee + 0.5))
 
 	rec := newMempoolRecord(intFee, inTx.Hash)
 	// }

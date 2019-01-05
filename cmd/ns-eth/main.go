@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	log = slf.WithContext("ns-eth")
+	log = slf.WithContext("ns-eth").WithCaller(slf.CallerShort)
 
 	// Set externaly during build
 	branch    string
