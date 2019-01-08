@@ -14,7 +14,6 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
-	_ "github.com/jekabolt/slflog"
 )
 
 type Client struct {
@@ -30,7 +29,6 @@ type Client struct {
 	rpcConf        *rpcclient.ConnConfig
 }
 
-// var log = slf.WithContext("btc")
 
 func NewClient(certFromConf []byte, btcNodeAddress string, usersData *sync.Map) (*Client, error) {
 

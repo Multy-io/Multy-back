@@ -6,7 +6,6 @@ See LICENSE for details
 package nseth
 
 import (
-	"fmt"
 	"math/big"
 	"sync"
 	"time"
@@ -239,8 +238,8 @@ func (client *Client) parseETHMultisig(rawTX ethrpc.Transaction, blockHeight int
 		input = input[:10]
 	}
 
-	fmt.Println("client.Multisig.UsersContracts ", ud)
-	fmt.Println("input", input)
+	log.Debugf("client.Multisig.UsersContracts %v", ud)
+	log.Debugf("input %v", input)
 
 	switch input {
 	case submitTransaction: // "c6427474": "submitTransaction(address,uint256,bytes)"

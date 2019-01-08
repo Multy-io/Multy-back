@@ -20,10 +20,7 @@ import (
 
 	pb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
 	"github.com/Multy-io/Multy-back/store"
-	_ "github.com/jekabolt/slflog"
 )
-
-// var log = slf.WithContext("streamer")
 
 // Server implements streamer interface and is a gRPC server
 type Server struct {
@@ -96,6 +93,7 @@ func (s *Server) IsEmptyAddress(ctx context.Context, in *pb.AddressToResync) (*p
 	return &pb.IsEmpty{
 		Empty: false,
 	}, nil
+
 }
 
 func (s *Server) GetERC20Info(ctx context.Context, in *pb.ERC20Address) (*pb.ERC20Info, error) {
@@ -106,17 +104,17 @@ func (s *Server) GetERC20Info(ctx context.Context, in *pb.ERC20Address) (*pb.ERC
 	request := gorequest.New()
 	resp, _, errs := request.Get(url).Retry(10, 3*time.Second, http.StatusForbidden, http.StatusBadRequest, http.StatusInternalServerError).End()
 	if len(errs) > 0 {
-
+		return nil, fmt.Errorf("GetERC20Info: request.Get: err: %v", errs[0].Error())
 	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println(`return errors.Wrap(err, "failed to read response body")`)
+		return nil, fmt.Errorf("GetERC20Info: ioutil.ReadAll: err: %v", err)
 	}
 
 	tokenresp := store.EtherscanResp{}
 	if err := json.Unmarshal(respBody, &tokenresp); err != nil {
-		fmt.Println(`fmt.Println("err Unmarshal ", err)`)
+		return nil, fmt.Errorf("GetERC20Info: ioutil.ReadAll: err: %v", err)
 	}
 	for _, tx := range tokenresp.Result {
 		addressInfo.History = append(addressInfo.History, &tx)
@@ -140,7 +138,7 @@ func (s *Server) GetERC20Info(ctx context.Context, in *pb.ERC20Address) (*pb.ERC
 
 		balanceToSend := "0"
 		if balance != nil {
-				balanceToSend = balance.String()
+			balanceToSend = balance.String()
 		}
 		addressInfo.Balances = append(addressInfo.Balances, &pb.ERC20Balances{
 			Address: contract,
@@ -249,14 +247,14 @@ func (s *Server) EventAddNewMultisig(ctx context.Context, address *pb.WatchAddre
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return &pb.ReplyInfo{
-			Message: fmt.Sprintf("EventResyncAddress: http.NewRequest = %s", err.Error()),
+			Message: fmt.Sprintf("EventAddNewMultisig: http.NewRequest = %s", err.Error()),
 		}, nil
 	}
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return &pb.ReplyInfo{
-			Message: fmt.Sprintf("EventResyncAddress: http.DefaultClient.Do = %s", err.Error()),
+			Message: fmt.Sprintf("EventAddNewMultisig: http.DefaultClient.Do = %s", err.Error()),
 		}, nil
 	}
 	defer res.Body.Close()
@@ -265,23 +263,23 @@ func (s *Server) EventAddNewMultisig(ctx context.Context, address *pb.WatchAddre
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return &pb.ReplyInfo{
-			Message: fmt.Sprintf("EventResyncAddress: ioutil.ReadAll = %s", err.Error()),
+			Message: fmt.Sprintf("EventAddNewMultisig: ioutil.ReadAll = %s", err.Error()),
 		}, nil
 	}
 
 	if err := json.Unmarshal(body, &reTx); err != nil {
 		return &pb.ReplyInfo{
-			Message: fmt.Sprintf("EventResyncAddress: json.Unmarshal = %s", err.Error()),
+			Message: fmt.Sprintf("EventAddNewMultisig: json.Unmarshal = %s", err.Error()),
 		}, nil
 	}
 
 	if !strings.Contains(reTx.Message, "OK") {
 		return &pb.ReplyInfo{
-			Message: fmt.Sprintf("EventResyncAddress: !strings.Contains OK a.k.a. bad response form 3-party"),
+			Message: fmt.Sprintf("EventAddNewMultisig: !strings.Contains OK a.k.a. bad response form 3-party"),
 		}, nil
 	}
 
-	log.Debugf("EventResyncAddress %d", len(reTx.Result))
+	log.Debugf("EventAddNewMultisig %d", len(reTx.Result))
 
 	for _, hash := range reTx.Result {
 		s.EthCli.ResyncMultisig(hash.Hash)
@@ -352,14 +350,15 @@ func (s *Server) CheckRejectTxs(ctx context.Context, txs *pb.TxsToCheck) (*pb.Re
 func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyInfo, error) {
 	currentH, err := s.EthCli.GetBlockHeight()
 	if err != nil {
-		log.Errorf("s.BtcCli.RpcClient.GetBlockCount: %v ", err.Error())
+		log.Errorf("SyncState:s.BtcCli.RpcClient.GetBlockCount: %v ", err.Error())
 	}
 
 	log.Debugf("currentH %v lastH %v dif %v", currentH, in.GetHeight(), int64(currentH)-in.GetHeight())
+
 	for lastH := int(in.GetHeight()); lastH < currentH; lastH++ {
 		b, err := s.EthCli.Rpc.EthGetBlockByNumber(lastH, true)
 		if err != nil {
-			log.Errorf("s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
+			log.Errorf("SyncState:s.BtcCli.RpcClient.GetBlockHash: %v", err.Error())
 		}
 		go s.EthCli.ResyncBlock(b)
 	}
@@ -374,16 +373,15 @@ func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommunications_Ev
 	if err != nil {
 		return err
 	}
-
 	for _, txs := range mp["pending"].(map[string]interface{}) {
 		for _, tx := range txs.(map[string]interface{}) {
-			gas, err := strconv.ParseInt(tx.(map[string]interface{})["gas"].(string), 0, 64)
+			gasPrice, err := strconv.ParseInt(tx.(map[string]interface{})["gasPrice"].(string), 0, 64)
 			if err != nil {
 				log.Errorf("EventGetAllMempool:strconv.ParseInt")
 			}
 			hash := tx.(map[string]interface{})["hash"].(string)
 			stream.Send(&pb.MempoolRecord{
-				Category: gas,
+				Category: gasPrice,
 				HashTX:   hash,
 			})
 		}
