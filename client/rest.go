@@ -1360,8 +1360,8 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 	}
 }
 
-func gasLimitForAddress(client ethpb.NodeCommunicationsClient, address string) int32 {
-	var gasLimit int32 = 21000
+func gasLimitForAddress(client ethpb.NodeCommunicationsClient, address string) string {
+	var gasLimit string = "21000"
 	code, err := client.EventGetCode(context.Background(), &ethpb.AddressToResync{
 		Address: address,
 	})
@@ -1369,7 +1369,7 @@ func gasLimitForAddress(client ethpb.NodeCommunicationsClient, address string) i
 		slf.WithContext("gasLimitForAddress").WithCaller(slf.CallerShort).Errorf("restClient.ETH.CliMain.EventGetCode falied with error: %v", err.Error())
 	}
 	if len(code.GetMessage()) > 10 {
-		gasLimit = 40000
+		gasLimit = "40000"
 	}
 	return gasLimit
 }
