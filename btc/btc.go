@@ -28,23 +28,23 @@ type BTCConn struct {
 	WatchAddressTest chan pb.WatchAddress
 	WatchAddressMain chan pb.WatchAddress
 
-	BtcMempool     sync.Map
-	BtcMempoolTest sync.Map
+	BtcMempool     *sync.Map
+	BtcMempoolTest *sync.Map
 
 	Resync *sync.Map
 
 	WsServer *gosocketio.Server
 }
 
-var log = slf.WithContext("btc")
+var log = slf.WithContext("btc").WithCaller(slf.CallerShort)
 
 //InitHandlers init nsq mongo and ws connection to node
 // return main client , test client , err
 func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string) (*BTCConn, error) {
 	//declare pacakge struct
 	cli := &BTCConn{
-		BtcMempool:     sync.Map{},
-		BtcMempoolTest: sync.Map{},
+		BtcMempool:     &sync.Map{},
+		BtcMempoolTest: &sync.Map{},
 		Resync:         &sync.Map{},
 	}
 

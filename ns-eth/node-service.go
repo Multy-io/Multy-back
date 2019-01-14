@@ -19,7 +19,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var log = slf.WithContext("NodeClient")
+var log = slf.WithContext("NodeClient").WithCaller(slf.CallerShort)
 
 // NodeClient is a main struct of service
 type NodeClient struct {
@@ -32,7 +32,7 @@ type NodeClient struct {
 
 // Init initializes Multy instance
 func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
-	resyncUrl := FethResyncUrl(conf.NetworkID)
+	resyncUrl := fetchResyncUrl(conf.NetworkID)
 	conf.ResyncUrl = resyncUrl
 	nc = &NodeClient{
 		Config: conf,
@@ -109,7 +109,7 @@ func (nc *NodeClient) Init(conf *Configuration) (*NodeClient, error) {
 	return nc, nil
 }
 
-func FethResyncUrl(networkid int) string {
+func fetchResyncUrl(networkid int) string {
 	switch networkid {
 	case 4:
 		return "http://api-rinkeby.etherscan.io/api?sort=asc&endblock=99999999&startblock=0&address="

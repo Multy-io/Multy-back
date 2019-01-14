@@ -1,4 +1,5 @@
 language: bash
+
 env:
   global:
     - DOCKER_USERNAME=multyio
@@ -25,5 +26,4 @@ deploy:
     script: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
             DOCKER_TAG="$TRAVIS_TAG" make docker-retag-images docker-push-images
     on:
-       tags: true
-       all_branches: true
+      tags: true

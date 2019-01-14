@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	log = slf.WithContext("multy-back")
+	log = slf.WithContext("multy-back").WithCaller(slf.CallerShort)
 
 	// Set externaly during build
 	branch    string

@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	log = slf.WithContext("ns-btc")
+	log = slf.WithContext("ns-btc").WithCaller(slf.CallerShort)
 
 	// Set externaly during build
 	branch    string

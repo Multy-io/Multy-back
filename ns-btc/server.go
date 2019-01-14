@@ -16,12 +16,10 @@ import (
 	"github.com/blockcypher/gobcy"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	_ "github.com/jekabolt/slflog"
 	"github.com/parnurzeal/gorequest"
 	"google.golang.org/grpc"
 )
 
-// var log = slf.WithContext("streamer")
 
 // Server implements streamer interface and is a gRPC server
 type Server struct {

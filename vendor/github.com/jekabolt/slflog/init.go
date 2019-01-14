@@ -76,7 +76,6 @@ func logLogF(format string, args ...interface{}) {
 func init() {
 
 	//var cf ConfFile = defaultConf
-	fmt.Print("aaaaaaaaaaa\n")
 	config.ReadGlobalConfig(&logConfig, "Logs")
 	initLoggers(logConfig.Logs)
 }

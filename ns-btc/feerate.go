@@ -24,7 +24,7 @@ func (c *Client) GetAllMempool() ([]store.MempoolRecord, error) {
 		floatFee := txInfo.Fee / float64(txInfo.Size) * btcToSatoshi
 
 		//It's some kind of Round function to prefent 0 FeeRates while casting from float to int
-		intFee := int(math.Floor(floatFee + 0.5))
+		intFee := int64(math.Floor(floatFee + 0.5))
 		// Node has transatctions withch not exist
 		if intFee > 0 {
 			allMempool = append(allMempool, newMempoolRecord(intFee, hash))

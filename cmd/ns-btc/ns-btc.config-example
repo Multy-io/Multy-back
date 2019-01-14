@@ -1,0 +1,38 @@
+{
+    "Name": "testnet-client",
+    "User": "multy",
+    "Password": "multy",
+    "BTCNodeAddress": "localhost:7770",
+    "BTCSertificate": "./rpc.cert",
+    "GrpcPort": ":6600",
+    "BTCAPI": {
+        "Token": "token",
+        "Coin": "btc",
+        "Chain": "main"
+    },
+    "Logs": {
+        "Handlers": [
+            {
+                "Type": "stderr",
+                "Level": "DEBUG"
+            },
+            {
+                "Type": "file",
+                "Level": "INFO",
+                "Filename": "info.log"
+            },
+            {
+                "Type": "file",
+                "Level": "WARN",
+                "Filename": "error.log"
+            },
+            {
+                "Type": "file",
+                "Level": "DEBUG",
+                "Filename": "debug.log"
+            }
+        ],
+        "CallerInfo": false,
+        "Logpath": "logs"
+    }
+}

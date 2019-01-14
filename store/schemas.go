@@ -46,7 +46,7 @@ const (
 	TopicNewIncoming = "NewIncoming"
 
 	MsgSend    = "message:send"
-	MsgRecieve = "message:recieve"
+	MsgReceive = "message:recieve"
 
 	JoinMultisig       = 1
 	LeaveMultisig      = 2
@@ -75,6 +75,8 @@ const (
 	ExecuteTransaction = "0xee22610b"
 
 	MaximumAvalibeEmptyWallets = 20
+
+	ETHStandardVeryFastFeeRate = 5000000000
 )
 
 // User represents a single app user
@@ -410,7 +412,7 @@ type CoinType struct {
 }
 
 type MempoolRecord struct {
-	Category int    `json:"category"`
+	Category int64  `json:"category"`
 	HashTX   string `json:"hashTX"`
 }
 
@@ -479,6 +481,19 @@ type Receiver struct {
 	Address    string `json:"address"`
 	Amount     string `json:"amount"`
 	Socket     *gosocketio.Channel
+}
+
+type StartupReceiver struct {
+	ID                 string             `json:"userid"`
+	UserCode           string             `json:"usercode"`
+	SupportedAddresses []SupportedAddress `json:"supportedAddresses,omitempty"`
+	Socket             *gosocketio.Channel
+}
+
+type SupportedAddress struct {
+	CurrencyID int    `json:"currencyid"`
+	NetworkID  int    `json:"networkid"`
+	Address    string `json:"address"`
 }
 
 type Sender struct {

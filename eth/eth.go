@@ -28,21 +28,21 @@ type ETHConn struct {
 	WatchAddressTest chan pb.WatchAddress
 	WatchAddressMain chan pb.WatchAddress
 
-	Mempool     sync.Map
-	MempoolTest sync.Map
+	Mempool     *sync.Map
+	MempoolTest *sync.Map
 
 	WsServer *gosocketio.Server
 }
 
-var log = slf.WithContext("eth")
+var log = slf.WithContext("eth").WithCaller(slf.CallerShort)
 
 //InitHandlers init nsq mongo and ws connection to node
 // return main client , test client , err
 func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string) (*ETHConn, error) {
 	//declare pacakge struct
 	cli := &ETHConn{
-		Mempool:     sync.Map{},
-		MempoolTest: sync.Map{},
+		Mempool:     &sync.Map{},
+		MempoolTest: &sync.Map{},
 	}
 
 	cli.WatchAddressMain = make(chan pb.WatchAddress)

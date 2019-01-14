@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	log = slf.WithContext("NodeClient")
+	log = slf.WithContext("NodeClient").WithCaller(slf.CallerShort)
 )
 
 // Multy is a main struct of service
