@@ -15,3 +15,6 @@ data-db
 
 .env
 .idea/
+
+*.DS_Store
+.vscode/

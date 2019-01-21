@@ -10,7 +10,9 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"errors"
+
 	"github.com/Multy-io/Multy-back/exchanger"
+
 	"net/http"
 	"sort"
 	"strconv"
@@ -29,7 +31,7 @@ import (
 	ethpb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/gin-gonic/gin"
-	"gopkg.in/mgo.v2"
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -189,20 +191,12 @@ type SelectWallet struct {
 	AddressIndex int    `json:"addressIndex"`
 }
 
-type EstimationSpeeds struct {
+type TransactionFeeRateEstimation struct {
 	VerySlow int64
 	Slow     int64
 	Medium   int64
 	Fast     int64
 	VeryFast int64
-}
-
-type EstimationSpeedsETH struct {
-	VerySlow string
-	Slow     string
-	Medium   string
-	Fast     string
-	VeryFast string
 }
 
 type Tx struct {
@@ -1201,7 +1195,7 @@ func (restClient *RestClient) addAddress() gin.HandlerFunc {
 
 func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var sp EstimationSpeeds
+		var sp TransactionFeeRateEstimation
 		currencyID, err := strconv.Atoi(c.Param("currencyid"))
 		if err != nil {
 			restClient.log.Errorf("getWalletVerbose: non int currency id: %s \t[addr=%s]", err.Error(), c.Request.RemoteAddr)
@@ -1325,7 +1319,7 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 				slowValue = slowestValue
 			}
 
-			sp = EstimationSpeeds{
+			sp = TransactionFeeRateEstimation{
 				VerySlow: int64(slowestValue),
 				Slow:     int64(slowValue),
 				Medium:   int64(mediumValue),
@@ -1343,31 +1337,49 @@ func (restClient *RestClient) getFeeRate() gin.HandlerFunc {
 		case currencies.Ether:
 			switch networkid {
 			case currencies.ETHMain:
-				mempoolSpeeds := fetchMempool(restClient.ETH.Mempool)
+				mempoolSpeeds := estimateTransactionGasPrice(restClient.ETH.Mempool)
+				gasLimit := gasLimitForAddress(restClient.ETH.CliMain, address)
+
 				c.JSON(http.StatusOK, gin.H{
-					"speeds":  mempoolSpeeds,
-					"code":    http.StatusOK,
-					"message": http.StatusText(http.StatusOK),
+					"gaslimit": gasLimit,
+					"speeds":   mempoolSpeeds,
+					"code":     http.StatusOK,
+					"message":  http.StatusText(http.StatusOK),
 				})
 				return
 			case currencies.ETHTest:
-				mempoolSpeeds := fetchMempool(restClient.ETH.Mempool)
+				// For testnet we return estimate gas price from mainnet because testnet have many strange transaction
+				mempoolSpeeds := estimateTransactionGasPrice(restClient.ETH.Mempool)
+				gasLimit := gasLimitForAddress(restClient.ETH.CliTest, address)
 				c.JSON(http.StatusOK, gin.H{
-					"speeds":  mempoolSpeeds,
-					"code":    http.StatusOK,
-					"message": http.StatusText(http.StatusOK),
+					"gaslimit": gasLimit,
+					"speeds":   mempoolSpeeds,
+					"code":     http.StatusOK,
+					"message":  http.StatusText(http.StatusOK),
 				})
 				return
 			}
-
 		default:
 
 		}
-
 	}
 }
 
-func fetchMempool(mempool *sync.Map) EstimationSpeeds {
+func gasLimitForAddress(client ethpb.NodeCommunicationsClient, address string) int32 {
+	var gasLimit int32 = 21000
+	code, err := client.EventGetCode(context.Background(), &ethpb.AddressToResync{
+		Address: address,
+	})
+	if err != nil {
+		slf.WithContext("gasLimitForAddress").WithCaller(slf.CallerShort).Errorf("restClient.ETH.CliMain.EventGetCode falied with error: %v", err.Error())
+	}
+	if len(code.GetMessage()) > 10 {
+		gasLimit = 40000
+	}
+	return gasLimit
+}
+
+func estimateTransactionGasPrice(mempool *sync.Map) TransactionFeeRateEstimation {
 	var fees []int64
 	mempool.Range(func(k, v interface{}) bool {
 		fee, ok := v.(int64)
@@ -1378,33 +1390,31 @@ func fetchMempool(mempool *sync.Map) EstimationSpeeds {
 	})
 	sort.Slice(fees, func(i, j int) bool { return fees[i] > fees[j] })
 
-	if len(fees) > 1400 {
-		return EstimationSpeeds{
-			VeryFast: average(fees[:100]),
-			Fast:     average(fees[100:400]),
-			Medium:   average(fees[400:700]),
-			Slow:     average(fees[700:1000]),
-			VerySlow: average(fees[1000:1300]),
-		}
-	} else if len(fees) < 1400 && len(fees) > 100 {
-		quantile := fetchQuantile(fees)
+	slf.WithContext("estimateTransactionGasPrice").WithCaller(slf.CallerShort).Debugf("ETH feerate:mempool size: = %d \n", len(fees))
 
-		return EstimationSpeeds{
-			VeryFast: average(fees[:quantile[0]]),
-			Fast:     average(fees[quantile[0]:quantile[1]]),
-			Medium:   average(fees[quantile[1]:quantile[2]]),
-			Slow:     average(fees[quantile[2]:quantile[3]]),
-			VerySlow: average(fees[quantile[3]:]),
+	// if mempool tx size > 1300, use sorted first 1300 mempool Transaction for estimate gas price
+	if len(fees) > 1300 {
+		fees = fees[:1300]
+	}
+
+	if len(fees) > 500 {
+		var firstPack int = len(fees) / 10
+		var step int = (len(fees) - firstPack) / 4
+		return TransactionFeeRateEstimation{
+			VeryFast: average(fees[:firstPack]),
+			Fast:     average(fees[firstPack:(firstPack + 1*step)]),
+			Medium:   average(fees[(firstPack + 1*step):(firstPack + 2*step)]),
+			Slow:     average(fees[(firstPack + 2*step):(firstPack + 3*step)]),
+			VerySlow: average(fees[(firstPack + 3*step):]),
 		}
 	}
-	return EstimationSpeeds{
+	return TransactionFeeRateEstimation{
 		VerySlow: 9 * 1000000000,
 		Slow:     10 * 1000000000,
 		Medium:   14 * 1000000000,
 		Fast:     20 * 1000000000,
 		VeryFast: 25 * 1000000000,
 	}
-
 }
 
 func average(fees []int64) int64 {
@@ -1414,18 +1424,6 @@ func average(fees []int64) int64 {
 	}
 	return int64(total / int64(len(fees)))
 
-}
-
-func fetchQuantile(fees []int64) []int {
-	firstQuantile := int(float32(len(fees)) * 0.1)
-	quantile := int(float32(len(fees)) * 0.225)
-	qs := []int{firstQuantile, quantile}
-	for i := 0; i < 2; i++ {
-		quantile = quantile + quantile
-		qs = append(qs, quantile)
-	}
-	qs = append(qs, len(fees)-1)
-	return qs
 }
 
 func (restClient *RestClient) getSpendableOutputs() gin.HandlerFunc {
