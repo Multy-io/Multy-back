@@ -1,36 +1,100 @@
-version: '3.4'
+version: '2.3'
 services:
-  btc-node-service-mainnet-prod:
-    image: multyio/multy-btc-node-service:release_1.1
-    network_mode: "host"
+  multy-back:
+    image: multyio/multy-back:${MULTY_BACK_VERSION}
+    env_file: .env
+    restart: on-failure
     volumes:
-      - "${BTCD_CERT}:/go/src/github.com/Multy-io/Multy-BTC-node-service/cmd/rpc.cert"
-      - "${BTC_NODE_SERVICE_MAINNET}:/go/src/github.com/Multy-io/Multy-BTC-node-service/cmd/client.config"
+      - "${MULTY_BACK_LOGS}:/go/src/github.com/Multy-io/Multy-back/cmd/logs"
+      - "${MULTY_BACK_CONF}:/multy/multy-back.config"
+      - "${MULTY_BACK_CURRENCIES}:/currencies"
     ports:
-      - "7755:7755"
+      - "${MULTY_REST_PORT}:6778" 
+      - "${MULTY_SOCKETIO_PORT}:6780"
+    depends_on:
+      - nsq
+      - mongodb
+      - btc-ns-mainnet
+      - btc-ns-testnet
+      - eth-ns-mainnet
+      - eth-ns-testnet
+    expose:
+      - 6778
+      - 6780
 
-  btc-node-service-testnet-prod:
-    image: multyio/multy-btc-node-service:release_1.1
-    network_mode: "host"
+  mongodb:
+    container_name: "mongo_db_dev"
+    image: mongo:3.6.2
+    env_file: .env
+    restart: on-failure
+    command: mongod --smallfiles --config /mongo/mongod.conf
     volumes:
-     - "${BTC_NODE_SERVICE_TESTNET}:/go/src/github.com/Multy-io/Multy-BTC-node-service/cmd/client.config"
-     - "${BTCD_CERT}:/go/src/github.com/Multy-io/Multy-BTC-node-service/cmd/rpc.cert"
-    ports:
-     - "6655:6655"
+      - "${MONGO_DATA_DIR}:/data/db"
+      - "${MONGO_LOG_DIR}:/data/logs"
+      - "${MONGO_CONF_DIR}:/mongo"
+      - "./mongo_entrypoint.sh:/mongo_entrypoint.sh"
+    expose:
+      - "27017"    
 
-  eth-node-service-mainnet-prod:
-    image: multyio/multy-eth-node-service:release_1.1
-    network_mode: "host"
+  nsqlookup:
+    image: nsqio/nsq
+    restart: on-failure
+    expose:
+      - "4160"
+    command: nsqlookupd
+
+  nsq:
+    image: nsqio/nsq
+    hostname: nsq
+    restart: on-failure
+    expose: 
+      - "4150"
+    links:
+      - nsqlookup
+    env_file: .env
     volumes:
-      - "${ETH_NODE_SERVICE_MAINNET}:/go/src/github.com/Multy-io/Multy-ETH-node-service/cmd/client.config"
-    ports:
-      - "7744:7744"
+      - "${NSQD_DATA_DIR}:/data/nsqd"
+    command: nsqd --broadcast-address nsq --lookupd-tcp-address=nsqlookup:4160 -data-path=/data
 
-
-  eth-node-service-testnet-prod:
-    image: multyio/multy-eth-node-service:release_1.1
-    network_mode: "host"
+  btc-ns-mainnet:
+    image: multyio/multy-btc-node-service:${MULTY_NS_BTC_VERSION}
+    restart: on-failure
     volumes:
-      - "${ETH_NODE_SERVICE_TESTNET}:/go/src/github.com/Multy-io/Multy-ETH-node-service/cmd/client.config"
-    ports:
-      - "6644:6644"
+      # LOGS? MULTY_NS_BTC_LOG_DIR
+      - "${MULTY_NS_BTC_MAINNET_NODE_CERT}:/multy/rpc.cert"
+      - "${MULTY_NS_BTC_MAINNET_CONFIG}:/multy/ns-btc.config"
+    expose: 
+      - "7755"
+
+  btc-ns-testnet:
+    image: multyio/multy-btc-node-service:${MULTY_NS_BTC_VERSION}
+    restart: on-failure
+    volumes:
+      - "${MULTY_NS_BTC_TESTNET_CONFIG}:/multy/ns-btc.config"
+      - "${MULTY_NS_BTC_TESTNET_NODE_CERT}:/multy/rpc.cert"
+    expose:
+      - "6655"
+
+  eth-ns-mainnet:
+    image: multyio/multy-eth-node-service:${MULTY_NS_ETH_VERSION}
+
+    restart: on-failure
+    hostname: multy.local
+    volumes:
+      - "${MULTY_NS_ETH_MAINNET_CONFIG}:/multy/ns-eth.config"
+    expose:
+      - "7744"
+    mem_limit: 2G
+    memswap_limit: 500MB
+
+
+  eth-ns-testnet:
+    image: multyio/multy-eth-node-service:${MULTY_NS_ETH_VERSION}
+    restart: on-failure
+    hostname: multy.local
+    volumes:
+      - "${MULTY_NS_ETH_TESTNET_CONFIG}:/multy/ns-eth.config"
+    expose:
+      - "6644"
+    mem_limit: 2G
+    memswap_limit: 500MB
