@@ -1,14 +1,17 @@
-cmd/cmd
-cmd/test
-cmd/stage
 cmd/**/*.config
-cmd/**/*.cert
 **/logs/*
-*/**/*.log
+*/*.log
 cmd/state.json
 cmd/ns-eth/ns-eth
+cmd/ns-eth/ns-eth-test
+cmd/ns-eth/ns-eth-main
+cmd/ns-eth/debug
 cmd/ns-btc/ns-btc
+cmd/ns-btc/ns-btc-main
+cmd/ns-btc/ns-btc-test
+cmd/ns-btc/debug
 cmd/multy-back/multy-back
+cmd/currencies
 
 rpc.cert
 data-db

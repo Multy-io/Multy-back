@@ -9,10 +9,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/Multy-io/Multy-back/exchanger"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/Multy-io/Multy-back/exchanger"
 
 	// exchanger "github.com/Multy-io/Multy-back-exchange-service"
 	"github.com/Multy-io/Multy-back/btc"
@@ -312,6 +313,8 @@ func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 
 // Run runs service
 func (multy *Multy) Run() error {
+	log.Debugf("Listening Rest address: %d", multy.config.RestAddress)
+	log.Debugf("Listening Socketio address %v", multy.config.SocketioAddr)
 	log.Info("Running server")
 	multy.route.Run(multy.config.RestAddress)
 	return nil
