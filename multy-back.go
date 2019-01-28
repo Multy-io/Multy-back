@@ -149,7 +149,7 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 		if err != nil {
 			return servicesInfo, fmt.Errorf("SetUserData: userStore.FindUsersContractsChain: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
 		}
-		if len(usersData) == 0 {
+		if len(usersContracts) == 0 {
 			log.Infof("Empty userscontracts")
 		}
 

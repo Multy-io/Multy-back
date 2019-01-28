@@ -230,6 +230,7 @@ func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResy
 		resp, _, errs := request.Get(url).Retry(10, 10*time.Second, http.StatusForbidden, http.StatusBadRequest, http.StatusInternalServerError).End()
 		if len(errs) > 0 {
 			log.Errorf("EventResyncAddress:request.Get: %v", errs)
+			return nil, fmt.Errorf("EventResyncAddress: request.Get : %v", errs)
 		}
 		respBody, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
