@@ -152,6 +152,7 @@ func SetRestHandlers(
 		v1.GET("/exchanger/supported_currencies", restClient.GetExchangerSupportedCurrencies())
 		v1.POST("/exchanger/exchange_amount", restClient.GetExchangerAmountExchange())
 		v1.POST("/exchanger/transaction", restClient.CreateExchangerTransaction())
+		v1.POST("/exchanger/minimum_amount", restClient.GetExchangerTransactionMinimumAmount())
 	}
 	return restClient, nil
 }

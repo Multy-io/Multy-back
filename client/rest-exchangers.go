@@ -10,9 +10,11 @@ For not we support only Changelly exchanger 3rd party.
 package client
 
 import (
+	"net/http"
+
 	"github.com/Multy-io/Multy-back/exchanger"
 	"github.com/gin-gonic/gin"
-	"net/http"
+	"github.com/pkg/errors"
 )
 
 func (restClient *RestClient) GetExchangerSupportedCurrencies() gin.HandlerFunc {
@@ -44,9 +46,9 @@ func (restClient *RestClient) GetExchangerSupportedCurrencies() gin.HandlerFunc 
 func (restClient *RestClient) GetExchangerAmountExchange() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		type RequestGetExchangeAmount struct {
-			From   string  `json:"from"`
-			To     string  `json:"to"`
-			Amount string  `json:"amount"`
+			From   string `json:"from"`
+			To     string `json:"to"`
+			Amount string `json:"amount"`
 		}
 
 		var requestData RequestGetExchangeAmount
@@ -83,10 +85,10 @@ func (restClient *RestClient) GetExchangerAmountExchange() gin.HandlerFunc {
 func (restClient *RestClient) CreateExchangerTransaction() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		type RequestCreateTransaction struct {
-			From    string  `json:"from"`
-			To      string  `json:"to"`
-			Amount  string  `json:"amount"`
-			Address string  `json:"address"`
+			From    string `json:"from"`
+			To      string `json:"to"`
+			Amount  string `json:"amount"`
+			Address string `json:"address"`
 		}
 
 		var requestData RequestCreateTransaction
@@ -120,5 +122,41 @@ func (restClient *RestClient) CreateExchangerTransaction() gin.HandlerFunc {
 				"payoutAddress": transaction.PayOutAddress,
 			})
 		}
+	}
+}
+
+func (restClient *RestClient) GetExchangerTransactionMinimumAmount() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		type RequestGetTransactionMinAmount struct {
+			From string `json:"from"`
+			To   string `json:"to"`
+		}
+
+		var requestData RequestGetTransactionMinAmount
+		err := decodeBody(c, &requestData)
+		if err != nil {
+			restClient.reportError(c, http.StatusBadRequest, msgErrRequestBodyError, errors.
+				Wrap(err, "Decode body"))
+			return
+		}
+		// GetExchanger always return error==nil
+		changellyExchanger, _ := restClient.
+			ExchangerFactory.
+			GetExchanger(exchanger.ExchangeChangellyCanonicalName)
+
+		TransactionMinimumAmount, err := changellyExchanger.GetTransactionMinimumAmount(
+			exchanger.CurrencyExchanger{Name: requestData.From},
+			exchanger.CurrencyExchanger{Name: requestData.To},
+		)
+
+		if err != nil {
+			restClient.reportError(c, http.StatusBadRequest, msgErrServerError, errors.Wrap(err, "GetTransactionMinimumAmount"))
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"code":    http.StatusOK,
+			"message": http.StatusText(http.StatusOK),
+			"amount":  TransactionMinimumAmount,
+		})
 	}
 }
