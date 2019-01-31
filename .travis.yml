@@ -11,6 +11,14 @@ services:
 
 before_script:
   - docker info
+  # Make a multy-back-builder image, 'script' section verifies that we can build docker images based on that.
+  - if [[ "$TRAVIS_TAG" =~ ^multy-back-builder/ ]] ;
+    then
+        export BUILDER_DOCKER_TAG="${TRAVIS_TAG/multy-back-builder\//}";
+        make docker-build-builder-image;
+        DOCKER_TAG="$BUILDER_DOCKER_TAG" make docker-retag-builder-image;
+        export MULTY_BACK_IMAGE_BUILDER=1;
+    fi
 
 script:
   - make docker-build-images
@@ -21,9 +29,20 @@ deploy:
             DOCKER_TAG=dev make docker-retag-images docker-push-images
     on:
       branch: dev
+      condition: ! ${MULTY_BACK_IMAGE_BUILDER}
 
   - provider: script
     script: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
             DOCKER_TAG="$TRAVIS_TAG" make docker-retag-images docker-push-images
     on:
       tags: true
+      condition: ! ${MULTY_BACK_IMAGE_BUILDER}
+
+  # Update multy-builder image explicitly on git tag multy-back-builder/version, and push it as multyio/multy-back-builder:version 
+  - provider: script
+    script: 
+      - echo "PUSHING BUILDER IMAGE"
+      - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
+            DOCKER_TAG=${BUILDER_DOCKER_TAG} make docker-push-builder-image
+    on:
+      condition: ${MULTY_BACK_IMAGE_BUILDER} = 1
