@@ -41,13 +41,14 @@ func NewClient(certFromConf []byte, btcNodeAddress string, usersData *sync.Map) 
 		AddToMempool:   make(chan pb.MempoolRecord),
 		Block:          make(chan pb.BlockHeight),
 		rpcConf: &rpcclient.ConnConfig{
-			Host:         btcNodeAddress,
-			User:         "multy",
-			Pass:         "multy",
-			Endpoint:     "ws",
-			Certificates: certFromConf,
-			HTTPPostMode: false, // Bitcoin core only supports HTTP POST mode
-			DisableTLS:   false, // Bitcoin core does not provide TLS by default
+			Host:                btcNodeAddress,
+			User:                "multy",
+			Pass:                "multy",
+			Endpoint:            "ws",
+			Certificates:        certFromConf,
+			HTTPPostMode:        false, // Bitcoin core only supports HTTP POST mode
+			DisableTLS:          false, // Bitcoin core does not provide TLS by default
+			DisableConnectOnNew: false,
 		},
 		UsersData: usersData,
 	}

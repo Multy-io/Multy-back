@@ -16,11 +16,10 @@ import (
 	"firebase.google.com/go/messaging"
 	"github.com/Multy-io/Multy-back/currencies"
 	"github.com/Multy-io/Multy-back/store"
+	nsq "github.com/bitly/go-nsq"
 	"github.com/gin-gonic/gin"
 	"github.com/jekabolt/slf"
 	"google.golang.org/api/option"
-
-	"github.com/nsqio/go-nsq"
 )
 
 type FirebaseConf struct {
@@ -57,7 +56,7 @@ func InitFirebaseConn(conf *FirebaseConf, c *gin.Engine, nsqAddr string) (*Fireb
 	}
 	fClient.log.Info("Firebase connection initialization")
 
-	service, err := NewPushService("./multy.config")
+	service, err := NewPushService("./multy-back.config")
 	if err != nil {
 		return nil, fmt.Errorf("NewPushService: %s", err.Error())
 	}

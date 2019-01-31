@@ -25,6 +25,7 @@ ONBUILD LABEL org.label-schema.build-date="$BUILD_DATE"
 ONBUILD LABEL org.label-schema.git-branch="$GIT_BRANCH"
 ONBUILD LABEL org.label-schema.vcs-ref="$GIT_COMMIT"
 ONBUILD LABEL org.label-schema.version="$GIT_TAG"
+RUN apk add --no-cache ca-certificates
 
 
 FROM base as multy-back

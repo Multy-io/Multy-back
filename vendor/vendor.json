@@ -21,6 +21,12 @@
 			"revisionTime": "2016-06-28T20:39:45Z"
 		},
 		{
+			"checksumSHA1": "kBZe0eWwkM9CzM9RsVIv6iXp260=",
+			"path": "github.com/btcsuite/btcd",
+			"revision": "ed77733ec07dfc8a513741138419b8d9d3de9d2d",
+			"revisionTime": "2019-01-15T01:39:29Z"
+		},
+		{
 			"checksumSHA1": "gZQ6HheWahvZzIc3phBnOwoWHjE=",
 			"path": "github.com/btcsuite/btcd/btcec",
 			"revision": "2e60448ffcc6bf78332d1fe590260095f554dd78",
@@ -92,6 +98,36 @@
 			"path": "github.com/btcsuite/websocket",
 			"revision": "31079b6807923eb23992c421b114992b95131b55",
 			"revisionTime": "2015-01-19T17:41:27Z"
+		},
+		{
+			"checksumSHA1": "9k5eLnwi/Y/j454U0b56CiKh8cE=",
+			"path": "github.com/btcsuite/winsvc/eventlog",
+			"revision": "f8fb11f83f7e860e3769a08e6811d1b399a43722",
+			"revisionTime": "2015-01-17T05:23:43Z"
+		},
+		{
+			"checksumSHA1": "ZdTJkdVtNdkAzXAOM7cT+aabMQw=",
+			"path": "github.com/btcsuite/winsvc/mgr",
+			"revision": "f8fb11f83f7e860e3769a08e6811d1b399a43722",
+			"revisionTime": "2015-01-17T05:23:43Z"
+		},
+		{
+			"checksumSHA1": "OGdIbkcKgXbGIsfC5GilHmYQEkU=",
+			"path": "github.com/btcsuite/winsvc/registry",
+			"revision": "f8fb11f83f7e860e3769a08e6811d1b399a43722",
+			"revisionTime": "2015-01-17T05:23:43Z"
+		},
+		{
+			"checksumSHA1": "pVp/bfSvzX0q0VvGZ+PqunyQtzc=",
+			"path": "github.com/btcsuite/winsvc/svc",
+			"revision": "f8fb11f83f7e860e3769a08e6811d1b399a43722",
+			"revisionTime": "2015-01-17T05:23:43Z"
+		},
+		{
+			"checksumSHA1": "QmgeAaO0N7oWvuHSU0jJ4cuYLyc=",
+			"path": "github.com/btcsuite/winsvc/winapi",
+			"revision": "f8fb11f83f7e860e3769a08e6811d1b399a43722",
+			"revisionTime": "2015-01-17T05:23:43Z"
 		},
 		{
 			"checksumSHA1": "GXOurDGgsLmJs0wounpdWZZRSGw=",
@@ -194,6 +230,18 @@
 			"path": "github.com/jekabolt/slog",
 			"revision": "a73ae5c379905c31dd2484b4dd1dc6f661d1f157",
 			"revisionTime": "2018-04-29T20:39:53Z"
+		},
+		{
+			"checksumSHA1": "HxzHdSrw2oBjI+Cbbj0YNnC+Mpk=",
+			"path": "github.com/jessevdk/go-flags",
+			"revision": "c0795c8afcf41dd1d786bebce68636c199b3bb45",
+			"revisionTime": "2018-12-21T19:31:53Z"
+		},
+		{
+			"checksumSHA1": "Ua7bbrA6+Zy8NtAP7Uo+XHVATQI=",
+			"path": "github.com/jrick/logrotate/rotator",
+			"revision": "a93b200c26cbae3bb09dd0dc2c7c7fe1468a034a",
+			"revisionTime": "2017-06-28T18:35:19Z"
 		},
 		{
 			"checksumSHA1": "gEjGS03N1eysvpQ+FCHTxPcbxXc=",
