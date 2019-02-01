@@ -1,5 +1,5 @@
 # Using alpine-based build image since we run built binaries on alpine too.
-FROM golang:1.11.2-alpine3.8 as multy-back-builder
+FROM golang:1.11.5-alpine3.8 as multy-back-builder
 LABEL org.label-schema.schema-version = "1.0"
 LABEL org.label-schema.url = "http://multy.io"
 LABEL org.label-schema.vcs-url = "https://github.com//multy-io/multy-back"
