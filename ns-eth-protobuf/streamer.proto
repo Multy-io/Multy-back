@@ -7,7 +7,7 @@ service NodeCommunications {
     rpc ServiceInfo (Empty) returns (ServiceVersion){
     }
 
-    rpc EventGetGasPrice (Empty) returns (GasPrice){
+    rpc EventGetGasPrice (Empty) returns (GasPriceEstimation){
     }
 
     rpc EventInitialAdd (UsersData) returns (ReplyInfo){
@@ -29,15 +29,6 @@ service NodeCommunications {
     }
 
     rpc EventGetAdressBalance (AddressToResync) returns (Balance){
-    }
-
-    rpc EventGetAllMempool (Empty) returns (stream MempoolRecord){
-    }
-
-    rpc EventAddMempoolRecord (Empty) returns (stream MempoolRecord){
-    }
-
-    rpc EventDeleteMempool (Empty) returns (stream MempoolToDelete){
     }
 
     rpc EventResyncAddress (AddressToResync) returns (ReplyInfo){
@@ -115,8 +106,12 @@ message Nonce {
     int64 Nonce = 1;
 }
 
-message GasPrice {
-    string Gas = 1;
+message GasPriceEstimation {
+    uint64 VerySlow = 1;
+    uint64 Slow = 2;
+    uint64 Medium = 3;
+    uint64 Fast = 4;
+    uint64 VeryFast = 5;
 }
 
 message BlockHeight{
@@ -177,20 +172,11 @@ message MultisigInfo{
     int64 height = 1 ;
 }
 
-message MempoolToDelete {
-   string hash = 1;
-}
-
 message WatchAddress {
    string address = 1;
    string userID = 2;
    int32 WalletIndex = 3; 
    int32 AddressIndex = 4;
-}
-
- message MempoolRecord {
-   int64 category = 1;
-   string hashTX = 2;
 }
 
 message Empty {

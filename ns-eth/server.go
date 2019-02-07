@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -47,13 +46,14 @@ func (s *Server) ServiceInfo(c context.Context, in *pb.Empty) (*pb.ServiceVersio
 	}, nil
 }
 
-func (s *Server) EventGetGasPrice(ctx context.Context, in *pb.Empty) (*pb.GasPrice, error) {
-	gp, err := s.EthCli.GetGasPrice()
-	if err != nil {
-		return &pb.GasPrice{}, err
-	}
-	return &pb.GasPrice{
-		Gas: gp.String(),
+func (s *Server) EventGetGasPrice(ctx context.Context, in *pb.Empty) (*pb.GasPriceEstimation, error) {
+	gasPriceEstimate := s.EthCli.EstimateTransactionGasPrice()
+	return &pb.GasPriceEstimation{
+		VerySlow: gasPriceEstimate.VerySlow,
+		Slow:     gasPriceEstimate.Slow,
+		Medium:   gasPriceEstimate.Medium,
+		Fast:     gasPriceEstimate.Fast,
+		VeryFast: gasPriceEstimate.VeryFast,
 	}, nil
 }
 
@@ -301,6 +301,7 @@ func (s *Server) EventGetBlockHeight(ctx context.Context, in *pb.Empty) (*pb.Blo
 	}, nil
 }
 
+// TODO: Pasha Change method to return len Message or rename method to 'isContranct' and return boot value
 func (s *Server) EventGetCode(ctx context.Context, in *pb.AddressToResync) (*pb.ReplyInfo, error) {
 	code, err := s.EthCli.GetCode(in.Address)
 	if err != nil {
@@ -367,56 +368,6 @@ func (s *Server) SyncState(ctx context.Context, in *pb.BlockHeight) (*pb.ReplyIn
 		Message: "ok",
 	}, nil
 }
-
-func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommunications_EventGetAllMempoolServer) error {
-	mp, err := s.EthCli.GetAllTxPool()
-	if err != nil {
-		return err
-	}
-	for _, txs := range mp["pending"].(map[string]interface{}) {
-		for _, tx := range txs.(map[string]interface{}) {
-			gasPrice, err := strconv.ParseInt(tx.(map[string]interface{})["gasPrice"].(string), 0, 64)
-			if err != nil {
-				log.Errorf("EventGetAllMempool:strconv.ParseInt")
-			}
-			hash := tx.(map[string]interface{})["hash"].(string)
-			stream.Send(&pb.MempoolRecord{
-				Category: gasPrice,
-				HashTX:   hash,
-			})
-		}
-	}
-	return nil
-}
-
-// func (s *Server) EventGetAllMempool(_ *pb.Empty, stream pb.NodeCommunications_EventGetAllMempoolServer) error {
-// 	mp, err := s.EthCli.GetAllTxPool()
-// 	fmt.Println("==========================\n\n\n")
-// 	fmt.Println("%s\n", mp)
-// 	fmt.Println("==========================\n\n\n")
-// 	if err != nil {
-// 		return err
-// 	}
-// 	// for key, value := range mp {
-// 	// 	fmt.Printf("%T ============== %s\n", value, key)
-
-// 	// }
-
-// 	// for _, txs := range mp["result"].(map[string]interface{}) {
-// 	// 	for _, tx := range txs.(map[string]interface{}) {
-// 	// 		gas, err := strconv.ParseInt(tx.(map[string]interface{})["gas"].(string), 0, 64)
-// 	// 		if err != nil {
-// 	// 			log.Errorf("EventGetAllMempool:strconv.ParseInt")
-// 	// 		}
-// 	// 		hash := tx.(map[string]interface{})["hash"].(string)
-// 	// 		stream.Send(&pb.MempoolRecord{
-// 	// 			Category: int32(gas),
-// 	// 			HashTX:   hash,
-// 	// 		})
-// 	// 	}
-// 	// }
-// 	return nil
-// }
 
 type resyncTx struct {
 	Message string `json:"message"`
@@ -488,30 +439,6 @@ func (s *Server) EventSendRawTx(c context.Context, tx *pb.RawTx) (*pb.ReplyInfo,
 		Message: hash,
 	}, nil
 
-}
-
-func (s *Server) EventDeleteMempool(_ *pb.Empty, stream pb.NodeCommunications_EventDeleteMempoolServer) error {
-	for del := range s.EthCli.DeleteMempoolStream {
-		err := stream.Send(&del)
-		if err != nil && err.Error() == ErrGrpcTransport {
-			log.Warnf("EventDeleteMempool:stream.Send() %v ", err.Error())
-			s.ReloadChan <- struct{}{}
-			return nil
-		}
-	}
-	return nil
-}
-
-func (s *Server) EventAddMempoolRecord(_ *pb.Empty, stream pb.NodeCommunications_EventAddMempoolRecordServer) error {
-	for add := range s.EthCli.AddToMempoolStream {
-		err := stream.Send(&add)
-		if err != nil && err.Error() == ErrGrpcTransport {
-			log.Warnf("EventAddMempoolRecord:stream.Send() %v ", err.Error())
-			s.ReloadChan <- struct{}{}
-			return nil
-		}
-	}
-	return nil
 }
 
 func (s *Server) NewTx(_ *pb.Empty, stream pb.NodeCommunications_NewTxServer) error {

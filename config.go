@@ -9,6 +9,7 @@ import (
 	"github.com/Multy-io/Multy-back/client"
 	"github.com/Multy-io/Multy-back/exchanger"
 	"github.com/Multy-io/Multy-back/store"
+	"github.com/Multy-io/Multy-back/types"
 )
 
 // Configuration is a struct with all service options
@@ -27,6 +28,8 @@ type Configuration struct {
 	Secretkey         string
 	store.MobileVersions
 	BrowserDefault store.BrowserDefault
+
+	ETHDefaultGasPrice types.TransactionFeeRateEstimation
 
 	SupportedNodes []store.CoinType
 	Exchangers     []exchanger.BasicExchangeConfiguration

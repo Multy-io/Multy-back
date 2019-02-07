@@ -90,6 +90,7 @@ func Init(conf *Configuration) (*Multy, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Init: btc.InitHandlers: %s", err.Error())
 	}
+	ethCli.ETHDefaultGasPrice = conf.ETHDefaultGasPrice
 	ethVer, err := ethCli.CliMain.ServiceInfo(context.Background(), &ethpb.Empty{})
 	multy.ETH = ethCli
 	log.Infof(" ETH initialization done on %v √", ethVer)

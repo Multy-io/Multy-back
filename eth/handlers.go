@@ -8,7 +8,6 @@ package eth
 import (
 	"context"
 	"io"
-	"sync"
 	"time"
 
 	"github.com/Multy-io/Multy-back/currencies"
@@ -19,12 +18,8 @@ import (
 )
 
 func (ethcli *ETHConn) setGRPCHandlers(networkID int, accuracyRange int) {
-	mempoolCh := make(chan interface{})
-	// initial fill mempool respectively network id
-
 	var client pb.NodeCommunicationsClient
 	var wa chan pb.WatchAddress
-	var mempool *sync.Map
 
 	nsqProducer := ethcli.NsqProducer
 
@@ -32,90 +27,11 @@ func (ethcli *ETHConn) setGRPCHandlers(networkID int, accuracyRange int) {
 	case currencies.ETHMain:
 		client = ethcli.CliMain
 		wa = ethcli.WatchAddressMain
-		mempool = ethcli.Mempool
 	case currencies.ETHTest:
 		client = ethcli.CliTest
 		wa = ethcli.WatchAddressTest
-		mempool = ethcli.MempoolTest
 
 	}
-
-	go func() {
-		stream, err := client.EventGetAllMempool(context.Background(), &pb.Empty{})
-		if err != nil {
-			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())
-			// return nil, err
-		}
-
-		for {
-			mpRec, err := stream.Recv()
-
-			if err == io.EOF {
-				break
-			}
-
-			if err != nil {
-				log.Errorf("setGRPCHandlers: client.EventGetAllMempool: %s", err.Error())
-			}
-			mempoolCh <- store.MempoolRecord{
-				Category: mpRec.Category,
-				HashTX:   mpRec.HashTX,
-			}
-
-		}
-	}()
-
-	// add transaction on every new tx on node
-	go func() {
-		stream, err := client.EventAddMempoolRecord(context.Background(), &pb.Empty{})
-		if err != nil {
-			log.Errorf("setGRPCHandlers: cli.EventAddMempoolRecord: %s", err.Error())
-			// return nil, err
-		}
-
-		for {
-			mpRec, err := stream.Recv()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				log.Errorf("setGRPCHandlers: client.EventAddMempoolRecord:stream.Recv: %s", err.Error())
-			}
-			mempoolCh <- store.MempoolRecord{
-				Category: mpRec.Category,
-				HashTX:   mpRec.HashTX,
-			}
-		}
-	}()
-
-	//deleting mempool record on block
-	go func() {
-
-		stream, err := client.EventDeleteMempool(context.Background(), &pb.Empty{})
-		if err != nil {
-			log.Errorf("setGRPCHandlers: cli.EventGetAllMempool: %s", err.Error())
-			// return nil, err
-		}
-
-		for {
-			mpRec, err := stream.Recv()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				log.Errorf("initGrpcClient: cli.EventDeleteMempool:stream.Recv: %s", err.Error())
-			}
-
-			mempoolCh <- mpRec.Hash
-
-			if err != nil {
-				log.Errorf("setGRPCHandlers:mpRates.Remove: %s", err.Error())
-			} else {
-				// log.Debugf("Tx removed: %s", mpRec.Hash)
-			}
-		}
-
-	}()
 
 	go func() {
 		stream, err := client.AddMultisig(context.Background(), &pb.Empty{})
@@ -330,6 +246,7 @@ func (ethcli *ETHConn) setGRPCHandlers(networkID int, accuracyRange int) {
 				log.Errorf("setGRPCHandlers: CheckRejectTxs: %s", err.Error())
 			}
 
+			// TODO: Pasha remove this if and rewrite for below
 			// Set status to rejected in db
 			if len(txToReject.GetRejectedTxs()) > 0 {
 
@@ -368,7 +285,7 @@ func (ethcli *ETHConn) setGRPCHandlers(networkID int, accuracyRange int) {
 						log.Errorf("setGRPCHandlers: cli.EventNewBlock:txStore.UpdateAll:Outcoming: %s", err.Error())
 					}
 				}
-
+				// TODO: Pasha remove this check error
 				if err != nil {
 					log.Errorf("initGrpcClient: restoreState.Update: %s", err.Error())
 				}
@@ -397,22 +314,6 @@ func (ethcli *ETHConn) setGRPCHandlers(networkID int, accuracyRange int) {
 				}
 				log.Debugf("EventResyncAddress Reply %s", rp)
 
-			}
-		}
-	}()
-
-	go func() {
-
-		for {
-			switch v := (<-mempoolCh).(type) {
-			// default:
-			// 	log.Errorf("Not found type: %v", v)
-			case string:
-				// delete tx from pool
-				mempool.Delete(v)
-			case store.MempoolRecord:
-				// add tx to pool
-				mempool.Store(v.HashTX, v.Category)
 			}
 		}
 	}()
