@@ -7,7 +7,6 @@ package eth
 
 import (
 	"fmt"
-	"sync"
 
 	"google.golang.org/grpc"
 	mgo "gopkg.in/mgo.v2"
@@ -15,8 +14,9 @@ import (
 	"github.com/Multy-io/Multy-back/currencies"
 	pb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
 	"github.com/Multy-io/Multy-back/store"
+	"github.com/Multy-io/Multy-back/types"
 	nsq "github.com/bitly/go-nsq"
-	"github.com/graarh/golang-socketio"
+	gosocketio "github.com/graarh/golang-socketio"
 	"github.com/jekabolt/slf"
 )
 
@@ -28,8 +28,7 @@ type ETHConn struct {
 	WatchAddressTest chan pb.WatchAddress
 	WatchAddressMain chan pb.WatchAddress
 
-	Mempool     *sync.Map
-	MempoolTest *sync.Map
+	ETHDefaultGasPrice types.TransactionFeeRateEstimation
 
 	WsServer *gosocketio.Server
 }
@@ -40,10 +39,7 @@ var log = slf.WithContext("eth").WithCaller(slf.CallerShort)
 // return main client , test client , err
 func InitHandlers(dbConf *store.Conf, coinTypes []store.CoinType, nsqAddr string) (*ETHConn, error) {
 	//declare pacakge struct
-	cli := &ETHConn{
-		Mempool:     &sync.Map{},
-		MempoolTest: &sync.Map{},
-	}
+	cli := &ETHConn{}
 
 	cli.WatchAddressMain = make(chan pb.WatchAddress)
 	cli.WatchAddressTest = make(chan pb.WatchAddress)

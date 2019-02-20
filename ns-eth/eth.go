@@ -18,20 +18,20 @@ import (
 )
 
 type Client struct {
-	Rpc                 *ethrpc.EthRPC
-	Client              *rpc.Client
-	config              *Conf
-	TransactionsStream  chan pb.ETHTransaction
-	DeleteMempoolStream chan pb.MempoolToDelete
-	AddToMempoolStream  chan pb.MempoolRecord
-	BlockStream         chan pb.BlockHeight
-	NewMultisigStream   chan pb.Multisig
-	RPCStream           chan interface{}
-	Done                <-chan interface{}
-	Stop                chan struct{}
-	UsersData           *sync.Map
-	Multisig            *Multisig
-	AbiClient           *ethclient.Client
+	Rpc                *ethrpc.EthRPC
+	Client             *rpc.Client
+	config             *Conf
+	TransactionsStream chan pb.ETHTransaction
+	BlockStream        chan pb.BlockHeight
+	NewMultisigStream  chan pb.Multisig
+	RPCStream          chan interface{}
+	Done               <-chan interface{}
+	Stop               chan struct{}
+	UsersData          *sync.Map
+	Multisig           *Multisig
+	AbiClient          *ethclient.Client
+	Mempool            *sync.Map
+	MempoolReloadBlock int
 }
 
 type Conf struct {
@@ -42,16 +42,15 @@ type Conf struct {
 
 func NewClient(conf *Conf, usersData *sync.Map, multisig *Multisig) *Client {
 	c := &Client{
-		config:              conf,
-		TransactionsStream:  make(chan pb.ETHTransaction),
-		DeleteMempoolStream: make(chan pb.MempoolToDelete),
-		AddToMempoolStream:  make(chan pb.MempoolRecord),
-		BlockStream:         make(chan pb.BlockHeight),
-		NewMultisigStream:   make(chan pb.Multisig),
-		Done:                make(chan interface{}),
-		Stop:                make(chan struct{}),
-		UsersData:           usersData,
-		Multisig:            multisig,
+		config:             conf,
+		TransactionsStream: make(chan pb.ETHTransaction),
+		BlockStream:        make(chan pb.BlockHeight),
+		NewMultisigStream:  make(chan pb.Multisig),
+		Done:               make(chan interface{}),
+		Stop:               make(chan struct{}),
+		UsersData:          usersData,
+		Multisig:           multisig,
+		Mempool:            &sync.Map{},
 	}
 
 	go c.RunProcess()
@@ -72,7 +71,13 @@ func (c *Client) RunProcess() error {
 		log.Errorf("NewClient:EthNewPendingTransactionFilter: %s", err.Error())
 		return err
 	}
-	// client, err := rpc.Dial("ws://" + c.config.Address + c.config.WsPort)
+	height, err := c.GetBlockHeight()
+	if err != nil {
+		log.Errorf("get block Height err: %v", err)
+		height = 1
+	}
+	c.MempoolReloadBlock = height
+	go c.ReloadTxPool()
 	client, err := rpc.Dial("ws" + c.config.Address + c.config.WsPort)
 
 	if err != nil {
@@ -82,17 +87,15 @@ func (c *Client) RunProcess() error {
 	c.Client = client
 	log.Infof("ETH RPC Connection %s", "ws://"+c.config.Address+c.config.WsPort)
 
-	ch := make(chan interface{})
+	c.RPCStream = make(chan interface{})
 
-	c.RPCStream = ch
-
-	_, err = c.Client.Subscribe(context.Background(), "eth", ch, "newHeads")
+	_, err = c.Client.Subscribe(context.Background(), "eth", c.RPCStream, "newHeads")
 	if err != nil {
 		log.Errorf("Run: client.Subscribe: newHeads %s", err.Error())
 		return err
 	}
 
-	_, err = c.Client.Subscribe(context.Background(), "eth", ch, "newPendingTransactions")
+	_, err = c.Client.Subscribe(context.Background(), "eth", c.RPCStream, "newPendingTransactions")
 	if err != nil {
 		log.Errorf("Run: client.Subscribe: newPendingTransactions %s", err.Error())
 		return err
@@ -103,11 +106,11 @@ func (c *Client) RunProcess() error {
 	// c.Done = done
 
 	for {
-		switch v := (<-ch).(type) {
+		switch v := (<-c.RPCStream).(type) {
 		default:
 			log.Errorf("Not found type: %v", v)
 		case string:
-			go c.txpoolTransaction(v)
+			go c.AddTransactionToTxpool(v)
 		case map[string]interface{}:
 			go c.BlockTransaction(v["hash"].(string))
 		case nil:
