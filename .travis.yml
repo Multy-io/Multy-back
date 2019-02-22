@@ -18,7 +18,10 @@ before_script:
         make docker-build-builder-image;
         DOCKER_TAG="$BUILDER_DOCKER_TAG" make docker-retag-builder-image;
         export MULTY_BACK_IMAGE_BUILDER=1;
+    else
+        export MULTY_BACK_IMAGE_BUILDER=0;
     fi
+  - echo MULTY_BACK_IMAGE_BUILDER ${MULTY_BACK_IMAGE_BUILDER}
 
 script:
   - make docker-build-images
@@ -29,20 +32,18 @@ deploy:
             DOCKER_TAG=dev make docker-retag-images docker-push-images
     on:
       branch: dev
-      condition: ! ${MULTY_BACK_IMAGE_BUILDER}
+      condition: ${MULTY_BACK_IMAGE_BUILDER:-0} = 0
 
   - provider: script
     script: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
             DOCKER_TAG="$TRAVIS_TAG" make docker-retag-images docker-push-images
     on:
       tags: true
-      condition: ! ${MULTY_BACK_IMAGE_BUILDER}
+      condition: $TRAVIS_BRANCH =~ ^release_.*$ && ${MULTY_BACK_IMAGE_BUILDER:-0} = 0
 
   # Update multy-builder image explicitly on git tag multy-back-builder/version, and push it as multyio/multy-back-builder:version 
   - provider: script
-    script: 
-      - echo "PUSHING BUILDER IMAGE"
-      - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
+    script: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
             DOCKER_TAG=${BUILDER_DOCKER_TAG} make docker-push-builder-image
     on:
       condition: ${MULTY_BACK_IMAGE_BUILDER} = 1
