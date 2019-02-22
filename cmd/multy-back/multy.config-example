@@ -94,7 +94,14 @@
             "GRPCUrl": "localhost:7722"
         }
     ],
-
+    "ETHDefaultGasPrice": {
+            "VerySlow": 9000000000,
+            "Slow":     10000000000,
+            "Medium":   14000000000,
+            "Fast":     20000000000,
+            "VeryFast": 25000000000
+    },
+    
     "Exchangers": [
         {
             "name": "changelly",

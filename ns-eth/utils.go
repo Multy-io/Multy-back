@@ -88,7 +88,7 @@ func (client *Client) GetAddressPendingBalance(address string) (big.Int, error) 
 	return balance, err
 }
 
-func (client *Client) GetAllTxPool() (map[string]interface{}, error) {
+func (client *Client) GetAllTxPool() ([]byte, error) {
 	return client.Rpc.TxPoolContent()
 }
 

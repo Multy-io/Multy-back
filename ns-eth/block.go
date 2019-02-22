@@ -8,6 +8,9 @@ import (
 	"github.com/onrik/ethrpc"
 )
 
+// update mempool every ~5 minutes = 20 block
+const blockLengthForReloadTxpool = 20
+
 func (c *Client) BlockTransaction(hash string) {
 	block, err := c.Rpc.EthGetBlockByHash(hash, true)
 	if err != nil {
@@ -29,16 +32,17 @@ func (c *Client) BlockTransaction(hash string) {
 		return
 	}
 
-	log.Debugf("New block -  lenght = %d", len(txs))
+	log.Debugf("New block transaction lenght: %d", len(txs))
+
+	if (c.MempoolReloadBlock + blockLengthForReloadTxpool) < block.Number {
+		go c.ReloadTxPool()
+		c.MempoolReloadBlock = block.Number
+	}
 
 	for _, rawTx := range txs {
 		c.parseETHMultisig(rawTx, int64(*rawTx.BlockNumber), false)
 		c.parseETHTransaction(rawTx, int64(*rawTx.BlockNumber), false)
-		go func(hash string) {
-			c.DeleteMempoolStream <- pb.MempoolToDelete{
-				Hash: hash,
-			}
-		}(rawTx.Hash)
+		c.DeleteTxpoolTransaction(rawTx.Hash)
 
 		if strings.ToLower(rawTx.To) == strings.ToLower(c.Multisig.FactoryAddress) {
 			log.Debugf("%v %s %v", strings.ToLower(rawTx.To), ":", strings.ToLower(c.Multisig.FactoryAddress))

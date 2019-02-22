@@ -12,7 +12,7 @@ import (
 	"time"
 
 	ethpb "github.com/Multy-io/Multy-back/ns-eth-protobuf"
-	"github.com/graarh/golang-socketio"
+	gosocketio "github.com/graarh/golang-socketio"
 )
 
 const (

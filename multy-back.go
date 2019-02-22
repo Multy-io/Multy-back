@@ -9,10 +9,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/Multy-io/Multy-back/exchanger"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/Multy-io/Multy-back/exchanger"
 
 	// exchanger "github.com/Multy-io/Multy-back-exchange-service"
 	"github.com/Multy-io/Multy-back/btc"
@@ -89,6 +90,7 @@ func Init(conf *Configuration) (*Multy, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Init: btc.InitHandlers: %s", err.Error())
 	}
+	ethCli.ETHDefaultGasPrice = conf.ETHDefaultGasPrice
 	ethVer, err := ethCli.CliMain.ServiceInfo(context.Background(), &ethpb.Empty{})
 	multy.ETH = ethCli
 	log.Infof(" ETH initialization done on %v √", ethVer)
@@ -149,7 +151,7 @@ func (m *Multy) SetUserData(userStore store.UserStore, ct []store.CoinType) ([]s
 		if err != nil {
 			return servicesInfo, fmt.Errorf("SetUserData: userStore.FindUsersContractsChain: curID :%d netID :%d err =%s", conCred.СurrencyID, conCred.NetworkID, err.Error())
 		}
-		if len(usersData) == 0 {
+		if len(usersContracts) == 0 {
 			log.Infof("Empty userscontracts")
 		}
 
@@ -312,6 +314,8 @@ func (multy *Multy) initHttpRoutes(conf *Configuration) error {
 
 // Run runs service
 func (multy *Multy) Run() error {
+	log.Debugf("Listening Rest address: %d", multy.config.RestAddress)
+	log.Debugf("Listening Socketio address %v", multy.config.SocketioAddr)
 	log.Info("Running server")
 	multy.route.Run(multy.config.RestAddress)
 	return nil

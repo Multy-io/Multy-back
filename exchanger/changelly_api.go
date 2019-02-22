@@ -14,6 +14,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -92,31 +94,43 @@ func (ec *ExchangerChangelly) GetSupportedCurrencies() ([]CurrencyExchanger, err
 
 func (ec *ExchangerChangelly) GetTransactionMinimumAmount(from CurrencyExchanger,
 	to CurrencyExchanger) (string, error) {
+	responseData, err := ec.sendRequest(RpcGetTransactionMinimumAmount, map[string]string{
+		"from": from.Name,
+		"to":   to.Name,
+	})
 
-	return "1.0", nil
+	if err != nil {
+		return "", errors.Wrapf(err, "Changelly API request failed: %s", RpcGetTransactionMinimumAmount)
+	}
+
+	var responsePacket rpcPacketResponse
+	err = json.Unmarshal(responseData, &responsePacket)
+	if err != nil {
+		return "", errors.Wrapf(err, "Changelly API failed to parse response of %s", RpcGetExchangeAmount)
+	}
+
+	return responsePacket.Result.(string), nil
 }
 
 func (ec *ExchangerChangelly) GetExchangeAmount(from CurrencyExchanger,
 	to CurrencyExchanger, amount string) (string, error) {
-	var responseResult string
-
 	responseData, err := ec.sendRequest(RpcGetExchangeAmount, map[string]string{
 		"from":   from.Name,
 		"to":     to.Name,
 		"amount": amount,
 	})
 
-	if err == nil {
-		var responsePacket rpcPacketResponse
-		err = json.Unmarshal(responseData, &responsePacket)
-		if err != nil {
-			return responseResult, err
-		}
-
-		responseResult, _ = responsePacket.Result.(string)
+	if err != nil {
+		return "", errors.Wrapf(err, "Changelly API request failed: %s", RpcGetExchangeAmount)
 	}
 
-	return responseResult, nil
+	var responsePacket rpcPacketResponse
+	err = json.Unmarshal(responseData, &responsePacket)
+	if err != nil {
+		return "", errors.Wrapf(err, "Changelly API failed to parse response of %s", RpcGetExchangeAmount)
+	}
+
+	return responsePacket.Result.(string), nil
 }
 
 func (ec *ExchangerChangelly) CreateTransaction(from CurrencyExchanger, to CurrencyExchanger,

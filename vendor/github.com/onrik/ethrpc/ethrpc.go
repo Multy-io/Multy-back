@@ -120,13 +120,25 @@ func (rpc *EthRPC) Web3ClientVersion() (string, error) {
 }
 
 // TxPoolContent returns raw txpool.
-func (rpc *EthRPC) TxPoolContent() (map[string]interface{}, error) {
-	var txPool map[string]interface{}
+func (rpc *EthRPC) TxPoolContent() ([]byte, error) {
+	// var txPool map[string]interface{}
 
 	//err := rpc.call("parity_pendingTransactions", &txPool)
-	err := rpc.call("txpool_content", &txPool)
+	var result []byte
+	result, err := rpc.Call("txpool_content")
+	// err := rpc.call("txpool_content", &txPool)
 
-	return txPool, err
+	return result, err
+}
+
+// TxPoolStatus returns raw txpool.
+func (rpc *EthRPC) TxPoolStatus() (map[string]interface{}, error) {
+	var txPoolStatus map[string]interface{}
+
+	//err := rpc.call("parity_pendingTransactions", &txPoolStatus)
+	err := rpc.call("txpool_status", &txPoolStatus)
+
+	return txPoolStatus, err
 }
 
 func (rpc *EthRPC) TransactionReceipt(hash string) (map[string]interface{}, error) {
