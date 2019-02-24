@@ -1,12 +1,12 @@
 # Builder image that builds all the multy-back and all node services
 # multyio/multy-back-builder has all dependencies cached
 # Based on golang:1.9.4
-FROM multyio/multy-back-builder:dev_alpine as builder
+FROM multyio/multy-back-builder:release_1.5 as builder
 
 WORKDIR $GOPATH/src/github.com/Multy-io/Multy-back
 # Build an image from sources of local directory.
 COPY . $GOPATH/src/github.com/Multy-io/Multy-back
-RUN go get -v -d ./...
+# RUN go get -v -d ./... # do not update packages implicitly for release, all deps are solidified in base image.
 RUN make build -B
 
 # Base image for all images with executable application
