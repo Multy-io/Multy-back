@@ -32,6 +32,7 @@ func (c *Client) BlockTransactions(hash *chainhash.Hash) {
 		}
 	}
 
+	log.Debug("Start process TXs ")
 	for _, txHash := range allBlockTransactions {
 
 		blockTxVerbose, err := c.RPCClient.GetRawTransactionVerbose(&txHash)
@@ -40,8 +41,9 @@ func (c *Client) BlockTransactions(hash *chainhash.Hash) {
 			continue
 		}
 
-		c.ProcessTransaction(blockHeight, blockTxVerbose, false)
+		go c.ProcessTransaction(blockHeight, blockTxVerbose, false)
 	}
+	log.Debug("END")
 }
 
 func (c *Client) ResyncBlock(blockVerbose *btcjson.GetBlockVerboseResult) {

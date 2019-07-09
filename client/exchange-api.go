@@ -140,7 +140,7 @@ func (eChart *exchangeChart) newPoloniexAPI(log slf.StructuredLogger) (*Poloniex
 	c, err := newWebSocketConn(poloniexAPIAddr)
 	if err != nil {
 		eChart.log.Errorf("new poloniex connection: %s", err.Error())
-		c, err = reconnectWebSocketConn(gdaxAPIAddr, log)
+		c, err = reconnectWebSocketConn(poloniexAPIAddr, log)
 		if err != nil {
 			eChart.log.Errorf("poloniex connection: %s", err.Error())
 			return nil, err
@@ -164,15 +164,17 @@ func (poloniex *PoloniexAPI) subscribe() {
 
 func (poloniex *PoloniexAPI) listen() {
 	for {
-		_, message, err := poloniex.conn.ReadMessage()
+		typeMessage, message, err := poloniex.conn.ReadMessage()
 		if err != nil {
-			poloniex.log.Errorf("read message: %s", err.Error())
+			poloniex.log.Errorf("read message: %s   , type message: %v ", err.Error(), typeMessage)
 			c, err := reconnectWebSocketConn(poloniexAPIAddr, poloniex.log)
 			if err != nil {
-				poloniex.log.Errorf("gdax reconnection: %s", err.Error())
+				poloniex.log.Errorf("polonex reconnection: %s", err.Error())
 				return
 			}
+			poloniex.log.Debug("polonex reconect done")
 			poloniex.conn = c
+			poloniex.subscribe()
 			continue
 		}
 

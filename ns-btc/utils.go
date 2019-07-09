@@ -515,7 +515,7 @@ func storeTxToGenerated(tx store.MultyTX) pb.BTCTransaction {
 func (c *Client) parseInputs(txVerbose *btcjson.TxRawResult, blockHeight int64, multyTx *store.MultyTX) error {
 	//Ranging by inputs
 	for _, input := range txVerbose.Vin {
-
+		// TODO: Remake get THIS info from ScriptSig    !!!!!!ASAP
 		//getting previous verbose transaction from BTC Node for checking addresses
 		previousTxVerbose, err := c.rawTxByTxid(input.Txid)
 		if err != nil {
