@@ -20,7 +20,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-
 // Server implements streamer interface and is a gRPC server
 type Server struct {
 	UsersData  *sync.Map
@@ -223,7 +222,7 @@ func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResy
 
 	if s.BtcAPI.Chain == "main" {
 
-		url := "https://chain.api.btc.com/v3/address/" + address.Address + "/tx?page=1"
+		url := "https://blockchain.info/rawaddr/" + address.Address + "?limit=50"
 		dbl := sync.Map{}
 
 		request := gorequest.New()
@@ -236,18 +235,18 @@ func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResy
 		if err != nil {
 			log.Errorf("EventResyncAddress:ioutil.ReadAll: %v", err.Error())
 		}
-
+		log.Debugf("load from blockchaininfo : %s", string(respBody))
 		reTx := store.BtcComResp{}
 		if err := json.Unmarshal(respBody, &reTx); err != nil {
 			log.Errorf("EventResyncAddress:json.Unmarshal: %v", err.Error())
 		}
 
-		if reTx.Data.TotalCount > 50 {
-			requestTimes = int(float64(reTx.Data.TotalCount)/50.0) + 2
+		if reTx.TotalCount > 50 {
+			requestTimes = int(float64(reTx.TotalCount)/50.0) + 2
 		}
-
-		if reTx.Data.TotalCount < 50 {
-			for _, tx := range reTx.Data.List {
+		log.Debugf("\n\n\n\n\ninfo abount txs : %v\n\n\n", reTx)
+		if reTx.TotalCount < 50 {
+			for _, tx := range reTx.List {
 				_, ok := dbl.LoadOrStore(tx, true)
 				if !ok {
 					allResync = append(allResync, store.ResyncTx{
@@ -258,9 +257,9 @@ func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResy
 			}
 		}
 
-		if reTx.Data.TotalCount > 50 {
+		if reTx.TotalCount > 50 {
 			for index := 1; index < requestTimes; index++ {
-				url := "https://chain.api.btc.com/v3/address/" + address.Address + "/tx?page=" + strconv.Itoa(index)
+				url := "https://blockchain.info/rawaddr/" + address.Address + "?limit=50&offset=" + strconv.Itoa(index*50)
 				resp, _, errs := request.Get(url).Retry(2, 2*time.Second, http.StatusForbidden, http.StatusBadRequest, http.StatusInternalServerError).End()
 				if len(errs) > 0 {
 					log.Errorf("EventResyncAddress:request.Get: %v", errs)
@@ -276,7 +275,7 @@ func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResy
 					log.Errorf("EventResyncAddress:json.Unmarshal: %v", err.Error())
 				}
 
-				for _, tx := range reTx.Data.List {
+				for _, tx := range reTx.List {
 					_, ok := dbl.LoadOrStore(tx, true)
 					if !ok {
 						allResync = append(allResync, store.ResyncTx{
@@ -288,7 +287,7 @@ func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResy
 			}
 		}
 
-		if reTx.Data.TotalCount == 0 {
+		if reTx.TotalCount == 0 {
 			delFromResyncQ = address.Address
 		}
 

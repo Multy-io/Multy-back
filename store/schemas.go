@@ -580,14 +580,14 @@ type InviteCodeInfo struct {
 }
 
 type BtcComResp struct {
-	Data struct {
-		TotalCount int `json:"total_count"`
-		Page       int `json:"page"`
-		List       []struct {
-			BlockHeight int    `json:"block_height"`
-			Hash        string `json:"hash"`
-		} `json:"list"`
-	}
+	// Data struct {
+	TotalCount int `json:"n_tx"`
+	Page       int `json:"page"`
+	List       []struct {
+		BlockHeight int    `json:"block_height"`
+		Hash        string `json:"hash"`
+	} `json:"txs"`
+	// }
 	ErrNo  int         `json:"err_no"`
 	ErrMsg interface{} `json:"err_msg"`
 }
