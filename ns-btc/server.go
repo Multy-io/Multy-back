@@ -221,8 +221,7 @@ func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResy
 	}
 
 	if s.BtcAPI.Chain == "main" {
-
-		url := "https://blockchain.info/rawaddr/" + address.Address + "?limit=50"
+		url := "https://api.blockchair.com/bitcoin/dashboards/address/" + address.Address + "?transaction_details=true&limit=10000"
 		dbl := sync.Map{}
 
 		request := gorequest.New()
@@ -235,61 +234,61 @@ func (s *Server) EventResyncAddress(c context.Context, address *pb.AddressToResy
 		if err != nil {
 			log.Errorf("EventResyncAddress:ioutil.ReadAll: %v", err.Error())
 		}
-		log.Debugf("load from blockchaininfo : %s", string(respBody))
+
 		reTx := store.BtcComResp{}
 		if err := json.Unmarshal(respBody, &reTx); err != nil {
 			log.Errorf("EventResyncAddress:json.Unmarshal: %v", err.Error())
 		}
-
-		if reTx.TotalCount > 50 {
-			requestTimes = int(float64(reTx.TotalCount)/50.0) + 2
-		}
 		log.Debugf("\n\n\n\n\ninfo abount txs : %v\n\n\n", reTx)
-		if reTx.TotalCount < 50 {
-			for _, tx := range reTx.List {
-				_, ok := dbl.LoadOrStore(tx, true)
-				if !ok {
-					allResync = append(allResync, store.ResyncTx{
-						Hash:        tx.Hash,
-						BlockHeight: tx.BlockHeight,
-					})
-				}
+		// if reTx.Data.TotalCount > 50 {
+		// 	requestTimes = int(float64(reTx.Data.TotalCount)/50.0) + 2
+		// }
+
+		// if reTx.Data.TotalCount < 50 {
+		for _, tx := range reTx.Data[address.Address].List {
+			_, ok := dbl.LoadOrStore(tx, true)
+			if !ok {
+				allResync = append(allResync, store.ResyncTx{
+					Hash:        tx.Hash,
+					BlockHeight: tx.BlockHeight,
+				})
 			}
 		}
+		// }
 
-		if reTx.TotalCount > 50 {
-			for index := 1; index < requestTimes; index++ {
-				url := "https://blockchain.info/rawaddr/" + address.Address + "?limit=50&offset=" + strconv.Itoa(index*50)
-				resp, _, errs := request.Get(url).Retry(2, 2*time.Second, http.StatusForbidden, http.StatusBadRequest, http.StatusInternalServerError).End()
-				if len(errs) > 0 {
-					log.Errorf("EventResyncAddress:request.Get: %v", errs)
-				}
+		// if reTx.Data.TotalCount > 50 {
+		// 	for index := 1; index < requestTimes; index++ {
+		// 		url := "https://chain.api.btc.com/v3/address/" + address.Address + "/tx?page=" + strconv.Itoa(index)
+		// 		resp, _, errs := request.Get(url).Retry(2, 2*time.Second, http.StatusForbidden, http.StatusBadRequest, http.StatusInternalServerError).End()
+		// 		if len(errs) > 0 {
+		// 			log.Errorf("EventResyncAddress:request.Get: %v", errs)
+		// 		}
 
-				respBody, err := ioutil.ReadAll(resp.Body)
-				if err != nil {
-					log.Errorf("EventResyncAddress:ioutil.ReadAll: %v", err.Error())
-				}
+		// 		respBody, err := ioutil.ReadAll(resp.Body)
+		// 		if err != nil {
+		// 			log.Errorf("EventResyncAddress:ioutil.ReadAll: %v", err.Error())
+		// 		}
 
-				reTx := store.BtcComResp{}
-				if err := json.Unmarshal(respBody, &reTx); err != nil {
-					log.Errorf("EventResyncAddress:json.Unmarshal: %v", err.Error())
-				}
+		// 		reTx := store.BtcComResp{}
+		// 		if err := json.Unmarshal(respBody, &reTx); err != nil {
+		// 			log.Errorf("EventResyncAddress:json.Unmarshal: %v", err.Error())
+		// 		}
 
-				for _, tx := range reTx.List {
-					_, ok := dbl.LoadOrStore(tx, true)
-					if !ok {
-						allResync = append(allResync, store.ResyncTx{
-							Hash:        tx.Hash,
-							BlockHeight: tx.BlockHeight,
-						})
-					}
-				}
-			}
-		}
+		// 		for _, tx := range reTx.Data.List {
+		// 			_, ok := dbl.LoadOrStore(tx, true)
+		// 			if !ok {
+		// 				allResync = append(allResync, store.ResyncTx{
+		// 					Hash:        tx.Hash,
+		// 					BlockHeight: tx.BlockHeight,
+		// 				})
+		// 			}
+		// 		}
+		// 	}
+		// }
 
-		if reTx.TotalCount == 0 {
-			delFromResyncQ = address.Address
-		}
+		// if reTx.Data.TotalCount == 0 {
+		// 	delFromResyncQ = address.Address
+		// }
 
 	}
 	reverseResyncTx(allResync)
