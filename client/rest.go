@@ -2925,7 +2925,10 @@ func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 						if err != nil {
 							restClient.log.Errorf("resyncWallet case currencies.Bitcoin:Main: %v", err.Error())
 						}
-						restClient.BTC.Resync.Store(address.Address, true)
+						// TODO: we have a problem where resync end, last address from wallet don't remove from resync map
+						if num_address != len(walletToResync.Adresses)-1 {
+							restClient.BTC.Resync.Store(address.Address, true)
+						}
 						restClient.BTC.CliMain.EventResyncAddress(context.Background(), &btcpb.AddressToResync{
 							Address:      address.Address,
 							UserID:       user.UserID,
