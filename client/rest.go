@@ -2920,7 +2920,7 @@ func (restClient *RestClient) resyncWallet() gin.HandlerFunc {
 		case currencies.Bitcoin:
 			if networkID == currencies.Main {
 				go func() {
-					for _, address := range walletToResync.Adresses {
+					for num_address, address := range walletToResync.Adresses {
 						err := restClient.userStore.DeleteHistory(currencyID, networkID, address.Address)
 						if err != nil {
 							restClient.log.Errorf("resyncWallet case currencies.Bitcoin:Main: %v", err.Error())
